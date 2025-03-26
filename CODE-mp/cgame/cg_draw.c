@@ -2746,6 +2746,13 @@ void CG_CenterPrint( const char *str, int y, int charWidth ) {
 
 	Q_strncpyz( cg.centerPrint, str, sizeof(cg.centerPrint) );
 
+	if (cg_centerHeight.value)
+		y = cg_centerHeight.value;
+	if (y < 0)
+		y = 0;
+	if (y > SCREEN_HEIGHT)
+		y = SCREEN_HEIGHT;
+
 	cg.centerPrintTime = cg.time;
 	cg.centerPrintY = y;
 	cg.centerPrintCharWidth = charWidth;
@@ -2776,8 +2783,8 @@ void CG_CenterPrintMultiKill(const char* str, int y, int charWidth) {
 		Q_strncpyz(cg.centerPrint, str, sizeof(cg.centerPrint));
 	}
 
-	//if (cg_centerHeight.value)
-	//	y = cg_centerHeight.value;
+	if (cg_centerHeight.value)
+		y = cg_centerHeight.value;
 	if (y < 0)
 		y = 0;
 	if (y > SCREEN_HEIGHT)
@@ -2818,7 +2825,7 @@ static void CG_DrawCenterString( void ) {
 	int		x, y, w;
 	int		h;
 	float	*color;
-	float	scale = 1.0; //0.5
+	float scale = cg_centerSize.value; //0.5
 	qboolean broke = qfalse;
 
 	if ( !cg.centerPrintTime ) {

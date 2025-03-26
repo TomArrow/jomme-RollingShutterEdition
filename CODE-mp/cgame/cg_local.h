@@ -1788,6 +1788,8 @@ extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[2][MAX_MARK_POLYS]; // 2 sub arrays. one reserved for saber marks.
 
 extern	vmCvar_t		cg_centertime;
+extern	vmCvar_t		cg_centerHeight;
+extern	vmCvar_t		cg_centerSize;
 extern	vmCvar_t		cg_runpitch;
 extern	vmCvar_t		cg_runroll;
 extern	vmCvar_t		cg_bobup;
