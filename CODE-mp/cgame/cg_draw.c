@@ -2427,6 +2427,8 @@ static void CG_DrawReward( void ) {
 	int		i, count;
 	float	x, y;
 	char	buf[32];
+	float	maxIconSize = ICON_SIZE * cg_drawRewardsSize.value;
+	float	iconSize = maxIconSize, time = 0.0f;
 
 	if ( !cg_drawRewards.integer ) {
 		return;
@@ -2449,6 +2451,14 @@ static void CG_DrawReward( void ) {
 		}
 	}
 
+	time = cg.time - cg.rewardTime;
+	if (time <= ITEM_BLOB_TIME) { //fade in
+		iconSize *= time * (1.0 / ITEM_BLOB_TIME);
+	}
+	else if (time > 0 && REWARD_TIME - time <= ITEM_BLOB_TIME) { //fade out
+		iconSize *= (REWARD_TIME - time) * (1.0f / ITEM_BLOB_TIME);
+	}
+
 	trap_R_SetColor( color );
 
 	/*
@@ -2467,23 +2477,27 @@ static void CG_DrawReward( void ) {
 	*/
 
 	if ( cg.rewardCount[0] >= 10 ) {
-		y = 56;
-		x = 320 - (ICON_SIZE/2)*cgs.widthRatioCoef;
-		CG_DrawPic( x, y, (ICON_SIZE-4)*cgs.widthRatioCoef, ICON_SIZE-4, cg.rewardShader[0] );
+		//y = 56;
+		//x = 320 - (ICON_SIZE/2)*cgs.widthRatioCoef;
+		y = cg_drawRewardsHeight.value + 56 + ((maxIconSize - iconSize) / 2);
+		//x = 0.5f * (SCREEN_WIDTH - iconSize);
+		x = 320 - (iconSize/2)*cgs.widthRatioCoef;
+		CG_DrawPic( x, y, (iconSize -4)*cgs.widthRatioCoef, iconSize -4, cg.rewardShader[0] );
 		Com_sprintf(buf, sizeof(buf), "%d", cg.rewardCount[0]);
 		x = ( SCREEN_WIDTH - SMALLCHAR_WIDTH * CG_DrawStrlen( buf )*cgs.widthRatioCoef ) / 2;
-		CG_DrawStringExt( x, y+ICON_SIZE, buf, color, qfalse, qtrue,
+		CG_DrawStringExt( x, y+ maxIconSize, buf, color, qfalse, qtrue,
 								SMALLCHAR_WIDTH*cgs.widthRatioCoef, SMALLCHAR_HEIGHT, 0 );
 	}
 	else {
 
 		count = cg.rewardCount[0];
 
-		y = 56;
-		x = 320 - count * (ICON_SIZE/2)*cgs.widthRatioCoef;
+		//y = 56;
+		y = cg_drawRewardsHeight.value + 56 + ((maxIconSize - iconSize) / 2);
+		x = 320 - count * (iconSize /2)*cgs.widthRatioCoef;
 		for ( i = 0 ; i < count ; i++ ) {
-			CG_DrawPic( x, y, (ICON_SIZE-4)*cgs.widthRatioCoef, ICON_SIZE-4, cg.rewardShader[0] );
-			x += ICON_SIZE*cgs.widthRatioCoef;
+			CG_DrawPic( x, y, (iconSize -4)*cgs.widthRatioCoef, iconSize -4, cg.rewardShader[0] );
+			x += iconSize *cgs.widthRatioCoef;
 		}
 	}
 	trap_R_SetColor( NULL );

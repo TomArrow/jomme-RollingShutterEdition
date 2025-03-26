@@ -460,6 +460,8 @@ vmCvar_t	cg_drawCrosshair;
 vmCvar_t	cg_drawCrosshairNames;
 vmCvar_t	cg_dynamicCrosshair;
 vmCvar_t	cg_drawRewards;
+vmCvar_t	cg_drawRewardsSize;
+vmCvar_t	cg_drawRewardsHeight;
 vmCvar_t	cg_drawScore;
 vmCvar_t	cg_drawFollowing;
 vmCvar_t	cg_drawScoreDefrag;
@@ -802,6 +804,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_drawScores, "cg_drawScores", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_dynamicCrosshair, "cg_dynamicCrosshair", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_drawRewards, "cg_drawRewards", "0", NULL, CVAR_ARCHIVE },
+	{ &cg_drawRewardsSize, "cg_drawRewardsSize", "1.0", NULL, CVAR_ARCHIVE },
+	{ &cg_drawRewardsHeight, "cg_drawRewardsHeight", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_crosshairSize, "cg_crosshairSize", "24", NULL, CVAR_ARCHIVE },
 	{ &cg_crosshairHealth, "cg_crosshairHealth", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_crosshairX, "cg_crosshairX", "0", NULL, CVAR_ARCHIVE },
