@@ -19,7 +19,7 @@ CLIENT SIDE DEMO PLAYBACK
 */
 
 typedef struct {
-	int			offsets[MAX_CONFIGSTRINGS];
+	int			offsets[MAX_CONFIGSTRINGS_MAX];
 	int			used;
 	char		data[MAX_GAMESTATE_CHARS];
 } demoString_t;

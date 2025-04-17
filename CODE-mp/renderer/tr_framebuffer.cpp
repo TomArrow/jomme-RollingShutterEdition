@@ -480,7 +480,7 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 	if (!fishEyeShader || !fishEyeShader->IsWorking())
 		return qfalse;
 
-	if ( !r_fboGLSL->integer) {
+	if ( !(r_fboGLSL->integer && ENABLEGLSL)) {
 		if (fbo.fishEyeActive) {
 			R_FrameBuffer_DeactivateFisheye();
 		}
@@ -514,7 +514,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 	if (!fishEyeShader || !fishEyeShader->IsWorking())
 		return qfalse;
 
-	if ( !r_fboGLSL->integer) {
+	if ( !(r_fboGLSL->integer && ENABLEGLSL)) {
 		if (fbo.fishEyeActive) {
 			R_FrameBuffer_DeactivateFisheye();
 		}
@@ -542,7 +542,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isL
 	//TODO
 	return qfalse;
 #else
-	if (!r_fboGLSL->integer) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
 		return qfalse;
 	}
 
@@ -570,7 +570,7 @@ qboolean R_FrameBuffer_SetMusicDeformData(float intensity, float time, float spr
 	//TODO
 	return qfalse;
 #else
-	if (!r_fboGLSL->integer) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
 		return qfalse;
 	}
 
@@ -1144,7 +1144,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 
 static void ReLoadGLSL() {
 	qboolean wasActive = qfalse;
-	if (r_fboGLSL->integer) {
+	if (r_fboGLSL->integer && ENABLEGLSL) {
 
 		if (fbo.fishEyeActive) {
 			qglUseProgram(0);
@@ -1355,7 +1355,7 @@ void R_FrameBuffer_Init( void ) {
 		}
 	}
 
-	if (r_fboGLSL->integer) {
+	if (r_fboGLSL->integer && ENABLEGLSL) {
 		if (g_SSBOsSupported) {
 			qglGenBuffersARB(1, &shadowLineSSBOReference);
 			qglGenBuffersARB(1, &musicDeformSSBOReference);
@@ -1441,7 +1441,7 @@ void R_FrameBuffer_StartFrame( void ) {
 	r_fboFishEyeTessellate = ri.Cvar_Get("r_fboFishEyeTessellate", "1", CVAR_ARCHIVE); // Updated on every frame.
 	r_fboFishEye = ri.Cvar_Get("r_fboFishEye", "0", CVAR_ARCHIVE);
 
-	if (r_fboGLSL->integer) {
+	if (r_fboGLSL->integer && ENABLEGLSL) {
 		if (tr.mmeMusicDeformIndex != fbo.soundDeformLastIndex) {
 			fbo.soundDeformSampleCount = 0;
 			static float empty[1]{ 0 };

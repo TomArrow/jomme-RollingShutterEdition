@@ -366,11 +366,11 @@ CG_ConfigStringModified
 
 ================
 */
-static void CG_ConfigStringModified( void ) {
+static void CG_ConfigStringModified( int offset ) {
 	const char	*str;
 	int		num;
 
-	num = atoi( CG_Argv( 1 ) );
+	num = atoi( CG_Argv( 1 ) ) + offset;
 
 	// get the gamestate from the client system, which will have the
 	// new configstring already integrated
@@ -487,6 +487,11 @@ static void CG_ConfigStringModified( void ) {
 	else if ( num >= CS_LIGHT_STYLES && num < CS_LIGHT_STYLES + (MAX_LIGHT_STYLES * 3))
 	{
 		CG_SetLightstyle(num - CS_LIGHT_STYLES);
+	}
+	else if ( num >= CS_ENTITIES && num < CS_ENTITIES + MAX_GENTITIES)
+	{
+		// entity meta
+		//CG_SetLightstyle(num - CS_LIGHT_STYLES);
 	}
 	else {
 		switch (num) {
@@ -1400,7 +1405,12 @@ static void CG_ServerCommand( void ) {
 	}
 
 	if ( !strcmp( cmd, "cs" ) ) {
-		CG_ConfigStringModified();
+		CG_ConfigStringModified(0);
+		return;
+	}
+
+	if ( !strcmp( cmd, "entcs" ) ) {
+		CG_ConfigStringModified(CS_ENTITIES);
 		return;
 	}
 

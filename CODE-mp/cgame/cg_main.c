@@ -2202,7 +2202,7 @@ CG_ConfigString
 =================
 */
 const char *CG_ConfigString( int index ) {
-	if ( index < 0 || index >= MAX_CONFIGSTRINGS ) {
+	if ( index < 0 || index >= MAX_CONFIGSTRINGS_MAX) {
 		CG_Error( "CG_ConfigString: bad index: %i", index );
 	}
 	return cgs.gameState.stringData + cgs.gameState.stringOffsets[ index ];

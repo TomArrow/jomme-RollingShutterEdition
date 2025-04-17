@@ -784,7 +784,7 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 	if ((cg_speedometer.integer & SPEEDOMETER_ENABLE) || cg_strafeHelper.integer /* || (cgs.isJK2Pro && cg_raceTimer.integer > 1)*/)
 		CG_CalculateSpeed(cent);
 
-	if (cg_strafeHelper.integer & SHELPER_ALL3D)
+	if (cg_strafeHelper.integer & SHELPER_ALL3D && EXPERIMENTS_ENABLED)
 		CG_StrafeHelper(cent);
 
 	CG_DrawSpeedGraph3D();

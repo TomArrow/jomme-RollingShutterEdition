@@ -10,6 +10,8 @@
 #include "qgl.h"
 #include "ghoul2/ghoul2_shared.h"
 
+#define ENABLEGLSL 1
+
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
 

@@ -103,6 +103,7 @@ extern camera_t cam;
 
 extern int dueltypes[MAX_CLIENTS];//jk2PRO - Clientside - Fullforce Duels
 
+#define EXPERIMENTS_ENABLED 1
 
 //jk2pro
 #define SHELPER_SUPEROLDSTYLE	(1<<0)

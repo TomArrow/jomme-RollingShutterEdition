@@ -6289,7 +6289,7 @@ static void DrawStrafeLine(vec3_t velocity, float diff, qboolean active, int mov
 	AngleVectors(angs, forward, NULL, NULL);
 
 	velocityScale3d = 1.0f;
-	if (cg_strafeHelper3DVelocityScale.integer && cg_strafeHelper.integer & SHELPER_3D) {
+	if (cg_strafeHelper3DVelocityScale.integer && cg_strafeHelper.integer & SHELPER_3D && EXPERIMENTS_ENABLED) {
 		basespeed = cg.predictedPlayerState.speed ? cg.predictedPlayerState.speed : 250;
 		if (moveDir == 8) {
 			VectorCopy(cg.predictedPlayerState.velocity, velocity2d);
@@ -6326,7 +6326,7 @@ static void DrawStrafeLine(vec3_t velocity, float diff, qboolean active, int mov
 	line3D[1] = delta3D[1] + start3D[1];
 	line3D[2] = start3D[2];
 
-	if (!CG_WorldCoordToScreenCoordFloat(line, &x, &y) && !(cg_strafeHelper.integer & SHELPER_3D))
+	if (!CG_WorldCoordToScreenCoordFloat(line, &x, &y) && !(cg_strafeHelper.integer & SHELPER_3D && EXPERIMENTS_ENABLED))
 		return;
 
 	if(!only3d){
@@ -6377,7 +6377,7 @@ static void DrawStrafeLine(vec3_t velocity, float diff, qboolean active, int mov
 		}
 	}
 
-	if (cg_strafeHelper.integer & SHELPER_3D && (moveDir == 0 || moveDir == 8 || moveDir == 20)) {
+	if (cg_strafeHelper.integer & SHELPER_3D && EXPERIMENTS_ENABLED  && (moveDir == 0 || moveDir == 8 || moveDir == 20)) {
 		vec3_t line3DEnd;
 		polyVert_t verts[4];
 		VectorCopy(line3D, line3DEnd);
@@ -6577,7 +6577,7 @@ void CG_StrafeHelper(centity_t* cent)
 			DrawStrafeLine(velocityAngle, (45.0f + (optimalDeltaAngle + (cg_strafeHelperOffset.value * 0.01f))), (qboolean)(cmd.forwardmove > 0 && cmd.rightmove == 0), 0, qfalse); //W
 			DrawStrafeLine(velocityAngle, (-45.0f - (optimalDeltaAngle + (cg_strafeHelperOffset.value * 0.01f))), (qboolean)(cmd.forwardmove > 0 && cmd.rightmove == 0), 0, qfalse); //W
 		}
-		if (cg_strafeHelper.integer & SHELPER_3D) {
+		if (cg_strafeHelper.integer & SHELPER_3D && EXPERIMENTS_ENABLED) {
 
 			DrawStrafeLine(cg.predictedPlayerState.viewangles,-moveAngle, (qboolean)(cmd.forwardmove > 0 && cmd.rightmove == 0), 20, qfalse); //W
 		}

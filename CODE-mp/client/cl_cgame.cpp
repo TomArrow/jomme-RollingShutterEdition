@@ -260,15 +260,15 @@ void CL_DoAutoLODScale(void)
 CL_ConfigstringModified
 =====================
 */
-void CL_ConfigstringModified( void ) {
+void CL_ConfigstringModified(int offset) {
 	char		*old, *s;
 	int			i, index;
 	char		*dup;
 	gameState_t	oldGs;
 	int			len;
 
-	index = atoi( Cmd_Argv(1) );
-	if ( index < 0 || index >= MAX_CONFIGSTRINGS ) {
+	index = atoi( Cmd_Argv(1) ) + offset;
+	if ( index < 0 || index >= MAX_CONFIGSTRINGS_MAX) {
 		Com_Error( ERR_DROP, "configstring > MAX_CONFIGSTRINGS" );
 	}
 	// get everything after "cs <num>"
@@ -287,7 +287,7 @@ void CL_ConfigstringModified( void ) {
 	// leave the first 0 for uninitialized strings
 	cl.gameState.dataCount = 1;
 		
-	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ ) {
+	for ( i = 0 ; i < MAX_CONFIGSTRINGS_MAX; i++ ) {
 		if ( i == index ) {
 			dup = s;
 		} else {
@@ -413,7 +413,14 @@ rescan:
 	}
 
 	if ( !strcmp( cmd, "cs" ) ) {
-		CL_ConfigstringModified();
+		CL_ConfigstringModified(0);
+		// reparse the string, because CL_ConfigstringModified may have done another Cmd_TokenizeString()
+		Cmd_TokenizeString( s );
+		return qtrue;
+	}
+
+	if ( !strcmp( cmd, "entcs" ) ) {
+		CL_ConfigstringModified(CS_ENTITIES);
 		// reparse the string, because CL_ConfigstringModified may have done another Cmd_TokenizeString()
 		Cmd_TokenizeString( s );
 		return qtrue;

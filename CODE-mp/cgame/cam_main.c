@@ -13,7 +13,7 @@ void Cam_Draw3d(void)
 	if (cam_shownames.integer && cam_shownames3D.integer)
 		Cam_DrawClientNames();
 
-	if (cam_hud3D.integer )
+	if (cam_hud3D.integer && EXPERIMENTS_ENABLED)
 		Cam_Add3DHUd();
 }
 

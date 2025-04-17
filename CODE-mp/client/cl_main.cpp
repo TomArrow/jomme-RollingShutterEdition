@@ -1365,7 +1365,7 @@ void CL_Configstrings_f( void ) {
 		return;
 	}
 
-	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ ) {
+	for ( i = 0 ; i < MAX_CONFIGSTRINGS_MAX; i++ ) {
 		ofs = cl.gameState.stringOffsets[ i ];
 		if ( !ofs ) {
 			continue;

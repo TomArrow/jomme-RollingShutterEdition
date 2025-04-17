@@ -45,7 +45,7 @@ static void demoFrameAddString( demoString_t *string, int num, const char *newSt
 	}
 	cache[0] = 0;
 	string->used = 1;
-	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ ) {
+	for ( i = 0 ; i < MAX_CONFIGSTRINGS_MAX; i++ ) {
 		const char * s;
 		s = (i == num) ? newString : string->data + string->offsets[i];
 		if (!s[0]) {
@@ -87,7 +87,7 @@ static void demoFrameUnpack( msg_t *msg, demoFrame_t *oldFrame, demoFrame_t *new
 			for (i = last;i<num;i++)
 				demoFrameAddString( &newFrame->string, i, oldFrame->string.data + oldFrame->string.offsets[i] );
 		}
-		if (num < MAX_CONFIGSTRINGS) {
+		if (num < MAX_CONFIGSTRINGS_MAX) {
 			demoFrameAddString( &newFrame->string, num, MSG_ReadBigString( msg ) );
 		} else {
 			break;
@@ -148,7 +148,7 @@ static void demoFramePack( msg_t *msg, const demoFrame_t *newFrame, const demoFr
 	MSG_WriteBits( msg, oldFrame ? 0 : 1, 1 );
 	MSG_WriteLong( msg, newFrame->serverTime );
 	/* Add the config strings */
-	for (i = 0;i<MAX_CONFIGSTRINGS;i++) {
+	for (i = 0;i< MAX_CONFIGSTRINGS_MAX;i++) {
 		const char *oldString = !oldFrame ? "" : &oldFrame->string.data[oldFrame->string.offsets[i]];
 		const char *newString = newFrame->string.data + newFrame->string.offsets[i];
 		if (strcmp( oldString, newString)) {
@@ -156,7 +156,7 @@ static void demoFramePack( msg_t *msg, const demoFrame_t *newFrame, const demoFr
 			MSG_WriteBigString( msg, newString );
 		}
 	}
-	MSG_WriteShort( msg, MAX_CONFIGSTRINGS );
+	MSG_WriteShort( msg, MAX_CONFIGSTRINGS_MAX );
 	/* Add the playerstates */
 	for (i=0; i<MAX_CLIENTS; i++) {
 		const playerState_t *oldPlayer, *newPlayer;
@@ -365,6 +365,12 @@ void demoConvert( const char *oldName, const char *newBaseName, qboolean smoothe
 				}
 				if ( !Q_stricmp( Cmd_Argv(0), "cs" ) ) {
 					int num = atoi( Cmd_Argv(1) );
+					s = Cmd_ArgsFrom( 2 );
+					demoFrameAddString( &workFrame->string, num, Cmd_ArgsFrom( 2 ) );	
+					break;
+				}
+				if ( !Q_stricmp( Cmd_Argv(0), "entcs" ) ) {
+					int num = atoi( Cmd_Argv(1) ) + CS_ENTITIES;
 					s = Cmd_ArgsFrom( 2 );
 					demoFrameAddString( &workFrame->string, num, Cmd_ArgsFrom( 2 ) );	
 					break;
@@ -640,7 +646,7 @@ static void demoPlaySynch( demoPlay_t *play, demoFrame_t *frame) {
 	int i;
 	int startCount = play->commandCount;
 	int totalLen = 0;
-	for (i = 0;i<MAX_CONFIGSTRINGS;i++) {
+	for (i = 0;i< MAX_CONFIGSTRINGS_MAX;i++) {
 		char *oldString = cl.gameState.stringData + cl.gameState.stringOffsets[i];
 		char *newString = frame->string.data + frame->string.offsets[i];
 		if (!strcmp( oldString, newString ))
@@ -894,7 +900,7 @@ static void demoPlayStop( demoPlay_t *play ) {
 	demo.del = qfalse;
 }
 
-extern void CL_ConfigstringModified( void );
+extern void CL_ConfigstringModified( int offset );
 qboolean demoGetServerCommand( int cmdNumber ) {
 	demoPlay_t *play = demo.play.handle;
 	int index = cmdNumber % DEMO_PLAY_CMDS;
@@ -907,7 +913,10 @@ qboolean demoGetServerCommand( int cmdNumber ) {
 
 	cmd = Cmd_Argv( 0 );
 	if ( !strcmp( cmd, "cs" ) ) {
-		CL_ConfigstringModified();
+		CL_ConfigstringModified(0);
+	}
+	else if ( !strcmp( cmd, "entcs" ) ) {
+		CL_ConfigstringModified(CS_ENTITIES);
 	}
 	return qtrue;
 }
