@@ -6375,6 +6375,10 @@ void CG_G2Animated( centity_t *cent )
 	CG_SetGhoul2Info(&legs, cent);
 
 	VectorSet(legs.modelScale, 1,1,1);
+	if (cent->entcs.modelScale[0])	legs.modelScale[0] = cent->entcs.modelScale[0];
+	if (cent->entcs.modelScale[1])	legs.modelScale[1] = cent->entcs.modelScale[1];
+	if (cent->entcs.modelScale[2])	legs.modelScale[2] = cent->entcs.modelScale[2];
+	
 	legs.radius = cent->currentState.g2radius;
 	VectorClear(legs.angles);
 
@@ -7773,6 +7777,10 @@ skipEffectOverride:
 	CG_SetGhoul2Info(&legs, cent);
 
 	VectorSet(legs.modelScale, 1,1,1);
+	if (cent->entcs.modelScale[0])	legs.modelScale[0] = cent->entcs.modelScale[0];
+	if (cent->entcs.modelScale[1])	legs.modelScale[1] = cent->entcs.modelScale[1];
+	if (cent->entcs.modelScale[2])	legs.modelScale[2] = cent->entcs.modelScale[2];
+
 	legs.radius = 64;
 	VectorClear(legs.angles);
 

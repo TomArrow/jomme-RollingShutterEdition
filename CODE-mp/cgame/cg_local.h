@@ -391,6 +391,10 @@ typedef struct centity_s {
 
 	saberTrail_t	entSaberTrail; // for ET_GRAPPLE/npcs
 	int				saberHitWallSoundDebounceTime;// for ET_GRAPPLE/npcs
+
+	struct {
+		vec3_t			modelScale;
+	} entcs;
 } centity_t;
 
 

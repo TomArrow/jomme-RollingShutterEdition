@@ -2165,6 +2165,20 @@ void CG_BuildSpectatorString(void) {
 	}
 }
 
+void CG_NewEntityInfo(int num);
+
+/*																																			
+===================
+CG_RegisterEntCS
+===================
+*/
+static void CG_RegisterEntCS( void ) {
+	int		i;
+
+	for (i=0 ; i<MAX_GENTITIES ; i++) {
+		CG_NewEntityInfo(i);
+	}
+}
 
 /*																																			
 ===================
@@ -3173,6 +3187,8 @@ Ghoul2 Insert End
 	CG_LoadingString( "clients" );
 	
 	CG_RegisterClients();		// if low on memory, some clients will be deferred
+
+	CG_RegisterEntCS();		
 
 	CG_AssetCache();
 	CG_LoadHudMenu();      // load new hud stuff

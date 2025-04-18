@@ -320,6 +320,35 @@ void CG_SetConfigValues( void ) {
 	}
 }
 
+void CG_NewEntityInfo(int num) {
+	const char* entcs = CG_ConfigString(num + CS_ENTITIES);
+	const char* s;
+	centity_t* cent = &cg_entities[num];
+
+	s = Info_ValueForKey(entcs, "modelScaleX");
+	if (*s) {
+		cent->entcs.modelScale[0] = atof(s);
+	}
+	else {
+		cent->entcs.modelScale[0] = 0;
+	}
+	s = Info_ValueForKey(entcs, "modelScaleY");
+	if (*s) {
+		cent->entcs.modelScale[1] = atof(s);
+	}
+	else {
+		cent->entcs.modelScale[1] = 0;
+	}
+	s = Info_ValueForKey(entcs, "modelScaleZ");
+	if (*s) {
+		cent->entcs.modelScale[2] = atof(s);
+	}
+	else {
+		cent->entcs.modelScale[2] = 0;
+	}
+}
+
+
 /*
 =====================
 CG_ShaderStateChanged
@@ -492,6 +521,7 @@ static void CG_ConfigStringModified( int offset ) {
 	{
 		// entity meta
 		//CG_SetLightstyle(num - CS_LIGHT_STYLES);
+		CG_NewEntityInfo(num - CS_ENTITIES);
 	}
 	else {
 		switch (num) {
