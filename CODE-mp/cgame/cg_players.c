@@ -3607,7 +3607,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel ) {
 	ent.modelScale[0] = 0.5;
 	ent.modelScale[1] = 0.5;
 	ent.modelScale[2] = 0.5;
-	ScaleModelAxis(&ent);
+	ScaleModelAxis(&ent, qfalse);
 
 	/*
 	if (cent->currentState.number == cg.snap->ps.clientNum)
@@ -6392,34 +6392,6 @@ void CG_G2Animated( centity_t *cent )
 
 	VectorCopy( cent->lerpOrigin, legs.origin );
 
-	// From JK2SP
-	//Scale applied to a refEnt will apply to any models attached to it... 
-	//This seems to copy the scale to every piece attached, kinda cool, but doesn't
-	//allow the body to be scaled up without scaling a bolt on or whatnot...
-	//Only apply scale if it's not 100% scale...
-	if (cent->modelScale[0] != 0.0f)
-	{
-		VectorScale(legs.axis[0], cent->modelScale[0], legs.axis[0]);
-		legs.nonNormalizedAxes = qtrue;
-	}
-
-	if (cent->modelScale[1] != 0.0f)
-	{
-		VectorScale(legs.axis[1], cent->modelScale[1], legs.axis[1]);
-		legs.nonNormalizedAxes = qtrue;
-	}
-
-	if (cent->modelScale[2] != 0.0f)
-	{
-		VectorScale(legs.axis[2], cent->modelScale[2], legs.axis[2]);
-		legs.nonNormalizedAxes = qtrue;
-		//if (!staticScale)
-		{
-			//FIXME:? need to know actual height of leg model bottom to origin, not hardcoded
-			legs.origin[2] += 24 * (cent->modelScale[2] - 1);
-		}
-	}
-
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
@@ -6466,7 +6438,7 @@ void CG_G2Animated( centity_t *cent )
 		//return;
 	}
 
-	ScaleModelAxis(&legs);
+	ScaleModelAxis(&legs,qtrue);
 
 	memset( &torso, 0, sizeof(torso) );
 
@@ -7950,34 +7922,6 @@ doEssentialOne:
 
 	VectorCopy( cent->lerpOrigin, legs.origin );
 
-	// From JK2SP
-	//Scale applied to a refEnt will apply to any models attached to it... 
-	//This seems to copy the scale to every piece attached, kinda cool, but doesn't
-	//allow the body to be scaled up without scaling a bolt on or whatnot...
-	//Only apply scale if it's not 100% scale...
-	if (cent->modelScale[0] != 0.0f)
-	{
-		VectorScale(legs.axis[0], cent->modelScale[0], legs.axis[0]);
-		legs.nonNormalizedAxes = qtrue;
-	}
-
-	if (cent->modelScale[1] != 0.0f)
-	{
-		VectorScale(legs.axis[1], cent->modelScale[1], legs.axis[1]);
-		legs.nonNormalizedAxes = qtrue;
-	}
-
-	if (cent->modelScale[2] != 0.0f)
-	{
-		VectorScale(legs.axis[2], cent->modelScale[2], legs.axis[2]);
-		legs.nonNormalizedAxes = qtrue;
-		//if (!staticScale)
-		{
-			//FIXME:? need to know actual height of leg model bottom to origin, not hardcoded
-			legs.origin[2] += 24 * (cent->modelScale[2] - 1);
-		}
-	}
-
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
@@ -8245,7 +8189,7 @@ SkipTrueView:
 		//return;
 	}
 
-	ScaleModelAxis(&legs);
+	ScaleModelAxis(&legs,qtrue);
 
 	memset( &torso, 0, sizeof(torso) );
 
@@ -8570,7 +8514,7 @@ doEssentialTwo:
 				cent->grip_arm.modelScale[0] = 1;//+(wv*6);
 				cent->grip_arm.modelScale[1] = 1;//+(wv*6);
 				cent->grip_arm.modelScale[2] = 1;//+(wv*6);
-				ScaleModelAxis(&cent->grip_arm);
+				ScaleModelAxis(&cent->grip_arm, qfalse);
 
 				cent->grip_arm.radius = 64;
 
@@ -8797,7 +8741,7 @@ skipPowerType3:
 				holoRef.modelScale[0] = 0.5;
 				holoRef.modelScale[1] = 0.5;
 				holoRef.modelScale[2] = 0.5;
-				ScaleModelAxis(&holoRef);
+				ScaleModelAxis(&holoRef, qfalse);
 
 				{
 					float wv;
