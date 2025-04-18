@@ -327,24 +327,24 @@ void CG_NewEntityInfo(int num) {
 
 	s = Info_ValueForKey(entcs, "modelScaleX");
 	if (*s) {
-		cent->entcs.modelScale[0] = atof(s);
+		cent->modelScale[0] = cent->entcs.modelScale[0] = atof(s);
 	}
 	else {
-		cent->entcs.modelScale[0] = 0;
+		cent->modelScale[0] = cent->entcs.modelScale[0] = 0;
 	}
 	s = Info_ValueForKey(entcs, "modelScaleY");
 	if (*s) {
-		cent->entcs.modelScale[1] = atof(s);
+		cent->modelScale[1] = cent->entcs.modelScale[1] = atof(s);
 	}
 	else {
-		cent->entcs.modelScale[1] = 0;
+		cent->modelScale[1] = cent->entcs.modelScale[1] = 0;
 	}
 	s = Info_ValueForKey(entcs, "modelScaleZ");
 	if (*s) {
-		cent->entcs.modelScale[2] = atof(s);
+		cent->modelScale[2] = cent->entcs.modelScale[2] = atof(s);
 	}
 	else {
-		cent->entcs.modelScale[2] = 0;
+		cent->modelScale[2] = cent->entcs.modelScale[2] = 0;
 	}
 }
 

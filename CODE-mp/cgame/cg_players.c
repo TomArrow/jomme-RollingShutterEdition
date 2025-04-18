@@ -6375,9 +6375,9 @@ void CG_G2Animated( centity_t *cent )
 	CG_SetGhoul2Info(&legs, cent);
 
 	VectorSet(legs.modelScale, 1,1,1);
-	if (cent->entcs.modelScale[0])	legs.modelScale[0] = cent->entcs.modelScale[0];
-	if (cent->entcs.modelScale[1])	legs.modelScale[1] = cent->entcs.modelScale[1];
-	if (cent->entcs.modelScale[2])	legs.modelScale[2] = cent->entcs.modelScale[2];
+	if (cent->modelScale[0]) legs.modelScale[0] = cent->modelScale[0];
+	if (cent->modelScale[1]) legs.modelScale[1] = cent->modelScale[1];
+	if (cent->modelScale[2]) legs.modelScale[2] = cent->modelScale[2];
 	
 	legs.radius = cent->currentState.g2radius;
 	VectorClear(legs.angles);
@@ -6391,6 +6391,35 @@ void CG_G2Animated( centity_t *cent )
 	renderfx |= RF_LIGHTING_ORIGIN;			// use the same origin for all
 
 	VectorCopy( cent->lerpOrigin, legs.origin );
+
+	// From JK2SP
+	//Scale applied to a refEnt will apply to any models attached to it... 
+	//This seems to copy the scale to every piece attached, kinda cool, but doesn't
+	//allow the body to be scaled up without scaling a bolt on or whatnot...
+	//Only apply scale if it's not 100% scale...
+	if (cent->modelScale[0] != 0.0f)
+	{
+		VectorScale(legs.axis[0], cent->modelScale[0], legs.axis[0]);
+		legs.nonNormalizedAxes = qtrue;
+	}
+
+	if (cent->modelScale[1] != 0.0f)
+	{
+		VectorScale(legs.axis[1], cent->modelScale[1], legs.axis[1]);
+		legs.nonNormalizedAxes = qtrue;
+	}
+
+	if (cent->modelScale[2] != 0.0f)
+	{
+		VectorScale(legs.axis[2], cent->modelScale[2], legs.axis[2]);
+		legs.nonNormalizedAxes = qtrue;
+		//if (!staticScale)
+		{
+			//FIXME:? need to know actual height of leg model bottom to origin, not hardcoded
+			legs.origin[2] += 24 * (cent->modelScale[2] - 1);
+		}
+	}
+
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
@@ -7777,9 +7806,9 @@ skipEffectOverride:
 	CG_SetGhoul2Info(&legs, cent);
 
 	VectorSet(legs.modelScale, 1,1,1);
-	if (cent->entcs.modelScale[0])	legs.modelScale[0] = cent->entcs.modelScale[0];
-	if (cent->entcs.modelScale[1])	legs.modelScale[1] = cent->entcs.modelScale[1];
-	if (cent->entcs.modelScale[2])	legs.modelScale[2] = cent->entcs.modelScale[2];
+	if (cent->modelScale[0]) legs.modelScale[0] = cent->modelScale[0];
+	if (cent->modelScale[1]) legs.modelScale[1] = cent->modelScale[1];
+	if (cent->modelScale[2]) legs.modelScale[2] = cent->modelScale[2];
 
 	legs.radius = 64;
 	VectorClear(legs.angles);
@@ -7920,6 +7949,34 @@ doEssentialOne:
 	CG_PlayerHitFX(cent);
 
 	VectorCopy( cent->lerpOrigin, legs.origin );
+
+	// From JK2SP
+	//Scale applied to a refEnt will apply to any models attached to it... 
+	//This seems to copy the scale to every piece attached, kinda cool, but doesn't
+	//allow the body to be scaled up without scaling a bolt on or whatnot...
+	//Only apply scale if it's not 100% scale...
+	if (cent->modelScale[0] != 0.0f)
+	{
+		VectorScale(legs.axis[0], cent->modelScale[0], legs.axis[0]);
+		legs.nonNormalizedAxes = qtrue;
+	}
+
+	if (cent->modelScale[1] != 0.0f)
+	{
+		VectorScale(legs.axis[1], cent->modelScale[1], legs.axis[1]);
+		legs.nonNormalizedAxes = qtrue;
+	}
+
+	if (cent->modelScale[2] != 0.0f)
+	{
+		VectorScale(legs.axis[2], cent->modelScale[2], legs.axis[2]);
+		legs.nonNormalizedAxes = qtrue;
+		//if (!staticScale)
+		{
+			//FIXME:? need to know actual height of leg model bottom to origin, not hardcoded
+			legs.origin[2] += 24 * (cent->modelScale[2] - 1);
+		}
+	}
 
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
 	legs.shadowPlane = shadowPlane;
