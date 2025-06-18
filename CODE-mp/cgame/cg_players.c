@@ -283,17 +283,18 @@ retryModel:
 
 	if (badModel) {
 		modelName = "kyle";
-		skinName = "default";
+		//skinName = "default"; // nah let the demo decide the skin
 		Com_Printf("WARNING: Attempted to load an unsupported multiplayer model! (bad or missing bone, or missing animation sequence)\n");
 
 		badModel = qfalse;
 		retriedAlready = qtrue;
 	}
 
-	if (!CG_IsValidCharacterModel(modelName, skinName)) {
-		modelName = "kyle";
-		skinName = "default";
-	}
+	// this is jomme. why would we care
+	//if (!CG_IsValidCharacterModel(modelName, skinName)) {
+	//	modelName = "kyle";
+	//	skinName = "default";
+	//}
 
 	// First things first.  If this is a ghoul2 model, then let's make sure we demolish this first.
 	if (ci->ghoul2Model && trap_G2_HaveWeGhoul2Models(ci->ghoul2Model)) {
@@ -706,7 +707,7 @@ void CG_LoadClientInfo( clientInfo_t *ci ) {
 				CG_Error( "DEFAULT_TEAM_MODEL / skin (%s/%s) failed to register", DEFAULT_TEAM_MODEL, ci->skinName );
 			}
 		} else {
-			if ( !CG_RegisterClientModelname( ci, DEFAULT_MODEL, "default", teamname, -1 ) ) {
+			if ( !CG_RegisterClientModelname( ci, DEFAULT_MODEL, ci->skinName/*"default"*/, teamname, -1 ) ) {
 				CG_Error( "DEFAULT_MODEL (%s) failed to register", DEFAULT_MODEL );
 			}
 		}
@@ -6276,11 +6277,50 @@ void CG_G2Animated( centity_t *cent )
 
 	if (!cent->ghoul2)
 	{ //Initialize this g2 anim ent, then return (will start rendering next frame)
+		qboolean modelNotFound = qfalse;
 		const char *modelName = CG_ConfigString( CS_MODELS+cent->currentState.modelindex );
 
+		retry:
 		if (modelName && modelName[0])
 		{
-			trap_G2API_InitGhoul2Model(&cent->ghoul2, modelName, 0, 0, 0, 0, 0);
+			int success;
+			qhandle_t skinHandle = 0;
+			if (cent->entcs.skinName[0]) {
+				char modelBase[MAX_OSPATH];
+				int charIndex = min(strlen(modelName), sizeof(modelBase)) - 1;
+				char* curChar = modelBase + charIndex;
+
+				Q_strncpyz(modelBase, modelName, sizeof(modelBase));
+
+				while (charIndex >= 0) { // cut off everything after last /
+					if (*curChar == '/' || *curChar == '\\') {
+						*curChar = 0;
+						break;
+					}
+					*curChar = 0;
+					curChar--;
+					charIndex--;
+				}
+
+				skinHandle = trap_R_RegisterSkin(va("%s/model_%s.skin", modelBase, cent->entcs.skinName));
+				success = trap_G2API_InitGhoul2Model(&cent->ghoul2, modelName, 0, skinHandle, 0, 0, 0);
+#if _DEBUG
+				if (cent->ghoul2 && success >= 0 && !skinHandle) {
+					Com_Printf("^3Model '%s' found but skin '%s' not found. Using default.\n", modelName, cent->entcs.skinName);
+				}
+#endif
+			}
+			else {
+				success = trap_G2API_InitGhoul2Model(&cent->ghoul2, modelName, 0, 0, 0, 0, 0);
+			}
+			if ((!cent->ghoul2 || success < 0) && !modelNotFound) {
+				modelNotFound = qtrue;
+#if _DEBUG
+				Com_Printf("^3Model '%s' not found. Defaulting to kyle.\n", modelName);
+#endif
+				modelName = "models/players/kyle/model.glm";
+				goto retry;
+			}
 			if (cent->ghoul2)
 			{
 				trap_G2API_AddBolt(cent->ghoul2, 0, "*r_hand");

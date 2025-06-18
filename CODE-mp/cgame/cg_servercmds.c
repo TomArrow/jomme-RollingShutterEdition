@@ -325,6 +325,8 @@ void CG_NewEntityInfo(int num) {
 	const char* s;
 	centity_t* cent = &cg_entities[num];
 
+	s = Info_ValueForKey(entcs, "skin");
+	Q_strncpyz(cent->entcs.skinName, s, sizeof(cent->entcs.skinName));
 	s = Info_ValueForKey(entcs, "modelScaleX");
 	if (*s) {
 		cent->modelScale[0] = cent->entcs.modelScale[0] = atof(s);

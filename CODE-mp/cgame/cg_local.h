@@ -394,6 +394,7 @@ typedef struct centity_s {
 
 	struct {
 		vec3_t			modelScale;
+		char			skinName[MAX_QPATH];
 	} entcs;
 } centity_t;
 
