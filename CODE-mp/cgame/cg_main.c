@@ -1872,8 +1872,9 @@ static void CG_RegisterGraphics( void ) {
 			}
 		}
 	}
-
-	if ( cgs.gametype == GT_CTF || cgs.gametype == GT_CTY || cg_buildScript.integer ) {
+	
+	// this is jomme. we may wanna do fun stuff with this, just load it
+	if ( qtrue || cgs.gametype == GT_CTF || cgs.gametype == GT_CTY || cg_buildScript.integer ) {
 		if (cg_buildScript.integer)
 		{
 			trap_R_RegisterModel( "models/flags/r_flag.md3" );

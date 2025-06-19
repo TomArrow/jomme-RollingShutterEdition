@@ -101,6 +101,7 @@ typedef struct uniformLocations_t {
 	GLint soundDeformShortDistanceReductionUniform;
 	GLint soundDeformModeUniform;
 
+	GLint dLightFastUniform;
 	GLint dLightIntensityUniform;
 	GLint dLightFastSkipThresholdUniform;
 	GLint dLightSpecIntensityUniform;
@@ -142,6 +143,7 @@ cvar_t *r_fboGLSLNoiseFuckeryLightmap; // 0 = as noise fuckery mode wishes, 1 = 
 cvar_t *r_fboGLSLNoiseFuckeryHDRIntensity;
 cvar_t *r_fboGLSLNoiseFuckeryLightmapIntensity;
 cvar_t *r_fboGLSLDLights;
+cvar_t *r_fboGLSLDLightsFast;
 cvar_t *r_fboGLSLDLightsSpecGamma;
 cvar_t *r_fboGLSLDLightsIntensity;
 cvar_t *r_fboGLSLDLightsSpecIntensity;
@@ -297,6 +299,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->soundDeformShortDistanceReductionUniform, fbo.musicDeformData.shortDistanceReduction);
 		qglUniform1i(uniformLocationsTess->soundDeformModeUniform, fbo.musicDeformData.mode);
 
+		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer?  backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocationsTess->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocationsTess->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
@@ -355,6 +358,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->soundDeformShortDistanceReductionUniform, fbo.musicDeformData.shortDistanceReduction);
 		qglUniform1i(uniformLocations->soundDeformModeUniform, fbo.musicDeformData.mode);
 
+		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocations->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocations->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
@@ -1120,6 +1124,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->soundDeformShortDistanceReductionUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformShortDistanceReductionUniform");
 		locs->soundDeformModeUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformModeUniform");
 
+		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastUniform");
 		locs->dLightSpecGammaUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecGammaUniform");
 		locs->dLightSpecIntensityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecIntensityUniform");
 		locs->dLightIntensityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightIntensityUniform");
@@ -1221,6 +1226,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingGamma = ri.Cvar_Get( "r_fboGLSLParallaxMappingGamma", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
+	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsSpecIntensity = ri.Cvar_Get( "r_fboGLSLDLightsSpecIntensity", "3.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsIntensity = ri.Cvar_Get( "r_fboGLSLDLightsIntensity", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsSpecGamma = ri.Cvar_Get( "r_fboGLSLDLightsSpecGamma", "5.0", CVAR_ARCHIVE);

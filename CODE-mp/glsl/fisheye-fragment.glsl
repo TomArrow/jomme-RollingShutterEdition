@@ -28,6 +28,7 @@ uniform float serverTimeUniform;
 uniform int isLightmapUniform; 
 uniform int isWorldBrushUniform; 
 uniform int isSaberUniform; 
+uniform int dLightFastUniform; 
 uniform int noiseFuckeryUniform; 
 uniform int noiseFuckeryLightmapUniform; 
 uniform float noiseFuckeryHDRIntensityUniform; 
@@ -558,7 +559,43 @@ float distanceToLineProper(vec3 point, vec3 linePoint1, vec3 linePoint2){
   }
 }
 
-float shortestDistanceLines(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
+float shortestDistanceLinesNew( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold) {
+    vec3 u = a1 - a0;
+    vec3 v = b1 - b0;
+    vec3 w = a0 - b0;
+	float d,e;
+
+    float a = dot(u, u);
+    float b = dot(u, v);
+    float c = dot(v, v);
+    float denom = a * c - b * b;
+
+    d = dot(u, w);
+    e = dot(v, w);
+
+    float s = 0.0f;
+    float t = 0.0f;
+
+    if (denom != 0.0f) {
+        s = clamp((b * e - c * d) / denom, 0.0f, 1.0f);
+    }
+
+    if (c != 0.0f) {
+        t = clamp((b * s + e) / c, 0.0f, 1.0f);
+    }
+
+    if (a != 0.0f) {
+        s = clamp((b * t - d) / a, 0.0f, 1.0f);
+    }
+
+    //vec3 closestPoint1 = a0 + s * u;
+    //vec3 closestPoint2 = b0 + t * v;
+	
+	return length(w + s * u -  t * v);
+    //return length(closestPoint1 - closestPoint2);
+}
+
+float shortestDistanceLinesOld(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
 
   vec3 a=normalize(a1-a0);
 	vec3 b=normalize(b1-b0);
@@ -603,6 +640,10 @@ float shortestDistanceLines(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, fl
 		type = 3;
 	}
 	return maxDistance;
+}
+
+float shortestDistanceLines(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
+	return dLightFastUniform > 0 ? shortestDistanceLinesNew(a0,a1,b0,b1,type,quitThreshold):shortestDistanceLinesOld(a0,a1,b0,b1,type,quitThreshold);
 }
 
 // 	1.660317619104158771	-0.58757266606617910577	-0.072916573137668344234
