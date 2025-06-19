@@ -79,7 +79,7 @@ struct shadowline_t {
 	float			c;
 	float			d;
 	float			e;
-	int				flags; // 1 = use point1 for feet shadow
+	int				flags; // 1 = use point1 for feet shadow, 2 = only ambient occlusion, 4 = pvsVisible (dynamically calculated)
 	// automatically calculated:
 	float			halfLineLength;
 	vec4			middle;

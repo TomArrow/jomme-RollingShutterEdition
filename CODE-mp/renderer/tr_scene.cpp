@@ -424,6 +424,14 @@ static int cmpDlightViewOrgDistance(const void* a, const void* b) {
 	dlight_t* bb = (dlight_t*)b;
 	float dist1, dist2;
 
+	if (!aa->pvsVisible) {
+		return 1;
+	}
+	if (!bb->pvsVisible) {
+		return -1;
+	}
+	
+
 	dist1 = DistanceSquared(aa->origin,tr.refdef.vieworg);
 	dist2 = DistanceSquared(bb->origin,tr.refdef.vieworg);
 
@@ -434,6 +442,13 @@ static int cmpShadowLineViewOrgDistance(const void* a, const void* b) {
 	shadowline_t* aa = (shadowline_t*)a;
 	shadowline_t* bb = (shadowline_t*)b;
 	float dist1, dist2;
+
+	if (!(aa->flags & 4)) { // not visible
+		return 1;
+	}
+	if (!(bb->flags & 4)) { // not visible
+		return -1;
+	}
 
 	dist1 = DistanceSquared(aa->middle,tr.refdef.vieworg);
 	dist2 = DistanceSquared(bb->middle,tr.refdef.vieworg);
@@ -540,7 +555,14 @@ void RE_RenderScene( const refdef_t *fd ) {
 	tr.refdef.num_dlights = r_numdlights - r_firstSceneDlight;
 	tr.refdef.dlights = &backEndData[tr.smpFrame]->dlights[r_firstSceneDlight];
 
+	int numVisible = 0;
+	for (int i = 0; i < tr.refdef.num_dlights; i++) {
+		if (tr.refdef.dlights[i].pvsVisible = R_inPVSAndVisible(tr.refdef.vieworg, tr.refdef.dlights[i].origin)) {
+			numVisible++;
+		}
+	}
 	qsort(tr.refdef.dlights, tr.refdef.num_dlights, sizeof(dlight_t), cmpDlightViewOrgDistance);
+	tr.refdef.num_dlights = numVisible;
 	if (tr.refdef.num_dlights > MAX_DLIGHTS) {
 		// sort by distance.
 		tr.refdef.num_dlights = MAX_DLIGHTS;
@@ -549,10 +571,21 @@ void RE_RenderScene( const refdef_t *fd ) {
 	tr.refdef.num_shadowlines = r_numshadowlines - r_firstSceneShadowLine;
 	tr.refdef.shadowlines = &backEndData[tr.smpFrame]->shadowLines[r_firstSceneShadowLine];
 
+	numVisible = 0;
+	for (int i = 0; i < tr.refdef.num_shadowlines; i++) {
+		if (R_inPVSAndVisible(tr.refdef.vieworg, tr.refdef.shadowlines[i].middle)) {
+			tr.refdef.shadowlines[i].flags |= 4;
+			numVisible++;
+		}
+		else {
+			tr.refdef.shadowlines[i].flags &= ~4;
+		}
+	}
 	qsort(tr.refdef.shadowlines, tr.refdef.num_shadowlines, sizeof(shadowline_t), cmpShadowLineViewOrgDistance);
-	if (tr.refdef.num_dlights > MAX_SHADOWLINES) {
+	tr.refdef.num_shadowlines = numVisible;
+	if (tr.refdef.num_shadowlines > MAX_SHADOWLINES) {
 		// sort by distance.
-		tr.refdef.num_dlights = MAX_SHADOWLINES;
+		tr.refdef.num_shadowlines = MAX_SHADOWLINES;
 	}
 
 	tr.refdef.numPolys = r_numpolys - r_firstScenePoly;

@@ -70,6 +70,8 @@ typedef struct dlight_s {
 	vec3_t			mTransBasis2;
 	vec3_t			mTransBasis3;
 
+	qboolean		pvsVisible;
+
 } dlight_t;
 
 typedef struct shadowline_s {
@@ -81,7 +83,7 @@ typedef struct shadowline_s {
 	float			c; 
 	float			d; 
 	float			e; 
-	int				flags; // 1 = use point1 for feet shadow
+	int				flags;  // 1 = use point1 for feet shadow, 2 = only ambient occlusion, 4 = pvsVisible (dynamically calculated)
 	// automatically calculated:
 	vec4_t			middle;
 	float			halfLineLength;
@@ -1722,6 +1724,7 @@ WORLD MAP
 void R_AddBrushModelSurfaces( trRefEntity_t *e );
 void R_AddWorldSurfaces( void );
 qboolean R_inPVS( const vec3_t p1, const vec3_t p2 );
+qboolean R_inPVSAndVisible(const vec3_t vieworg, const vec3_t point);
 
 
 /*

@@ -653,13 +653,42 @@ R_inPVS
 qboolean R_inPVS( const vec3_t p1, const vec3_t p2 ) {
 	mnode_t *leaf;
 	byte	*vis;
+	int		area;
 
 	leaf = R_PointInLeaf( p1 );
 	vis = CM_ClusterPVS( leaf->cluster );
+	area = leaf->area;
 	leaf = R_PointInLeaf( p2 );
 
 	if ( !(vis[leaf->cluster>>3] & (1<<(leaf->cluster&7))) ) {
 		return qfalse;
+	}
+	return qtrue;
+}
+
+/*
+=================
+R_inPVSAndVisible
+=================
+*/
+qboolean R_inPVSAndVisible( const vec3_t vieworg, const vec3_t point ) {
+	mnode_t *leaf;
+	byte	*vis;
+	int		area;
+
+	leaf = R_PointInLeaf(vieworg);
+	vis = CM_ClusterPVS( leaf->cluster );
+	area = leaf->area;
+	leaf = R_PointInLeaf(point);
+
+	if ( !(vis[leaf->cluster>>3] & (1<<(leaf->cluster&7))) ) {
+		return qfalse;
+	}
+	// TA: more granularity here? or is it evil?
+	if (!r_drawAllAreas->integer && leaf->area != area) {// TA: Added leaf->area != viewArea check for demos with faulty areamask. at least draw the area i'm currently in please!
+		if ((tr.refdef.areamask[leaf->area >> 3] & (1 << (leaf->area & 7)))) {
+			return qfalse;		// not visible
+		}
 	}
 	return qtrue;
 }
@@ -677,6 +706,7 @@ static void R_MarkLeaves (void) {
 	mnode_t	*leaf, *parent;
 	int		i;
 	int		cluster;
+	int		viewArea;
 
 	// lockpvs lets designers walk around to determine the
 	// extent of the current pvs
@@ -687,6 +717,7 @@ static void R_MarkLeaves (void) {
 	// current viewcluster
 	leaf = R_PointInLeaf( tr.viewParms.pvsOrigin );
 	cluster = leaf->cluster;
+	viewArea = leaf->area;
 
 	// if the cluster is the same and the area visibility matrix
 	// hasn't changed, we don't need to mark everything again
@@ -730,8 +761,8 @@ static void R_MarkLeaves (void) {
 		}
 
 		// check for door connection
-		if (!r_drawAllAreas->integer) {
-			if ((tr.refdef.areamask[leaf->area >> 3] & (1 << (leaf->area & 7)))) {
+		if (!r_drawAllAreas->integer && leaf->area != viewArea) {// TA: Added leaf->area != viewArea check for demos with faulty areamask. at least draw the area i'm currently in please!
+			if ((tr.refdef.areamask[leaf->area >> 3] & (1 << (leaf->area & 7)))) { 
 				continue;		// not visible
 			}
 		}
