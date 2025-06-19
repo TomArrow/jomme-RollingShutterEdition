@@ -613,9 +613,12 @@ const mat3 HDRtoSRGB = mat3(1.660317619104158771,	-0.58757266606617910577,	-0.07
 void main(void)
 {
     //const float depth = 5.0f;
-
+#ifdef PERLINFUCKERY
 	int perlinFuckery = noiseFuckeryUniform;
-	
+#else 
+	int perlinFuckery = 0;
+#endif
+
 	vec2 uvCoords = gl_TexCoord[0].st;
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
 	vec4 color;

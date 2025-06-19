@@ -2031,8 +2031,8 @@ typedef enum {
 // on an SMP machine
 typedef struct {
 	drawSurf_t	drawSurfs[MAX_DRAWSURFS];
-	shadowline_t	shadowLines[MAX_SHADOWLINES];
-	dlight_t	dlights[MAX_DLIGHTS];
+	shadowline_t	shadowLines[MAX_SHADOWLINES_TO_SORT];
+	dlight_t	dlights[MAX_DLIGHTS_TO_SORT];
 	//trRefEntity_t	entities[MAX_ENTITIES];
 	trRefEntity_t	entities[MAX_REFENTITIES];
 	trMiniRefEntity_t	miniEntities[MAX_MINI_ENTITIES];

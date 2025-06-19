@@ -315,7 +315,7 @@ void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, floa
 	if ( !tr.registered ) {
 		return;
 	}
-	if ( r_numdlights >= MAX_DLIGHTS ) {
+	if ( r_numdlights >= MAX_DLIGHTS_TO_SORT) {
 		return;
 	}
 	if ( intensity <= 0 ) {
@@ -344,7 +344,7 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 		if ( !tr.registered ) {
 			return;
 		}
-		if ( r_numdlights >= MAX_DLIGHTS ) {
+		if ( r_numdlights >= MAX_DLIGHTS_TO_SORT) {
 			return;
 		}
 		//dl = &backEnd.refdef.dlights[r_numdlights++];
@@ -390,7 +390,7 @@ void RE_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width, flo
 	if ( !tr.registered ) {
 		return;
 	}
-	if ( r_numdlights >= MAX_SHADOWLINES ) {
+	if ( r_numshadowlines >= MAX_SHADOWLINES_TO_SORT) {
 		return;
 	}
 
@@ -416,6 +416,29 @@ RE_AddAdditiveLightToScene
 */
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
 	RE_AddDynamicLightToScene( org, intensity, r, g, b, qtrue );
+}
+
+
+static int cmpDlightViewOrgDistance(const void* a, const void* b) {
+	dlight_t* aa = (dlight_t*)a;
+	dlight_t* bb = (dlight_t*)b;
+	float dist1, dist2;
+
+	dist1 = DistanceSquared(aa->origin,tr.refdef.vieworg);
+	dist2 = DistanceSquared(bb->origin,tr.refdef.vieworg);
+
+	return dist1 - dist2;
+}
+
+static int cmpShadowLineViewOrgDistance(const void* a, const void* b) {
+	shadowline_t* aa = (shadowline_t*)a;
+	shadowline_t* bb = (shadowline_t*)b;
+	float dist1, dist2;
+
+	dist1 = DistanceSquared(aa->middle,tr.refdef.vieworg);
+	dist2 = DistanceSquared(bb->middle,tr.refdef.vieworg);
+
+	return dist1 - dist2;
 }
 
 /*
@@ -517,8 +540,20 @@ void RE_RenderScene( const refdef_t *fd ) {
 	tr.refdef.num_dlights = r_numdlights - r_firstSceneDlight;
 	tr.refdef.dlights = &backEndData[tr.smpFrame]->dlights[r_firstSceneDlight];
 
+	qsort(tr.refdef.dlights, tr.refdef.num_dlights, sizeof(dlight_t), cmpDlightViewOrgDistance);
+	if (tr.refdef.num_dlights > MAX_DLIGHTS) {
+		// sort by distance.
+		tr.refdef.num_dlights = MAX_DLIGHTS;
+	}
+
 	tr.refdef.num_shadowlines = r_numshadowlines - r_firstSceneShadowLine;
 	tr.refdef.shadowlines = &backEndData[tr.smpFrame]->shadowLines[r_firstSceneShadowLine];
+
+	qsort(tr.refdef.shadowlines, tr.refdef.num_shadowlines, sizeof(shadowline_t), cmpShadowLineViewOrgDistance);
+	if (tr.refdef.num_dlights > MAX_SHADOWLINES) {
+		// sort by distance.
+		tr.refdef.num_dlights = MAX_SHADOWLINES;
+	}
 
 	tr.refdef.numPolys = r_numpolys - r_firstScenePoly;
 	tr.refdef.polys = &backEndData[tr.smpFrame]->polys[r_firstScenePoly];

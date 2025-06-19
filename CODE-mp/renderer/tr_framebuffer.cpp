@@ -1125,18 +1125,18 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->dLightIntensityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightIntensityUniform");
 		locs->dLightsCountUniform = qglGetUniformLocation(program->ShaderId(i), "dLightsCountUniform");
 		locs->dLightFastSkipThresholdUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastSkipThresholdUniform");
-		for (int i = 0; i < MAX_DLIGHTS; i++) {
-			locs->dLightsUniformColor[i] = qglGetUniformLocation(program->ShaderId(i), va("dLightsUniform[%d].color",i));
-			locs->dLightsUniformOrigin[i] = qglGetUniformLocation(program->ShaderId(i), va("dLightsUniform[%d].origin",i));
-			locs->dLightsUniformRadius[i] = qglGetUniformLocation(program->ShaderId(i), va("dLightsUniform[%d].radius",i));
+		for (int j = 0; j < MAX_DLIGHTS; j++) {
+			locs->dLightsUniformColor[j] = qglGetUniformLocation(program->ShaderId(i), va("dLightsUniform[%d].color",j));
+			locs->dLightsUniformOrigin[j] = qglGetUniformLocation(program->ShaderId(i), va("dLightsUniform[%d].origin",j));
+			locs->dLightsUniformRadius[j] = qglGetUniformLocation(program->ShaderId(i), va("dLightsUniform[%d].radius",j));
 		}
 		locs->shadowLinesCountUniform = qglGetUniformLocation(program->ShaderId(i), "shadowLinesCountUniform");
-		for (int i = 0; i < MAX_SHADOWLINES; i++) {
-			locs->shadowLinesPoint1[i] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].point1",i));
-			locs->shadowLinesPoint2[i] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].point2",i));
-			locs->shadowLinesWidth[i] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].width",i));
-			locs->shadowLinesA[i] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].a",i));
-			locs->shadowLinesB[i] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].b",i));
+		for (int j = 0; j < MAX_SHADOWLINES; j++) {
+			locs->shadowLinesPoint1[j] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].point1",j));
+			locs->shadowLinesPoint2[j] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].point2",j));
+			locs->shadowLinesWidth[j] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].width",j));
+			locs->shadowLinesA[j] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].a",j));
+			locs->shadowLinesB[j] = qglGetUniformLocation(program->ShaderId(i), va("shadowLinesUniform[%d].b",j));
 		}
 		locs++;
 	}
