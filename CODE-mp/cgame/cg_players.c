@@ -5107,7 +5107,7 @@ CheckTrail:
 
 	// if we happen to be timescaled or running in a high framerate situation, we don't want to flood
 	//	the system with very small trail slices...but perhaps doing it by distance would yield better results?
-	if ( cg.time > saberTrail->lastTime + 1 ) { // 2ms
+	if ( cg.time >= saberTrail->lastTime + (1000/ cg_saberTrailMaxFPS.integer) ) { // 2ms
 		if ((saberMoveData[cent->currentState.saberMove].trailLength > 0
 			|| ((cent->currentState.powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || cent->currentState.saberInFlight || cg_saberTrail.integer == 3)
 			&& cg.time < saberTrail->lastTime + 2000 ) // if we have a stale segment, don't draw until we have a fresh one
