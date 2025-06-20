@@ -1,7 +1,16 @@
 #version 400 compatibility
+#define VOXELSTUFF 0
 #extension GL_ARB_shader_storage_buffer_object : enable
+#if VOXELSTUFF
+#extension GL_ARB_gpu_shader_int64 : require
+#endif
 
 #define PERLINFVCKERY 1
+
+
+#if VOXELSTUFF
+precision highp int;
+#endif
 
 uniform sampler2D text_in;
 
@@ -93,6 +102,36 @@ layout(std430, binding = 3) buffer shadowLinesLayout
 {
     shadowline_t shadowLines[64*18];
 };
+
+#if VOXELSTUFF
+layout(std430, binding = 5) buffer voxelBitGridLayout
+{
+    uint voxelBitGrid[]; 
+};
+
+#define VOXELGRIDRANGE 512
+#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
+#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
+#define VOXELGRIDSTEPSIZE 20
+#define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((x)+VOXELGRIDRANGE))
+
+
+bool voxelSolid(vec3 pos){
+	pos /= float(VOXELGRIDSTEPSIZE);
+	int64_t x = int64_t(pos.x);
+	int64_t y = int64_t(pos.y);
+	int64_t z = int64_t(pos.z);
+	x += VOXELGRIDEDGESIZE;
+	y += VOXELGRIDEDGESIZE;
+	z += VOXELGRIDEDGESIZE;
+	int64_t voxIndex = VOXELINDEX(x,y,z);
+	int64_t voxArrayOffset = voxIndex/32;
+	if(voxArrayOffset >= voxelBitGrid.length()) return false;
+	int64_t voxBitIndex = 1<<(voxIndex & 31);
+
+	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBitIndex)) > 0;
+}
+#endif
 
 vec2 parallaxMap(){
 		vec2 uvCoords;
@@ -900,6 +939,12 @@ void main(void)
 		} 
 	
 	}
+
+#if VOXELSTUFF
+	if(voxelSolid(worldPixel)){
+		addValue.x += 0.5;
+	}
+#endif
 
 	gl_FragColor.xyz += addValue;
 	gl_FragColor.xyz -= boringShadowSubtractVal;

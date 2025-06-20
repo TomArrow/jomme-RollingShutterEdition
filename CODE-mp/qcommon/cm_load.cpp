@@ -728,6 +728,101 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 	}
 }
 
+template<int bits>
+class EzBitmask {
+	//byte data[(bits / 8) + 1] = { 0 };
+	const size_t dataSize = (bits / 8) + 1;
+	byte* data = new byte[dataSize]{ 0 };
+public:
+	~EzBitmask() {
+		if (data) {
+			delete[] data;
+		}
+	}
+	inline const bool operator [](size_t bit) {
+		return (data[(bit >> 3)] & (1 << (bit & 7)));
+	}
+	inline void setbit(size_t bit) {
+		data[(bit >> 3)] |= (1 << (bit & 7));
+	}
+	inline void clearbit(size_t bit) {
+		data[(bit >> 3)] &= ~(1 << (bit & 7));
+	}
+	inline const byte* getData() {
+		return data;
+	}
+	inline const size_t getDataSize() {
+		return dataSize;
+	}
+};
+
+#define VOXELGRIDRANGE 512
+#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
+#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
+#define VOXELGRIDSTEPSIZE 20
+#define VOXELINDEX(x,y,z) (((int64_t)(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((int64_t)(y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((int64_t)(x)+VOXELGRIDRANGE))
+static void CM_MakeVoxelGrid(const char* name) {
+
+	const char* voxelname = va("%s.voxels1",name);
+	
+	if (FS_FileExists(voxelname)) {
+		Com_Printf("voxels for %s exist", name);
+		return;
+	}
+	EzBitmask<VOXELGRIDARRAYSIZE>* voxels = new EzBitmask<VOXELGRIDARRAYSIZE>();
+	
+	int minusPlus = VOXELGRIDRANGE;
+
+	trace_t trace;
+	vec3_t pos,pos2;
+	vec3_t mins, maxs;
+	vec3_t mins2, maxs2;
+	vec3_t mins4, maxs4;
+	VectorSet(mins4, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
+	VectorSet(maxs4, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE * 3, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE * 3, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE * 3);
+	VectorSet(mins2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
+	VectorSet(maxs2, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE);
+	VectorSet(mins, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
+	VectorSet(maxs, VOXELGRIDSTEPSIZE / 2, VOXELGRIDSTEPSIZE / 2, VOXELGRIDSTEPSIZE / 2);
+
+	for (int x = -minusPlus; x < minusPlus-3; x+=4) {
+		pos[0] = x * VOXELGRIDSTEPSIZE;
+		for (int y = -minusPlus; y < minusPlus-3; y+=4) {
+			pos[1] = y * VOXELGRIDSTEPSIZE;
+			for (int z = -minusPlus; z < minusPlus-3; z+=4) {
+				pos[2] = z * VOXELGRIDSTEPSIZE;
+				memset(&trace, 0, sizeof(trace));
+				CM_BoxTrace(&trace, pos, pos, mins4, maxs4, 0, CONTENTS_SOLID, qfalse);
+				if (trace.allsolid || trace.startsolid) {
+
+					// do subtraces
+					for (int x2 = x; x2 < x + 4; x2++) {
+						pos2[0] = x2 * VOXELGRIDSTEPSIZE;
+						for (int y2 = y; y2 < y + 4; y2++) {
+							pos2[1] = y2 * VOXELGRIDSTEPSIZE;
+							for (int z2 = z; z2 < z + 4; z2++) {
+								pos2[2] = z2 * VOXELGRIDSTEPSIZE;
+								memset(&trace, 0, sizeof(trace));
+								CM_BoxTrace(&trace, pos2, pos2, mins, maxs, 0, CONTENTS_SOLID, qfalse);
+								if (trace.allsolid || trace.startsolid) {
+									voxels->setbit(VOXELINDEX(x2, y2, z2));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	fileHandle_t f = FS_FOpenFileWrite(voxelname);
+	if (f > 0) {
+		FS_Write(voxels->getData(), voxels->getDataSize(), f);
+		FS_FCloseFile(f);
+	}
+	delete voxels;
+	Com_Printf("voxels for %s generated",name);
+}
 
 // need a wrapper function around this because of multiple returns, need to ensure bool is correct...
 //
@@ -738,6 +833,8 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum )
 		CM_LoadMap_Actual( name, clientload, checksum );
 
 	gbUsingCachedMapDataRightNow = qfalse;	// !!!!!!!!!!!!!!!!!!
+
+	CM_MakeVoxelGrid(name);
 }
 
 
