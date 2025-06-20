@@ -120,50 +120,19 @@ int64_t test = VOXELINDEX(0L,0L,100L);
 int voxelSolid(vec3 pos, inout vec3 color){
 	if(voxelBitGrid.length()<100000) return -2;
 	pos /= float(VOXELGRIDSTEPSIZE);
+	pos = round(pos);
+	vec3 signs = sign(pos);
+	pos+= 0.5*signs;
 	int64_t x = int64_t(int(pos.x));
 	int64_t y = int64_t(int(pos.y));
 	int64_t z = int64_t(int(pos.z));
 	int64_t voxIndex = VOXELINDEX(x,y,z);
 	int64_t voxArrayOffset = voxIndex/int64_t(32L);
-	int64_t voxVecArrOffset = voxArrayOffset /4;
-	int64_t voxVecArrIndex = voxArrayOffset % 4;
-	//if(voxVecArrOffset >= voxelBitGrid.length()) return -1;
 	if(voxArrayOffset >= voxelBitGrid.length() || voxArrayOffset < 0) return -1;
-	//if(voxVecArrOffset >= 8413209 || voxVecArrOffset < 0) return -1;
 	int64_t voxBit = 1<<(voxIndex & int64_t(31L));
 
-	//color = float(voxArrayOffset) / float(voxelBitGrid.length());
-	//color = (float(int64_t(x / 32L) & 31)+float(int64_t(y / 32L) & 31)+float(int64_t(z / 32L) & 31))/(3.0*31.0);
-	//color.x = (float(int64_t(x) & 31))/(31.0);
-	//color.y = (float(int64_t(y) & 31))/(31.0);
-	//color.z = (float(int64_t(z) & 31))/(31.0);
-	//color.x = (float(int64_t((voxIndex / 32)) % 33))/(32.0);
-	//color.x = float(voxArrayOffset % 5000)/4999.0;///float(voxelBitGrid.length());
-	//color.y = float(voxArrayOffset)/5000.0;///float(voxelBitGrid.length());
-	//color = float((voxArrayOffset & 31))/31.0;
-	//color.x = voxIndex > test ? 0.5:0.1;
-
-	//return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
-	//uint theint = voxelBitGrid[uint(voxVecArrOffset)][uint(voxVecArrIndex)];
-	uint theint = voxelBitGrid[uint(voxArrayOffset)];
-	//color.x = float(theint)/float(uint(0xffffffffL));
-	//color.y = float(voxBit)/float(uint(0xffffffffL));
 	color.x = 0.5;
-	int bits = 0;
-	for(uint i=0;i<32;i++){
-		if((theint & (1U << i)) > 0){
-			bits++;
-		}
-	}
-	//color.z = float(bits)/32.0;
-	//return 1;
-	if(theint != 0){
-		//return 1;
-	}
-	else{
-		//return 0;
-	}
-	return (theint & uint(voxBit)) > 0 ? 1 : 0;
+	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
 }
 #endif
 
