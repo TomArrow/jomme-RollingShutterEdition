@@ -132,6 +132,11 @@ static GLuint musicDeformSSBOReference = 0;
 static shadowline_t shadowLineSSBO[MAX_SHADOWLINES];
 static float* musicDeformSSBOData = NULL;
 
+
+static GLuint voxelSSBOReference = 0;
+static byte* voxelSSBOData = NULL;
+static size_t voxelSSBODataSize = 0;
+
 void R_FrameBuffer_CreateRollingShutterBuffers(int width, int height, int flags);
 
 cvar_t *r_convertToHDR;
@@ -1365,6 +1370,7 @@ void R_FrameBuffer_Init( void ) {
 		if (g_SSBOsSupported) {
 			qglGenBuffersARB(1, &shadowLineSSBOReference);
 			qglGenBuffersARB(1, &musicDeformSSBOReference);
+			qglGenBuffersARB(1, &voxelSSBOReference);
 		}
 	}
 	ReLoadGLSL();
@@ -1448,6 +1454,30 @@ void R_FrameBuffer_StartFrame( void ) {
 	r_fboFishEye = ri.Cvar_Get("r_fboFishEye", "0", CVAR_ARCHIVE);
 
 	if (r_fboGLSL->integer && ENABLEGLSL) {
+		if (voxelGrid && (voxelGridUpdated & VOXELGRIDUPDATED_GLSL)) {
+			if (g_SSBOsSupported) {
+				if (voxelSSBOData) {
+					delete[] voxelSSBOData;
+					voxelSSBOData = NULL;
+					voxelSSBODataSize = 0;
+				}
+				voxelSSBOData = new byte[voxelGridSize];
+				voxelSSBODataSize = voxelGridSize;
+
+				memcpy(voxelSSBOData, voxelGrid, voxelGridSize);
+
+				voxelSSBODataSize /= 4;
+				voxelSSBODataSize *= 4; // make it align well? idk if needed tbh
+
+				qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, voxelSSBOReference);
+				qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, voxelGridSize, voxelSSBOData, GL_DYNAMIC_DRAW_ARB);
+				qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, voxelSSBOReference);
+				qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
+
+				voxelGridUpdated &= ~VOXELGRIDUPDATED_GLSL;
+			}
+		}
+
 		if (tr.mmeMusicDeformIndex != fbo.soundDeformLastIndex) {
 			fbo.soundDeformSampleCount = 0;
 			static float empty[1]{ 0 };

@@ -592,7 +592,7 @@ qboolean CM_DeleteCachedMap(qboolean bGuaranteedOkToDelete)
 
 
 
-static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *checksum ) {
+static qboolean CM_LoadMap_Actual( const char *name, qboolean clientload, int *checksum ) {
 	int				*buf;
 	int				i;
 	dheader_t		header;	
@@ -611,7 +611,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 
 	if ( !strcmp( cm.name, name ) && clientload ) {
 		*checksum = last_checksum;
-		return;
+		return qfalse;
 	}
 
 	// free old stuff
@@ -623,7 +623,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 		cm.numAreas = 1;
 		cm.cmodels = (struct cmodel_s *)Hunk_Alloc( sizeof( *cm.cmodels ), h_high );
 		*checksum = 0;
-		return;
+		return qfalse;
 	}
 
 	//
@@ -726,6 +726,8 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 	if ( !clientload ) {
 		Q_strncpyz( cm.name, name, sizeof( cm.name ) );
 	}
+
+	return qtrue;
 }
 
 template<int bits>
@@ -748,17 +750,25 @@ public:
 	inline void clearbit(size_t bit) {
 		data[(bit >> 3)] &= ~(1 << (bit & 7));
 	}
-	inline const byte* getData() {
-		return data;
+	inline const byte* getData(bool release) {
+		byte* retVal = data;
+		if (release) {
+			data = NULL;
+		}
+		return retVal;
 	}
 	inline const size_t getDataSize() {
 		return dataSize;
 	}
 };
 
+const byte* voxelGrid = NULL;
+size_t voxelGridSize = 0;
+uint32_t voxelGridUpdated = 0;
+
 #define VOXELGRIDRANGE 512
 #define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
-#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
+#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4*8+4*8) // +4*8 because we want to send this as a uint array to glsl and another 4*8 to guarantee alignment if we chop of anything that's not a full integer
 #define VOXELGRIDSTEPSIZE 20
 #define VOXELINDEX(x,y,z) (((int64_t)(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((int64_t)(y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((int64_t)(x)+VOXELGRIDRANGE))
 static void CM_MakeVoxelGrid(const char* name) {
@@ -766,7 +776,22 @@ static void CM_MakeVoxelGrid(const char* name) {
 	const char* voxelname = va("%s.voxels1",name);
 	
 	if (FS_FileExists(voxelname)) {
-		Com_Printf("voxels for %s exist", name);
+		Com_Printf("voxels for %s exist\n", name);
+		fileHandle_t f;
+		int size = FS_FOpenFileRead(voxelname, &f, qtrue);
+		if (size > 0) {
+
+			if (voxelGrid) {
+				delete[] voxelGrid;
+			}
+			byte* data = new byte[size];
+
+			FS_Read(data, size, f);
+
+			voxelGrid = data;
+			voxelGridSize = size;
+			voxelGridUpdated = 0xffffffff;
+		}
 		return;
 	}
 	EzBitmask<VOXELGRIDARRAYSIZE>* voxels = new EzBitmask<VOXELGRIDARRAYSIZE>();
@@ -815,13 +840,21 @@ static void CM_MakeVoxelGrid(const char* name) {
 		}
 	}
 
+	if (voxelGrid) {
+		delete[] voxelGrid;
+	}
+
+	voxelGrid = voxels->getData(true);
+	voxelGridSize = voxels->getDataSize();
+	voxelGridUpdated = 0xffffffff;
+
 	fileHandle_t f = FS_FOpenFileWrite(voxelname);
 	if (f > 0) {
-		FS_Write(voxels->getData(), voxels->getDataSize(), f);
+		FS_Write(voxelGrid, voxelGridSize, f);
 		FS_FCloseFile(f);
 	}
 	delete voxels;
-	Com_Printf("voxels for %s generated",name);
+	Com_Printf("voxels for %s generated\n",name);
 }
 
 // need a wrapper function around this because of multiple returns, need to ensure bool is correct...
@@ -830,11 +863,13 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum )
 {
 	gbUsingCachedMapDataRightNow = qtrue;	// !!!!!!!!!!!!!!!!!!
 
-		CM_LoadMap_Actual( name, clientload, checksum );
+	qboolean didLoad = CM_LoadMap_Actual( name, clientload, checksum );
 
 	gbUsingCachedMapDataRightNow = qfalse;	// !!!!!!!!!!!!!!!!!!
 
-	CM_MakeVoxelGrid(name);
+	if (didLoad) {
+		CM_MakeVoxelGrid(name);
+	}
 }
 
 

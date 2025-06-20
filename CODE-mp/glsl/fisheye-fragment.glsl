@@ -1,5 +1,5 @@
 #version 400 compatibility
-#define VOXELSTUFF 0
+#define VOXELSTUFF 1
 #extension GL_ARB_shader_storage_buffer_object : enable
 #if VOXELSTUFF
 #extension GL_ARB_gpu_shader_int64 : require
@@ -109,27 +109,25 @@ layout(std430, binding = 5) buffer voxelBitGridLayout
     uint voxelBitGrid[]; 
 };
 
-#define VOXELGRIDRANGE 512
-#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
-#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
+#define VOXELGRIDRANGE int64_t(512)
+#define VOXELGRIDEDGESIZE int64_t(VOXELGRIDRANGE*2+1) // +1 for 0
+#define VOXELGRIDARRAYSIZE int64_t(VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
 #define VOXELGRIDSTEPSIZE 20
 #define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((x)+VOXELGRIDRANGE))
 
 
-bool voxelSolid(vec3 pos){
+int voxelSolid(vec3 pos){
+	if(voxelBitGrid.length()<10) return -2;
 	pos /= float(VOXELGRIDSTEPSIZE);
 	int64_t x = int64_t(pos.x);
 	int64_t y = int64_t(pos.y);
 	int64_t z = int64_t(pos.z);
-	x += VOXELGRIDEDGESIZE;
-	y += VOXELGRIDEDGESIZE;
-	z += VOXELGRIDEDGESIZE;
 	int64_t voxIndex = VOXELINDEX(x,y,z);
 	int64_t voxArrayOffset = voxIndex/32;
-	if(voxArrayOffset >= voxelBitGrid.length()) return false;
-	int64_t voxBitIndex = 1<<(voxIndex & 31);
+	if(voxArrayOffset >= voxelBitGrid.length()) return -1;
+	int64_t voxBit = 1<<(voxIndex & 31);
 
-	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBitIndex)) > 0;
+	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
 }
 #endif
 
@@ -941,8 +939,13 @@ void main(void)
 	}
 
 #if VOXELSTUFF
-	if(voxelSolid(worldPixel)){
+	int voxelState = voxelSolid(worldPixel);
+	if(voxelState > 0){
 		addValue.x += 0.5;
+	} else if(voxelState == -1){
+		addValue.z += 0.5;
+	} else if(voxelState == -2){
+		addValue.y += 0.5;
 	}
 #endif
 

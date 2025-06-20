@@ -12,6 +12,11 @@
 
 #define ENABLEGLSL 1
 
+#define VOXELGRIDUPDATED_GLSL (1<<0)
+extern const byte* voxelGrid;
+extern uint32_t voxelGridUpdated; // this is set to 0xffffffff so any module that depends on this is informed an update took place. glsl for example will use VOXELGRIDUPDATED_GLSL to check and then unset that bit
+extern size_t voxelGridSize;
+
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
 
