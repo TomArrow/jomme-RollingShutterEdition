@@ -114,7 +114,7 @@ layout(std430, binding = 5) buffer voxelBitGridLayout
 #define VOXELGRIDEDGESIZE int64_t(VOXELGRIDRANGE*2+1) // +1 for 0
 #define VOXELGRIDARRAYSIZE int64_t(VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
 #define VOXELGRIDSTEPSIZE 20
-#define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((x)+VOXELGRIDRANGE))
+#define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((z)+VOXELGRIDRANGE))
 
 int64_t test = VOXELINDEX(0L,0L,100L);
 int voxelSolid(vec3 pos, inout vec3 color){
@@ -146,23 +146,24 @@ int voxelSolid(vec3 pos, inout vec3 color){
 	//return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
 	//uint theint = voxelBitGrid[uint(voxVecArrOffset)][uint(voxVecArrIndex)];
 	uint theint = voxelBitGrid[uint(voxArrayOffset)];
-	color.x = float(theint)/float(uint(0xffffffffL));
-	color.y = float(voxBit)/float(uint(0xffffffffL));
+	//color.x = float(theint)/float(uint(0xffffffffL));
+	//color.y = float(voxBit)/float(uint(0xffffffffL));
+	color.x = 0.5;
 	int bits = 0;
 	for(uint i=0;i<32;i++){
 		if((theint & (1U << i)) > 0){
 			bits++;
 		}
 	}
-	color.z = float(bits)/32.0;
-	return 1;
+	//color.z = float(bits)/32.0;
+	//return 1;
 	if(theint != 0){
-		return 1;
+		//return 1;
 	}
 	else{
-		return 0;
+		//return 0;
 	}
-	//return ( & uint(voxBit)) > 0 ? 1 : 0;
+	return (theint & uint(voxBit)) > 0 ? 1 : 0;
 }
 #endif
 

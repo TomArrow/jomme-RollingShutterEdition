@@ -135,7 +135,7 @@ static float* musicDeformSSBOData = NULL;
 
 
 static GLuint voxelSSBOReference = 0;
-static byte* voxelSSBOData = NULL;
+static uint32_t* voxelSSBOData = NULL;
 static size_t voxelSSBODataSize = 0;
 
 void R_FrameBuffer_CreateRollingShutterBuffers(int width, int height, int flags);
@@ -1463,16 +1463,20 @@ void R_FrameBuffer_StartFrame( void ) {
 					voxelSSBOData = NULL;
 					voxelSSBODataSize = 0;
 				}
-				voxelSSBOData = new byte[voxelGridSize];
+
 				voxelSSBODataSize = voxelGridSize;
+				voxelSSBODataSize /= 4 * 4;
+				voxelSSBODataSize *= 4 * 4; // make it align well? idk if needed tbh
 
-				memcpy(voxelSSBOData, voxelGrid, voxelGridSize);
+				voxelSSBOData = new uint32_t[voxelSSBODataSize/4];
 
-				voxelSSBODataSize /= 4*4;
-				voxelSSBODataSize *= 4*4; // make it align well? idk if needed tbh
+				memcpy(voxelSSBOData, voxelGrid, voxelSSBODataSize);
+				//memset(voxelSSBOData, 255, voxelSSBODataSize);
+				//memset((byte*)voxelSSBOData+ 67305664, 255, voxelSSBODataSize- 67305664);
+				uint32_t* dataSource = voxelSSBOData;
 
 				qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, voxelSSBOReference);
-				qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, voxelSSBODataSize, voxelSSBOData, GL_DYNAMIC_DRAW_ARB);
+				qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, voxelSSBODataSize, dataSource, GL_DYNAMIC_DRAW_ARB);
 				qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, voxelSSBOReference);
 				qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
 

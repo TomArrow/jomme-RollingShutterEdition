@@ -770,7 +770,7 @@ uint32_t voxelGridUpdated = 0;
 #define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
 #define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4*8+(4*8*4)) // +4*8 because we want to send this as a uint array to glsl and another 4*8 to guarantee alignment if we chop of anything that's not a full uvec4
 #define VOXELGRIDSTEPSIZE 20
-#define VOXELINDEX(x,y,z) (((int64_t)(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((int64_t)(y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((int64_t)(x)+VOXELGRIDRANGE))
+#define VOXELINDEX(x,y,z) (((int64_t)(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((int64_t)(y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((int64_t)(z)+VOXELGRIDRANGE))
 static void CM_MakeVoxelGrid(const char* name) {
 
 	const char* voxelname = va("%s.voxels1",name);
@@ -791,6 +791,8 @@ static void CM_MakeVoxelGrid(const char* name) {
 			voxelGrid = data;
 			voxelGridSize = size;
 			voxelGridUpdated = 0xffffffff;
+
+			FS_FCloseFile(f);
 		}
 		return;
 	}
@@ -842,6 +844,7 @@ static void CM_MakeVoxelGrid(const char* name) {
 
 	if (voxelGrid) {
 		delete[] voxelGrid;
+		voxelGrid = NULL;
 	}
 
 	voxelGrid = voxels->getData(true);
