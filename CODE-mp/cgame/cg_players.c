@@ -4818,6 +4818,7 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 	qboolean nonPlayer = cent->currentState.number >= MAX_CLIENTS;
 	int thisPlayerSaberLength = nonPlayer ? SABER_LENGTH_MAX : cgs.clientinfo[cent->currentState.number].saberLength;
 	int* saberHitWallSoundDebounceTime;
+	qboolean temporaryTrailSegment = qfalse;
 
 	saberEnt = &cg_entities[cent->currentState.saberEntityNum];
 
@@ -5104,10 +5105,12 @@ CheckTrail:
 		goto JustDoIt;
 	}
 	
+	temporaryTrailSegment = !(cg.time >= saberTrail->lastTime + (1000 / cg_saberTrailMaxFPS.integer));
 
 	// if we happen to be timescaled or running in a high framerate situation, we don't want to flood
 	//	the system with very small trail slices...but perhaps doing it by distance would yield better results?
-	if ( cg.time >= saberTrail->lastTime + (1000/ cg_saberTrailMaxFPS.integer) ) { // 2ms
+	//if (  ) 
+	{ // 2ms
 		if ((saberMoveData[cent->currentState.saberMove].trailLength > 0
 			|| ((cent->currentState.powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || cent->currentState.saberInFlight || cg_saberTrail.integer == 3)
 			&& cg.time < saberTrail->lastTime + 2000 ) // if we have a stale segment, don't draw until we have a fresh one
@@ -5252,7 +5255,7 @@ CheckTrail:
 				fx.mShader = trailShader;//cgs.media.saberBlurShader;
 				fx.mSetFlags = FX_USE_ALPHA;
 				//fx.mKillTime = SABER_TRAIL_TIME;
-				fx.mKillTime = cg_saberTrailTime.value;
+				fx.mKillTime = temporaryTrailSegment ? 0 : cg_saberTrailTime.value;
 
 				trap_FX_AddPrimitive(&fx);
 			}
@@ -5307,21 +5310,23 @@ CheckTrail:
 				fx.mShader = trailShader;//cgs.media.saberBlurShader;
 				fx.mSetFlags = FX_USE_ALPHA;
 				//fx.mKillTime = SABER_TRAIL_TIME;
-				fx.mKillTime = cg_saberTrailTime.value;
+				fx.mKillTime = temporaryTrailSegment ? 0 : cg_saberTrailTime.value;
 
 				trap_FX_AddPrimitive(&fx);
 			}
 		}
 
-		// we must always do this, even if we aren't active..otherwise we won't know where to pick up from
-		VectorCopy( org_, saberTrail->base );
-		VectorMA( end, 3.0f, axis_[0], saberTrail->tip );
-		saberTrail->lastTime = cg.time;
+		if (!temporaryTrailSegment) {
+			// we must always do this, even if we aren't active..otherwise we won't know where to pick up from
+			VectorCopy(org_, saberTrail->base);
+			VectorMA(end, 3.0f, axis_[0], saberTrail->tip);
+			saberTrail->lastTime = cg.time;
 
-		if (cent->currentState.bolt2)
-		{
-			VectorCopy( otherPos, saberTrail->dualbase );
-			VectorMA( otherEnd, 3.0f, otherDir, saberTrail->dualtip );
+			if (cent->currentState.bolt2)
+			{
+				VectorCopy(otherPos, saberTrail->dualbase);
+				VectorMA(otherEnd, 3.0f, otherDir, saberTrail->dualtip);
+			}
 		}
 	}
 

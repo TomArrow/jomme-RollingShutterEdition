@@ -219,7 +219,7 @@ void FX_Add( void )
 		if ( ef->mEffect != 0 )
 		{ 
 			// Effect is active
-			if ( theFxHelper.mTime > ef->mEffect->GetKillTime() )
+			if ( theFxHelper.mTime > ef->mEffect->GetKillTime() || ef->mEffect->GetDestroySingleFrameEffect(com_frameNumber))
 			{ 
 				// Clean up old effects, calling any death effects as needed
 				// this flag just has to be cleared otherwise death effects might not happen correctly
@@ -311,6 +311,10 @@ void FX_AddPrimitive( CEffect **pEffect, CCloud *effectCloud, int killTime )
 			effectCloud->AddEffect(*pEffect);
 		}
 //		dbgMemCheckAll();
+	}
+	if (killTime == 0) {
+		killTime = 1000; // this is for continuously updated saber trails. it's not deleted based on mTime, but it's simply deleted on every new frame.
+		(*pEffect)->SetSingleFrameNumber(com_frameNumber);
 	}
 	(*pEffect)->SetKillTime(theFxHelper.mTime + killTime);
 	activeFx++;

@@ -160,6 +160,9 @@ protected:
 
 	int			mKillTime;
 
+	qboolean	singleFrameEffect = qfalse;
+	int			singleFrameNumber;
+
 	CFxBoltInterface mBoltInterface;
 	bool			mBoltInterfaceValid;
 
@@ -181,6 +184,8 @@ public:
 
 	inline void		SetNext(CEffect *Next) { mNext = Next; }
 	inline CEffect	*GetNext(void) { return mNext; }
+	inline void		SetSingleFrameNumber(int currentFramenumber) { singleFrameEffect = qtrue; singleFrameNumber = currentFramenumber; }
+	inline bool		GetDestroySingleFrameEffect(int currentFramenumber) { return singleFrameEffect ? currentFramenumber != singleFrameNumber : qfalse; }
 	inline void		SetKillTime(int KillTime) { mKillTime = KillTime; }
 	inline int		GetKillTime(void) { return mKillTime; }
 	inline int		GetFlags(void) { return mFlags; }

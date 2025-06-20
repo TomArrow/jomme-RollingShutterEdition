@@ -181,7 +181,7 @@ bool CCloud::Update()
 		next = current->GetNext();
 
 		willDie = false;
-		if ( theFxHelper.mTime > current->GetKillTime())
+		if ( theFxHelper.mTime > current->GetKillTime() || current->GetDestroySingleFrameEffect(com_frameNumber))
 		{ 
 			// Clean up old effects, calling any death effects as needed
 			// this flag just has to be cleared otherwise death effects might not happen correctly

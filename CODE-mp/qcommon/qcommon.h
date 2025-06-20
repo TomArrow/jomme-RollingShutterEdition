@@ -716,6 +716,7 @@ extern	int		time_backend;		// renderer backend time
 
 extern	int		com_frameTime;
 extern	int		com_frameMsec;
+extern	int		com_frameNumber;
 
 extern	qboolean	com_errorEntered;
 
