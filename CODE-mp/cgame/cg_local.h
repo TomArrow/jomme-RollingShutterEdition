@@ -233,6 +233,7 @@ typedef struct
 	int		inAction;	// controls whether should we even consider starting one
 	int		duration;	// how long each trail seg stays in existence
 	int		lastTime;	// time a saber segement was last stored
+	int		lastTimeDual;	// time a dual saber segement was last stored
 	vec3_t	base;
 	vec3_t	tip;
 
@@ -1884,6 +1885,7 @@ extern	vmCvar_t		cg_saberContact;
 extern	vmCvar_t		cg_saberTrail;
 extern	vmCvar_t		cg_saberTrailTime;
 extern	vmCvar_t		cg_saberTrailMaxFPS;
+extern	vmCvar_t		cg_saberTrailMinSegDist;
 
 extern	vmCvar_t		cg_saberForceOn;
 
