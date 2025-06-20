@@ -95,6 +95,21 @@ typedef struct shadowline_s {
 } shadowline_t;
 
 
+typedef struct ssboSupport_s
+{
+	int maxBlocksVertex;
+	int maxBlocksGeometry;
+	int maxBlocksTessControl;
+	int maxBlocksTessEval;
+	int maxBlocksFragment;
+	int maxBlocksCompute;
+	int maxBlocksCombined;
+	int maxBindings;
+	int maxBlockSize;
+	int bufferOffsetAlignment;
+	int barrierBit;
+} ssboSupport_t;
+
 // a trMiniRefEntity_t has all the information passed in by
 // the client game, other info will come from it's parent main ref entity
 typedef struct 

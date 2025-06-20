@@ -102,6 +102,7 @@ cvar_t	*r_allowSoftwareGL;		// don't abort out if the pixelformat claims softwar
 // Whether the current hardware supports dynamic glows/flares.
 extern bool g_bDynamicGlowSupported;
 extern bool g_SSBOsSupported;
+extern ssboSupport_t g_SSBOProperties;
 #endif
 
 static void GLW_ARB_InitExtensions( void ) {
@@ -1765,6 +1766,21 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 	}
 
 	g_SSBOsSupported = qglBindBufferBase != NULL;
+
+	if (g_SSBOsSupported) {
+
+		qglGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksVertex);
+		qglGetIntegerv(GL_MAX_GEOMETRY_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksGeometry);
+		qglGetIntegerv(GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksTessControl);
+		qglGetIntegerv(GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksTessEval);
+		qglGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksFragment);
+		qglGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksCompute);
+		qglGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS,&g_SSBOProperties.maxBlocksCombined);
+		qglGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS,&g_SSBOProperties.maxBindings);
+		qglGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE,&g_SSBOProperties.maxBlockSize);
+		qglGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT,&g_SSBOProperties.bufferOffsetAlignment);
+		qglGetIntegerv(GL_SHADER_STORAGE_BARRIER_BIT,&g_SSBOProperties.barrierBit);
+	}
 
 	// Figure out which texture rectangle extension to use.
 	bool bTexRectSupported = false;

@@ -64,6 +64,7 @@
 #endif
 
 extern bool g_SSBOsSupported;
+extern ssboSupport_t g_SSBOProperties;
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
@@ -1456,6 +1457,7 @@ void R_FrameBuffer_StartFrame( void ) {
 	if (r_fboGLSL->integer && ENABLEGLSL) {
 		if (voxelGrid && (voxelGridUpdated & VOXELGRIDUPDATED_GLSL)) {
 			if (g_SSBOsSupported) {
+
 				if (voxelSSBOData) {
 					delete[] voxelSSBOData;
 					voxelSSBOData = NULL;
@@ -1466,11 +1468,11 @@ void R_FrameBuffer_StartFrame( void ) {
 
 				memcpy(voxelSSBOData, voxelGrid, voxelGridSize);
 
-				voxelSSBODataSize /= 4;
-				voxelSSBODataSize *= 4; // make it align well? idk if needed tbh
+				voxelSSBODataSize /= 4*4;
+				voxelSSBODataSize *= 4*4; // make it align well? idk if needed tbh
 
 				qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, voxelSSBOReference);
-				qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, voxelGridSize, voxelSSBOData, GL_DYNAMIC_DRAW_ARB);
+				qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, voxelSSBODataSize, voxelSSBOData, GL_DYNAMIC_DRAW_ARB);
 				qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, voxelSSBOReference);
 				qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
 

@@ -24,7 +24,9 @@ bool g_bRenderGlowingObjects = false;
 // Whether the current hardware supports dynamic glows/flares.
 bool g_bDynamicGlowSupported = false;
 
-bool g_SSBOsSupported = false;
+bool g_SSBOsSupported = false; 
+ssboSupport_t g_SSBOProperties;
+
 
 // Hack variable for deciding which kind of texture rectangle thing to do (for some
 // reason it acts different on radeon! It's against the spec!).
