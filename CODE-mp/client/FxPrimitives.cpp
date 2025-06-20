@@ -1680,74 +1680,91 @@ bool CTrail::Cull()
 #define OLD_TIP		2
 #define OLD_MUZZLE	3
 
+#define VERTTOTRIVERT(index,targetindex) VectorCopy(mVerts[(index)].origin,verts[(targetindex)].xyz); \
+VectorCopy(mVerts[(index)].rgb,verts[(targetindex)].modulate); \
+verts[(targetindex)].modulate[3] = mVerts[(index)].alpha; \
+verts[(targetindex)].st[0] = mVerts[(index)].curST[0]; \
+verts[(targetindex)].st[1] = mVerts[(index)].curST[1];
+
 //----------------------------
 void CTrail::Draw()
 {
 	polyVert_t	verts[3];
 //	vec3_t		color;
 
-	// build the first tri out of the new muzzle...new tip...old muzzle
-	VectorCopy( mVerts[NEW_MUZZLE].origin, verts[0].xyz );
-	VectorCopy( mVerts[NEW_TIP].origin, verts[1].xyz );
-	VectorCopy( mVerts[OLD_MUZZLE].origin, verts[2].xyz );
 
-//	VectorScale( mVerts[NEW_MUZZLE].curRGB, mVerts[NEW_MUZZLE].curAlpha, color );
-	verts[0].modulate[0] = mVerts[NEW_MUZZLE].rgb[0];
-	verts[0].modulate[1] = mVerts[NEW_MUZZLE].rgb[1];
-	verts[0].modulate[2] = mVerts[NEW_MUZZLE].rgb[2];
-	verts[0].modulate[3] = mVerts[NEW_MUZZLE].alpha;
 
-//	VectorScale( mVerts[NEW_TIP].curRGB, mVerts[NEW_TIP].curAlpha, color );
-	verts[1].modulate[0] = mVerts[NEW_TIP].rgb[0];
-	verts[1].modulate[1] = mVerts[NEW_TIP].rgb[1];
-	verts[1].modulate[2] = mVerts[NEW_TIP].rgb[2];
-	verts[1].modulate[3] = mVerts[NEW_TIP].alpha;
-
-//	VectorScale( mVerts[OLD_MUZZLE].curRGB, mVerts[OLD_MUZZLE].curAlpha, color );
-	verts[2].modulate[0] = mVerts[OLD_MUZZLE].rgb[0];
-	verts[2].modulate[1] = mVerts[OLD_MUZZLE].rgb[1];
-	verts[2].modulate[2] = mVerts[OLD_MUZZLE].rgb[2];
-	verts[2].modulate[3] = mVerts[OLD_MUZZLE].alpha;
-
-	verts[0].st[0] = mVerts[NEW_MUZZLE].curST[0];
-	verts[0].st[1] = mVerts[NEW_MUZZLE].curST[1];
-	verts[1].st[0] = mVerts[NEW_TIP].curST[0];
-	verts[1].st[1] = mVerts[NEW_TIP].curST[1];
-	verts[2].st[0] = mVerts[OLD_MUZZLE].curST[0];
-	verts[2].st[1] = mVerts[OLD_MUZZLE].curST[1];
+	VERTTOTRIVERT(NEW_MUZZLE, 0);
+	VERTTOTRIVERT(NEW_TIP, 1);
+	VERTTOTRIVERT(OLD_MUZZLE, 2);
+//
+//	// build the first tri out of the new muzzle...new tip...old muzzle
+//	VectorCopy( mVerts[NEW_MUZZLE].origin, verts[0].xyz );
+//	VectorCopy( mVerts[NEW_TIP].origin, verts[1].xyz );
+//	VectorCopy( mVerts[OLD_MUZZLE].origin, verts[2].xyz );
+//
+////	VectorScale( mVerts[NEW_MUZZLE].curRGB, mVerts[NEW_MUZZLE].curAlpha, color );
+//	verts[0].modulate[0] = mVerts[NEW_MUZZLE].rgb[0];
+//	verts[0].modulate[1] = mVerts[NEW_MUZZLE].rgb[1];
+//	verts[0].modulate[2] = mVerts[NEW_MUZZLE].rgb[2];
+//	verts[0].modulate[3] = mVerts[NEW_MUZZLE].alpha;
+//
+////	VectorScale( mVerts[NEW_TIP].curRGB, mVerts[NEW_TIP].curAlpha, color );
+//	verts[1].modulate[0] = mVerts[NEW_TIP].rgb[0];
+//	verts[1].modulate[1] = mVerts[NEW_TIP].rgb[1];
+//	verts[1].modulate[2] = mVerts[NEW_TIP].rgb[2];
+//	verts[1].modulate[3] = mVerts[NEW_TIP].alpha;
+//
+////	VectorScale( mVerts[OLD_MUZZLE].curRGB, mVerts[OLD_MUZZLE].curAlpha, color );
+//	verts[2].modulate[0] = mVerts[OLD_MUZZLE].rgb[0];
+//	verts[2].modulate[1] = mVerts[OLD_MUZZLE].rgb[1];
+//	verts[2].modulate[2] = mVerts[OLD_MUZZLE].rgb[2];
+//	verts[2].modulate[3] = mVerts[OLD_MUZZLE].alpha;
+//
+//	verts[0].st[0] = mVerts[NEW_MUZZLE].curST[0];
+//	verts[0].st[1] = mVerts[NEW_MUZZLE].curST[1];
+//	verts[1].st[0] = mVerts[NEW_TIP].curST[0];
+//	verts[1].st[1] = mVerts[NEW_TIP].curST[1];
+//	verts[2].st[0] = mVerts[OLD_MUZZLE].curST[0];
+//	verts[2].st[1] = mVerts[OLD_MUZZLE].curST[1];
 
 	// Add this tri
 	theFxHelper.AddPolyToScene( mShader, 3, verts );
 
-	// build the second tri out of the old muzzle...old tip...new tip
-	VectorCopy( mVerts[OLD_MUZZLE].origin, verts[0].xyz );
-	VectorCopy( mVerts[OLD_TIP].origin, verts[1].xyz );
-	VectorCopy( mVerts[NEW_TIP].origin, verts[2].xyz );
 
-//	VectorScale( mVerts[OLD_MUZZLE].curRGB, mVerts[OLD_MUZZLE].curAlpha, color );
-	verts[0].modulate[0] = mVerts[OLD_MUZZLE].rgb[0];
-	verts[0].modulate[1] = mVerts[OLD_MUZZLE].rgb[1];
-	verts[0].modulate[2] = mVerts[OLD_MUZZLE].rgb[2];
-	verts[0].modulate[3] = mVerts[OLD_MUZZLE].alpha;
+	VERTTOTRIVERT(OLD_MUZZLE, 0);
+	VERTTOTRIVERT(OLD_TIP, 1);
+	VERTTOTRIVERT(NEW_TIP, 2);
 
-//	VectorScale( mVerts[OLD_TIP].curRGB, mVerts[OLD_TIP].curAlpha, color );
-	verts[1].modulate[0] = mVerts[OLD_TIP].rgb[0];
-	verts[1].modulate[1] = mVerts[OLD_TIP].rgb[1];
-	verts[1].modulate[2] = mVerts[OLD_TIP].rgb[2];
-	verts[0].modulate[3] = mVerts[OLD_TIP].alpha;
-
-//	VectorScale( mVerts[NEW_TIP].curRGB, mVerts[NEW_TIP].curAlpha, color );
-	verts[2].modulate[0] = mVerts[NEW_TIP].rgb[0];
-	verts[2].modulate[1] = mVerts[NEW_TIP].rgb[1];
-	verts[2].modulate[2] = mVerts[NEW_TIP].rgb[2];
-	verts[0].modulate[3] = mVerts[NEW_TIP].alpha;
-
-	verts[0].st[0] = mVerts[OLD_MUZZLE].curST[0];
-	verts[0].st[1] = mVerts[OLD_MUZZLE].curST[1];
-	verts[1].st[0] = mVerts[OLD_TIP].curST[0];
-	verts[1].st[1] = mVerts[OLD_TIP].curST[1];
-	verts[2].st[0] = mVerts[NEW_TIP].curST[0];
-	verts[2].st[1] = mVerts[NEW_TIP].curST[1];
+//	// build the second tri out of the old muzzle...old tip...new tip
+//	VectorCopy( mVerts[OLD_MUZZLE].origin, verts[0].xyz );
+//	VectorCopy( mVerts[OLD_TIP].origin, verts[1].xyz );
+//	VectorCopy( mVerts[NEW_TIP].origin, verts[2].xyz );
+//
+////	VectorScale( mVerts[OLD_MUZZLE].curRGB, mVerts[OLD_MUZZLE].curAlpha, color );
+//	verts[0].modulate[0] = mVerts[OLD_MUZZLE].rgb[0];
+//	verts[0].modulate[1] = mVerts[OLD_MUZZLE].rgb[1];
+//	verts[0].modulate[2] = mVerts[OLD_MUZZLE].rgb[2];
+//	verts[0].modulate[3] = mVerts[OLD_MUZZLE].alpha;
+//
+////	VectorScale( mVerts[OLD_TIP].curRGB, mVerts[OLD_TIP].curAlpha, color );
+//	verts[1].modulate[0] = mVerts[OLD_TIP].rgb[0];
+//	verts[1].modulate[1] = mVerts[OLD_TIP].rgb[1];
+//	verts[1].modulate[2] = mVerts[OLD_TIP].rgb[2];
+//	verts[0].modulate[3] = mVerts[OLD_TIP].alpha;
+//
+////	VectorScale( mVerts[NEW_TIP].curRGB, mVerts[NEW_TIP].curAlpha, color );
+//	verts[2].modulate[0] = mVerts[NEW_TIP].rgb[0];
+//	verts[2].modulate[1] = mVerts[NEW_TIP].rgb[1];
+//	verts[2].modulate[2] = mVerts[NEW_TIP].rgb[2];
+//	verts[0].modulate[3] = mVerts[NEW_TIP].alpha;
+//
+//	verts[0].st[0] = mVerts[OLD_MUZZLE].curST[0];
+//	verts[0].st[1] = mVerts[OLD_MUZZLE].curST[1];
+//	verts[1].st[0] = mVerts[OLD_TIP].curST[0];
+//	verts[1].st[1] = mVerts[OLD_TIP].curST[1];
+//	verts[2].st[0] = mVerts[NEW_TIP].curST[0];
+//	verts[2].st[1] = mVerts[NEW_TIP].curST[1];
 
 	// Add this tri
 	theFxHelper.AddPolyToScene( mShader, 3, verts );

@@ -15,6 +15,7 @@ extern cvar_t	fx_debug;
 extern cvar_t	fx_freeze;
 
 extern cvar_t	*fx_forcePhysics;
+extern cvar_t	*fx_trailSmoothen;
 
 inline void Vector2Clear(vec2_t a)
 {

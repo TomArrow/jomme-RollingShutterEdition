@@ -12,6 +12,7 @@ cvar_t	fx_debug;
 cvar_t	fx_freeze;
 
 cvar_t	*fx_forcePhysics;
+cvar_t	*fx_trailSmoothen;
 
 #define DEFAULT_EXPLOSION_RADIUS	512
 
