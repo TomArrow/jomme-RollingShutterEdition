@@ -1680,11 +1680,16 @@ bool CTrail::Cull()
 #define OLD_TIP		2
 #define OLD_MUZZLE	3
 
-#define VERTTOTRIVERT(index,targetindex) VectorCopy(mVerts[(index)].origin,verts[(targetindex)].xyz); \
-VectorCopy(mVerts[(index)].rgb,verts[(targetindex)].modulate); \
-verts[(targetindex)].modulate[3] = mVerts[(index)].alpha; \
-verts[(targetindex)].st[0] = mVerts[(index)].curST[0]; \
-verts[(targetindex)].st[1] = mVerts[(index)].curST[1];
+#define VERTTOTRIVERTDYNAMIC(source,targetindex) VectorCopy((source).origin,verts[(targetindex)].xyz); \
+VectorCopy((source).rgb,verts[(targetindex)].modulate); \
+verts[(targetindex)].modulate[3] = (source).alpha; \
+verts[(targetindex)].st[0] = (source).curST[0]; \
+verts[(targetindex)].st[1] = (source).curST[1];
+
+#define VERTTOTRIVERT(index,targetindex) VERTTOTRIVERTDYNAMIC(mVerts[(index)],targetindex)
+#define CETNERPOINTTOTRIVERT(targetindex) VERTTOTRIVERTDYNAMIC(centerPoint,targetindex)
+
+#define AVERAGEMVERTS(prop) ((mVerts[0].prop + mVerts[1].prop+ mVerts[2].prop+ mVerts[3].prop)/4.0f)
 
 //----------------------------
 void CTrail::Draw()
@@ -1693,81 +1698,81 @@ void CTrail::Draw()
 //	vec3_t		color;
 
 
+	if (fx_trailSmoothen->integer == 2 ) {
+		TVert centerPoint = { 0 };
+		// 4 tris from centerpoint.
+		centerPoint.origin[0] = AVERAGEMVERTS(origin[0]);
+		centerPoint.origin[1] = AVERAGEMVERTS(origin[1]);
+		centerPoint.origin[2] = AVERAGEMVERTS(origin[2]);
+		centerPoint.rgb[0] = AVERAGEMVERTS(rgb[0]);
+		centerPoint.rgb[1] = AVERAGEMVERTS(rgb[1]);
+		centerPoint.rgb[2] = AVERAGEMVERTS(rgb[2]);
+		centerPoint.alpha = AVERAGEMVERTS(alpha);
+		centerPoint.curST[0] = AVERAGEMVERTS(curST[0]);
+		centerPoint.curST[1] = AVERAGEMVERTS(curST[1]);
 
-	VERTTOTRIVERT(NEW_MUZZLE, 0);
-	VERTTOTRIVERT(NEW_TIP, 1);
-	VERTTOTRIVERT(OLD_MUZZLE, 2);
-//
-//	// build the first tri out of the new muzzle...new tip...old muzzle
-//	VectorCopy( mVerts[NEW_MUZZLE].origin, verts[0].xyz );
-//	VectorCopy( mVerts[NEW_TIP].origin, verts[1].xyz );
-//	VectorCopy( mVerts[OLD_MUZZLE].origin, verts[2].xyz );
-//
-////	VectorScale( mVerts[NEW_MUZZLE].curRGB, mVerts[NEW_MUZZLE].curAlpha, color );
-//	verts[0].modulate[0] = mVerts[NEW_MUZZLE].rgb[0];
-//	verts[0].modulate[1] = mVerts[NEW_MUZZLE].rgb[1];
-//	verts[0].modulate[2] = mVerts[NEW_MUZZLE].rgb[2];
-//	verts[0].modulate[3] = mVerts[NEW_MUZZLE].alpha;
-//
-////	VectorScale( mVerts[NEW_TIP].curRGB, mVerts[NEW_TIP].curAlpha, color );
-//	verts[1].modulate[0] = mVerts[NEW_TIP].rgb[0];
-//	verts[1].modulate[1] = mVerts[NEW_TIP].rgb[1];
-//	verts[1].modulate[2] = mVerts[NEW_TIP].rgb[2];
-//	verts[1].modulate[3] = mVerts[NEW_TIP].alpha;
-//
-////	VectorScale( mVerts[OLD_MUZZLE].curRGB, mVerts[OLD_MUZZLE].curAlpha, color );
-//	verts[2].modulate[0] = mVerts[OLD_MUZZLE].rgb[0];
-//	verts[2].modulate[1] = mVerts[OLD_MUZZLE].rgb[1];
-//	verts[2].modulate[2] = mVerts[OLD_MUZZLE].rgb[2];
-//	verts[2].modulate[3] = mVerts[OLD_MUZZLE].alpha;
-//
-//	verts[0].st[0] = mVerts[NEW_MUZZLE].curST[0];
-//	verts[0].st[1] = mVerts[NEW_MUZZLE].curST[1];
-//	verts[1].st[0] = mVerts[NEW_TIP].curST[0];
-//	verts[1].st[1] = mVerts[NEW_TIP].curST[1];
-//	verts[2].st[0] = mVerts[OLD_MUZZLE].curST[0];
-//	verts[2].st[1] = mVerts[OLD_MUZZLE].curST[1];
+		VERTTOTRIVERT(0, 0);
+		VERTTOTRIVERT(1, 1);
+		CETNERPOINTTOTRIVERT(2);
 
-	// Add this tri
-	theFxHelper.AddPolyToScene( mShader, 3, verts );
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
 
+		VERTTOTRIVERT(1, 0);
+		VERTTOTRIVERT(2, 1);
+		CETNERPOINTTOTRIVERT(2);
 
-	VERTTOTRIVERT(OLD_MUZZLE, 0);
-	VERTTOTRIVERT(OLD_TIP, 1);
-	VERTTOTRIVERT(NEW_TIP, 2);
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
 
-//	// build the second tri out of the old muzzle...old tip...new tip
-//	VectorCopy( mVerts[OLD_MUZZLE].origin, verts[0].xyz );
-//	VectorCopy( mVerts[OLD_TIP].origin, verts[1].xyz );
-//	VectorCopy( mVerts[NEW_TIP].origin, verts[2].xyz );
-//
-////	VectorScale( mVerts[OLD_MUZZLE].curRGB, mVerts[OLD_MUZZLE].curAlpha, color );
-//	verts[0].modulate[0] = mVerts[OLD_MUZZLE].rgb[0];
-//	verts[0].modulate[1] = mVerts[OLD_MUZZLE].rgb[1];
-//	verts[0].modulate[2] = mVerts[OLD_MUZZLE].rgb[2];
-//	verts[0].modulate[3] = mVerts[OLD_MUZZLE].alpha;
-//
-////	VectorScale( mVerts[OLD_TIP].curRGB, mVerts[OLD_TIP].curAlpha, color );
-//	verts[1].modulate[0] = mVerts[OLD_TIP].rgb[0];
-//	verts[1].modulate[1] = mVerts[OLD_TIP].rgb[1];
-//	verts[1].modulate[2] = mVerts[OLD_TIP].rgb[2];
-//	verts[0].modulate[3] = mVerts[OLD_TIP].alpha;
-//
-////	VectorScale( mVerts[NEW_TIP].curRGB, mVerts[NEW_TIP].curAlpha, color );
-//	verts[2].modulate[0] = mVerts[NEW_TIP].rgb[0];
-//	verts[2].modulate[1] = mVerts[NEW_TIP].rgb[1];
-//	verts[2].modulate[2] = mVerts[NEW_TIP].rgb[2];
-//	verts[0].modulate[3] = mVerts[NEW_TIP].alpha;
-//
-//	verts[0].st[0] = mVerts[OLD_MUZZLE].curST[0];
-//	verts[0].st[1] = mVerts[OLD_MUZZLE].curST[1];
-//	verts[1].st[0] = mVerts[OLD_TIP].curST[0];
-//	verts[1].st[1] = mVerts[OLD_TIP].curST[1];
-//	verts[2].st[0] = mVerts[NEW_TIP].curST[0];
-//	verts[2].st[1] = mVerts[NEW_TIP].curST[1];
+		VERTTOTRIVERT(2, 0);
+		VERTTOTRIVERT(3, 1);
+		CETNERPOINTTOTRIVERT(2);
 
-	// Add this tri
-	theFxHelper.AddPolyToScene( mShader, 3, verts );
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
+
+		VERTTOTRIVERT(3, 0);
+		VERTTOTRIVERT(0, 1);
+		CETNERPOINTTOTRIVERT(2);
+
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
+
+	}
+	else if (fx_trailSmoothen->integer == 1 && DotProduct(mVerts[2].origin, mVerts[0].origin) < DotProduct(mVerts[1].origin, mVerts[3].origin)) {
+		// shortest diagonal is the one we split
+
+		// just move it all by 1 index: 1->2->0 and 0->3->2
+
+		VERTTOTRIVERT(1, 0);
+		VERTTOTRIVERT(2, 1);
+		VERTTOTRIVERT(0, 2);
+
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
+
+		VERTTOTRIVERT(0, 0);
+		VERTTOTRIVERT(3, 1);
+		VERTTOTRIVERT(2, 2);
+
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
+	}
+	else {
+
+		// classic way of doing it: 0->1->3 and 3->2->1
+
+		// build the first tri out of the new muzzle...new tip...old muzzle
+		VERTTOTRIVERT(NEW_MUZZLE, 0);
+		VERTTOTRIVERT(NEW_TIP, 1);
+		VERTTOTRIVERT(OLD_MUZZLE, 2);
+
+		// Add this tri
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
+
+		// build the second tri out of the old muzzle...old tip...new tip
+		VERTTOTRIVERT(OLD_MUZZLE, 0);
+		VERTTOTRIVERT(OLD_TIP, 1);
+		VERTTOTRIVERT(NEW_TIP, 2);
+
+		// Add this tri
+		theFxHelper.AddPolyToScene(mShader, 3, verts);
+	}
 }
 
 //----------------------------

@@ -97,7 +97,7 @@ int	FX_Init( void )
 	theFxHelper.ReInit();
 
 	fx_forcePhysics = Cvar_Get("fx_forcePhysics", "13", CVAR_ARCHIVE);
-	fx_trailSmoothen = Cvar_Get("fx_trailSmoothen", "1", CVAR_ARCHIVE);
+	fx_trailSmoothen = Cvar_Get("fx_trailSmoothen", "2", CVAR_ARCHIVE);
 
 	return true;
 }
