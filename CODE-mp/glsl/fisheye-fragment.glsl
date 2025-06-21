@@ -177,17 +177,16 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	
     bool foundany = false;
 	bool sawEmpty = false;
+	bool found = false;
 
 	for (int i = 0; i < RAYSTEPS; i++) {
 		//if (voxelSolid(vec3(voxpos)+vec3(0.5)) == 1) {
-		if (voxelSolid(voxpos) == 1) {
-			if(sawEmpty){
-				foundany=true;
-				break;
-			}
-		} else{
-			sawEmpty = true;
+		bool found = voxelSolid(voxpos) == 1;
+		if (found && sawEmpty || voxpos == voxposend) {
+			foundany=found && voxpos != voxposend;
+			break;
 		}
+		sawEmpty = sawEmpty || !found;
 
         collisions = lessThanEqual(side.xyz, min(side.yzx, side.zxy));	
 			
@@ -196,9 +195,9 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	}
 
 	//if(foundany && distance(voxpos,end) < float(VOXELGRIDSTEPSIZE)*2.0 ){
-	if(foundany && voxpos == voxposend){
-		//foundany = false;
-	}
+	//if(foundany && voxpos == voxposend){
+	//	foundany = false;
+	//}
 	
 	return foundany;
 }
