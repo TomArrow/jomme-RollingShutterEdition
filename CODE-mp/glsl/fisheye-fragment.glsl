@@ -2,14 +2,16 @@
 #define VOXELSTUFF 1
 #extension GL_ARB_shader_storage_buffer_object : enable
 #if VOXELSTUFF
-#extension GL_ARB_gpu_shader_int64 : require
+	#define USE64BITINDEX 0
+	#if USE64BITINDEX
+		#extension GL_ARB_gpu_shader_int64 : require
+	#endif
 #endif
 
 #define PERLINFVCKERY 1
 
 
 #if VOXELSTUFF
-#define USE64BITINDEX 1
 precision highp int;
 #endif
 
@@ -115,15 +117,16 @@ layout(std430, binding = 5) buffer voxelBitGridLayout
 
 #if USE64BITINDEX
 #define VOXELGRIDRANGE 1024L
-#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2L+1L) // +1 for 0
-#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4L+4L) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
-#define VOXELINDEX(x,y,z) (VOXELGRIDEDGESIZE*((int64_t(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + (int64_t(y)+VOXELGRIDRANGE)) + (int64_t(z)+VOXELGRIDRANGE))
+#define VOXELGRIDEDGESIZE (((VOXELGRIDRANGE*2L+1L)/8L+1L)*8L) // +1 for 0. divide by 8, add 1, multiply by 8, to align sides and make them divisible by 8. for optimization and avoiding 64bit ints
+#define VOXELINDEX(x,y,z) (VOXELGRIDEDGESIZE*((int64_t(x))*VOXELGRIDEDGESIZE + (int64_t(y))) + (int64_t(z)))
 #else
 #define VOXELGRIDRANGE 1024
-#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
-#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE/8*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) 
-#define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((z)+VOXELGRIDRANGE))
+#define VOXELGRIDEDGESIZE (((VOXELGRIDRANGE*2+1)/8+1)*8) // +1 for 0
+const uint EDGE8TH = VOXELGRIDEDGESIZE/8;
+#define VOXELINDEX(x,y,z) (EDGE8TH*((x)*VOXELGRIDEDGESIZE + (y)) + ((z)>>3)) // trick to predivide, and then the number stays smaller
 #endif
+
+const ivec3 rangeadd = ivec3(VOXELGRIDRANGE,VOXELGRIDRANGE,VOXELGRIDRANGE);
 
 int voxelSolid(ivec3 pos){
 
@@ -133,16 +136,12 @@ int voxelSolid(ivec3 pos){
 	if(voxArrayOffset >= voxelBitGrid.length() || voxArrayOffset < 0) return -1;
 	int64_t voxBit = 1<<(voxIndex & 31L);
 
-	//color.x = 0.5;
 	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
 #else
-	int64_t voxIndex = VOXELINDEX(pos.x,pos.y,pos.z);
-	int64_t voxArrayOffset = voxIndex/32L;
+	uint voxIndex = VOXELINDEX(pos.x,pos.y,pos.z);
+	uint voxArrayOffset = voxIndex>>2;
 	if(voxArrayOffset >= voxelBitGrid.length() || voxArrayOffset < 0) return -1;
-	int64_t voxBit = 1<<(voxIndex & 31L);
-
-	//color.x = 0.5;
-	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
+	return int((voxelBitGrid[voxArrayOffset] >> ((pos.z & 7) + ((voxIndex & 3)<<3)) ) & 1);
 #endif
 }
 
@@ -156,9 +155,12 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	if(voxelBitGrid.length()<10) return false;
 	pos /= float(VOXELGRIDSTEPSIZE);
 	end /= float(VOXELGRIDSTEPSIZE);
+	pos += rangeadd;
+	end += rangeadd;
 	vec3 dir = end-pos;
 	
 	ivec3 voxpos = ivec3(floor(pos + 0.));
+	ivec3 voxposend = ivec3(floor(end + 0.));
 
 	vec3 dist = abs(vec3(length(dir)) / dir);
 	
@@ -193,7 +195,8 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 		voxpos += ivec3(vec3(collisions)) * isign;
 	}
 
-	if(foundany && distance(voxpos,end) < float(VOXELGRIDSTEPSIZE)*2.0 ){
+	//if(foundany && distance(voxpos,end) < float(VOXELGRIDSTEPSIZE)*2.0 ){
+	if(foundany && voxpos == voxposend){
 		//foundany = false;
 	}
 	

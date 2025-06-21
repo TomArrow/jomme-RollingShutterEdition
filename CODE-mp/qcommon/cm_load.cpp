@@ -767,7 +767,7 @@ size_t voxelGridSize = 0;
 uint32_t voxelGridUpdated = 0;
 
 #define VOXELGRIDRANGE 1024ULL
-#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2ULL+1ULL) // +1 for 0
+#define VOXELGRIDEDGESIZE (((VOXELGRIDRANGE*2ULL+1ULL)/8ULL+1ULL)*8ULL) // +1 for 0
 #define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4ULL*8ULL+(4ULL*8ULL*4ULL)) // +4*8 because we want to send this as a uint array to glsl and another 4*8 to guarantee alignment if we chop of anything that's not a full uvec4
 #define VOXELGRIDSTEPSIZE 10
 #define VOXELINDEX(x,y,z) (((int64_t)(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((int64_t)(y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((int64_t)(z)+VOXELGRIDRANGE))
@@ -811,6 +811,17 @@ static void CM_MakeVoxelGrid(const char* name) {
 	VectorSet(maxs2, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE);
 	VectorSet(mins, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
 	VectorSet(maxs, VOXELGRIDSTEPSIZE / 2, VOXELGRIDSTEPSIZE / 2, VOXELGRIDSTEPSIZE / 2);
+
+#if 1 // yea uh. rounding is more expensive in glsl so lets just floor it here too. 
+	vec3_t floorAdd;
+	VectorSet(floorAdd, VOXELGRIDSTEPSIZE/2, VOXELGRIDSTEPSIZE/2, VOXELGRIDSTEPSIZE/2);
+	VectorAdd(mins, floorAdd, mins);
+	VectorAdd(maxs, floorAdd, maxs);
+	VectorAdd(mins2, floorAdd, mins2);
+	VectorAdd(maxs2, floorAdd, maxs2);
+	VectorAdd(mins4, floorAdd, mins4);
+	VectorAdd(maxs4, floorAdd, maxs4);
+#endif
 
 	for (int x = -minusPlus; x < minusPlus-3; x+=4) {
 		pos[0] = x * VOXELGRIDSTEPSIZE;
