@@ -9,6 +9,7 @@
 
 
 #if VOXELSTUFF
+#define USE64BITINDEX 1
 precision highp int;
 #endif
 
@@ -110,29 +111,39 @@ layout(std430, binding = 5) buffer voxelBitGridLayout
     //uvec4 voxelBitGrid[];   
 };
 
-#define VOXELGRIDRANGE int64_t(1024)
-#define VOXELGRIDEDGESIZE int64_t(VOXELGRIDRANGE*2+1) // +1 for 0
-#define VOXELGRIDARRAYSIZE int64_t(VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
 #define VOXELGRIDSTEPSIZE 10
-#define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((z)+VOXELGRIDRANGE))
 
-int64_t test = VOXELINDEX(0L,0L,100L);
-int voxelSolid(vec3 pos){
-	if(voxelBitGrid.length()<100000) return -2;
-	//pos /= float(VOXELGRIDSTEPSIZE);
-	pos = round(pos);
-	vec3 signs = sign(pos);
-	pos+= 0.5*signs;
-	int64_t x = int64_t(int(pos.x));
-	int64_t y = int64_t(int(pos.y));
-	int64_t z = int64_t(int(pos.z));
-	int64_t voxIndex = VOXELINDEX(x,y,z);
-	int64_t voxArrayOffset = voxIndex/int64_t(32L);
+#if USE64BITINDEX
+#define VOXELGRIDRANGE 1024L
+#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2L+1L) // +1 for 0
+#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4L+4L) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
+#define VOXELINDEX(x,y,z) (VOXELGRIDEDGESIZE*((int64_t(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + (int64_t(y)+VOXELGRIDRANGE)) + (int64_t(z)+VOXELGRIDRANGE))
+#else
+#define VOXELGRIDRANGE 1024
+#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
+#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE/8*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) 
+#define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((z)+VOXELGRIDRANGE))
+#endif
+
+int voxelSolid(ivec3 pos){
+
+#if USE64BITINDEX
+	int64_t voxIndex = VOXELINDEX(pos.x,pos.y,pos.z);
+	int64_t voxArrayOffset = voxIndex/32L;
 	if(voxArrayOffset >= voxelBitGrid.length() || voxArrayOffset < 0) return -1;
-	int64_t voxBit = 1<<(voxIndex & int64_t(31L));
+	int64_t voxBit = 1<<(voxIndex & 31L);
 
 	//color.x = 0.5;
 	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
+#else
+	int64_t voxIndex = VOXELINDEX(pos.x,pos.y,pos.z);
+	int64_t voxArrayOffset = voxIndex/32L;
+	if(voxArrayOffset >= voxelBitGrid.length() || voxArrayOffset < 0) return -1;
+	int64_t voxBit = 1<<(voxIndex & 31L);
+
+	//color.x = 0.5;
+	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
+#endif
 }
 
 
@@ -142,6 +153,7 @@ const int RAYSTEPS = 64;
 
 // based on "Branchless Voxel Raycasting" shadertoy by fb39ca4: https://www.shadertoy.com/view/4dX3zl
 bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
+	if(voxelBitGrid.length()<10) return false;
 	pos /= float(VOXELGRIDSTEPSIZE);
 	end /= float(VOXELGRIDSTEPSIZE);
 	vec3 dir = end-pos;
@@ -165,7 +177,8 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	bool sawEmpty = false;
 
 	for (int i = 0; i < RAYSTEPS; i++) {
-		if (voxelSolid(vec3(voxpos)+vec3(0.5)) == 1) {
+		//if (voxelSolid(vec3(voxpos)+vec3(0.5)) == 1) {
+		if (voxelSolid(voxpos) == 1) {
 			if(sawEmpty){
 				foundany=true;
 				break;
