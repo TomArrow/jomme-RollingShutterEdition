@@ -730,7 +730,7 @@ static qboolean CM_LoadMap_Actual( const char *name, qboolean clientload, int *c
 	return qtrue;
 }
 
-template<int bits>
+template<size_t bits>
 class EzBitmask {
 	//byte data[(bits / 8) + 1] = { 0 };
 	const size_t dataSize = (bits / 8) + 1;
@@ -766,10 +766,10 @@ const byte* voxelGrid = NULL;
 size_t voxelGridSize = 0;
 uint32_t voxelGridUpdated = 0;
 
-#define VOXELGRIDRANGE 512
-#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2+1) // +1 for 0
-#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4*8+(4*8*4)) // +4*8 because we want to send this as a uint array to glsl and another 4*8 to guarantee alignment if we chop of anything that's not a full uvec4
-#define VOXELGRIDSTEPSIZE 20
+#define VOXELGRIDRANGE 1024ULL
+#define VOXELGRIDEDGESIZE (VOXELGRIDRANGE*2ULL+1ULL) // +1 for 0
+#define VOXELGRIDARRAYSIZE (VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4ULL*8ULL+(4ULL*8ULL*4ULL)) // +4*8 because we want to send this as a uint array to glsl and another 4*8 to guarantee alignment if we chop of anything that's not a full uvec4
+#define VOXELGRIDSTEPSIZE 10
 #define VOXELINDEX(x,y,z) (((int64_t)(x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((int64_t)(y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((int64_t)(z)+VOXELGRIDRANGE))
 static void CM_MakeVoxelGrid(const char* name) {
 
@@ -819,7 +819,7 @@ static void CM_MakeVoxelGrid(const char* name) {
 			for (int z = -minusPlus; z < minusPlus-3; z+=4) {
 				pos[2] = z * VOXELGRIDSTEPSIZE;
 				memset(&trace, 0, sizeof(trace));
-				CM_BoxTrace(&trace, pos, pos, mins4, maxs4, 0, CONTENTS_SOLID, qfalse);
+				CM_BoxTrace(&trace, pos, pos, mins4, maxs4, 0, MASK_PLAYERSOLID, qfalse);
 				if (trace.allsolid || trace.startsolid) {
 
 					// do subtraces
@@ -830,7 +830,7 @@ static void CM_MakeVoxelGrid(const char* name) {
 							for (int z2 = z; z2 < z + 4; z2++) {
 								pos2[2] = z2 * VOXELGRIDSTEPSIZE;
 								memset(&trace, 0, sizeof(trace));
-								CM_BoxTrace(&trace, pos2, pos2, mins, maxs, 0, CONTENTS_SOLID, qfalse);
+								CM_BoxTrace(&trace, pos2, pos2, mins, maxs, 0, MASK_PLAYERSOLID, qfalse);
 								if (trace.allsolid || trace.startsolid) {
 									voxels->setbit(VOXELINDEX(x2, y2, z2));
 								}

@@ -110,16 +110,16 @@ layout(std430, binding = 5) buffer voxelBitGridLayout
     //uvec4 voxelBitGrid[];   
 };
 
-#define VOXELGRIDRANGE int64_t(512)
+#define VOXELGRIDRANGE int64_t(1024)
 #define VOXELGRIDEDGESIZE int64_t(VOXELGRIDRANGE*2+1) // +1 for 0
 #define VOXELGRIDARRAYSIZE int64_t(VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE+4+4) // +4 because we want to send this as a uint array to glsl and another 4 to guarantee alignment if we chop of anything that's not a full integer
-#define VOXELGRIDSTEPSIZE 20
+#define VOXELGRIDSTEPSIZE 10
 #define VOXELINDEX(x,y,z) (((x)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE*VOXELGRIDEDGESIZE + ((y)+VOXELGRIDRANGE)*VOXELGRIDEDGESIZE + ((z)+VOXELGRIDRANGE))
 
 int64_t test = VOXELINDEX(0L,0L,100L);
-int voxelSolid(vec3 pos, inout vec3 color){
+int voxelSolid(vec3 pos){
 	if(voxelBitGrid.length()<100000) return -2;
-	pos /= float(VOXELGRIDSTEPSIZE);
+	//pos /= float(VOXELGRIDSTEPSIZE);
 	pos = round(pos);
 	vec3 signs = sign(pos);
 	pos+= 0.5*signs;
@@ -131,9 +131,62 @@ int voxelSolid(vec3 pos, inout vec3 color){
 	if(voxArrayOffset >= voxelBitGrid.length() || voxArrayOffset < 0) return -1;
 	int64_t voxBit = 1<<(voxIndex & int64_t(31L));
 
-	color.x = 0.5;
+	//color.x = 0.5;
 	return (voxelBitGrid[uint(voxArrayOffset)] & uint(voxBit)) > 0 ? 1 : 0;
 }
+
+
+
+const int RAYSTEPS = 64;
+
+
+// based on "Branchless Voxel Raycasting" shadertoy by fb39ca4: https://www.shadertoy.com/view/4dX3zl
+bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
+	pos /= float(VOXELGRIDSTEPSIZE);
+	end /= float(VOXELGRIDSTEPSIZE);
+	vec3 dir = end-pos;
+	
+	ivec3 voxpos = ivec3(floor(pos + 0.));
+
+	vec3 dist = abs(vec3(length(dir)) / dir);
+	
+    vec3 vsign = sign(dir);
+	ivec3 isign = ivec3(vsign);
+
+	vec3 side = 
+    (
+    vsign * ( vec3(voxpos) - pos)
+    + (vsign * 0.5) 
+    + 0.5 
+    ) 
+    * dist; 
+	
+    bool foundany = false;
+	bool sawEmpty = false;
+
+	for (int i = 0; i < RAYSTEPS; i++) {
+		if (voxelSolid(vec3(voxpos)+vec3(0.5)) == 1) {
+			if(sawEmpty){
+				foundany=true;
+				break;
+			}
+		} else{
+			sawEmpty = true;
+		}
+
+        collisions = lessThanEqual(side.xyz, min(side.yzx, side.zxy));	
+			
+		side += vec3(collisions) * dist;
+		voxpos += ivec3(vec3(collisions)) * isign;
+	}
+
+	if(foundany && distance(voxpos,end) < float(VOXELGRIDSTEPSIZE)*2.0 ){
+		//foundany = false;
+	}
+	
+	return foundany;
+}
+
 #endif
 
 vec2 parallaxMap(){
@@ -822,8 +875,18 @@ void main(void)
 	vec3 boringShadowSubtractVal = baseColorForLightingReal * (1.0f - boringShadowingIntensity);
 	
 	vec3 addValue = vec3(0.0);
+
+#if VOXELSTUFF
+	bvec3 collision;
+#endif
+
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		for(int i=0;i<dLightsCountUniform;i++){
+#if VOXELSTUFF
+			if(traceVoxel(dLightsUniform[i].origin,worldPixel,collision)){
+				continue;
+			}
+#endif
 			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dLightsUniform[i].origin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
 			if(dot(lightVector1,normal) <= 0.0){
@@ -942,21 +1005,25 @@ void main(void)
 		} 
 	
 	}
-
-#if VOXELSTUFF
-	vec3 voxelcolor = vec3(0);
-	int voxelState = voxelSolid(worldPixel, voxelcolor);
-	if(voxelState > 0){
-		addValue += voxelcolor;
-	} else if(voxelState == -1){
-		addValue.z += 0.5;
-	} else if(voxelState == -2){
-		addValue.y += 0.5;
-	}
-#endif
-
+	
 	gl_FragColor.xyz += addValue;
 	gl_FragColor.xyz -= boringShadowSubtractVal;
+
+#if VOXELSTUFF
+	//if(isWorldBrushUniform > 0){
+	//	vec3 voxelcolor = vec3(0);
+	//	traceVoxel(viewOriginUniform,worldPixel,voxelcolor);
+	//	gl_FragColor.xyz = voxelcolor;
+	//}
+	//int voxelState = voxelSolid(worldPixel, voxelcolor);
+	//if(voxelState > 0){
+	//	addValue += voxelcolor;
+	//} else if(voxelState == -1){
+	//	addValue.z += 0.5;
+	//} else if(voxelState == -2){
+	//	addValue.y += 0.5;
+	//}
+#endif
 
 }
 
