@@ -149,10 +149,62 @@ int voxelSolid(ivec3 pos){
 
 const int RAYSTEPS = 64;
 
+// based on "Branchless Voxel Raycasting" shadertoy by fb39ca4: https://www.shadertoy.com/view/4dX3zl
+// gotta make this separate because recursion is not supported
+bool traceVoxelReverse(vec3 pos, vec3 end, inout bvec3 collisions,  out ivec3 endpos){
+	
+	pos /= float(VOXELGRIDSTEPSIZE);
+	end /= float(VOXELGRIDSTEPSIZE);
+	pos += rangeadd;
+	end += rangeadd;
+	vec3 dir = end-pos;
+	
+	ivec3 voxpos = ivec3(floor(pos + 0.));
+	ivec3 voxposend = ivec3(floor(end + 0.));	
+
+	vec3 dist = abs(vec3(length(dir)) / dir);
+	
+    vec3 vsign = sign(dir);
+	ivec3 isign = ivec3(vsign);
+
+	vec3 side = 
+    (
+    vsign * ( vec3(voxpos) - pos)
+    + (vsign * 0.5) 
+    + 0.5 
+    ) 
+    * dist; 
+	
+    bool foundfree = false;
+
+	for (int i = 0; i < RAYSTEPS; i++) {
+		bool found = voxelSolid(voxpos) == 1;
+		if (!found) {
+			foundfree = true;
+			break;
+		}
+
+        collisions = lessThanEqual(side.xyz, min(side.yzx, side.zxy));	
+			
+		side += vec3(collisions) * dist;
+		voxpos += ivec3(vec3(collisions)) * isign;
+	}
+
+	endpos = voxpos;
+	
+	return foundfree;
+}
+
 
 // based on "Branchless Voxel Raycasting" shadertoy by fb39ca4: https://www.shadertoy.com/view/4dX3zl
 bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	if(voxelBitGrid.length()<10) return false;
+
+	
+	// do a reverse search to find where the target surface reaches "air", to check against hitting that (cuz else we think we hit a wall before the target, but we really didn't)
+	ivec3 voxposend2 = ivec3(0);
+	traceVoxelReverse(end,pos,collisions,voxposend2);
+
 	pos /= float(VOXELGRIDSTEPSIZE);
 	end /= float(VOXELGRIDSTEPSIZE);
 	pos += rangeadd;
@@ -161,6 +213,7 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	
 	ivec3 voxpos = ivec3(floor(pos + 0.));
 	ivec3 voxposend = ivec3(floor(end + 0.));
+	
 
 	vec3 dist = abs(vec3(length(dir)) / dir);
 	
@@ -180,10 +233,9 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 	bool found = false;
 
 	for (int i = 0; i < RAYSTEPS; i++) {
-		//if (voxelSolid(vec3(voxpos)+vec3(0.5)) == 1) {
 		bool found = voxelSolid(voxpos) == 1;
-		if (found && sawEmpty || voxpos == voxposend) {
-			foundany=found && voxpos != voxposend;
+		if (found && sawEmpty || voxpos == voxposend || voxpos == voxposend2) {
+			foundany=found && voxpos != voxposend && voxpos != voxposend2;
 			break;
 		}
 		sawEmpty = sawEmpty || !found;
@@ -194,10 +246,6 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 		voxpos += ivec3(vec3(collisions)) * isign;
 	}
 
-	//if(foundany && distance(voxpos,end) < float(VOXELGRIDSTEPSIZE)*2.0 ){
-	//if(foundany && voxpos == voxposend){
-	//	foundany = false;
-	//}
 	
 	return foundany;
 }
