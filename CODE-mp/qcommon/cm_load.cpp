@@ -801,16 +801,18 @@ static void CM_MakeVoxelGrid(const char* name) {
 	int minusPlus = VOXELGRIDRANGE;
 
 	trace_t trace;
-	vec3_t pos,pos2;
+	vec3_t pos,pos2,pos3,pos4;
 	vec3_t mins, maxs;
 	vec3_t mins2, maxs2;
 	vec3_t mins4, maxs4;
+	vec3_t pointMinsMaxs;
 	VectorSet(mins4, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
 	VectorSet(maxs4, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE * 3, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE * 3, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE * 3);
 	VectorSet(mins2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
 	VectorSet(maxs2, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE, VOXELGRIDSTEPSIZE / 2 + VOXELGRIDSTEPSIZE);
 	VectorSet(mins, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2, -VOXELGRIDSTEPSIZE / 2);
 	VectorSet(maxs, VOXELGRIDSTEPSIZE / 2, VOXELGRIDSTEPSIZE / 2, VOXELGRIDSTEPSIZE / 2);
+	VectorSet(pointMinsMaxs, 0, 0, 0);
 
 #if 1 // yea uh. rounding is more expensive in glsl so lets just floor it here too. 
 	vec3_t floorAdd;
@@ -830,21 +832,55 @@ static void CM_MakeVoxelGrid(const char* name) {
 			for (int z = -minusPlus; z < minusPlus-3; z+=4) {
 				pos[2] = z * VOXELGRIDSTEPSIZE;
 				memset(&trace, 0, sizeof(trace));
-				CM_BoxTrace(&trace, pos, pos, mins4, maxs4, 0, MASK_PLAYERSOLID, qfalse);
+				CM_BoxTrace(&trace, pos, pos, mins4, maxs4, 0, CONTENTS_SOLID, qfalse);
 				if (trace.allsolid || trace.startsolid) {
 
 					// do subtraces
 					for (int x2 = x; x2 < x + 4; x2++) {
-						pos2[0] = x2 * VOXELGRIDSTEPSIZE;
+						pos2[0] = x2 * VOXELGRIDSTEPSIZE - VOXELGRIDSTEPSIZE/2;
 						for (int y2 = y; y2 < y + 4; y2++) {
-							pos2[1] = y2 * VOXELGRIDSTEPSIZE;
+							pos2[1] = y2 * VOXELGRIDSTEPSIZE - VOXELGRIDSTEPSIZE / 2;
 							for (int z2 = z; z2 < z + 4; z2++) {
-								pos2[2] = z2 * VOXELGRIDSTEPSIZE;
+								pos2[2] = z2 * VOXELGRIDSTEPSIZE - VOXELGRIDSTEPSIZE / 2;
 								memset(&trace, 0, sizeof(trace));
+								// this is going to be very slow, but we test all 8 edges as points instead of the box as a whole.
+								// if any edge is free, its not considered solid. 
+								// to make it a bit faster, we trace one edge to the opposing edge. if 4x allsolid: then its solid
+
+#if 1
+								bool nonefree = true;
+								for (int a = 0; a < 2 && nonefree; a++) {
+									pos3[0] = pos2[0] + a * VOXELGRIDSTEPSIZE;
+									for (int b = 0; b < 2 && nonefree; b++) {
+										pos3[1] = pos2[1] + b * VOXELGRIDSTEPSIZE;
+										for (int c = 0; c < 2 && nonefree; c++) {
+											pos3[2] = pos2[2] + c * VOXELGRIDSTEPSIZE;
+											memset(&trace, 0, sizeof(trace));
+											CM_BoxTrace(&trace, pos3, pos3, pointMinsMaxs, pointMinsMaxs, 0, CONTENTS_SOLID, qfalse);
+											if (!trace.allsolid && !trace.startsolid) {
+												nonefree = false;
+												break;
+											}
+										}
+									}
+								}
+								if (nonefree) {
+									voxels->setbit(VOXELINDEX(x2, y2, z2));
+								}
+#elif 0
+								if (trace.allsolid) {
+									if (trace.allsolid) {
+										if (trace.allsolid) {
+											memset(&trace, 0, sizeof(trace));
+										}
+									}
+								}
+#else
 								CM_BoxTrace(&trace, pos2, pos2, mins, maxs, 0, MASK_PLAYERSOLID, qfalse);
 								if (trace.allsolid || trace.startsolid) {
 									voxels->setbit(VOXELINDEX(x2, y2, z2));
 								}
+#endif
 							}
 						}
 					}

@@ -26,6 +26,7 @@ uniform mat4x4 worldModelViewMatrixUniform;
 in mat4x4 worldModelViewMatrixReverseGeom;
 
 in vec3 normal;
+in vec3 worldNormal;
 
 uniform int fishEyeModeUniform; //1= fisheye, 2=equirectangular
 uniform float texAverageBrightnessUniform;
@@ -151,7 +152,9 @@ const int RAYSTEPS = 64;
 
 // based on "Branchless Voxel Raycasting" shadertoy by fb39ca4: https://www.shadertoy.com/view/4dX3zl
 // gotta make this separate because recursion is not supported
-bool traceVoxelReverse(vec3 pos, vec3 end, inout bvec3 collisions,  out ivec3 endpos){
+// mode 0: search until free found, then return last solid
+// mode 1: just do full count of steps
+bool traceVoxelReverse(vec3 pos, vec3 end, int mode, int maxSteps, inout bvec3 collisions,  out ivec3 endpos){
 	
 	pos /= float(VOXELGRIDSTEPSIZE);
 	end /= float(VOXELGRIDSTEPSIZE);
@@ -177,9 +180,9 @@ bool traceVoxelReverse(vec3 pos, vec3 end, inout bvec3 collisions,  out ivec3 en
 	
     bool foundfree = false;
 
-	for (int i = 0; i < RAYSTEPS; i++) {
+	for (int i = 0; i < maxSteps; i++) {
 		bool found = voxelSolid(voxpos) == 1;
-		if (!found) {
+		if (!found && mode == 0) {
 			foundfree = true;
 			break;
 		}
@@ -202,18 +205,20 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 
 	
 	// do a reverse search to find where the target surface reaches "air", to check against hitting that (cuz else we think we hit a wall before the target, but we really didn't)
-	ivec3 voxposend2 = ivec3(0);
-	traceVoxelReverse(end,pos,collisions,voxposend2);
+	//ivec3 voxposend2 = ivec3(0);
+	//traceVoxelReverse(end,pos,1,1,collisions,voxposend2); // just trace 1 step backwards. avoid lil microshadows
 
 	pos /= float(VOXELGRIDSTEPSIZE);
 	end /= float(VOXELGRIDSTEPSIZE);
 	pos += rangeadd;
 	end += rangeadd;
 	vec3 dir = end-pos;
+
+	//pos += 1.0;
+	//end += 1.0;
 	
 	ivec3 voxpos = ivec3(floor(pos + 0.));
 	ivec3 voxposend = ivec3(floor(end + 0.));
-	
 
 	vec3 dist = abs(vec3(length(dir)) / dir);
 	
@@ -234,8 +239,10 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 
 	for (int i = 0; i < RAYSTEPS; i++) {
 		bool found = voxelSolid(voxpos) == 1;
-		if (found && sawEmpty || voxpos == voxposend || voxpos == voxposend2) {
-			foundany=found && voxpos != voxposend && voxpos != voxposend2;
+		ivec3 enddist = voxpos-voxposend;
+		bool closeToEnd = dot(enddist,enddist) <= 2;
+		if (found && sawEmpty || closeToEnd){// || voxpos == voxposend || voxpos == voxposend2) {
+			foundany=found && !closeToEnd;// && voxpos != voxposend && voxpos != voxposend2;
 			break;
 		}
 		sawEmpty = sawEmpty || !found;
@@ -945,16 +952,18 @@ void main(void)
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		for(int i=0;i<dLightsCountUniform;i++){
-#if VOXELSTUFF
-			if(traceVoxel(dLightsUniform[i].origin,worldPixel,collision)){
-				continue;
-			}
-#endif
 			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dLightsUniform[i].origin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
 			if(dot(lightVector1,normal) <= 0.0){
 				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
 			}
+			
+#if VOXELSTUFF
+			if(traceVoxel(dLightsUniform[i].origin+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+				continue;
+			}
+#endif
+
 			vec3 lightVectorNorm = normalize( lightVector1);
 			float intensity = max(dot(lightNormal,lightVectorNorm),0.0);
 			float dist = length(lightVector1);
@@ -1073,19 +1082,22 @@ void main(void)
 	gl_FragColor.xyz -= boringShadowSubtractVal;
 
 #if VOXELSTUFF
-	//if(isWorldBrushUniform > 0){
-	//	vec3 voxelcolor = vec3(0);
-	//	traceVoxel(viewOriginUniform,worldPixel,voxelcolor);
-	//	gl_FragColor.xyz = voxelcolor;
-	//}
-	//int voxelState = voxelSolid(worldPixel, voxelcolor);
-	//if(voxelState > 0){
-	//	addValue += voxelcolor;
-	//} else if(voxelState == -1){
-	//	addValue.z += 0.5;
-	//} else if(voxelState == -2){
-	//	addValue.y += 0.5;
-	//}
+#if 0
+	if(isWorldBrushUniform > 0){
+		bvec3 voxelcolor = bvec3(0);
+		traceVoxel(viewOriginUniform,worldPixel,voxelcolor);
+		gl_FragColor.xyz = vec3(ivec3(voxelcolor));
+	}
+#elseif 0
+	int voxelState = voxelSolid(ivec3(floor((worldPixel/float(VOXELGRIDEDGESIZE))+rangeadd)));
+	if(voxelState > 0){
+		gl_FragColor.x += 0.5;
+	} else if(voxelState == -1){
+		gl_FragColor.z += 0.5;
+	} else if(voxelState == -2){
+		gl_FragColor.y += 0.5;
+	}
+#endif
 #endif
 
 }

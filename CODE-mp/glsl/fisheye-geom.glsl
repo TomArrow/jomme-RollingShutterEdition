@@ -21,6 +21,7 @@ in mat4x4 worldModelViewMatrixReverse[3];
 out mat4x4 worldModelViewMatrixReverseGeom;
 
 out vec3 normal;
+out vec3 worldNormal;
 
 in vec4 eyeSpaceCoords[3];
 varying out vec4 eyeSpaceCoordsGeom;
@@ -493,6 +494,12 @@ void main()
 	texUVTransform= uvtransform;*/
 	vec3 myNormal = normalize(cross(normalize(eyeSpaceCoords[2].xyz-eyeSpaceCoords[0].xyz),normalize(eyeSpaceCoords[1].xyz-eyeSpaceCoords[0].xyz)));
 	normal = myNormal;
+
+	vec4 worldSpaceCoords0 = worldModelViewMatrixReverse[0]*eyeSpaceCoords[0];
+	vec4 worldSpaceCoords1 = worldModelViewMatrixReverse[0]*eyeSpaceCoords[1];
+	vec4 worldSpaceCoords2 = worldModelViewMatrixReverse[0]*eyeSpaceCoords[2];
+	
+	worldNormal = normalize(cross(normalize(worldSpaceCoords2.xyz-worldSpaceCoords0.xyz),normalize(worldSpaceCoords1.xyz-worldSpaceCoords0.xyz)));
 
 	// Calculate UV vectors (dunno what im doing, i want parallax mapping lol)
 	vec3 uvtransform[2];
