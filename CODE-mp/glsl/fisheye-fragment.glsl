@@ -234,18 +234,18 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
     * dist; 
 	
     bool foundany = false;
-	bool sawEmpty = false;
+	//bool sawEmpty = false;
 	bool found = false;
 
 	for (int i = 0; i < RAYSTEPS; i++) {
 		bool found = voxelSolid(voxpos) == 1;
 		ivec3 enddist = voxpos-voxposend;
 		bool closeToEnd = dot(enddist,enddist) <= 2;
-		if (found && sawEmpty || closeToEnd){// || voxpos == voxposend || voxpos == voxposend2) {
+		if (found /* && sawEmpty*/ || closeToEnd){// || voxpos == voxposend || voxpos == voxposend2) {
 			foundany=found && !closeToEnd;// && voxpos != voxposend && voxpos != voxposend2;
 			break;
 		}
-		sawEmpty = sawEmpty || !found;
+		//sawEmpty = sawEmpty || !found;
 
         collisions = lessThanEqual(side.xyz, min(side.yzx, side.zxy));	
 			
@@ -952,18 +952,14 @@ void main(void)
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		for(int i=0;i<dLightsCountUniform;i++){
+		
+			bool lightVoxelPathChecked = false;
 			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dLightsUniform[i].origin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
 			if(dot(lightVector1,normal) <= 0.0){
 				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
 			}
-			
-#if VOXELSTUFF
-			if(traceVoxel(dLightsUniform[i].origin+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
-				continue;
-			}
-#endif
-
+						
 			vec3 lightVectorNorm = normalize( lightVector1);
 			float intensity = max(dot(lightNormal,lightVectorNorm),0.0);
 			float dist = length(lightVector1);
@@ -971,18 +967,29 @@ void main(void)
 			vec3 value = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius*50.0*dLightIntensityUniform)*intensity/(dist*dist);
 
 			bool fastSkip = intensity <= 0.0 || length(value) < dLightFastSkipThresholdUniform;
-			//bool fastSkip = intensity <= 0.0 || length(value) < 0.1f;
+
+			float fastSkipThresMain = dLightFastSkipThresholdUniform/length(value);
 		
-			bool mainLightShadowLinesCalculated = false;
+			int mainLightShadowLinesCalculated = 0;
 			float shadowedIntensity = 1.0f;
 
 			if(!fastSkip){
+
+				
+#if VOXELSTUFF
+				if(!lightVoxelPathChecked ){
+					if(traceVoxel(dLightsUniform[i].origin+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+						continue;
+					}
+				}
+				lightVoxelPathChecked = true;
+#endif
 		
-				mainLightShadowLinesCalculated = true;
 				vec3 shadowDebugColor = vec3(1.0,1.0,1.0);
 				vec3 lightVectorAbs = worldPixel-dLightsUniform[i].origin;
 				vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
-				for(int s=0;s<shadowLinesCountUniform;s++){
+				int s =mainLightShadowLinesCalculated;
+				for(;s<shadowLinesCountUniform;s++){
 
 					if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
 						continue;
@@ -995,7 +1002,11 @@ void main(void)
 					float maxDistance = shortestDistanceLines(worldPixel,dLightsUniform[i].origin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
 				
 					float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
-					shadowedIntensity = min(lightIntensityHere*lightIntensityHere,shadowedIntensity);
+					shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
+
+					if(shadowedIntensity < fastSkipThresMain){
+						break;
+					}
 
 					switch(type){
 						case 0:
@@ -1013,6 +1024,7 @@ void main(void)
 					}
 
 				}
+				mainLightShadowLinesCalculated= s;
 
 				addValue+= value*shadowedIntensity;
 				if(shadowedIntensity < 1.0){
@@ -1038,29 +1050,43 @@ void main(void)
 
 				vec3 addVal = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius)*specIntensity*dLightSpecIntensityUniform/totalDist;
 
-				bool fastSkip2 =  length(value) < dLightFastSkipThresholdUniform || specIntensity <= 0;
+				bool fastSkip2 =  length(addVal) < dLightFastSkipThresholdUniform || specIntensity <= 0;
+
+				float fastSkipThresSpec = dLightFastSkipThresholdUniform/length(addVal);
 			
 				if(!fastSkip2){
-					if( !mainLightShadowLinesCalculated){
+					//if( !mainLightShadowLinesCalculated){
 
-						for(int s=0;s<shadowLinesCountUniform;s++){
-
-							if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
-								continue;
-							}
-							int type= 0;
-							// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
-							float maxDistance = shortestDistanceLines(worldPixel,dLightsUniform[i].origin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-							float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
-							shadowedIntensity = min(lightIntensityHere*lightIntensityHere,shadowedIntensity);
-					
-				
-							// Actually dont do this, looks bad :) already occluded by geometry
-							//float maxDistance = shortestDistanceLines(worldPixel,worldViewer,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type);
-							//float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
-							//shadowedIntensity = min(lightIntensityHere*lightIntensityHere,shadowedIntensity);
+#if VOXELSTUFF
+					if(!lightVoxelPathChecked ){
+						if(traceVoxel(dLightsUniform[i].origin+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+							continue;
 						}
 					}
+					lightVoxelPathChecked = true;
+#endif
+					int s=mainLightShadowLinesCalculated;
+					for(;s<shadowLinesCountUniform;s++){
+
+						if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
+							continue;
+						}
+						int type= 0;
+						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
+						float maxDistance = shortestDistanceLines(worldPixel,dLightsUniform[i].origin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+						float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
+						shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
+						if(shadowedIntensity < fastSkipThresSpec){
+							break;
+						}
+				
+						// Actually dont do this, looks bad :) already occluded by geometry
+						//float maxDistance = shortestDistanceLines(worldPixel,worldViewer,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type);
+						//float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
+						//shadowedIntensity = min(lightIntensityHere*lightIntensityHere,shadowedIntensity);
+					}
+					mainLightShadowLinesCalculated = s;
+					//}
 					//gl_FragColor.xyz += addVal * shadowedIntensity;
 					addValue += addVal * shadowedIntensity;
 				}
