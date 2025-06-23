@@ -479,9 +479,10 @@ static void SetFinalProjection( void ) {
 
 		vec3_t pixelJitterOrigin = { (pixelJitter[0] * width) / backEnd.viewParms.viewportWidth,(pixelJitter[1] * height) / backEnd.viewParms.viewportHeight,0 }; // TODO: how, if at all, should we take fbo supersampling into account here?
 		vec3_t dofJitterOrigin = { eyeJitter[0],eyeJitter[1],0 };
+		vec3_t voxelShadowJitter3D = { 0,0,0};
 		float dofRadius = shotData.dofRadius, dofFocus = shotData.dofFocus;
 		R_MME_ClampDof(&dofFocus, &dofRadius);
-		R_FrameBuffer_ActivateFisheye(pixelJitterOrigin,dofJitterOrigin, dofFocus, dofRadius, backEnd.viewParms.fovX, backEnd.viewParms.fovY);//Doesn't work. Needs fixing.
+		R_FrameBuffer_ActivateFisheye(pixelJitterOrigin,dofJitterOrigin, voxelShadowJitter3D, dofFocus, dofRadius, backEnd.viewParms.fovX, backEnd.viewParms.fovY);//Doesn't work. Needs fixing.
 	}
 
 	xmin += dx; xmax += dx;

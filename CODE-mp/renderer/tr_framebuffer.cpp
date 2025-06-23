@@ -103,10 +103,13 @@ typedef struct uniformLocations_t {
 	GLint soundDeformModeUniform;
 
 	GLint dLightFastUniform;
+	GLint dLightVoxelShadowsUniform;
+	GLint dLightVoxelShadowJitterUniform;
 	GLint dLightIntensityUniform;
 	GLint dLightFastSkipThresholdUniform;
 	GLint dLightSpecIntensityUniform;
 	GLint dLightSpecGammaUniform;
+	GLint dLightSpecBaseReflectivityUniform;
 	GLint dLightsCountUniform; 
 	GLint dLightsUniformOrigin[MAX_DLIGHTS];
 	GLint dLightsUniformColor[MAX_DLIGHTS];
@@ -150,9 +153,11 @@ cvar_t *r_fboGLSLNoiseFuckeryHDRIntensity;
 cvar_t *r_fboGLSLNoiseFuckeryLightmapIntensity;
 cvar_t *r_fboGLSLDLights;
 cvar_t *r_fboGLSLDLightsFast;
+cvar_t *r_fboGLSLDLightsVoxelShadows;
 cvar_t *r_fboGLSLDLightsSpecGamma;
 cvar_t *r_fboGLSLDLightsIntensity;
 cvar_t *r_fboGLSLDLightsSpecIntensity;
+cvar_t *r_fboGLSLDLightsSpecBaseReflectivity;
 cvar_t *r_fboGLSLDLightsFastSkipThreshold;
 cvar_t *r_fboGLSLParallaxMapping;
 cvar_t *r_fboGLSLParallaxMappingIntensity;
@@ -306,9 +311,12 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->soundDeformModeUniform, fbo.musicDeformData.mode);
 
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
+		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
+		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
 		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer?  backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocationsTess->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocationsTess->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
+		qglUniform1f(uniformLocationsTess->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
 		qglUniform1f(uniformLocationsTess->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
 		qglUniform1f(uniformLocationsTess->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
 		//qglUniform3fv(uniformLocationsTess->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
@@ -365,9 +373,12 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->soundDeformModeUniform, fbo.musicDeformData.mode);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
+		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
+		qglUniform3fv(uniformLocations->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
 		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocations->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocations->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
+		qglUniform1f(uniformLocations->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
 		qglUniform1f(uniformLocations->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
 		qglUniform1f(uniformLocations->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
 		//qglUniform3fv(uniformLocations->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
@@ -516,7 +527,7 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 #endif
 }
 
-qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, float dofFocus, float dofRadius, float fovX, float fovY) {
+qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, float dofFocus, float dofRadius, float fovX, float fovY) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -536,6 +547,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 
 	VectorCopy(dofJitter3D, fbo.fishEyeData.dofJitter3D);
 	VectorCopy(pixelJitter3D, fbo.fishEyeData.pixelJitter3D);
+	VectorCopy(voxelshadowJitter3D, fbo.fishEyeData.dlightVoxelShadowJitter3D);
 	fbo.fishEyeData.dofFocus = dofFocus;
 	fbo.fishEyeData.dofRadius = dofRadius;
 	fbo.fishEyeData.fovX = fovX;
@@ -1131,8 +1143,11 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->soundDeformModeUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformModeUniform");
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastUniform");
+		locs->dLightVoxelShadowsUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowsUniform");
+		locs->dLightVoxelShadowJitterUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowJitterUniform");
 		locs->dLightSpecGammaUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecGammaUniform");
 		locs->dLightSpecIntensityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecIntensityUniform");
+		locs->dLightSpecBaseReflectivityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecBaseReflectivityUniform");
 		locs->dLightIntensityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightIntensityUniform");
 		locs->dLightsCountUniform = qglGetUniformLocation(program->ShaderId(i), "dLightsCountUniform");
 		locs->dLightFastSkipThresholdUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastSkipThresholdUniform");
@@ -1233,7 +1248,9 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
-	r_fboGLSLDLightsSpecIntensity = ri.Cvar_Get( "r_fboGLSLDLightsSpecIntensity", "3.0", CVAR_ARCHIVE);
+	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );
+	r_fboGLSLDLightsSpecIntensity = ri.Cvar_Get( "r_fboGLSLDLightsSpecIntensity", "5.0", CVAR_ARCHIVE);
+	r_fboGLSLDLightsSpecBaseReflectivity = ri.Cvar_Get( "r_fboGLSLDLightsSpecBaseReflectivity", "0.1", CVAR_ARCHIVE);
 	r_fboGLSLDLightsIntensity = ri.Cvar_Get( "r_fboGLSLDLightsIntensity", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsSpecGamma = ri.Cvar_Get( "r_fboGLSLDLightsSpecGamma", "5.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsFastSkipThreshold = ri.Cvar_Get( "r_fboGLSLDLightsFastSkipThreshold", "0.00001", CVAR_ARCHIVE);

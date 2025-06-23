@@ -2175,6 +2175,8 @@ typedef struct {
 typedef struct {
 	vec3_t pixelJitter3D;
 	vec3_t dofJitter3D;
+	vec3_t dlightJitter3D; // not used yet, might do differently
+	vec3_t dlightVoxelShadowJitter3D;
 	float dofFocus;
 	float dofRadius;
 	float fovX;
@@ -2238,7 +2240,7 @@ void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex);
 qboolean R_FrameBuffer_Blur(float scale, int frame, int total);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
-qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
+qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
 qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness = NULL, bool* isLightmap = NULL, bool* isWorldBrush=NULL, bool* isSaber = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();

@@ -35,6 +35,7 @@ uniform float dLightFastSkipThresholdUniform;
 uniform float dLightIntensityUniform;
 uniform float dLightSpecIntensityUniform;
 uniform float dLightSpecGammaUniform;
+uniform float dLightSpecBaseReflectivityUniform; // for schlick
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
 uniform float serverTimeUniform;
@@ -42,6 +43,8 @@ uniform int isLightmapUniform;
 uniform int isWorldBrushUniform; 
 uniform int isSaberUniform; 
 uniform int dLightFastUniform; 
+uniform int dLightVoxelShadowsUniform; 
+uniform vec3 dLightVoxelShadowJitterUniform;
 uniform int noiseFuckeryUniform; 
 uniform int noiseFuckeryLightmapUniform; 
 uniform float noiseFuckeryHDRIntensityUniform; 
@@ -201,7 +204,7 @@ bool traceVoxelReverse(vec3 pos, vec3 end, int mode, int maxSteps, inout bvec3 c
 
 // based on "Branchless Voxel Raycasting" shadertoy by fb39ca4: https://www.shadertoy.com/view/4dX3zl
 bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
-	if(voxelBitGrid.length()<10) return false;
+	if(voxelBitGrid.length()<10 || dLightVoxelShadowsUniform < 1) return false;
 
 	
 	// do a reverse search to find where the target surface reaches "air", to check against hitting that (cuz else we think we hit a wall before the target, but we really didn't)
@@ -978,7 +981,7 @@ void main(void)
 				
 #if VOXELSTUFF
 				if(!lightVoxelPathChecked ){
-					if(traceVoxel(dLightsUniform[i].origin+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+					if(traceVoxel(dLightsUniform[i].origin+dLightVoxelShadowJitterUniform+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
 						continue;
 					}
 				}
@@ -1046,6 +1049,10 @@ void main(void)
 
 				float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
 
+				// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
+				float cosviewercomponent = 1.0 - max(0.0,dot(lightNormal,viewerVectorNorm));
+				specIntensity *= dLightSpecBaseReflectivityUniform+(1.0-dLightSpecBaseReflectivityUniform)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
+
 				float totalDist = dist + length(viewerVector);
 
 				vec3 addVal = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius)*specIntensity*dLightSpecIntensityUniform/totalDist;
@@ -1059,7 +1066,7 @@ void main(void)
 
 #if VOXELSTUFF
 					if(!lightVoxelPathChecked ){
-						if(traceVoxel(dLightsUniform[i].origin+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+						if(traceVoxel(dLightsUniform[i].origin+dLightVoxelShadowJitterUniform+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
 							continue;
 						}
 					}
