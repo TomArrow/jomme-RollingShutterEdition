@@ -535,6 +535,66 @@ static void RE_jitterate2(float *jit1, float *jit2, int num, float _rad2) {
 const float sqrtOf2				=	1.414213562373095048801688724209698078569671875376948073176679f;
 const float onedivbysqrtOf2		=	0.707106781186547524400844362104849039284835937688474036588339f;
 
+
+
+
+
+
+
+static void R_MME_VoxelLightJitterFillWithSidePoints(float* jitter, int num, int numsides, const vec3_t* startpoints, const vec3_t* dirs) {
+	int pointsPerSide = (num / numsides * numsides == num) ? num / numsides : num / numsides + 1;  // e.g. 32: 16 per side
+	int pointsMid = (pointsPerSide - 1) / 2;
+	int lastToMidDist = pointsPerSide - 1 - pointsMid;
+	int side = 0;
+	float pointDist = 1.0f / (float)(pointsPerSide + 2); // +2 because the corners are already handled above so they never get drawn by this logic.
+
+	if (com_developer->integer) {
+		Com_Printf("R_MME_VoxelLightJitter: pointsPerSide %d, pointsMid %d, lastToMidDist %d\n", pointsPerSide, pointsMid, lastToMidDist);
+	}
+
+	while (num > 0) {
+		int trueside = side % numsides;
+		int pointIndex = side / numsides;
+
+		// ok lets say we have 6 points.
+		// 0 1 2 3 4 5
+		// we divide by 2 for start index. index 5 /2 = 2
+		// then we do 2 and 5, and then we move left on the indizes. so: 
+		// 2 5 1 4 0 3
+		// that way we get a decently big spread between points
+		//
+		// for non-even numbers, lets say 5 points
+		// 0 1 2 4 5
+		// divide index 4 by 2: 2.
+		// we start at 2.
+		// same principle 
+		// 2 5 1 4 0
+		//
+		// so we always have pairs of 2.
+
+		int iter = pointIndex / 2;
+		int subindex = pointIndex % 2;
+		int pointIndexTrue = pointsMid - iter + lastToMidDist * subindex; // subindex is 0 or 1. if 1, we add lastToMidDist.
+
+		if (com_developer->integer) {
+			Com_Printf("side %d, pointIndex %d\n", trueside, pointIndexTrue);
+		}
+
+		VectorMA(startpoints[trueside], (float)(pointIndexTrue + 1) * pointDist, dirs[trueside], jitter);
+
+		jitter += 3;
+		num--;
+		side++;
+	}
+}
+
+
+
+
+
+
+
+
 // to counteract the cubey nature of voxel shadows, we jitter along the sides of a thingie (i thought i was thinking of a cube but i wasnt, i had a stroke?)
 // whose diagonals align with the normal axes. might be good? idk.
 const vec3_t corners[6] = { 
@@ -579,14 +639,15 @@ const vec3_t sidevecstarts[12] = {
 	COPYVEC(3),
 };
 
-
 void R_MME_VoxelLightJitter(float* jitter, int num) {
 	for (int i = 0; i < 6 && num > 0; i++,num--,jitter+=3) {
 		// corner points first
 		VectorCopy(corners[i],jitter);
 	}
+	R_MME_VoxelLightJitterFillWithSidePoints(jitter,num,12, sidevecstarts, sidevecs);
+	/*
 	//int pointsPerSide = (num + 12 / 2) / 12;  // rounded int division. e.g. 32- 8 = 24. 2 per side.
-	int pointsPerSide = (num / 12 * 12 == num) ? num / 12 : num / 12 + 1;  // e.g. 32- 8 = 24. 2 per side. we need to roudn up so we always have enough stuff.
+	int pointsPerSide = (num / NUMSIDES * NUMSIDES == num) ? num / NUMSIDES : num / NUMSIDES + 1;  // e.g. 32- 8 = 24. 2 per side. we need to roudn up so we always have enough stuff.
 	int pointsMid = (pointsPerSide - 1) / 2;
 	int lastToMidDist = pointsPerSide - 1 - pointsMid;
 	int side = 0;
@@ -597,8 +658,8 @@ void R_MME_VoxelLightJitter(float* jitter, int num) {
 	}
 
 	while (num > 0) {
-		int trueside = side % 12;
-		int pointIndex = side / 12;
+		int trueside = side % NUMSIDES;
+		int pointIndex = side / NUMSIDES;
 		
 		// ok lets say we have 6 points.
 		// 0 1 2 3 4 5
@@ -629,7 +690,29 @@ void R_MME_VoxelLightJitter(float* jitter, int num) {
 		jitter+=3;
 		num--;
 		side++;
-	}
+	}*/
+}
+
+vec3_t startpoints[4] = {
+	{1,1,0},
+	{-1,-1,0},
+	{-1,1,0},
+	{1,-1,0},
+};
+vec3_t startpointvecs[4] = {
+	{-1,-1,0},
+	{1,1,0},
+	{1,-1,0},
+	{-1,1,0},
+};
+
+
+
+
+// actually just 2d along the plane perpendicular to the vector from light to point
+void R_MME_VoxelLightJitterMethod2(float* jitter, int num) {
+
+	R_MME_VoxelLightJitterFillWithSidePoints(jitter, num, 4, startpoints, startpointvecs);
 }
 
 void R_MME_JitterTable(float *jitarr, int num) {

@@ -102,6 +102,7 @@ cvar_t	*mme_dofFrames;
 cvar_t	*mme_dofRadius;
 cvar_t	*mme_forceNonFishEyeDistanceCalc;
 cvar_t	*mme_voxelShadowLightQuickJitter;
+cvar_t	*mme_voxelShadowLightQuickJitterMethod;
 cvar_t	*mme_dofQuick;
 cvar_t	* mme_dofQuickRandom;
 cvar_t	* mme_dofQuickRandomMod;
@@ -539,7 +540,7 @@ static void R_MME_CheckCvars( void ) {
 			}
 
 			if(doit){
-				if (blurFrames != passData.quickVoxelJitterTotalCount) {
+				if (blurFrames != passData.quickVoxelJitterTotalCount || mme_voxelShadowLightQuickJitterMethod->modified) {
 					passData.quickVoxelJitterTotalCount = blurFrames;
 					if (passData.quickVoxelJitter) {
 						delete[] passData.quickVoxelJitter;
@@ -548,8 +549,14 @@ static void R_MME_CheckCvars( void ) {
 					passData.quickVoxelJitter = new float[blurFrames * 3];
 					passData.quickVoxelJitterIndex = 0;
 
-					R_MME_VoxelLightJitter(passData.quickVoxelJitter, blurFrames);
-					
+					if (mme_voxelShadowLightQuickJitterMethod->integer == 2) {
+						R_MME_VoxelLightJitterMethod2(passData.quickVoxelJitter, blurFrames);
+					}
+					else {
+						R_MME_VoxelLightJitter(passData.quickVoxelJitter, blurFrames);
+					}
+
+					mme_voxelShadowLightQuickJitterMethod->modified = qfalse;
 				}
 			}
 			
@@ -1668,6 +1675,7 @@ void R_MME_Init(void) {
 	mme_dofRadius = ri.Cvar_Get ( "mme_dofRadius", "2", CVAR_ARCHIVE );
 	mme_forceNonFishEyeDistanceCalc = ri.Cvar_Get ( "mme_forceNonFishEyeDistanceCalc", "0", CVAR_ARCHIVE );
 	mme_voxelShadowLightQuickJitter = ri.Cvar_Get ( "mme_voxelShadowLightQuickJitter", "10.0", CVAR_ARCHIVE );
+	mme_voxelShadowLightQuickJitterMethod = ri.Cvar_Get ( "mme_voxelShadowLightQuickJitterMethod", "2", CVAR_ARCHIVE );
 	mme_dofQuick = ri.Cvar_Get ( "mme_dofQuick", "1", CVAR_ARCHIVE );
 	mme_dofQuickRandom = ri.Cvar_Get ( "mme_dofQuickRandom", "0", CVAR_ARCHIVE ); 
 	mme_dofQuickRandomMod = ri.Cvar_Get ( "mme_dofQuickRandomMod", "0.2", CVAR_ARCHIVE );

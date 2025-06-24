@@ -45,6 +45,7 @@ uniform int isSaberUniform;
 uniform int dLightFastUniform; 
 uniform int dLightVoxelShadowsUniform; 
 uniform vec3 dLightVoxelShadowJitterUniform;
+uniform int dLightVoxelShadowJitterMethodUniform;
 uniform int noiseFuckeryUniform; 
 uniform int noiseFuckeryLightmapUniform; 
 uniform float noiseFuckeryHDRIntensityUniform; 
@@ -258,6 +259,18 @@ bool traceVoxel(vec3 pos, vec3 end, inout bvec3 collisions){
 
 	
 	return foundany;
+}
+
+const vec3 upaxis = {0.0,0.0,1.0};
+vec3 transformDLightForVoxelShadow(vec3 dlight, vec3 target){
+	if(dLightVoxelShadowJitterMethodUniform == 2){
+		vec3 dir = normalize(target-dlight);
+		vec3 side = cross(dir,upaxis);
+		vec3 up = cross(dir,side);
+		return dlight + side*dLightVoxelShadowJitterUniform.x + up*dLightVoxelShadowJitterUniform.y;
+	} else{
+		return dlight + dLightVoxelShadowJitterUniform;
+	}
 }
 
 #endif
@@ -981,7 +994,9 @@ void main(void)
 				
 #if VOXELSTUFF
 				if(!lightVoxelPathChecked ){
-					if(traceVoxel(dLightsUniform[i].origin+dLightVoxelShadowJitterUniform+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+					vec3 voxeltarget = worldPixel +worldNormal*11.0;
+					vec3 lightpos = transformDLightForVoxelShadow(dLightsUniform[i].origin+worldNormal*11.0,voxeltarget);
+					if(traceVoxel(lightpos,voxeltarget,collision)){
 						continue;
 					}
 				}
@@ -1066,7 +1081,9 @@ void main(void)
 
 #if VOXELSTUFF
 					if(!lightVoxelPathChecked ){
-						if(traceVoxel(dLightsUniform[i].origin+dLightVoxelShadowJitterUniform+worldNormal*11.0,worldPixel+worldNormal*11.0,collision)){
+						vec3 voxeltarget = worldPixel +worldNormal*11.0;
+						vec3 lightpos = transformDLightForVoxelShadow(dLightsUniform[i].origin+worldNormal*11.0,voxeltarget);
+						if(traceVoxel(lightpos,voxeltarget,collision)){
 							continue;
 						}
 					}

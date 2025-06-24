@@ -105,6 +105,7 @@ typedef struct uniformLocations_t {
 	GLint dLightFastUniform;
 	GLint dLightVoxelShadowsUniform;
 	GLint dLightVoxelShadowJitterUniform;
+	GLint dLightVoxelShadowJitterMethodUniform;
 	GLint dLightIntensityUniform;
 	GLint dLightFastSkipThresholdUniform;
 	GLint dLightSpecIntensityUniform;
@@ -313,6 +314,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
+		qglUniform1i(uniformLocationsTess->dLightVoxelShadowJitterMethodUniform, mme_voxelShadowLightQuickJitterMethod->integer);
 		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer?  backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocationsTess->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocationsTess->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
@@ -375,6 +377,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocations->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
+		qglUniform1i(uniformLocations->dLightVoxelShadowJitterMethodUniform, mme_voxelShadowLightQuickJitterMethod->integer);
 		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocations->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocations->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
@@ -1145,6 +1148,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastUniform");
 		locs->dLightVoxelShadowsUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowsUniform");
 		locs->dLightVoxelShadowJitterUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowJitterUniform");
+		locs->dLightVoxelShadowJitterMethodUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowJitterMethodUniform");
 		locs->dLightSpecGammaUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecGammaUniform");
 		locs->dLightSpecIntensityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecIntensityUniform");
 		locs->dLightSpecBaseReflectivityUniform = qglGetUniformLocation(program->ShaderId(i), "dLightSpecBaseReflectivityUniform");
