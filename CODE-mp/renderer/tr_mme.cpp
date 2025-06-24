@@ -814,6 +814,12 @@ int R_MME_MultiPassNext( ) {
 		// in the correct amount of frames, that's good enough because I think the jitter table is randomized anyway.
 		passData.quickVoxelJitterIndex = 0;
 	}
+	
+	if (++(passData.quickDLightJitterIndex) >= passData.quickDLightJitterTotalCount) {
+		// We don't really care about alignment with capture times or anything. It jitters through the wole jitterarray
+		// in the correct amount of frames, that's good enough because I think the jitter table is randomized anyway.
+		passData.quickDLightJitterIndex = 0;
+	}
 
 
 
