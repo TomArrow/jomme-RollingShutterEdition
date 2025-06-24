@@ -535,7 +535,7 @@ static void RE_jitterate2(float *jit1, float *jit2, int num, float _rad2) {
 const float sqrtOf2				=	1.414213562373095048801688724209698078569671875376948073176679f;
 const float onedivbysqrtOf2		=	0.707106781186547524400844362104849039284835937688474036588339f;
 
-// to counteract the cubey nature of voxel shadows, we jitter along the sides of a square 
+// to counteract the cubey nature of voxel shadows, we jitter along the sides of a thingie (i thought i was thinking of a cube but i wasnt, i had a stroke?)
 // whose diagonals align with the normal axes. might be good? idk.
 const vec3_t corners[6] = { 
 	{0,0,1},
