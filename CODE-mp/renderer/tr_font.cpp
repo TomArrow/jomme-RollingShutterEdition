@@ -992,7 +992,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 		offset = curfont->GetPointSize() * fScale * 0.075f;
 
 		//^blah stuff confuses shadows, so parse it out first
-		while (psText[i] && r < 1024) {
+		while (psText[i] && r < 1024-1) {
 			if (psText[i] == '^') {
 				if ( (i < 1 || psText[i-1] != '^') &&
 					(!psText[i+1] || psText[i+1] != '^') ) {
