@@ -103,6 +103,7 @@ typedef struct uniformLocations_t {
 	GLint soundDeformModeUniform;
 
 	GLint dLightFastUniform;
+	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
 	GLint dLightVoxelShadowJitterUniform;
 	GLint dLightVoxelShadowJitterMethodUniform;
@@ -315,6 +316,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowJitterMethodUniform, mme_voxelShadowLightQuickJitterMethod->integer);
+		qglUniform3fv(uniformLocationsTess->dLightJitterUniform, 1, fbo.fishEyeData.dlightJitter3D);
 		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer?  backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocationsTess->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocationsTess->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
@@ -378,6 +380,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocations->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
 		qglUniform1i(uniformLocations->dLightVoxelShadowJitterMethodUniform, mme_voxelShadowLightQuickJitterMethod->integer);
+		qglUniform3fv(uniformLocations->dLightJitterUniform,1, fbo.fishEyeData.dlightJitter3D);
 		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
 		qglUniform1f(uniformLocations->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocations->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
@@ -530,7 +533,7 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 #endif
 }
 
-qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, float dofFocus, float dofRadius, float fovX, float fovY) {
+qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX, float fovY) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -551,6 +554,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 	VectorCopy(dofJitter3D, fbo.fishEyeData.dofJitter3D);
 	VectorCopy(pixelJitter3D, fbo.fishEyeData.pixelJitter3D);
 	VectorCopy(voxelshadowJitter3D, fbo.fishEyeData.dlightVoxelShadowJitter3D);
+	VectorCopy(dlightJitter3D, fbo.fishEyeData.dlightJitter3D);
 	fbo.fishEyeData.dofFocus = dofFocus;
 	fbo.fishEyeData.dofRadius = dofRadius;
 	fbo.fishEyeData.fovX = fovX;
@@ -1146,6 +1150,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->soundDeformModeUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformModeUniform");
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastUniform");
+		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderId(i), "dLightJitterUniform");
 		locs->dLightVoxelShadowsUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowsUniform");
 		locs->dLightVoxelShadowJitterUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowJitterUniform");
 		locs->dLightVoxelShadowJitterMethodUniform = qglGetUniformLocation(program->ShaderId(i), "dLightVoxelShadowJitterMethodUniform");

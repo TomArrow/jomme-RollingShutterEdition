@@ -43,6 +43,7 @@ uniform int isLightmapUniform;
 uniform int isWorldBrushUniform; 
 uniform int isSaberUniform; 
 uniform int dLightFastUniform; 
+uniform vec3 dLightJitterUniform; 
 uniform int dLightVoxelShadowsUniform; 
 uniform vec3 dLightVoxelShadowJitterUniform;
 uniform int dLightVoxelShadowJitterMethodUniform;
@@ -969,8 +970,10 @@ void main(void)
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		for(int i=0;i<dLightsCountUniform;i++){
 		
+			vec3 dlightRawOrigin = dLightsUniform[i].origin;
+			vec3 dlightOrigin = dlightRawOrigin+dLightJitterUniform;
 			bool lightVoxelPathChecked = false;
-			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dLightsUniform[i].origin,1.0);
+			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dlightOrigin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
 			if(dot(lightVector1,normal) <= 0.0){
 				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
@@ -995,7 +998,7 @@ void main(void)
 #if VOXELSTUFF
 				if(!lightVoxelPathChecked ){
 					vec3 voxeltarget = worldPixel +worldNormal*11.0;
-					vec3 lightpos = transformDLightForVoxelShadow(dLightsUniform[i].origin+worldNormal*11.0,voxeltarget);
+					vec3 lightpos = transformDLightForVoxelShadow(dlightRawOrigin+worldNormal*11.0,voxeltarget);
 					if(traceVoxel(lightpos,voxeltarget,collision)){
 						continue;
 					}
@@ -1004,7 +1007,7 @@ void main(void)
 #endif
 		
 				vec3 shadowDebugColor = vec3(1.0,1.0,1.0);
-				vec3 lightVectorAbs = worldPixel-dLightsUniform[i].origin;
+				vec3 lightVectorAbs = worldPixel-dlightOrigin;
 				vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
 				int s =mainLightShadowLinesCalculated;
 				for(;s<shadowLinesCountUniform;s++){
@@ -1017,7 +1020,7 @@ void main(void)
 					//}
 
 					int type= 0;
-					float maxDistance = shortestDistanceLines(worldPixel,dLightsUniform[i].origin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+					float maxDistance = shortestDistanceLines(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
 				
 					float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
 					shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
@@ -1082,7 +1085,7 @@ void main(void)
 #if VOXELSTUFF
 					if(!lightVoxelPathChecked ){
 						vec3 voxeltarget = worldPixel +worldNormal*11.0;
-						vec3 lightpos = transformDLightForVoxelShadow(dLightsUniform[i].origin+worldNormal*11.0,voxeltarget);
+						vec3 lightpos = transformDLightForVoxelShadow(dlightRawOrigin+worldNormal*11.0,voxeltarget);
 						if(traceVoxel(lightpos,voxeltarget,collision)){
 							continue;
 						}
@@ -1097,7 +1100,7 @@ void main(void)
 						}
 						int type= 0;
 						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
-						float maxDistance = shortestDistanceLines(worldPixel,dLightsUniform[i].origin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+						float maxDistance = shortestDistanceLines(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
 						float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
 						shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
 						if(shadowedIntensity < fastSkipThresSpec){

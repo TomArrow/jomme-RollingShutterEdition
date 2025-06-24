@@ -1448,6 +1448,7 @@ extern cvar_t	*mme_rollingShutterPixels;
 extern cvar_t	*mme_rollingShutterMultiplier;
 extern cvar_t	*mme_mvShaderLoadOrder;
 extern cvar_t	*mme_voxelShadowLightQuickJitterMethod;
+extern cvar_t	*mme_quickDlightJitter;
 
 
 float R_NoiseGet4f( float x, float y, float z, double t );
@@ -2139,7 +2140,7 @@ const void *R_MME_CaptureShotCmdStereo( const void *data );
 void R_MME_Capture( const char *shotName, float fps, float focus, float radius );
 void R_MME_CaptureStereo( const char *shotName, float fps, float focus, float radius );
 void R_MME_BlurInfo( int* total, int* index );
-void R_MME_JitterView( float *pixels, float* eyes, float* voxelshadowlights );
+void R_MME_JitterView( float *pixels, float* eyes, float* voxelshadowlights, float* dlights);
 void R_MME_JitterViewStereo( float *pixels, float* eyes );
 qboolean R_MME_JitterOrigin( float *x, float *y );
 qboolean R_MME_JitterOriginStereo( float *x, float *y );
@@ -2176,7 +2177,7 @@ typedef struct {
 typedef struct {
 	vec3_t pixelJitter3D;
 	vec3_t dofJitter3D;
-	vec3_t dlightJitter3D; // not used yet, might do differently
+	vec3_t dlightJitter3D;
 	vec3_t dlightVoxelShadowJitter3D;
 	float dofFocus;
 	float dofRadius;
@@ -2241,7 +2242,7 @@ void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex);
 qboolean R_FrameBuffer_Blur(float scale, int frame, int total);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
-qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
+qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
 qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness = NULL, bool* isLightmap = NULL, bool* isWorldBrush=NULL, bool* isSaber = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
