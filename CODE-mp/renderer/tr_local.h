@@ -2138,7 +2138,7 @@ const void *R_MME_CaptureShotCmdStereo( const void *data );
 void R_MME_Capture( const char *shotName, float fps, float focus, float radius );
 void R_MME_CaptureStereo( const char *shotName, float fps, float focus, float radius );
 void R_MME_BlurInfo( int* total, int* index );
-void R_MME_JitterView( float *pixels, float* eyes );
+void R_MME_JitterView( float *pixels, float* eyes, float* voxelshadowlights );
 void R_MME_JitterViewStereo( float *pixels, float* eyes );
 qboolean R_MME_JitterOrigin( float *x, float *y );
 qboolean R_MME_JitterOriginStereo( float *x, float *y );

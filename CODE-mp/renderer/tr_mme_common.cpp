@@ -532,6 +532,106 @@ static void RE_jitterate2(float *jit1, float *jit2, int num, float _rad2) {
 	memcpy(jit1,jit2,2 * num * sizeof(float));
 }
 
+const float sqrtOf2				=	1.414213562373095048801688724209698078569671875376948073176679f;
+const float onedivbysqrtOf2		=	0.707106781186547524400844362104849039284835937688474036588339f;
+
+// to counteract the cubey nature of voxel shadows, we jitter along the sides of a square 
+// whose diagonals align with the normal axes. might be good? idk.
+const vec3_t corners[6] = { 
+	{0,0,1},
+	{0,0,-1},
+	{-onedivbysqrtOf2,-onedivbysqrtOf2,0},
+	{onedivbysqrtOf2,onedivbysqrtOf2,0},
+	{-onedivbysqrtOf2,onedivbysqrtOf2,0},
+	{onedivbysqrtOf2,-onedivbysqrtOf2,0},
+};
+
+#define COPYVEC(a) { corners[(a)][0],corners[(a)][1],corners[(a)][2]  }
+#define CORNERTOCORNER(a,b) { corners[(b)][0]-corners[(a)][0],corners[(b)][1]-corners[(a)][1],corners[(b)][2]-corners[(a)][2]  }
+
+const vec3_t sidevecs[12] = { 
+	CORNERTOCORNER(0,2),
+	CORNERTOCORNER(1,3),
+	CORNERTOCORNER(2,5),
+	CORNERTOCORNER(4,0),
+	CORNERTOCORNER(5,1),
+	CORNERTOCORNER(3,4),
+	CORNERTOCORNER(0,3),
+	CORNERTOCORNER(1,2),
+	CORNERTOCORNER(2,4),
+	CORNERTOCORNER(5,0),
+	CORNERTOCORNER(4,1),
+	CORNERTOCORNER(3,5),
+};
+
+const vec3_t sidevecstarts[12] = { 
+	COPYVEC(0),
+	COPYVEC(1),
+	COPYVEC(2),
+	COPYVEC(4),
+	COPYVEC(5),
+	COPYVEC(3),
+	COPYVEC(0),
+	COPYVEC(1),
+	COPYVEC(2),
+	COPYVEC(5),
+	COPYVEC(4),
+	COPYVEC(3),
+};
+
+
+void R_MME_VoxelLightJitter(float* jitter, int num) {
+	for (int i = 0; i < 6 && num > 0; i++,num--,jitter+=3) {
+		// corner points first
+		VectorCopy(corners[i],jitter);
+	}
+	//int pointsPerSide = (num + 12 / 2) / 12;  // rounded int division. e.g. 32- 8 = 24. 2 per side.
+	int pointsPerSide = (num / 12 * 12 == num) ? num / 12 : num / 12 + 1;  // e.g. 32- 8 = 24. 2 per side. we need to roudn up so we always have enough stuff.
+	int pointsMid = (pointsPerSide - 1) / 2;
+	int lastToMidDist = pointsPerSide - 1 - pointsMid;
+	int side = 0;
+	float pointDist = 1.0f / (float)(pointsPerSide + 2); // +2 because the corners are already handled above so they never get drawn by this logic.
+
+	if (com_developer->integer) {
+		Com_Printf("R_MME_VoxelLightJitter: pointsPerSide %d, pointsMid %d, lastToMidDist %d\n", pointsPerSide, pointsMid, lastToMidDist);
+	}
+
+	while (num > 0) {
+		int trueside = side % 12;
+		int pointIndex = side / 12;
+		
+		// ok lets say we have 6 points.
+		// 0 1 2 3 4 5
+		// we divide by 2 for start index. index 5 /2 = 2
+		// then we do 2 and 5, and then we move left on the indizes. so: 
+		// 2 5 1 4 0 3
+		// that way we get a decently big spread between points
+		//
+		// for non-even numbers, lets say 5 points
+		// 0 1 2 4 5
+		// divide index 4 by 2: 2.
+		// we start at 2.
+		// same principle 
+		// 2 5 1 4 0
+		//
+		// so we always have pairs of 2.
+
+		int iter = pointIndex / 2;
+		int subindex = pointIndex % 2;
+		int pointIndexTrue = pointsMid - iter + lastToMidDist * subindex; // subindex is 0 or 1. if 1, we add lastToMidDist.
+
+		if (com_developer->integer) {
+			Com_Printf("side %d, pointIndex %d\n", trueside, pointIndexTrue);
+		}
+
+		VectorMA(sidevecstarts[trueside],(float)(pointIndexTrue+1)*pointDist,sidevecs[trueside],jitter);
+
+		jitter+=3;
+		num--;
+		side++;
+	}
+}
+
 void R_MME_JitterTable(float *jitarr, int num) {
 
 	float jit2tmp[12 + 256*2];

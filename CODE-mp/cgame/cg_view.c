@@ -1071,7 +1071,7 @@ inline float CG_DistanceAwareFovScale(float cgFov) {
 	if (cg_distanceAwareFov.value) {
 		vec3_t charCameraDistance;
 		VectorSubtract(cg.predictedPlayerState.origin, cg.refdef.vieworg, charCameraDistance);
-		float fullyCorrectedFovDelta = cgFov * cg_thirdPersonRange.value / VectorLength(charCameraDistance) - cgFov;
+		float fullyCorrectedFovDelta = cgFov * cg_thirdPersonRange.value / VectorLength(charCameraDistance) - cgFov; // TODO fix.
 		return cgFov + fullyCorrectedFovDelta * cg_distanceAwareFov.value;
 	}
 	else {

@@ -110,6 +110,7 @@ void R_MME_BlurOverlapAdd( mmeBlurBlock_t *block, int index );
 void R_MME_BlurAccumShift( mmeBlurBlock_t *block  );
 void blurCreate( mmeBlurControl_t* control, const char* type, int frames );
 void R_MME_JitterTable(float *jitarr, int num);
+void R_MME_VoxelLightJitter(float *jitarr, int num);
 
 float R_MME_FocusScale(float focus);
 void R_MME_ClampDof(float *focus, float *radius);
@@ -119,6 +120,7 @@ extern cvar_t	*mme_aviFormat;
 extern cvar_t	*mme_blurJitter;
 extern cvar_t	*mme_dofFrames;
 extern cvar_t	*mme_dofRadius;
+extern cvar_t	*mme_voxelShadowLightQuickJitter;
 extern cvar_t	*mme_dofQuick;
 extern cvar_t	*mme_dofQuickRandom;
 extern cvar_t	* mme_dofQuickRandomMod;

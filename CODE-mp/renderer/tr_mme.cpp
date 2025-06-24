@@ -55,6 +55,11 @@ static struct {
 	int		quickJitterTotalCount;
 	int		quickJitterIndex;
 	float*	quickJitter;
+	
+	// QuickVoxelShadowLightJitter
+	int		quickVoxelJitterTotalCount;
+	int		quickVoxelJitterIndex;
+	float*	quickVoxelJitter;
 
 	superRandomDofJitterControl_t superRandomDofJitterControl;
 } passData;
@@ -96,6 +101,7 @@ cvar_t	*mme_blurJitter;
 cvar_t	*mme_dofFrames;
 cvar_t	*mme_dofRadius;
 cvar_t	*mme_forceNonFishEyeDistanceCalc;
+cvar_t	*mme_voxelShadowLightQuickJitter;
 cvar_t	*mme_dofQuick;
 cvar_t	* mme_dofQuickRandom;
 cvar_t	* mme_dofQuickRandomMod;
@@ -380,7 +386,7 @@ static qboolean R_MME_LoadDOFMask(float* jitterTable, int countNeeded, char* mas
 
 
 static void R_MME_CheckCvars( void ) {
-	int pixelCount, blurTotal, passTotal, quickDOF;
+	int pixelCount, blurTotal, passTotal, quickDOF, quickVoxelLightJitter;
 	mmeBlurControl_t* blurControl = &blurData.control;
 	mmeBlurControl_t* passControl = &passData.control;
 
@@ -498,6 +504,58 @@ static void R_MME_CheckCvars( void ) {
 		}
 
 	}
+	
+	// Quick DOF
+	// Jitters while the demo keeps moving. Obviously not incredibly accurate but especially with the high rolling shutter
+	// capture FPS, it may not be bad enough to make a real dent.
+	quickVoxelLightJitter = mme_voxelShadowLightQuickJitter->value != 0;
+	if (quickVoxelLightJitter) {
+		if (passTotal) { // mme_voxelShadowLightQuickJitter is incompatible with mme_dofFrames
+			passData.quickVoxelJitterTotalCount = 0;
+			if (passData.quickVoxelJitter) {
+				delete[] passData.quickVoxelJitter;
+				passData.quickVoxelJitter = NULL;
+			}
+		}
+		else {
+			mmeRollingShutterInfo_t* rsInfo = R_MME_GetRollingShutterInfo();
+
+			// Check how many frames it SHOULD be.
+			
+			// Unify this fps calculation code somewhere. UGLY.
+			// Also TODO make this work with normal mme_blurFrames
+			int blurFrames = 0;
+			qboolean doit = qfalse;
+			if (rsInfo->rollingShutterEnabled) {
+				float captureFPS = shotData.fps * rsInfo->captureFpsMultiplier;
+				float blurDuration = mme_rollingShutterBlur->value * (1.0f / shotData.fps);
+				blurFrames = (int)(blurDuration * captureFPS);
+				doit = qtrue;
+			}
+			else if (blurControl->totalFrames) {
+				// Make this for mme_blurframes.
+				blurFrames = blurControl->totalFrames;
+				doit = qtrue;
+			}
+
+			if(doit){
+				if (blurFrames != passData.quickVoxelJitterTotalCount) {
+					passData.quickVoxelJitterTotalCount = blurFrames;
+					if (passData.quickVoxelJitter) {
+						delete[] passData.quickVoxelJitter;
+						passData.quickVoxelJitter = NULL;
+					}
+					passData.quickVoxelJitter = new float[blurFrames * 3];
+					passData.quickVoxelJitterIndex = 0;
+
+					R_MME_VoxelLightJitter(passData.quickVoxelJitter, blurFrames);
+					
+				}
+			}
+			
+		}
+
+	}
 
 	mme_blurOverlap->modified = qfalse;
 	mme_blurType->modified = qfalse;
@@ -564,7 +622,7 @@ qboolean R_MME_JitterOrigin( float *x, float *y ) {
 	return qfalse;
 }
 
-void R_MME_JitterView( float *pixels, float *eyes ) {
+void R_MME_JitterView( float *pixels, float *eyes, float * voxelshadowlights) {
 	mmeBlurControl_t* blurControl = &blurData.control;
 	mmeBlurControl_t* passControl = &passData.control;
 
@@ -588,6 +646,14 @@ void R_MME_JitterView( float *pixels, float *eyes ) {
 			eyes[0] = scale * passData.quickJitter[i * 2];
 			eyes[1] = scale * passData.quickJitter[i * 2 + 1];
 		}
+	}
+
+	if (tr.captureIsActive &&  passData.quickVoxelJitter) {
+		int i = passData.quickVoxelJitterIndex;
+		float scale = mme_voxelShadowLightQuickJitter->value;
+		voxelshadowlights[0] = scale * passData.quickVoxelJitter[i * 3];
+		voxelshadowlights[1] = scale * passData.quickVoxelJitter[i * 3 + 1];
+		voxelshadowlights[2] = scale * passData.quickVoxelJitter[i * 3 + 2];
 	}
 
 	if (blurControl->totalFrames) {
@@ -670,6 +736,14 @@ int R_MME_MultiPassNext( ) {
 			std::shuffle((uint64_t*)&passData.quickJitter[0], (uint64_t*)&passData.quickJitter[passData.quickJitterTotalCount * 2], g);
 		}
 	}
+
+
+	if (++(passData.quickVoxelJitterIndex) >= passData.quickVoxelJitterTotalCount) {
+		// We don't really care about alignment with capture times or anything. It jitters through the wole jitterarray
+		// in the correct amount of frames, that's good enough because I think the jitter table is randomized anyway.
+		passData.quickVoxelJitterIndex = 0;
+	}
+
 
 
 	if ( !control->totalFrames )
@@ -1593,6 +1667,7 @@ void R_MME_Init(void) {
 	mme_dofFrames = ri.Cvar_Get ( "mme_dofFrames", "0", CVAR_ARCHIVE );
 	mme_dofRadius = ri.Cvar_Get ( "mme_dofRadius", "2", CVAR_ARCHIVE );
 	mme_forceNonFishEyeDistanceCalc = ri.Cvar_Get ( "mme_forceNonFishEyeDistanceCalc", "0", CVAR_ARCHIVE );
+	mme_voxelShadowLightQuickJitter = ri.Cvar_Get ( "mme_voxelShadowLightQuickJitter", "10.0", CVAR_ARCHIVE );
 	mme_dofQuick = ri.Cvar_Get ( "mme_dofQuick", "1", CVAR_ARCHIVE );
 	mme_dofQuickRandom = ri.Cvar_Get ( "mme_dofQuickRandom", "0", CVAR_ARCHIVE ); 
 	mme_dofQuickRandomMod = ri.Cvar_Get ( "mme_dofQuickRandomMod", "0.2", CVAR_ARCHIVE );
