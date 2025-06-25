@@ -287,6 +287,51 @@ typedef struct psHistory_s {
 } psHistory_t;
 
 
+typedef enum shadowLineBoltType_s {
+	SLB_RTIBIA,
+	SLB_LTIBIA,
+	SLB_RTALUS,
+	SLB_LTALUS,
+	SLB_CERVICAL,
+	SLB_LLUMBAR,
+	SLB_RHUMERUS,
+	SLB_LHUMERUS,
+	SLB_RRADIUS,
+	SLB_LRADIUS,
+	SLB_RHAND,
+	SLB_LHAND,
+	SLB_SHADOW_LINE_BOLT_COUNT
+} shadowLineBoltType_t;
+
+typedef enum shadowLineType_s {
+	SL_TORSO,
+	SL_RSHOULDER,
+	SL_RARM,
+	SL_RFOREARM,
+	SL_LSHOULDER,
+	SL_LARM,
+	SL_LFOREARM,
+	SL_RLEG,
+	SL_RCALF,
+	SL_LLEG,
+	SL_LCALF,
+	SL_SHADOW_LINE_COUNT
+} shadowLineType_t;
+
+typedef struct shadowLineTypeInfo_s {
+	shadowLineBoltType_t	bolt1;
+	shadowLineBoltType_t	bolt2;
+	float					width;
+	float					a;
+	float					b;
+	int						flags;
+} shadowLineTypeInfo_t;
+
+extern shadowLineTypeInfo_t shadowLineTypes[SL_SHADOW_LINE_COUNT];
+
+typedef struct {
+	qhandle_t	bolts[SLB_SHADOW_LINE_BOLT_COUNT];
+} shadowlineBolts_t;
 
 
 void demoTrajectory(const trajectory_t* tr, int time, float timeFraction, vec3_t result);
@@ -397,6 +442,8 @@ typedef struct centity_s {
 		vec3_t			modelScale;
 		char			skinName[MAX_QPATH];
 	} entcs;
+
+	shadowlineBolts_t shadowBolts;
 } centity_t;
 
 
@@ -600,20 +647,7 @@ typedef struct {
 #define	MAX_CUSTOM_SOUNDS	32
 
 
-typedef struct {
-	qhandle_t rtibia;
-	qhandle_t  ltibia;
-	qhandle_t  rtalus;
-	qhandle_t  ltalus;
-	qhandle_t  cervical;
-	qhandle_t  llumbar;
-	qhandle_t  rhumerus;
-	qhandle_t  lhumerus;
-	qhandle_t  rradius;
-	qhandle_t  lradius;
-	qhandle_t  rhand;
-	qhandle_t  lhand;
-} shadowlineBolts_t;
+
 
 typedef struct {
 	qboolean		infoValid;

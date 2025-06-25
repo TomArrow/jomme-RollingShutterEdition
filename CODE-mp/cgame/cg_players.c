@@ -239,18 +239,18 @@ static qboolean trueviewwarning = qfalse;
 static qboolean CG_GetShadowLineBolts(void* ghoul2, shadowlineBolts_t* shadowBolts) {
 	qboolean success = qtrue;
 	if (!ghoul2) return qfalse;
-	success = success && (shadowBolts->rtibia = trap_G2API_AddBolt(ghoul2, 0, "rtibia"));
-	success = success && (shadowBolts->ltibia = trap_G2API_AddBolt(ghoul2, 0, "ltibia"));
-	success = success && (shadowBolts->rtalus = trap_G2API_AddBolt(ghoul2, 0, "rtalus"));
-	success = success && (shadowBolts->ltalus = trap_G2API_AddBolt(ghoul2, 0, "ltalus"));
-	success = success && (shadowBolts->cervical = trap_G2API_AddBolt(ghoul2, 0, "cervical"));
-	success = success && (shadowBolts->llumbar = trap_G2API_AddBolt(ghoul2, 0, "lower_lumbar"));
-	success = success && (shadowBolts->rhumerus = trap_G2API_AddBolt(ghoul2, 0, "rhumerus"));
-	success = success && (shadowBolts->lhumerus = trap_G2API_AddBolt(ghoul2, 0, "lhumerus"));
-	success = success && (shadowBolts->rradius = trap_G2API_AddBolt(ghoul2, 0, "rradius"));
-	success = success && (shadowBolts->lradius = trap_G2API_AddBolt(ghoul2, 0, "lradius"));
-	success = success && (shadowBolts->rhand = trap_G2API_AddBolt(ghoul2, 0, "rhand"));
-	success = success && (shadowBolts->lhand = trap_G2API_AddBolt(ghoul2, 0, "lhand"));
+	success = success && (shadowBolts->bolts[SLB_RTIBIA] = trap_G2API_AddBolt(ghoul2, 0, "rtibia"));
+	success = success && (shadowBolts->bolts[SLB_LTIBIA] = trap_G2API_AddBolt(ghoul2, 0, "ltibia"));
+	success = success && (shadowBolts->bolts[SLB_RTALUS] = trap_G2API_AddBolt(ghoul2, 0, "rtalus"));
+	success = success && (shadowBolts->bolts[SLB_LTALUS] = trap_G2API_AddBolt(ghoul2, 0, "ltalus"));
+	success = success && (shadowBolts->bolts[SLB_CERVICAL] = trap_G2API_AddBolt(ghoul2, 0, "cervical"));
+	success = success && (shadowBolts->bolts[SLB_LLUMBAR] = trap_G2API_AddBolt(ghoul2, 0, "lower_lumbar"));
+	success = success && (shadowBolts->bolts[SLB_RHUMERUS] = trap_G2API_AddBolt(ghoul2, 0, "rhumerus"));
+	success = success && (shadowBolts->bolts[SLB_LHUMERUS] = trap_G2API_AddBolt(ghoul2, 0, "lhumerus"));
+	success = success && (shadowBolts->bolts[SLB_RRADIUS] = trap_G2API_AddBolt(ghoul2, 0, "rradius"));
+	success = success && (shadowBolts->bolts[SLB_LRADIUS] = trap_G2API_AddBolt(ghoul2, 0, "lradius"));
+	success = success && (shadowBolts->bolts[SLB_RHAND] = trap_G2API_AddBolt(ghoul2, 0, "rhand"));
+	success = success && (shadowBolts->bolts[SLB_LHAND] = trap_G2API_AddBolt(ghoul2, 0, "lhand"));
 	return success;
 }
 
@@ -269,6 +269,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	qboolean retriedAlready = qfalse;
 	char	surfOff[MAX_SURF_LIST_SIZE];
 	char	surfOn[MAX_SURF_LIST_SIZE];
+	centity_t* cent = cg_entities + (ci - cgs.clientinfo);
 
 	//[TrueView]
 	//Warning flag for models that are incompatible with True View

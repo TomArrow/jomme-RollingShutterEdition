@@ -3,6 +3,8 @@
 #include "cg_local.h"
 camera_t cam;
 
+void Cam_AddEntityShadowLines(centity_t* cent);
+
 void Cam_Draw2d(void)
 {
 	if (cam_shownames.integer && !cam_shownames3D.integer)
@@ -232,8 +234,8 @@ void Cam_Add3DHUd() {
 	}
 	clientInfo_t* ci = cgs.clientinfo + playerNum;
 	qboolean success = qtrue;
-	success = success && GetBoltPositionReal(cent, ci->shadowBolts.cervical, cervical);
-	success = success && GetBoltPositionReal(cent, ci->shadowBolts.llumbar, llumbar);
+	success = success && GetBoltPositionReal(cent, ci->shadowBolts.bolts[SLB_CERVICAL], cervical);
+	success = success && GetBoltPositionReal(cent, ci->shadowBolts.bolts[SLB_LLUMBAR], llumbar);
 	if (!success) {
 		return;
 	}
@@ -286,66 +288,62 @@ void Cam_AddPlayerShadowLines() {
 		clientInfo_t* ci = cgs.clientinfo + i;
 
 		if (cent->currentValid) {
-			if (0) { // simple
-				VectorCopy(cent->lerpOrigin, p1);
-				VectorCopy(cent->lerpOrigin, p2);
-				p1[2] += DEFAULT_MAXS_2;
-				p1[2] += DEFAULT_MINS_2;
-
-				trap_R_AddShadowLineToScene(p1, p2, 20.0, 0, 0,1);
-			}
-			else { // this is cool idea in theory but ... atm a bit slow and doesnt look quite right yet; edit: nvm
-				
-				VectorCopy(cent->lerpOrigin, p1);
-				VectorCopy(cent->lerpOrigin, p2);
-				p1[2] += DEFAULT_MAXS_2;
-				//p2[2] += DEFAULT_MINS_2;
-				trap_R_AddShadowLineToScene(p1, p2, 60.0, 400.0, 0, 2); // ambient occlusion thingie
-
-				/*qboolean success = qtrue;
-				success = success && GetBoltPosition(cent,"rtibia",rtibia);
-				success = success && GetBoltPosition(cent,"ltibia", ltibia);
-				success = success && GetBoltPosition(cent,"rtalus", rtalus);
-				success = success && GetBoltPosition(cent,"ltalus", ltalus);
-				success = success && GetBoltPosition(cent,"cervical", cervical);
-				success = success && GetBoltPosition(cent,"lower_lumbar", llumbar);
-				success = success && GetBoltPosition(cent,"rhumerus", rhumerus);
-				success = success && GetBoltPosition(cent,"lhumerus", lhumerus);
-				success = success && GetBoltPosition(cent,"rradius", rradius);
-				success = success && GetBoltPosition(cent,"lradius", lradius);
-				success = success && GetBoltPosition(cent,"rhand", rhand);
-				success = success && GetBoltPosition(cent,"lhand", lhand);*/
-				qboolean success = qtrue;
-				success = success && GetBoltPositionReal(cent,ci->shadowBolts.rtibia,rtibia);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.ltibia, ltibia);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.rtalus, rtalus);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.ltalus, ltalus);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.cervical, cervical);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.llumbar, llumbar);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.rhumerus, rhumerus);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.lhumerus, lhumerus);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.rradius, rradius);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.lradius, lradius);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.rhand, rhand);
-				success = success && GetBoltPositionReal(cent, ci->shadowBolts.lhand, lhand);
-
-				if (success) {
-
-					trap_R_AddShadowLineToScene(cervical, llumbar, 15.0, 0, 0, 0);
-
-					trap_R_AddShadowLineToScene(cervical, rhumerus, 7.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(rradius, rhumerus, 5.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(rradius, rhand, 3.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(cervical, lhumerus, 7.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(lradius, lhumerus, 5.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(lradius, lhand, 3.0, 0, 0, 0);
-
-					trap_R_AddShadowLineToScene(rtibia, llumbar, 7.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(rtalus, rtibia,3.0, 60.0, 30.0, 1);
-					trap_R_AddShadowLineToScene(ltibia, llumbar, 7.0, 0, 0, 0);
-					trap_R_AddShadowLineToScene(ltalus, ltibia, 3.0, 60.0, 30.0, 1);
-				}
-			}
+			Cam_AddEntityShadowLines(cent);
 		}
 	}
 }
+
+void Cam_AddEntityShadowLines(centity_t* cent) {
+	if (0) { // simple
+		vec3_t p1, p2;
+		VectorCopy(cent->lerpOrigin, p1);
+		VectorCopy(cent->lerpOrigin, p2);
+		p1[2] += DEFAULT_MAXS_2;
+		p1[2] += DEFAULT_MINS_2;
+
+		trap_R_AddShadowLineToScene(p1, p2, 20.0, 0, 0, 1);
+	}
+	else { // this is cool idea in theory but ... atm a bit slow and doesnt look quite right yet; edit: nvm
+
+		vec3_t p1, p2;
+		vec3_t shadowLineBoltPos[SLB_SHADOW_LINE_BOLT_COUNT];
+		int shadowLineBoltPosKnown = 0; // bitmask
+		int	entnum = cent - cg_entities;
+		shadowLineTypeInfo_t* shadowLineType;
+		shadowlineBolts_t* shadowBolts = entnum < MAX_CLIENTS ? &cgs.clientinfo[entnum].shadowBolts : &cent->shadowBolts;
+		int i;
+		VectorCopy(cent->lerpOrigin, p1);
+		VectorCopy(cent->lerpOrigin, p2);
+		p1[2] += DEFAULT_MAXS_2;
+		trap_R_AddShadowLineToScene(p1, p2, 60.0, 400.0, 0, 2); // ambient occlusion thingie
+
+
+		for (i = 0; i < SLB_SHADOW_LINE_BOLT_COUNT; i++) {
+			if (GetBoltPositionReal(cent, shadowBolts->bolts[i], shadowLineBoltPos[i])) {
+				shadowLineBoltPosKnown |= (1 << i);
+			}
+		}
+		for (i = 0; i < SL_SHADOW_LINE_COUNT; i++) {
+			shadowLineType = shadowLineTypes + i;
+			if ((shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
+				trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
+			}
+		}
+
+	}
+}
+
+shadowLineTypeInfo_t shadowLineTypes[SL_SHADOW_LINE_COUNT] = {
+	{SLB_CERVICAL,	SLB_LLUMBAR,	15.0,	0,		0,		0},
+	{SLB_CERVICAL,	SLB_RHUMERUS,	7.0,	0,		0,		0},
+	{SLB_RRADIUS,	SLB_RHUMERUS,	5.0,	0,		0,		0},
+	{SLB_RRADIUS,	SLB_RHAND,		3.0,	0,		0,		0},
+	{SLB_CERVICAL,	SLB_LHUMERUS,	7.0,	0,		0,		0},
+	{SLB_LRADIUS,	SLB_LHUMERUS,	5.0,	0,		0,		0},
+	{SLB_LRADIUS,	SLB_LHAND,		3.0,	0,		0,		0},
+	{SLB_RTIBIA,	SLB_LLUMBAR,	7.0,	0,		0,		0},
+	{SLB_RTALUS,	SLB_RTIBIA,		3.0,	60.0,	30.0,	1},
+	{SLB_LTIBIA,	SLB_LLUMBAR,	7.0,	0,		0,		0},
+	{SLB_LTALUS,	SLB_LTIBIA,		3.0,	60.0,	30.0,	1},
+};
+
