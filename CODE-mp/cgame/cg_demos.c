@@ -1459,16 +1459,17 @@ void CG_DemoDismembermentEvent( centity_t *cent, vec3_t position ) {
 					//trap_G2API_SetSurfaceOnOff(targetent->ghoul2, "r_hand", 0x00000100);
 					trap_G2API_SetSurfaceOnOff(targetent->ghoul2, "l_leg", 0x00000100);
 					trap_G2API_SetSurfaceOnOff(targetent->ghoul2, "r_leg", 0x00000100);
-					cg_entities[targetent->currentState.number].dism.cut[DISM_HEAD] =
-						//cg_entities[targetent->currentState.number].dism.cut[DISM_LHAND] =
-						//cg_entities[targetent->currentState.number].dism.cut[DISM_RHAND] =
-						cg_entities[targetent->currentState.number].dism.cut[DISM_LARM] =
-						cg_entities[targetent->currentState.number].dism.cut[DISM_RARM] =
-						cg_entities[targetent->currentState.number].dism.cut[DISM_LLEG] =
-						cg_entities[targetent->currentState.number].dism.cut[DISM_RLEG] =
-						cg_entities[targetent->currentState.number].dism.cut[DISM_WAIST] =
-						//cg_entities[targetent->currentState.number].dism.cut[DISM_TOTAL] = 
-							qtrue;
+					cg_entities[targetent->currentState.number].dism.cut |= (
+						(1<<DISM_HEAD)
+						//| (1<< DISM_LHAND)
+						//| (1<< DISM_RHAND)
+						| (1<< DISM_LARM)
+						| (1<< DISM_RARM)
+						| (1<< DISM_LLEG)
+						| (1<< DISM_RLEG)
+						| (1<< DISM_WAIST)
+						//| (1<< DISM_TOTAL)
+						);
 					cg_entities[targetent->currentState.number].torsoBolt = 1;
 					cg_entities[targetent->currentState.number].anyDismember = qtrue;
 					cg_entities[targetent->currentState.number].ghoul2weapon = NULL;

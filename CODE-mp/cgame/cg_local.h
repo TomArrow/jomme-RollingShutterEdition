@@ -327,6 +327,7 @@ typedef struct shadowLineTypeInfo_s {
 	int						flags;
 } shadowLineTypeInfo_t;
 
+extern int	shadowLineDismemberBlocks[SL_SHADOW_LINE_COUNT];
 extern shadowLineTypeInfo_t shadowLineTypes[SL_SHADOW_LINE_COUNT];
 
 typedef struct {
@@ -426,7 +427,8 @@ typedef struct centity_s {
 	qboolean		teamPowerType; //0 regen, 1 heal, 2 drain, 3 absorb
 
 	struct {
-		qboolean cut[DISM_TOTAL];  //limbs cut off //DISM_*
+		//qboolean cut[DISM_TOTAL];  //limbs cut off //DISM_*
+		int cut; // bitmask now :) easy to check against shadowlines
 		int deathtime;    //timepoint of death
 		int lastkiller;	
 	} dism;

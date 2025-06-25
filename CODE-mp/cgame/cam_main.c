@@ -325,7 +325,7 @@ void Cam_AddEntityShadowLines(centity_t* cent) {
 		}
 		for (i = 0; i < SL_SHADOW_LINE_COUNT; i++) {
 			shadowLineType = shadowLineTypes + i;
-			if ((shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
+			if (!(cent->dism.cut & shadowLineDismemberBlocks[i]) && (shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
 				trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
 			}
 		}
@@ -334,16 +334,29 @@ void Cam_AddEntityShadowLines(centity_t* cent) {
 }
 
 shadowLineTypeInfo_t shadowLineTypes[SL_SHADOW_LINE_COUNT] = {
-	{SLB_CERVICAL,	SLB_LLUMBAR,	15.0,	0,		0,		0},
-	{SLB_CERVICAL,	SLB_RHUMERUS,	7.0,	0,		0,		0},
-	{SLB_RRADIUS,	SLB_RHUMERUS,	5.0,	0,		0,		0},
-	{SLB_RRADIUS,	SLB_RHAND,		3.0,	0,		0,		0},
-	{SLB_CERVICAL,	SLB_LHUMERUS,	7.0,	0,		0,		0},
-	{SLB_LRADIUS,	SLB_LHUMERUS,	5.0,	0,		0,		0},
-	{SLB_LRADIUS,	SLB_LHAND,		3.0,	0,		0,		0},
-	{SLB_RTIBIA,	SLB_LLUMBAR,	7.0,	0,		0,		0},
-	{SLB_RTALUS,	SLB_RTIBIA,		3.0,	60.0,	30.0,	1},
-	{SLB_LTIBIA,	SLB_LLUMBAR,	7.0,	0,		0,		0},
-	{SLB_LTALUS,	SLB_LTIBIA,		3.0,	60.0,	30.0,	1},
+	{SLB_CERVICAL,	SLB_LLUMBAR,	15.0,	0,		0,		0}, // torso
+	{SLB_CERVICAL,	SLB_RHUMERUS,	7.0,	0,		0,		0}, // right shoulder
+	{SLB_RRADIUS,	SLB_RHUMERUS,	5.0,	0,		0,		0}, // right arm
+	{SLB_RRADIUS,	SLB_RHAND,		3.0,	0,		0,		0}, // right forearm
+	{SLB_CERVICAL,	SLB_LHUMERUS,	7.0,	0,		0,		0}, // left shoulder
+	{SLB_LRADIUS,	SLB_LHUMERUS,	5.0,	0,		0,		0}, // left arm 
+	{SLB_LRADIUS,	SLB_LHAND,		3.0,	0,		0,		0}, // left forearm
+	{SLB_RTIBIA,	SLB_LLUMBAR,	7.0,	0,		0,		0}, // right leg
+	{SLB_RTALUS,	SLB_RTIBIA,		3.0,	60.0,	30.0,	1}, // right calf
+	{SLB_LTIBIA,	SLB_LLUMBAR,	7.0,	0,		0,		0}, // left leg
+	{SLB_LTALUS,	SLB_LTIBIA,		3.0,	60.0,	30.0,	1}, // left calf
 };
 
+int	shadowLineDismemberBlocks[SL_SHADOW_LINE_COUNT] = { // which dismemberments will cause each line to not be drawn, bitmask
+	1<<DISM_WAIST,
+	1<<DISM_WAIST,
+	(1<<DISM_WAIST) | (1<<DISM_RARM),
+	(1<<DISM_WAIST) | (1<<DISM_RARM),
+	1<<DISM_WAIST,
+	(1<<DISM_WAIST) | (1<<DISM_LARM),
+	(1<<DISM_WAIST) | (1<<DISM_LARM),
+	1 << DISM_RLEG,
+	1 << DISM_RLEG,
+	1 << DISM_LLEG,
+	1 << DISM_LLEG,
+};

@@ -411,18 +411,18 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	int clientnum = cent->currentState.number;
 	vec3_t	boltPoint;
 		
-	if (!cent->ghoul2 || cg_entities[clientnum].dism.cut[part] == qtrue)
+	if (!cent->ghoul2 || (cg_entities[clientnum].dism.cut & (1<<part)))
 		return;
 	
-	if (cg_entities[clientnum].dism.cut[DISM_WAIST] == qtrue)
+	if ((cg_entities[clientnum].dism.cut & (1<<DISM_WAIST)))
 		if (part >= DISM_HEAD && part <= DISM_RARM)  //connected to waist
 			return;
 	
-	if (cg_entities[clientnum].dism.cut[DISM_LARM] == qtrue) 
+	if ((cg_entities[clientnum].dism.cut & (1<<DISM_LARM))) 
 		if (part == DISM_LHAND) //connected to left arm
 			return;
 	
-	if (cg_entities[clientnum].dism.cut[DISM_RARM] == qtrue)
+	if ((cg_entities[clientnum].dism.cut & (1<<DISM_RARM)))
 		if (part == DISM_RHAND) //connected to right arm
 			return;
 
@@ -538,7 +538,7 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	trap_G2API_SetSurfaceOnOff(cent->ghoul2, stubCapName, 0);
 	
 	le->limbpart = part;
-	cg_entities[clientnum].dism.cut[part] = qtrue;	
+	cg_entities[clientnum].dism.cut |= (1<<part);	
 	if (mov_dismemberDisallowNative.integer) {
 		cg_entities[clientnum].torsoBolt = 1;
 	}
@@ -812,15 +812,15 @@ void demoPlayerDismember(centity_t *cent) {
 		char *stubTagName;
 			
 		for (part = 0; part < 8; part++) {				
-			if (cg_entities[clientnum].dism.cut[part] == qfalse) 
+			if (!(cg_entities[clientnum].dism.cut & (1<<part))) 
 				continue;
 
-			if (part >= DISM_HEAD && part <= DISM_RARM && cg_entities[clientnum].dism.cut[DISM_WAIST] == qtrue)
+			if (part >= DISM_HEAD && part <= DISM_RARM && (cg_entities[clientnum].dism.cut & (1<<DISM_WAIST)))
 				continue;
 
-			if (part == DISM_RHAND && cg_entities[clientnum].dism.cut[DISM_RARM] == qtrue)
+			if (part == DISM_RHAND && (cg_entities[clientnum].dism.cut & (1<<DISM_RARM)))
 				continue;
-			if (part == DISM_LHAND && cg_entities[clientnum].dism.cut[DISM_LARM] == qtrue)
+			if (part == DISM_LHAND && (cg_entities[clientnum].dism.cut & (1<<DISM_LARM)))
 				continue;
 
 			switch(part) {

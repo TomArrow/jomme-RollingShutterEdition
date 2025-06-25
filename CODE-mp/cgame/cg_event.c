@@ -641,7 +641,7 @@ void CG_ReattachLimb(centity_t *source) {
 		int part;
 		trap_G2API_SetSurfaceOnOff(source->ghoul2, "hips", 0); // Makes no sense for dismemberment but needed to restore gibbing.
 		for (part = 0; part < 8; part++) {
-			if (cg_entities[source->currentState.number].dism.cut[part] == qtrue) {
+			if (cg_entities[source->currentState.number].dism.cut & (1<<part)) {
 				switch (part) {
 				case DISM_HEAD:
 					limbName = "head";
@@ -680,7 +680,7 @@ void CG_ReattachLimb(centity_t *source) {
 				}
 				trap_G2API_SetSurfaceOnOff(source->ghoul2, limbName, 0);
 				trap_G2API_SetSurfaceOnOff(source->ghoul2, stubCapName, 0x00000100);
-				cg_entities[source->currentState.number].dism.cut[part] = qfalse;
+				cg_entities[source->currentState.number].dism.cut &= ~(1<<part);
 			}
 		}
 	} else if (!demo15detected) {
@@ -758,7 +758,8 @@ void CG_ReattachLimb(centity_t *source) {
 	}
 	source->torsoBolt = 0;
 	source->anyDismember = qfalse;
-	memset(&source->dism.cut, 0, sizeof(source->dism.cut));
+	//memset(&source->dism.cut, 0, sizeof(source->dism.cut));
+	source->dism.cut = 0;
 
 	source->ghoul2weapon = NULL;
 }

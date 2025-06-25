@@ -655,19 +655,19 @@ static void CG_General( centity_t *cent ) {
 				limb_anim = demo15detected?BOTH_DISMEMBER_RLEG_15:BOTH_DISMEMBER_RLEG;
 			}
 
-			if (clEnt && clEnt->dism.cut[dismemberPart]) {
+			if (clEnt && (clEnt->dism.cut & (1<<dismemberPart))) {
 				return; // this body part is already dismembered.
 			}
 			
-			if (clEnt->dism.cut[DISM_WAIST] == qtrue)
+			if (clEnt->dism.cut & (1<<DISM_WAIST))
 				if (dismemberPart >= DISM_HEAD && dismemberPart <= DISM_RARM)  //connected to waist
 					return;
 
-			if (clEnt->dism.cut[DISM_LARM] == qtrue)
+			if (clEnt->dism.cut & (1<<DISM_LARM))
 				if (dismemberPart == DISM_LHAND) //connected to left arm
 					return;
 
-			if (clEnt->dism.cut[DISM_RARM] == qtrue)
+			if (clEnt->dism.cut & (1<<DISM_RARM))
 				if (dismemberPart == DISM_RHAND) //connected to right arm
 					return;
 
@@ -795,7 +795,7 @@ static void CG_General( centity_t *cent ) {
 
 			clEnt->torsoBolt = cent->currentState.modelGhoul2; //reinit model after copying limbless one to queue
 			clEnt->anyDismember = qtrue;
-			clEnt->dism.cut[dismemberPart] = qtrue;
+			clEnt->dism.cut |= (1<<dismemberPart);
 
 			return;
 		}

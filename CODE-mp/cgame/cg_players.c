@@ -8210,7 +8210,7 @@ doEssentialOne:
 			trap_G2API_SetSurfaceOnOff( cent->ghoul2, "headb_eyes_mouth", TURN_OFF );
 
 		}
-		else if(!cent->dism.cut[DISM_HEAD])
+		else if(!(cent->dism.cut & (1<<DISM_HEAD)))
 		{
 			trap_G2API_SetSurfaceOnOff( cent->ghoul2, "head_eyes_mouth", TURN_ON );
 			trap_G2API_SetSurfaceOnOff( cent->ghoul2, "heada_eyes_mouth", TURN_ON );
@@ -8223,7 +8223,7 @@ doEssentialOne:
 
 		}
 	}
-	else if ( !(cent->torsoBolt & (1 << (G2_MODELPART_HEAD-10) ))  && !cent->dism.cut[DISM_HEAD]) // ?!?! since when is this a bitmask?
+	else if ( !(cent->torsoBolt & (1 << (G2_MODELPART_HEAD-10) ))  && !(cent->dism.cut & (1<<DISM_HEAD))) // ?!?! since when is this a bitmask?
 	{
 		trap_G2API_SetSurfaceOnOff( cent->ghoul2, "head_eyes_mouth", TURN_ON );
 		trap_G2API_SetSurfaceOnOff( cent->ghoul2, "heada_eyes_mouth", TURN_ON );
