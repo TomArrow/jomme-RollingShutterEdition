@@ -3552,7 +3552,7 @@ static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
 CG_PlayerFlag
 ===============
 */
-static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel ) {
+static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop ) {
 	refEntity_t		ent;
 	vec3_t			angles;
 	vec3_t			axis[3];
@@ -3610,6 +3610,10 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel ) {
 	ent.modelScale[2] = 0.5;
 	ScaleModelAxis(&ent, qfalse);
 
+	VectorCopy(ent.origin, flagTop);
+	VectorMA(flagTop, 110.0, ent.axis[2], flagTop);
+	VectorMA(flagTop, 20.0, ent.axis[0], flagTop);
+
 	/*
 	if (cent->currentState.number == cg.snap->ps.clientNum)
 	{ //If we're the current client (in third person), render the flag on our back transparently
@@ -3633,6 +3637,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	clientInfo_t	*ci;
 	vec3_t powerupLightOrigin;
 	vec3_t angles;
+	vec3_t flagTop;
 
 	powerups = cent->currentState.powerups;
 	if ( !powerups ) {
@@ -3643,7 +3648,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	angles[PITCH] = 0;
 	angles[ROLL] = 0;
 	AngleVectors(angles, powerupLightOrigin, NULL, NULL);
-	VectorMA(cent->lerpOrigin, -10.0f, powerupLightOrigin, powerupLightOrigin);
+	VectorMA(cent->lerpOrigin, -15.0f, powerupLightOrigin, powerupLightOrigin);
 	powerupLightOrigin[2] += DEFAULT_MAXS_2;
 
 	// quad gives a dlight
@@ -3654,19 +3659,19 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 	// redflag
 	if ( powerups & ( 1 << PW_REDFLAG ) ) {
-		CG_PlayerFlag( cent, cgs.media.redFlagModel );
-		trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&31), 1.0, 0.2f, 0.2f );
+		CG_PlayerFlag( cent, cgs.media.redFlagModel, flagTop);
+		trap_R_AddLightToScene(flagTop, 100 + (rand()&31), 1.0, 0.2f, 0.2f );
 	}
 
 	// blueflag
 	if ( powerups & ( 1 << PW_BLUEFLAG ) ) {
-		CG_PlayerFlag( cent, cgs.media.blueFlagModel );
-		trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&31), 0.2f, 0.2f, 1.0 );
+		CG_PlayerFlag( cent, cgs.media.blueFlagModel, flagTop);
+		trap_R_AddLightToScene(flagTop, 100 + (rand()&31), 0.2f, 0.2f, 1.0 );
 	}
 
 	// neutralflag
 	if ( powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-		trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&31), 1.0, 1.0, 1.0 );
+		trap_R_AddLightToScene(powerupLightOrigin, 100 + (rand()&31), 1.0, 1.0, 1.0 );
 	}
 
 	// haste leaves smoke trails
