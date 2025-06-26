@@ -106,25 +106,35 @@ Leave expanding blood puffs behind gibs
 ================
 */
 void CG_BloodTrail( localEntity_t *le ) {
-	if (1) { // I dont understand why this was set to !mov_dismebmer??!
-		int		t;
-		int		t2;
+	if (le->leBounceSoundType == LEBS_BLOOD) { // I dont understand why this was set to !mov_dismebmer??!
+		//int		t;
+		//int		t2;
 		int		step;
 		vec3_t	newOrigin;
 		localEntity_t	*blood;
 
 		step = 150;
-		t = step * ( (cg.time - cg.frametime + step ) / step );
-		t2 = step * ( cg.time / step );
 
-		for ( ; t <= t2; t += step ) {
-			BG_EvaluateTrajectory( &le->pos, t, newOrigin );
+		if (le->nextMark > cg.time + 10000) {
+			// something went terribly wrong
+			le->nextMark = cg.time;
+			Com_Printf("CG_BloodTrail: le->nextMark > cg.time + 10000\n");
+		}
+
+		// sadly this old q3 logic is hopelessly broken, idk why. it would require fps to sink to incredibly low values to work at all?
+		//t = step * ( (cg.time - cg.frametime + step ) / step );
+		//t2 = step * ( cg.time / step );
+
+		//for ( ; t <= t2; t += step ) 
+		while(cg.time >= le->nextMark)
+		{
+			BG_EvaluateTrajectory(&le->pos, le->nextMark , newOrigin);
 
 			blood = CG_SmokePuff( newOrigin, vec3_origin, 
 						  20,		// radius
 						  1, 1, 1, 1,	// color
 						  2000,		// trailTime
-						  t,		// startTime
+						  le->nextMark, //t,		// startTime
 						  0,		// fadeInTime
 						  0,		// flags
 						  cgs.media.bloodTrailShader );
@@ -132,10 +142,11 @@ void CG_BloodTrail( localEntity_t *le ) {
 			blood->leType = LE_FALL_SCALE_FADE;
 			// drop a total of 40 units over its lifetime
 			blood->pos.trDelta[2] = 40;
+			le->nextMark += step;
 		}
 	} 
 	
-	if(mov_dismember.integer){
+	if(mov_dismember.integer && le->leFragmentType == LEFT_DISM){
 		int newBolt;
 		char *limbTagName;
 	
@@ -239,7 +250,7 @@ void CG_FragmentBounceSound( localEntity_t *le, trace_t *trace ) {
 	if(mov_dismember.integer){
 		sfxHandle_t s = -1;
 	
-		if ( le->leFragmentType == LEFT_GIB) {
+		if ( le->leFragmentType == LEFT_DISM) {
 			if (le->limbpart == DISM_WAIST) {   ///WAIST
 				int r = rand()&3;
 
@@ -307,7 +318,7 @@ void CG_ReflectVelocity( localEntity_t *le, trace_t *trace ) {
 			return;		
 		if (le->leFragmentType == LEFT_SABER) {
 			le->angles.trBase[0] = 90;
-		} else if (le->leFragmentType == LEFT_GIB) {
+		} else if (le->leFragmentType == LEFT_DISM) {
 			if (le->limbpart == DISM_WAIST) {
 				le->angles.trBase[0] = le->angles.trBase[2] = 0;
 			} else if (le->limbpart >= DISM_LHAND && le->limbpart <= DISM_RARM) {
@@ -331,11 +342,15 @@ CG_AddFragment
 void CG_AddFragment( localEntity_t *le ) {
 	vec3_t	newOrigin;
 	trace_t	trace;
+	qboolean isDismember = le->leFragmentType == LEFT_DISM;
+	vec3_t shadowAngles;
 
 	if (le->forceAlpha) {
 		le->refEntity.renderfx |= RF_FORCE_ENT_ALPHA;
 		le->refEntity.shaderRGBA[3] = le->forceAlpha;
 	}
+
+	VectorCopy(le->angles.trBase, shadowAngles);
 
 	if ( le->pos.trType == TR_STATIONARY ) {
 		// sink into the ground if near the removal time
@@ -359,15 +374,20 @@ void CG_AddFragment( localEntity_t *le ) {
 
 			le->refEntity.shaderRGBA[3] = t_e;
 
+
 			trap_R_AddRefEntityToScene( &le->refEntity );
 		} else {
 			trap_R_AddRefEntityToScene( &le->refEntity );
 		}
 
+		if (isDismember) {
+			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts);
+		}
+
 		return;
 	}
 	
-	if (mov_dismember.integer && le->leFragmentType == LEFT_GIB)
+	if (mov_dismember.integer && le->leFragmentType == LEFT_DISM)
 		CG_BloodTrail( le );
 	
 	// calculate new position
@@ -376,6 +396,7 @@ void CG_AddFragment( localEntity_t *le ) {
 	// trace a line from previous position to new position
 	CG_Trace( &trace, le->refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
 	if ( trace.fraction == 1.0 ) {
+		float extraHeight = 0;
 		// still in free fall
 		VectorCopy( newOrigin, le->refEntity.origin );
 
@@ -384,14 +405,21 @@ void CG_AddFragment( localEntity_t *le ) {
 
 			demoNowTrajectory( &le->angles, angles );
 			AnglesToAxis( angles, le->refEntity.axis );
+			VectorCopy(angles, shadowAngles);
 		}
 
-		if ( mov_dismember.integer && le->leFragmentType == LEFT_GIB ) {
-			le->refEntity.origin[2] += 8;
+		if ( mov_dismember.integer && le->leFragmentType == LEFT_DISM ) {
+			extraHeight += 8;
 		} else if ( mov_dismember.integer && le->leFragmentType == LEFT_SABER ) {
-			le->refEntity.origin[2] += 1;
+			extraHeight += 1;
 		}
+		le->refEntity.origin[2] += extraHeight;
 		trap_R_AddRefEntityToScene( &le->refEntity );
+		le->refEntity.origin[2] -= extraHeight; // gotta revert it or we dont get proper bounces as the new calculated pos ends up behind the old, so we get startsolid and all hell breaks loose
+
+		if (isDismember) { // what about angles? uh.
+			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts);
+		}
 
 		// add a blood trail
 		if ( le->leBounceSoundType == LEBS_BLOOD ) {
@@ -410,7 +438,7 @@ void CG_AddFragment( localEntity_t *le ) {
 	}
 
 	if (!trace.startsolid) {
-		if (!mov_dismember.integer) { // TODO Weird.
+		if (!mov_dismember.integer || le->leFragmentType != LEFT_SABER && le->leFragmentType != LEFT_DISM) { // TODO Weird.
 			// leave a mark
 			CG_FragmentBounceMark( le, &trace );
 			// do a bouncy sound
@@ -455,6 +483,7 @@ void CG_AddFragment( localEntity_t *le ) {
 
 			}			
 			AnglesToAxis(le->angles.trBase, le->refEntity.axis);
+			VectorCopy(le->angles.trBase, shadowAngles);
 			// do a bouncy sound
 			if (le->bouncetime < cg.time) {
 				CG_FragmentBounceSound( le, &trace );
@@ -469,6 +498,10 @@ void CG_AddFragment( localEntity_t *le ) {
 		CG_ReflectVelocity( le, &trace );
 
 		trap_R_AddRefEntityToScene( &le->refEntity );
+
+		if (isDismember) { // what about angles? uh.
+			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts);
+		}
 	}
 }
 

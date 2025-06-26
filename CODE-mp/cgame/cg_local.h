@@ -328,6 +328,7 @@ typedef struct shadowLineTypeInfo_s {
 } shadowLineTypeInfo_t;
 
 extern int	shadowLineDismemberBlocks[SL_SHADOW_LINE_COUNT];
+extern int	shadowLineBodyPartsBlackList[DISM_TOTAL];
 extern shadowLineTypeInfo_t shadowLineTypes[SL_SHADOW_LINE_COUNT];
 
 typedef struct {
@@ -437,6 +438,8 @@ typedef struct centity_s {
 
 	qboolean		isGibbing;
 
+	int				shadowLineBlacklist; // for body parts. only let shadowline be added directly from body part drawing code. thus we dont have to reset this.
+
 	saberTrail_t	entSaberTrail; // for ET_GRAPPLE/npcs
 	int				saberHitWallSoundDebounceTime;// for ET_GRAPPLE/npcs
 
@@ -504,8 +507,9 @@ typedef enum {
 
 typedef enum {
 	LEFT_NONE,
+	LEFT_DISM,
+	LEFT_SABER,
 	LEFT_GIB,
-	LEFT_SABER
 } leFragmentType_t;			// fragment type
 
 typedef struct localEntity_s {
@@ -543,6 +547,8 @@ typedef struct localEntity_s {
 	leFragmentType_t	leFragmentType;
 	int bouncetime;
 	int limbpart;
+
+	int				nextMark;
 
 	union {
 		struct {
@@ -613,7 +619,9 @@ typedef struct localEntity_s {
 		} spawner;
 		struct
 		{
-			float radius;
+			float	radius;
+			int		shadowLineBlacklist; // for body parts
+			shadowlineBolts_t	shadowBolts;
 		} fragment;
 	} data;
 
@@ -2857,6 +2865,8 @@ void CG_InitG2Weapons(void);
 void CG_ShutDownG2Weapons(void);
 void CG_CopyG2WeaponInstance(centity_t *cent, int weaponNum, void *toGhoul2);
 void CG_CheckPlayerG2Weapons(playerState_t *ps, centity_t *cent);
+void CG_GibPlayer(vec3_t playerOrigin, vec3_t baseVelocity);
+void Cam_AddGhoul2ShadowLines(refEntity_t* rent, int shadowLineBlackList, vec3_t angles, shadowlineBolts_t* shadowBolts);
 
 extern void *g2WeaponInstances[MAX_WEAPONS];
 /*

@@ -156,6 +156,19 @@ static qboolean GetBoltPositionReal( centity_t* cent, qhandle_t bolt, vec3_t res
 	}
 	return qfalse;
 }
+static qboolean GetBoltPositionRealRefEnt( refEntity_t* rent,vec3_t angles, qhandle_t bolt, vec3_t result) {
+	if (!rent->ghoul2 || /*!bolt || */bolt == -1) {
+		return qfalse;
+	}
+	mdxaBone_t boneMatrix;
+	if (trap_G2API_GetBoltMatrix(rent->ghoul2, 0, bolt, &boneMatrix, angles, rent->origin, cg.time, cgs.gameModels, rent->modelScale)) {
+		vec3_t betterOrigin;
+		trap_G2API_GiveMeVectorFromMatrix(&boneMatrix, ORIGIN, betterOrigin);
+		VectorCopy(betterOrigin, result);
+		return qtrue;
+	}
+	return qfalse;
+}
 
 static qboolean GetBoltPosition(centity_t* cent, const char* boltName,  vec3_t result) {
 	if (!cent->ghoul2) {
@@ -325,12 +338,39 @@ void Cam_AddEntityShadowLines(centity_t* cent) {
 		}
 		for (i = 0; i < SL_SHADOW_LINE_COUNT; i++) {
 			shadowLineType = shadowLineTypes + i;
-			if (!(cent->dism.cut & shadowLineDismemberBlocks[i]) && (shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
+			if (!(cent->shadowLineBlacklist & (1<<i)) && !(cent->dism.cut & shadowLineDismemberBlocks[i]) && (shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
 				trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
 			}
 		}
 
 	}
+}
+
+// for localent body parts
+// im having angles passed separately because most code seems to shy away from using re->angles for some reason,
+// opting to set axis instead and using cent->turAngles for angles
+// so maybe its not good to set it
+void Cam_AddGhoul2ShadowLines(refEntity_t* rent, int shadowLineBlackList, vec3_t angles, shadowlineBolts_t* shadowBolts) {
+	vec3_t shadowLineBoltPos[SLB_SHADOW_LINE_BOLT_COUNT];
+	int shadowLineBoltPosKnown = 0; // bitmask
+	//int	entnum = cent - cg_entities;
+	shadowLineTypeInfo_t* shadowLineType;
+	//shadowlineBolts_t* shadowBolts = entnum < MAX_CLIENTS ? &cgs.clientinfo[entnum].shadowBolts : &cent->shadowBolts;
+	int i;
+
+	for (i = 0; i < SLB_SHADOW_LINE_BOLT_COUNT; i++) {
+		if (GetBoltPositionRealRefEnt(rent, angles, shadowBolts->bolts[i], shadowLineBoltPos[i])) {
+			shadowLineBoltPosKnown |= (1 << i);
+		}
+	}
+	for (i = 0; i < SL_SHADOW_LINE_COUNT; i++) {
+		shadowLineType = shadowLineTypes + i;
+		if (!(shadowLineBlackList & (1<<i)) && (shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
+			trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
+		}
+	}
+
+	
 }
 
 shadowLineTypeInfo_t shadowLineTypes[SL_SHADOW_LINE_COUNT] = {
@@ -359,4 +399,16 @@ int	shadowLineDismemberBlocks[SL_SHADOW_LINE_COUNT] = { // which dismemberments 
 	1 << DISM_RLEG,
 	1 << DISM_LLEG,
 	1 << DISM_LLEG,
+};
+
+int	shadowLineBodyPartsBlackList[DISM_TOTAL] = { // which dismemberments will block which body part shadowlines to be drawn for bodyparts
+	0,// head. dont care.
+	0,// left hand, dont care
+	0,// right hand, dont care
+	(1 << SL_LARM) | (1 << SL_LFOREARM),// left arm
+	(1 << SL_RARM) | (1 << SL_RFOREARM),// right arm
+	(1 << SL_LLEG) | (1 << SL_LCALF),// left leg
+	(1 << SL_RLEG) | (1 << SL_RCALF),// right leg
+	(1 << SL_TORSO) | (1 << SL_RSHOULDER) | (1 << SL_RARM) | (1 << SL_RFOREARM) | (1 << SL_LSHOULDER) | (1 << SL_LARM) | (1 << SL_LFOREARM),// waist
+	0, //saber. dont care.
 };

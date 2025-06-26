@@ -410,6 +410,7 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	int  limb_anim;
 	int clientnum = cent->currentState.number;
 	vec3_t	boltPoint;
+	int i;
 		
 	if (!cent->ghoul2 || (cg_entities[clientnum].dism.cut & (1<<part)))
 		return;
@@ -436,10 +437,11 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	le->lifeRate = 1.0f / (le->endTime - le->startTime);
 	
 	VectorCopy( limborg, re->origin );
+	//VectorCopy(limbang, le->angles);
 	AnglesToAxis( limbang, re->axis );
 	
 	le->pos.trType = TR_GRAVITY;
-	le->angles.trType = TR_GRAVITY;
+	le->angles.trType = TR_STATIONARY; // uh what, gravity on angles? TR_GRAVITY;
 	VectorCopy( limborg, le->pos.trBase );
 	VectorCopy( limbang, le->angles.trBase); 
 	le->pos.trTime = cg.time;
@@ -448,7 +450,7 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	le->bounceFactor = 0.1f + random()*0.2;
 	
 	VectorCopy(dir, le->pos.trDelta );
-	le->leFragmentType = LEFT_GIB;
+	le->leFragmentType = LEFT_DISM;
 	
 	/////////DUPLICATE GHOUL2
 	if (re->ghoul2 && trap_G2_HaveWeGhoul2Models(re->ghoul2))
@@ -456,6 +458,9 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	if (cent->ghoul2 && trap_G2_HaveWeGhoul2Models(cent->ghoul2))
 		trap_G2API_DuplicateGhoul2Instance(cent->ghoul2, &re->ghoul2);
 	
+	le->data.fragment.shadowBolts = clientnum >= 0 && clientnum < MAX_CLIENTS?  cgs.clientinfo[clientnum].shadowBolts : cent->shadowBolts; // just copy it over. same model, same bolts. or not?
+	VectorCopy(cent->modelScale,re->modelScale);
+
 	/////////ANIMATION FIXME: stop routine animations
 	
 	switch( part ) {
@@ -538,6 +543,17 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	trap_G2API_SetSurfaceOnOff(cent->ghoul2, stubCapName, 0);
 	
 	le->limbpart = part;
+
+
+	le->data.fragment.shadowLineBlacklist = ~shadowLineBodyPartsBlackList[part]; // e.g. we are cutting off right arm, which blocks right arm shadowlines. but this is the cut off part itself, so we block everything BUT the right arm shadowlines.
+
+	// then we go through anything that was already cut off before. e.g. if we are cutting off waist but the arm was already cut off, then the arm should ofc not get drawn anymore.
+	for (i = 0; i < DISM_TOTAL; i++) {
+		if (cg_entities[clientnum].dism.cut & (1 << i)) {
+			le->data.fragment.shadowLineBlacklist |= shadowLineBodyPartsBlackList[i]; // dont draw shadowlines for anything that's cut off.
+		}
+	}
+
 	cg_entities[clientnum].dism.cut |= (1<<part);	
 	if (mov_dismemberDisallowNative.integer) {
 		cg_entities[clientnum].torsoBolt = 1;

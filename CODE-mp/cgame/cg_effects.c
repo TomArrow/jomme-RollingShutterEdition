@@ -1179,6 +1179,7 @@ void CG_LaunchGib( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
 	re = &le->refEntity;
 
 	le->leType = LE_FRAGMENT;
+	le->leFragmentType = LEFT_GIB;
 	le->startTime = cg.time;
 	le->endTime = le->startTime + 15000 + random() * 10000;
 
@@ -1190,6 +1191,7 @@ void CG_LaunchGib( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
 	VectorCopy( origin, le->pos.trBase );
 	VectorCopy( velocity, le->pos.trDelta );
 	le->pos.trTime = cg.time;
+	le->nextMark = cg.time + 150;
 
 	//le->bounceFactor = 0.6f;
 	le->bounceFactor = cg_gibBounce.value;
