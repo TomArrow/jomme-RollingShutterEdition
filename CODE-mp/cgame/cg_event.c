@@ -801,6 +801,9 @@ static void CG_BodyQueueCopy(centity_t *cent, int clientNum, int knownWeapon)
 
 	trap_G2API_DuplicateGhoul2Instance(source->ghoul2, &cent->ghoul2);
 
+	cent->shadowBolts = ci->shadowBolts;
+	cent->dism.cut = source->dism.cut;
+
 	//either force the weapon from when we died or remove it if it was a dropped weapon
 	if (knownWeapon > WP_BRYAR_PISTOL && trap_G2API_HasGhoul2ModelOnIndex(&(cent->ghoul2), 1))
 	{

@@ -236,7 +236,9 @@ static qboolean trueviewwarning = qfalse;
 //[/TrueView]
 
 
-static qboolean CG_GetShadowLineBolts(void* ghoul2, shadowlineBolts_t* shadowBolts) {
+
+
+qboolean CG_GetShadowLineBolts(void* ghoul2, shadowlineBolts_t* shadowBolts) {
 	qboolean success = qtrue;
 	if (!ghoul2) return qfalse;
 	success = success && (shadowBolts->bolts[SLB_RTIBIA] = trap_G2API_AddBolt(ghoul2, 0, "rtibia"));
@@ -6355,6 +6357,7 @@ void CG_G2Animated( centity_t *cent )
 				trap_G2API_AddBolt(cent->ghoul2, 0, "*l_hand");
 				trap_G2API_AddBolt(cent->ghoul2, 0, "*head_top");
 				trap_G2API_AddBolt(cent->ghoul2, 0, "Motion");
+				CG_GetShadowLineBolts(cent->ghoul2, &cent->shadowBolts);
 			}
 		}
 		return;
@@ -6524,6 +6527,8 @@ void CG_G2Animated( centity_t *cent )
 
 	trap_R_AddRefEntityToScene(&legs);
 
+	//Cam_AddEntityShadowLines(cent);
+	Cam_AddGhoul2ShadowLines(&legs,cent->shadowLineBlacklist,rootAngles,&cent->shadowBolts, 0,-1);
 
 	// Electricity
 	//------------------------------------------------

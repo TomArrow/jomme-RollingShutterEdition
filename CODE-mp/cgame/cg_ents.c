@@ -497,6 +497,8 @@ static void CG_General( centity_t *cent ) {
 	vec3_t				beamOrg;
 	mdxaBone_t			matrix;
 	qboolean			doNotSetModel = qfalse;
+	qboolean			isDismember = qfalse;
+	qboolean			isBody = cent->currentState.eType == ET_BODY;
 
 	if (cent->currentState.modelGhoul2 == 127)
 	{ //not ready to be drawn or initialized..
@@ -519,7 +521,8 @@ static void CG_General( centity_t *cent ) {
 	{ //special case for client limbs
 		centity_t *clEnt;
 		int dismember_settings = cg_dismember.integer;
-		
+		isDismember = qtrue;
+
 		if (mov_dismember.integer && mov_dismemberDisallowNative.integer) {
 			return;
 		}
@@ -553,6 +556,7 @@ static void CG_General( centity_t *cent ) {
 			char *limbTagName;
 			char *stubTagName;
 			int limb_anim;
+			int i;
 			int newBolt;
 			int mG2 = cent->currentState.modelGhoul2;
 			dismpart_t dismemberPart;
@@ -705,6 +709,7 @@ static void CG_General( centity_t *cent ) {
 				if (!cent->ghoul2) {
 
 					trap_G2API_DuplicateGhoul2Instance(clEnt->ghoul2, &cent->ghoul2);
+					cent->shadowBolts = ci ? ci->shadowBolts : clEnt->shadowBolts;
 				}
 
 				if (anim) {
@@ -763,12 +768,18 @@ static void CG_General( centity_t *cent ) {
 
 			trap_G2API_SetRootSurface(cent->ghoul2, 0, limbName);
 
-			trap_G2API_SetNewOrigin(cent->ghoul2, trap_G2API_AddBolt(cent->ghoul2, 0, rotateBone));
+			cent->baseBolt = trap_G2API_AddBolt(cent->ghoul2, 0, rotateBone);
+			trap_G2API_SetNewOrigin(cent->ghoul2, cent->baseBolt);
 
 			trap_G2API_SetSurfaceOnOff(cent->ghoul2, limbCapName, 0);
 
 			trap_G2API_SetSurfaceOnOff(clEnt->ghoul2, limbName, 0x00000100);
 			trap_G2API_SetSurfaceOnOff(clEnt->ghoul2, stubCapName, 0);
+
+			if (!CG_GetShadowLineBolts(cent->ghoul2, &cent->shadowBolts)) { // i t hink we have to do this because the old bolt numbers might be invalidated after setrootsurface
+				Com_Printf("wtf");
+			}
+
 
 			newBolt = trap_G2API_AddBolt( clEnt->ghoul2, 0, stubTagName );
 			if ( newBolt != -1 )
@@ -790,6 +801,16 @@ static void CG_General( centity_t *cent ) {
 				if (trap_G2API_HasGhoul2ModelOnIndex(&(clEnt->ghoul2), 1))
 				{
 					trap_G2API_RemoveGhoul2Model(&(clEnt->ghoul2), 1);
+				}
+			}
+
+
+			cent->shadowLineBlacklist = ~shadowLineBodyPartsBlackList[dismemberPart]; // e.g. we are cutting off right arm, which blocks right arm shadowlines. but this is the cut off part itself, so we block everything BUT the right arm shadowlines.
+
+			// then we go through anything that was already cut off before. e.g. if we are cutting off waist but the arm was already cut off, then the arm should ofc not get drawn anymore.
+			for (i = 0; i < DISM_TOTAL; i++) {
+				if (clEnt->dism.cut & (1 << i)) {
+					cent->shadowLineBlacklist |= shadowLineBodyPartsBlackList[i]; // dont draw shadowlines for anything that's cut off.
 				}
 			}
 
@@ -1080,6 +1101,15 @@ Ghoul2 Insert End
 
 	if (!demo15detected && cent->currentState.modelGhoul2 && !ent.ghoul2 && !ent.hModel) {
 		return;
+	}
+
+
+	if (isDismember || isBody) { // what about angles? uh.
+		Cam_AddGhoul2ShadowLines(&ent, cent->shadowLineBlacklist, cent->lerpAngles, &cent->shadowBolts, isBody ? cent->dism.cut : 0, isDismember ? cent->baseBolt : -1);
+	}
+	else if (isBody) {
+		// actually dont do this because i think for a body we wont have cent->turAngles set? use the refent method instead
+		//Cam_AddEntityShadowLines(cent);
 	}
 
 	// add to refresh list

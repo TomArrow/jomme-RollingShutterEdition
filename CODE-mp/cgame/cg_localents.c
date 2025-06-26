@@ -381,7 +381,7 @@ void CG_AddFragment( localEntity_t *le ) {
 		}
 
 		if (isDismember) {
-			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts);
+			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts,0, le->data.fragment.dismemberBaseBolt);
 		}
 
 		return;
@@ -418,7 +418,7 @@ void CG_AddFragment( localEntity_t *le ) {
 		le->refEntity.origin[2] -= extraHeight; // gotta revert it or we dont get proper bounces as the new calculated pos ends up behind the old, so we get startsolid and all hell breaks loose
 
 		if (isDismember) { // what about angles? uh.
-			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts);
+			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts, 0, le->data.fragment.dismemberBaseBolt);
 		}
 
 		// add a blood trail
@@ -496,11 +496,12 @@ void CG_AddFragment( localEntity_t *le ) {
 
 		// reflect the velocity on the trace plane
 		CG_ReflectVelocity( le, &trace );
+		VectorCopy(le->angles.trBase, shadowAngles);
 
 		trap_R_AddRefEntityToScene( &le->refEntity );
 
 		if (isDismember) { // what about angles? uh.
-			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts);
+			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts, 0, le->data.fragment.dismemberBaseBolt);
 		}
 	}
 }

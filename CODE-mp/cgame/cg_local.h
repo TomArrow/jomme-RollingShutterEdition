@@ -448,7 +448,9 @@ typedef struct centity_s {
 		char			skinName[MAX_QPATH];
 	} entcs;
 
-	shadowlineBolts_t shadowBolts;
+	shadowlineBolts_t	shadowBolts;
+
+	qhandle_t			baseBolt; // for dismembered parts
 } centity_t;
 
 
@@ -622,6 +624,7 @@ typedef struct localEntity_s {
 			float	radius;
 			int		shadowLineBlacklist; // for body parts
 			shadowlineBolts_t	shadowBolts;
+			qhandle_t	dismemberBaseBolt;
 		} fragment;
 	} data;
 
@@ -2866,7 +2869,9 @@ void CG_ShutDownG2Weapons(void);
 void CG_CopyG2WeaponInstance(centity_t *cent, int weaponNum, void *toGhoul2);
 void CG_CheckPlayerG2Weapons(playerState_t *ps, centity_t *cent);
 void CG_GibPlayer(vec3_t playerOrigin, vec3_t baseVelocity);
-void Cam_AddGhoul2ShadowLines(refEntity_t* rent, int shadowLineBlackList, vec3_t angles, shadowlineBolts_t* shadowBolts);
+void Cam_AddGhoul2ShadowLines(refEntity_t* rent, int shadowLineBlackList, vec3_t angles, shadowlineBolts_t* shadowBolts, int dismCut, qhandle_t basebolt);
+void Cam_AddEntityShadowLines(centity_t* cent);
+qboolean CG_GetShadowLineBolts(void* ghoul2, shadowlineBolts_t* shadowBolts);
 
 extern void *g2WeaponInstances[MAX_WEAPONS];
 /*

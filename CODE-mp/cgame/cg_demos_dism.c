@@ -536,12 +536,17 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 
 	//////////DISMEMBER
 	trap_G2API_SetRootSurface(re->ghoul2, 0, limbName);
-	trap_G2API_SetNewOrigin(re->ghoul2, trap_G2API_AddBolt(re->ghoul2, 0, limbBone));
+	le->data.fragment.dismemberBaseBolt = trap_G2API_AddBolt(re->ghoul2, 0, limbBone);
+	trap_G2API_SetNewOrigin(re->ghoul2, le->data.fragment.dismemberBaseBolt);
 	trap_G2API_SetSurfaceOnOff(re->ghoul2, limbCapName, 0);
 	
 	trap_G2API_SetSurfaceOnOff(cent->ghoul2, limbName, 0x00000100);
 	trap_G2API_SetSurfaceOnOff(cent->ghoul2, stubCapName, 0);
 	
+	if (!CG_GetShadowLineBolts(cent->ghoul2, &le->data.fragment.shadowBolts)) { // i t hink we have to do this because the old bolt numbers might be invalidated after setrootsurface
+		Com_Printf("wtf");
+	}
+
 	le->limbpart = part;
 
 
