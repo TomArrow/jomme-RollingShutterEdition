@@ -4817,7 +4817,7 @@ static void CG_G2SaberEffects(vec3_t start, vec3_t end, centity_t *owner) {
 #define FX_USE_ALPHA		0x08000000
 #include "cg_demos_math.h"
 const vec3_t container = { -8.0f, 8.0f, 8.0f };
-void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber) {
+void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
 	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
 	trace_t	trace;
 	int i = 0;
@@ -4842,6 +4842,20 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 
 //	if (cgs.clientinfo[ cent->currentState.clientNum ].team != TEAM_SPECTATOR &&
 //		!(cg.snap->ps.pm_flags & PMF_FOLLOW)) {
+	if (retracting) {
+		if (cent->saberLength > thisPlayerSaberLength) {
+			cent->saberLength = thisPlayerSaberLength;
+			cent->saberExtendTime = cg.time;
+		}
+		if (cent->saberLength > 0) {
+			cent->saberLength -= ((cg.time - cent->saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
+		}
+		if (cent->saberLength < 0) {
+			cent->saberLength = 0;
+		}
+		cent->saberExtendTime = cg.time;
+	}
+	else {
 		if (cent->saberLength < 1) {
 			cent->saberLength = 1;
 			cent->saberExtendTime = cg.time;
@@ -4849,14 +4863,14 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 
 		//if (cent->saberLength < SABER_LENGTH_MAX) {
 		if (cent->saberLength < thisPlayerSaberLength) {
-			cent->saberLength += ((cg.time - cent->saberExtendTime) + cg.timeFraction)*(0.05f* thisPlayerSaberLength / SABER_LENGTH_MAX);
+			cent->saberLength += ((cg.time - cent->saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
 		}
 
 		if (cent->saberLength > thisPlayerSaberLength) {
 			cent->saberLength = thisPlayerSaberLength;
 		}
-
 		cent->saberExtendTime = cg.time;
+	}
 //		saberLen = cent->saberLength;
 //	} else {
 //		saberLen = SABER_LENGTH_MAX;
@@ -4873,6 +4887,10 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 	} else {
 		saberLen = cent->saberLength;
 		cent->saberLengthOld = saberLen;
+	}
+
+	if (cent->saberLength == 0) {
+		return;
 	}
 
 /*
@@ -6721,7 +6739,7 @@ void CG_G2Animated( centity_t *cent )
 
 				VectorCopy(saberEnt->lerpAngles, bladeAngles);
 				bladeAngles[ROLL] = 0;
-				CG_AddSaberBlade(cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue);
+				CG_AddSaberBlade(cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue, qfalse);
 
 				//Make the player's hand glow while guiding the saber
 				{
@@ -6777,7 +6795,7 @@ void CG_G2Animated( centity_t *cent )
 				saberEnt->ghoul2 = NULL;
 				VectorClear(saberEnt->currentState.pos.trBase);
 			}
-			CG_AddSaberBlade(cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse);
+			CG_AddSaberBlade(cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qfalse);
 			cent->bolt3 = 0;
 			cent->bolt2 = 0;
 
@@ -9068,7 +9086,7 @@ stillDoSaber:
 
 				VectorCopy(saberEnt->lerpAngles, bladeAngles);
 				bladeAngles[ROLL] = 0;
-				CG_AddSaberBlade(cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue);
+				CG_AddSaberBlade(cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue, qfalse);
 
 				//Make the player's hand glow while guiding the saber
 				{
@@ -9122,12 +9140,36 @@ stillDoSaber:
 				saberEnt->ghoul2 = NULL;
 				VectorClear(saberEnt->currentState.pos.trBase);
 			}
-			CG_AddSaberBlade( cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse);
+			CG_AddSaberBlade( cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse,qfalse);
 			cent->bolt3 = 0;
 			cent->bolt2 = 0;
 
 			//cent->bolt4 = 0;
 		}
+	}
+	else if (cent->currentState.weapon == WP_SABER && (cent->currentState.shouldtarget && !forceSaberOn) && !cent->currentState.saberInFlight && cent->saberLength > 0) {
+		// make it retract
+		// mostly a copy paste from the else clause above
+		centity_t* saberEnt;
+
+		saberEnt = &cg_entities[cent->currentState.saberEntityNum];
+
+		if (/*cent->bolt4 && */!g2HasWeapon && !cent->anyDismember)
+		{
+			trap_G2API_CopySpecificGhoul2Model(g2WeaponInstances[WP_SABER], 0, cent->ghoul2, 1);
+
+			if (saberEnt && saberEnt->ghoul2)
+			{
+				trap_G2API_CleanGhoul2Models(&(saberEnt->ghoul2));
+			}
+
+			saberEnt->currentState.modelindex = 0;
+			saberEnt->ghoul2 = NULL;
+			VectorClear(saberEnt->currentState.pos.trBase);
+		}
+		CG_AddSaberBlade(cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qtrue); // last qtrue: retracting
+		cent->bolt3 = 0;
+		cent->bolt2 = 0;
 	}
 	else
 	{
