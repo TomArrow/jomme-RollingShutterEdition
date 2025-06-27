@@ -400,6 +400,9 @@ typedef struct centity_s {
 	float			saberLengthOld;
 	int				saberExtendTime;
 
+	float			saberLengthNonDead;
+	float			saberLengthOldNonDead;
+
 	int				rootBone;
 	int				torsoBolt;
 	
@@ -625,6 +628,19 @@ typedef struct localEntity_s {
 			int		shadowLineBlacklist; // for body parts
 			shadowlineBolts_t	shadowBolts;
 			qhandle_t	dismemberBaseBolt;
+
+			struct {
+				int				saberEntityNum;
+				float			saberLength;
+				float			saberLengthOld;
+				int				saberExtendTime;
+				int				bolt2;
+				int				icolor1;
+				saberTrail_t	saberTrail;
+				int				saberHitWallSoundDebounceTime;
+				int				saberMove;
+				int				powerups;
+			} saber;
 		} fragment;
 	} data;
 
@@ -2872,6 +2888,7 @@ void CG_GibPlayer(vec3_t playerOrigin, vec3_t baseVelocity);
 void Cam_AddGhoul2ShadowLines(refEntity_t* rent, int shadowLineBlackList, vec3_t angles, shadowlineBolts_t* shadowBolts, int dismCut, qhandle_t basebolt);
 void Cam_AddEntityShadowLines(centity_t* cent);
 qboolean CG_GetShadowLineBolts(void* ghoul2, shadowlineBolts_t* shadowBolts);
+void CG_AddSaberBlade(localEntity_t* lent, centity_t* cent1, centity_t* scent, refEntity_t* saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting);
 
 extern void *g2WeaponInstances[MAX_WEAPONS];
 /*

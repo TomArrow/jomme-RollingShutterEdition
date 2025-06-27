@@ -51,6 +51,14 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	
 	le->leFragmentType = LEFT_SABER;
 
+	le->data.fragment.saber.bolt2 = cent->bolt2;
+	le->data.fragment.saber.saberEntityNum = cent->currentState.saberEntityNum;
+	le->data.fragment.saber.saberLength = cent->saberLengthNonDead;
+	le->data.fragment.saber.saberExtendTime = cent->saberExtendTime;
+	le->data.fragment.saber.saberLengthOld = cent->saberLengthOldNonDead;
+	le->data.fragment.saber.saberMove = cent->currentState.saberMove;
+	le->data.fragment.saber.powerups = cent->currentState.powerups;
+
 	/////////SABER GHOUL2
 	ci = &cgs.clientinfo[cent->currentState.clientNum];
 	if (ci->saberModel && ci->saberModel[0])
@@ -58,6 +66,8 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	else
 		trap_G2API_InitGhoul2Model(&re->ghoul2, "models/weapons2/saber/saber_w.glm", 0, 0, 0, 0, 0);
 	
+	trap_G2API_AddBolt(re->ghoul2, 0, "*flash");
+
 	/////REMOVE SABER FROM PLAYERMODEL
 	if (trap_G2API_HasGhoul2ModelOnIndex(&(cent->ghoul2), 1))
 		trap_G2API_RemoveGhoul2Model(&(cent->ghoul2), 1);

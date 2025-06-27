@@ -343,6 +343,7 @@ void CG_AddFragment( localEntity_t *le ) {
 	vec3_t	newOrigin;
 	trace_t	trace;
 	qboolean isDismember = le->leFragmentType == LEFT_DISM;
+	qboolean isSaber = le->leFragmentType == LEFT_SABER;
 	vec3_t shadowAngles;
 
 	if (le->forceAlpha) {
@@ -378,6 +379,10 @@ void CG_AddFragment( localEntity_t *le ) {
 			trap_R_AddRefEntityToScene( &le->refEntity );
 		} else {
 			trap_R_AddRefEntityToScene( &le->refEntity );
+		}
+
+		if (isSaber) {
+			CG_AddSaberBlade(le, NULL, NULL, NULL, 0, 0, le->refEntity.origin, shadowAngles, qtrue, qtrue);
 		}
 
 		if (isDismember) {
@@ -417,6 +422,9 @@ void CG_AddFragment( localEntity_t *le ) {
 		trap_R_AddRefEntityToScene( &le->refEntity );
 		le->refEntity.origin[2] -= extraHeight; // gotta revert it or we dont get proper bounces as the new calculated pos ends up behind the old, so we get startsolid and all hell breaks loose
 
+		if (isSaber) {
+			CG_AddSaberBlade(le, NULL, NULL, NULL, 0, 0, le->refEntity.origin, shadowAngles, qtrue, qtrue);
+		}
 		if (isDismember) { // what about angles? uh.
 			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts, 0, le->data.fragment.dismemberBaseBolt);
 		}
@@ -500,6 +508,9 @@ void CG_AddFragment( localEntity_t *le ) {
 
 		trap_R_AddRefEntityToScene( &le->refEntity );
 
+		if (isSaber) {
+			CG_AddSaberBlade(le, NULL, NULL, NULL, 0, 0, le->refEntity.origin, shadowAngles, qtrue, qtrue);
+		}
 		if (isDismember) { // what about angles? uh.
 			Cam_AddGhoul2ShadowLines(&le->refEntity, le->data.fragment.shadowLineBlacklist, shadowAngles, &le->data.fragment.shadowBolts, 0, le->data.fragment.dismemberBaseBolt);
 		}

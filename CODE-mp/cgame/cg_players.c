@@ -4817,7 +4817,7 @@ static void CG_G2SaberEffects(vec3_t start, vec3_t end, centity_t *owner) {
 #define FX_USE_ALPHA		0x08000000
 #include "cg_demos_math.h"
 const vec3_t container = { -8.0f, 8.0f, 8.0f };
-void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
+void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
 	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
 	trace_t	trace;
 	int i = 0;
@@ -4832,44 +4832,52 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 	int scolor = 0;
 	vec3_t otherPos, otherDir, otherEnd;
 	float dualLen = 0.7;
-	qboolean nonPlayer = cent->currentState.number >= MAX_CLIENTS;
-	int thisPlayerSaberLength = nonPlayer ? SABER_LENGTH_MAX : cgs.clientinfo[cent->currentState.number].saberLength;
+	qboolean nonPlayer = !cent1 || cent1->currentState.number >= MAX_CLIENTS;
+	int thisPlayerSaberLength = nonPlayer ? SABER_LENGTH_MAX : cgs.clientinfo[cent1->currentState.number].saberLength;
 	int* saberHitWallSoundDebounceTime;
 	qboolean temporaryTrailSegmentBlade = qfalse;
 	qboolean temporaryTrailSegmentBlade2 = qfalse;
+	int saberEntityNum = cent1 ? cent1->currentState.saberEntityNum : lent->data.fragment.saber.saberEntityNum;
+	float*	saberLength = cent1 ? &cent1->saberLength : &lent->data.fragment.saber.saberLength;
+	int*	saberExtendTime = cent1 ? &cent1->saberExtendTime : &lent->data.fragment.saber.saberExtendTime;
+	float*	saberLengthOld = cent1 ? &cent1->saberLengthOld : &lent->data.fragment.saber.saberLengthOld;
+	int*	bolt2 = cent1 ? &cent1->bolt2 : &lent->data.fragment.saber.bolt2;
+	int*	saberMove = cent1 ? &cent1->currentState.saberMove : &lent->data.fragment.saber.saberMove;
+	int*	powerups = cent1 ? &cent1->currentState.powerups : &lent->data.fragment.saber.powerups;
+	int		saberInFlight = cent1 ? cent1->currentState.saberInFlight : 0;
 
-	saberEnt = &cg_entities[cent->currentState.saberEntityNum];
+	saberEnt = &cg_entities[saberEntityNum];
 
 //	if (cgs.clientinfo[ cent->currentState.clientNum ].team != TEAM_SPECTATOR &&
 //		!(cg.snap->ps.pm_flags & PMF_FOLLOW)) {
 	if (retracting) {
-		if (cent->saberLength > thisPlayerSaberLength) {
-			cent->saberLength = thisPlayerSaberLength;
-			cent->saberExtendTime = cg.time;
+		if (*saberLength > thisPlayerSaberLength) {
+			*saberLength = thisPlayerSaberLength;
+			*saberExtendTime = cg.time;
 		}
-		if (cent->saberLength > 0) {
-			cent->saberLength -= ((cg.time - cent->saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
+		if (*saberLength > 0) {
+			*saberLength -= ((cg.time -*saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
 		}
-		if (cent->saberLength < 0) {
-			cent->saberLength = 0;
+		if (*saberLength < 0) {
+			*saberLength = 0;
 		}
-		cent->saberExtendTime = cg.time;
+		*saberExtendTime = cg.time;
 	}
 	else {
-		if (cent->saberLength < 1) {
-			cent->saberLength = 1;
-			cent->saberExtendTime = cg.time;
+		if (*saberLength < 1) {
+			*saberLength = 1;
+			*saberExtendTime = cg.time;
 		}
 
 		//if (cent->saberLength < SABER_LENGTH_MAX) {
-		if (cent->saberLength < thisPlayerSaberLength) {
-			cent->saberLength += ((cg.time - cent->saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
+		if (*saberLength < thisPlayerSaberLength) {
+			*saberLength += ((cg.time - *saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
 		}
 
-		if (cent->saberLength > thisPlayerSaberLength) {
-			cent->saberLength = thisPlayerSaberLength;
+		if (*saberLength > thisPlayerSaberLength) {
+			*saberLength = thisPlayerSaberLength;
 		}
-		cent->saberExtendTime = cg.time;
+		*saberExtendTime = cg.time;
 	}
 //		saberLen = cent->saberLength;
 //	} else {
@@ -4877,19 +4885,19 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 //	}
 
 	if ((cg.time - cg.oldTime) == 0) {
-		if (cent->saberLengthOld != cent->saberLength) {
-			float lenDif = cent->saberLength - cent->saberLengthOld;
-			saberLen = cent->saberLengthOld + lenDif * cg.timeFraction;
-			cent->saberLength = cent->saberLengthOld;
+		if (*saberLengthOld != *saberLength) {
+			float lenDif = *saberLength - *saberLengthOld;
+			saberLen = *saberLengthOld + lenDif * cg.timeFraction;
+			*saberLength = *saberLengthOld;
 		} else {
-			saberLen = cent->saberLengthOld;
+			saberLen = *saberLengthOld;
 		}
 	} else {
-		saberLen = cent->saberLength;
-		cent->saberLengthOld = saberLen;
+		saberLen = *saberLength;
+		*saberLengthOld = saberLen;
 	}
 
-	if (cent->saberLength == 0) {
+	if (*saberLength == 0) {
 		return;
 	}
 
@@ -4899,7 +4907,7 @@ Ghoul2 Insert Start
 
 	dualSaberLen = saberLen;
 
-	if ((cent->currentState.eFlags & EF_DEAD) && !fromSaber)
+	if ((cent1 && (cent1->currentState.eFlags & EF_DEAD)) && !fromSaber)
 	{ //trying to draw a saber on a corpse? That's bad.
 		return;
 	}
@@ -4911,11 +4919,21 @@ Ghoul2 Insert Start
 	// figure out where the actual model muzzle is
 	if (fromSaber)
 	{
-		trap_G2API_GetBoltMatrix(scent->ghoul2, 0, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, scent->modelScale);
+		if (!cent1 && lent) {
+			trap_G2API_GetBoltMatrix(lent->refEntity.ghoul2, 0, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, lent->refEntity.modelScale);
+		}
+		else {
+			trap_G2API_GetBoltMatrix(scent->ghoul2, 0, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, scent->modelScale);
+		}
 	}
 	else
 	{
-		trap_G2API_GetBoltMatrix(scent->ghoul2, 1, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, scent->modelScale);
+		if (!cent1 && lent) {
+			trap_G2API_GetBoltMatrix(lent->refEntity.ghoul2, 1, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, lent->refEntity.modelScale);
+		}
+		else {
+			trap_G2API_GetBoltMatrix(scent->ghoul2, 1, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, scent->modelScale);
+		}
 	}
 	// work the matrix axis stuff into the original axis and origins used.
 	trap_G2API_GiveMeVectorFromMatrix(&boltMatrix, ORIGIN, org_);
@@ -4928,14 +4946,14 @@ Ghoul2 Insert Start
 		VectorCopy(axis_[0], saberEnt->currentState.apos.trBase);
 	}
 
-	client = &cgs.clientinfo[cent->currentState.number];
+	client = nonPlayer ? NULL : &cgs.clientinfo[cent1->currentState.number];
 
 	if (!client && !nonPlayer)
 	{ //something horrible has apparently happened
 		return;
 	}
 
-	if (cent->currentState.bolt2)
+	if (*bolt2)
 	{
 		VectorMA( org_, saberLen*dualLen, axis_[0], end );
 		VectorMA( org_, saberLen*dualLen/2.0f, axis_[0], mid );
@@ -4953,7 +4971,7 @@ Ghoul2 Insert Start
 	
 	VectorAdd( end, axis_[0], end );
 
-	if (cent->currentState.bolt2)
+	if (*bolt2)
 	{
 		otherPos[0] = org_[0] - axis_[0][0]*12;
 		otherPos[1] = org_[1] - axis_[0][1]*12;
@@ -4969,14 +4987,17 @@ Ghoul2 Insert Start
 
 	if (nonPlayer) {
 		scolor = 1; // for now. TODO tunnel that through the entity somehow
+		if (!cent1 && lent) {
+			scolor = lent->data.fragment.saber.icolor1;
+		}
 	}
 	else {
-		scolor = cgs.clientinfo[cent->currentState.number].icolor1;
+		scolor = cgs.clientinfo[cent1->currentState.number].icolor1;
 
 		if (cgs.gametype >= GT_TEAM && (!cgs.jediVmerc || demo15detected) && mov_saberTeamColour.integer) {
-			if (cgs.clientinfo[cent->currentState.number].team == TEAM_RED)
+			if (cgs.clientinfo[cent1->currentState.number].team == TEAM_RED)
 				scolor = SABER_RED;
-			else if (cgs.clientinfo[cent->currentState.number].team == TEAM_BLUE)
+			else if (cgs.clientinfo[cent1->currentState.number].team == TEAM_BLUE)
 				scolor = SABER_BLUE;
 		}
 	}
@@ -4987,16 +5008,16 @@ Ghoul2 Insert Start
 	}
 
 #ifdef G2_COLLISION_ENABLED
-	if (!demo15detected && cg_saberModelTraceEffect.integer) {
-		CG_G2SaberEffects(org_, end, cent);
+	if (cent1 && (!demo15detected || cg_saberModelTraceEffect.integer==2) && cg_saberModelTraceEffect.integer) {
+		CG_G2SaberEffects(org_, end, cent1);
 	}
 #endif
 
 	int saberMarksFps = cg_saberMarksFps.integer ? cg_saberMarksFps.integer : fx_vfps.integer;
 	int iterations = cg_saberMarksDoubleSided.integer ? 2 : 1;
 
-	saberTrail = nonPlayer ? &cent->entSaberTrail : &client->saberTrail;
-	saberHitWallSoundDebounceTime = nonPlayer ? &cent->saberHitWallSoundDebounceTime : &client->saberHitWallSoundDebounceTime;
+	saberTrail = nonPlayer ? (!cent1 ? &lent->data.fragment.saber.saberTrail: &cent1->entSaberTrail) : &client->saberTrail;
+	saberHitWallSoundDebounceTime = nonPlayer ? (!cent1 ? &lent->data.fragment.saber.saberHitWallSoundDebounceTime : &cent1->saberHitWallSoundDebounceTime) : &client->saberHitWallSoundDebounceTime;
 
 	if (cg.time < saberTrail->lastTimeMark) // In case we rewind.
 		saberTrail->lastTimeMark = cg.time;
@@ -5031,7 +5052,7 @@ Ghoul2 Insert Start
 					VectorCopy(trace.endpos, end);
 				}
 
-				if (cent->currentState.bolt2)
+				if (*bolt2)
 				{
 					break;
 				}
@@ -5086,7 +5107,7 @@ Ghoul2 Insert Start
 			}
 			else
 			{
-				if (cent->currentState.bolt2)
+				if (*bolt2)
 				{
 					break;
 				}
@@ -5106,7 +5127,7 @@ Ghoul2 Insert Start
 		}
 	}
 
-	if (cent->currentState.bolt2)
+	if (*bolt2)
 	{
 		for ( i = 0; i < 1; i++ )//was 2 because it would go through architecture and leave saber trails on either side of the brush - but still looks bad if we hit a corner, blade is still 8 longer than hit
 		{
@@ -5145,8 +5166,8 @@ CheckTrail:
 	//	the system with very small trail slices...but perhaps doing it by distance would yield better results?
 	//if (  ) 
 	{ // 2ms
-		if ((saberMoveData[cent->currentState.saberMove].trailLength > 0
-			|| ((cent->currentState.powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || cent->currentState.saberInFlight || cg_saberTrail.integer == 3)
+		if ((saberMoveData[*saberMove].trailLength > 0
+			|| ((*powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || saberInFlight || cg_saberTrail.integer == 3)
 			&& (cg.time < saberTrail->lastTime + 2000 || cg.time < saberTrail->lastTimeDual + 2000) // if we have a stale segment, don't draw until we have a fresh one
 			)
 		{
@@ -5186,7 +5207,7 @@ CheckTrail:
 				case SABER_ELEC2:
 				case SABER_RGB:
 					{
-						int cnum = cent->currentState.clientNum;
+						int cnum = !cent1 ? -1 : cent1->currentState.clientNum;
 						if (nonPlayer) {
 							VectorSet( rgb1, 0.0f, 64.0f, 255.0f );
 						}
@@ -5298,7 +5319,7 @@ CheckTrail:
 				trap_FX_AddPrimitive(&fx);
 			}
 
-			if (cent->currentState.bolt2 && cg.time < saberTrail->lastTimeDual + 2000) {
+			if (*bolt2 && cg.time < saberTrail->lastTimeDual + 2000) {
 				//float oldAlpha = 1.0f - ( diff / SABER_TRAIL_TIME );
 				float oldAlpha = 1.0f - ( diff / cg_saberTrailTime.value);
 
@@ -5363,7 +5384,7 @@ CheckTrail:
 			saberTrail->lastTime = cg.time;
 		}
 
-		if (cent->currentState.bolt2 && !temporaryTrailSegmentBlade2)
+		if (*bolt2 && !temporaryTrailSegmentBlade2)
 		{
 			VectorCopy(otherPos, saberTrail->dualbase);
 			VectorMA(otherEnd, 3.0f, otherDir, saberTrail->dualtip);
@@ -5377,18 +5398,18 @@ JustDoIt:
 	if (cg_saberTrail.integer && cg.time < saberTrail->lastTimeDual)
 		saberTrail->lastTimeDual = cg.time;
 
-	if ((client || nonPlayer) && cent->currentState.bolt2) {
+	if ((client || nonPlayer) && *bolt2) {
 		float sideOneLen = saberLen*dualLen;
 		float sideTwoLen = dualSaberLen*dualLen;
 		if (sideOneLen < 1) {
 			sideOneLen = 1;
 		}		
-		CG_DoSaber(org_, axis_[0], sideOneLen, scolor, renderfx, nonPlayer ? -1: cent->currentState.clientNum);
-		CG_DoSaber(otherPos, otherDir, sideTwoLen, scolor, renderfx, nonPlayer ? -1 : cent->currentState.clientNum);
+		CG_DoSaber(org_, axis_[0], sideOneLen, scolor, renderfx, nonPlayer ? -1: cent1->currentState.clientNum);
+		CG_DoSaber(otherPos, otherDir, sideTwoLen, scolor, renderfx, nonPlayer ? -1 : cent1->currentState.clientNum);
 	} else {
 		// Pass in the renderfx flags attached to the saber weapon model...this is done so that saber glows
 		//	will get rendered properly in a mirror...not sure if this is necessary??
-		CG_DoSaber(org_, axis_[0], saberLen, scolor, renderfx, nonPlayer ? -1 : cent->currentState.clientNum);
+		CG_DoSaber(org_, axis_[0], saberLen, scolor, renderfx, nonPlayer ? -1 : cent1->currentState.clientNum);
 	}
 }
 
@@ -6739,7 +6760,7 @@ void CG_G2Animated( centity_t *cent )
 
 				VectorCopy(saberEnt->lerpAngles, bladeAngles);
 				bladeAngles[ROLL] = 0;
-				CG_AddSaberBlade(cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue, qfalse);
+				CG_AddSaberBlade(NULL, cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue, qfalse);
 
 				//Make the player's hand glow while guiding the saber
 				{
@@ -6795,12 +6816,36 @@ void CG_G2Animated( centity_t *cent )
 				saberEnt->ghoul2 = NULL;
 				VectorClear(saberEnt->currentState.pos.trBase);
 			}
-			CG_AddSaberBlade(cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qfalse);
+			CG_AddSaberBlade(NULL, cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qfalse);
 			cent->bolt3 = 0;
 			cent->bolt2 = 0;
 
 			//cent->bolt4 = 0;
 		}
+	}
+	else if (cent->currentState.weapon == WP_SABER && (cent->currentState.shouldtarget && !forceSaberOn) && !cent->currentState.saberInFlight && cent->saberLength > 0) {
+		// make it retract
+		// mostly a copy paste from the else clause above
+		centity_t* saberEnt;
+
+		saberEnt = &cg_entities[cent->currentState.saberEntityNum];
+
+		if (/*cent->bolt4 && */!g2HasWeapon && !cent->anyDismember)
+		{
+			trap_G2API_CopySpecificGhoul2Model(g2WeaponInstances[WP_SABER], 0, cent->ghoul2, 1);
+
+			if (saberEnt && saberEnt->ghoul2)
+			{
+				trap_G2API_CleanGhoul2Models(&(saberEnt->ghoul2));
+			}
+
+			saberEnt->currentState.modelindex = 0;
+			saberEnt->ghoul2 = NULL;
+			VectorClear(saberEnt->currentState.pos.trBase);
+		}
+		CG_AddSaberBlade(NULL, cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qtrue); // last qtrue: retracting
+		cent->bolt3 = 0;
+		cent->bolt2 = 0;
 	}
 	else
 	{
@@ -9086,7 +9131,7 @@ stillDoSaber:
 
 				VectorCopy(saberEnt->lerpAngles, bladeAngles);
 				bladeAngles[ROLL] = 0;
-				CG_AddSaberBlade(cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue, qfalse);
+				CG_AddSaberBlade(NULL, cent, saberEnt, NULL, 0, 0, saberEnt->lerpOrigin, bladeAngles, qtrue, qfalse);
 
 				//Make the player's hand glow while guiding the saber
 				{
@@ -9140,7 +9185,7 @@ stillDoSaber:
 				saberEnt->ghoul2 = NULL;
 				VectorClear(saberEnt->currentState.pos.trBase);
 			}
-			CG_AddSaberBlade( cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse,qfalse);
+			CG_AddSaberBlade(NULL, cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse,qfalse);
 			cent->bolt3 = 0;
 			cent->bolt2 = 0;
 
@@ -9167,7 +9212,7 @@ stillDoSaber:
 			saberEnt->ghoul2 = NULL;
 			VectorClear(saberEnt->currentState.pos.trBase);
 		}
-		CG_AddSaberBlade(cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qtrue); // last qtrue: retracting
+		CG_AddSaberBlade(NULL, cent, cent, NULL, 0, 0, legs.origin, rootAngles, qfalse, qtrue); // last qtrue: retracting
 		cent->bolt3 = 0;
 		cent->bolt2 = 0;
 	}
@@ -9175,6 +9220,7 @@ stillDoSaber:
 	{
 		cent->saberLength = 0;
 	}
+	
 
 	if (cent->currentState.eFlags & EF_DEAD)
 	{
@@ -9183,6 +9229,10 @@ stillDoSaber:
 			trap_G2API_RemoveGhoul2Model(&(cent->ghoul2), 1);
 			g2HasWeapon = qfalse;
 		}
+	}
+	else {
+		cent->saberLengthNonDead = cent->saberLength;
+		cent->saberLengthOldNonDead = cent->saberLengthOld;
 	}
 
 	if (iwantout)
