@@ -449,6 +449,8 @@ typedef struct centity_s {
 	struct {
 		vec3_t			modelScale;
 		char			skinName[MAX_QPATH];
+		int				saberColor;
+		qboolean		saberColorKnown;
 	} entcs;
 
 	shadowlineBolts_t	shadowBolts;

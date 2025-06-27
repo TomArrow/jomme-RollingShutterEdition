@@ -4986,9 +4986,16 @@ Ghoul2 Insert Start
 	}
 
 	if (nonPlayer) {
-		scolor = 1; // for now. TODO tunnel that through the entity somehow
 		if (!cent1 && lent) {
 			scolor = lent->data.fragment.saber.icolor1;
+		}
+		else if (cent1) {
+			if (cent1->entcs.saberColorKnown) {
+				scolor = cent1->entcs.saberColor;
+			}
+			else {
+				scolor = 1;
+			}
 		}
 	}
 	else {

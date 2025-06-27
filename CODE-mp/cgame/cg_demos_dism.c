@@ -65,7 +65,9 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 		trap_G2API_InitGhoul2Model(&re->ghoul2, va("models/weapons2/%s/saber_w.glm", ci->saberModel), 0, 0, 0, 0, 0);
 	else
 		trap_G2API_InitGhoul2Model(&re->ghoul2, "models/weapons2/saber/saber_w.glm", 0, 0, 0, 0, 0);
-	
+
+	le->data.fragment.saber.icolor1 = ci->icolor1;
+
 	trap_G2API_AddBolt(re->ghoul2, 0, "*flash");
 
 	/////REMOVE SABER FROM PLAYERMODEL

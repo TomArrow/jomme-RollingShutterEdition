@@ -327,6 +327,15 @@ void CG_NewEntityInfo(int num) {
 
 	s = Info_ValueForKey(entcs, "skin");
 	Q_strncpyz(cent->entcs.skinName, s, sizeof(cent->entcs.skinName));
+	s = Info_ValueForKey(entcs, "c1");
+	if (*s) {
+		cent->entcs.saberColor = atoi(s);
+		cent->entcs.saberColorKnown = qtrue;
+	}
+	else {
+		cent->entcs.saberColor = 1;
+		cent->entcs.saberColorKnown = qfalse;
+	}
 	s = Info_ValueForKey(entcs, "modelScaleX");
 	if (*s) {
 		cent->modelScale[0] = cent->entcs.modelScale[0] = atof(s);
