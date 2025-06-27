@@ -10,6 +10,11 @@
 
 // TODO Try to also allow dismemberment for dead bodies that are no longer at the original entity number < MAX_CLIENTS
 
+const vec3_t limbMins = { -6.0f, -6.0f, -9.0f };
+const vec3_t limbMaxs = { 6.0f, 6.0f, 6.0f };
+const vec3_t saberMins = { -3.0f, -3.0f, -3.0f };
+const vec3_t saberMaxs = { 3.0f, 3.0f, 3.0f };
+
 void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	localEntity_t	*le;
 	refEntity_t		*re;
@@ -44,9 +49,9 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	le->bounceFactor = 0.6f;
 	
 	VectorCopy(dir, le->pos.trDelta );
-	le->angles.trDelta[0] = Q_irand(-20,20);
-	le->angles.trDelta[1] = Q_irand(-20,20);
-	le->angles.trDelta[2] = Q_irand(-20,20);
+	le->angles.trDelta[0] = Q_irand(-20,40);
+	le->angles.trDelta[1] = Q_irand(-20,40);
+	le->angles.trDelta[2] = Q_irand(-20,40);
 	le->angles.trDelta[Q_irand(0,3)] = 0;
 	
 	le->leFragmentType = LEFT_SABER;
@@ -58,6 +63,9 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	le->data.fragment.saber.saberLengthOld = cent->saberLengthOldNonDead;
 	le->data.fragment.saber.saberMove = cent->currentState.saberMove;
 	le->data.fragment.saber.powerups = cent->currentState.powerups;
+	le->data.fragment.mins = saberMins;
+	le->data.fragment.maxs = saberMaxs;
+	le->leFlags |= LEF_TUMBLE;
 
 	/////////SABER GHOUL2
 	ci = &cgs.clientinfo[cent->currentState.clientNum];
@@ -67,6 +75,7 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 		trap_G2API_InitGhoul2Model(&re->ghoul2, "models/weapons2/saber/saber_w.glm", 0, 0, 0, 0, 0);
 
 	le->data.fragment.saber.icolor1 = ci->icolor1;
+	le->data.fragment.saber.saberTrail = ci->saberTrail;
 
 	trap_G2API_AddBolt(re->ghoul2, 0, "*flash");
 
@@ -463,6 +472,16 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	
 	VectorCopy(dir, le->pos.trDelta );
 	le->leFragmentType = LEFT_DISM;
+
+	le->angles.trDelta[0] = Q_irand(-20, 40);
+	le->angles.trDelta[1] = Q_irand(-20, 40);
+	le->angles.trDelta[2] = Q_irand(-20, 40);
+	le->angles.trDelta[Q_irand(0, 3)] = 0;
+
+	le->data.fragment.mins = limbMins;
+	le->data.fragment.maxs = limbMaxs;
+
+	le->leFlags |= LEF_TUMBLE;
 	
 	/////////DUPLICATE GHOUL2
 	if (re->ghoul2 && trap_G2_HaveWeGhoul2Models(re->ghoul2))

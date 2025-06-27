@@ -630,6 +630,7 @@ typedef struct localEntity_s {
 			int		shadowLineBlacklist; // for body parts
 			shadowlineBolts_t	shadowBolts;
 			qhandle_t	dismemberBaseBolt;
+			vec_t		*mins, *maxs;
 
 			struct {
 				int				saberEntityNum;
@@ -1949,6 +1950,7 @@ extern	vmCvar_t		cg_saberDynamicMarkTime;
 extern	vmCvar_t		cg_saberContact;
 extern	vmCvar_t		cg_saberTrail;
 extern	vmCvar_t		cg_saberTrailTime;
+extern	vmCvar_t		cg_saberTrailTimeShort;
 extern	vmCvar_t		cg_saberTrailMaxFPS;
 extern	vmCvar_t		cg_saberTrailMinSegDist;
 

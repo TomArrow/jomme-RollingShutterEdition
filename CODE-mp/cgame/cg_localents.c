@@ -399,9 +399,14 @@ void CG_AddFragment( localEntity_t *le ) {
 	demoNowTrajectory( &le->pos, newOrigin );
 
 	// trace a line from previous position to new position
-	CG_Trace( &trace, le->refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
+	if (le->data.fragment.mins && le->data.fragment.maxs) {
+		CG_Trace(&trace, le->refEntity.origin, le->data.fragment.mins, le->data.fragment.maxs, newOrigin, -1, CONTENTS_SOLID);
+	}
+	else {
+		CG_Trace(&trace, le->refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID);
+	}
 	if ( trace.fraction == 1.0 ) {
-		float extraHeight = 0;
+		//float extraHeight = 0;
 		// still in free fall
 		VectorCopy( newOrigin, le->refEntity.origin );
 
@@ -412,15 +417,16 @@ void CG_AddFragment( localEntity_t *le ) {
 			AnglesToAxis( angles, le->refEntity.axis );
 			VectorCopy(angles, shadowAngles);
 		}
-
-		if ( mov_dismember.integer && le->leFragmentType == LEFT_DISM ) {
-			extraHeight += 8;
-		} else if ( mov_dismember.integer && le->leFragmentType == LEFT_SABER ) {
-			extraHeight += 1;
-		}
-		le->refEntity.origin[2] += extraHeight;
+		
+		// we added mins/maxs to the trace so dont need this anymore
+		//if ( mov_dismember.integer && le->leFragmentType == LEFT_DISM ) {
+		//	extraHeight += 8;
+		//} else if ( mov_dismember.integer && le->leFragmentType == LEFT_SABER ) {
+		//	extraHeight += 1;
+		//}
+		//le->refEntity.origin[2] += extraHeight;
 		trap_R_AddRefEntityToScene( &le->refEntity );
-		le->refEntity.origin[2] -= extraHeight; // gotta revert it or we dont get proper bounces as the new calculated pos ends up behind the old, so we get startsolid and all hell breaks loose
+		//le->refEntity.origin[2] -= extraHeight; // gotta revert it or we dont get proper bounces as the new calculated pos ends up behind the old, so we get startsolid and all hell breaks loose
 
 		if (isSaber) {
 			CG_AddSaberBlade(le, NULL, NULL, NULL, 0, 0, le->refEntity.origin, shadowAngles, qtrue, qtrue);

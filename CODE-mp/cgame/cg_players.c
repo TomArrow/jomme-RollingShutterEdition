@@ -4837,6 +4837,9 @@ void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, 
 	int* saberHitWallSoundDebounceTime;
 	qboolean temporaryTrailSegmentBlade = qfalse;
 	qboolean temporaryTrailSegmentBlade2 = qfalse;
+	float saberTrailTimeShort =  cg_saberTrailTimeShort.value;
+	float saberTrailTime = !cent1 ? saberTrailTimeShort : cg_saberTrailTime.value;
+
 	int saberEntityNum = cent1 ? cent1->currentState.saberEntityNum : lent->data.fragment.saber.saberEntityNum;
 	float*	saberLength = cent1 ? &cent1->saberLength : &lent->data.fragment.saber.saberLength;
 	int*	saberExtendTime = cent1 ? &cent1->saberExtendTime : &lent->data.fragment.saber.saberExtendTime;
@@ -5173,8 +5176,13 @@ CheckTrail:
 	//	the system with very small trail slices...but perhaps doing it by distance would yield better results?
 	//if (  ) 
 	{ // 2ms
-		if ((saberMoveData[*saberMove].trailLength > 0
-			|| ((*powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || saberInFlight || cg_saberTrail.integer == 3)
+		qboolean dosabertrail = saberMoveData[*saberMove].trailLength > 0
+			|| ((*powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || saberInFlight || cg_saberTrail.integer == 3;
+		if (!dosabertrail && cg_saberTrail.integer == 4 ) {
+			dosabertrail = qtrue;
+			saberTrailTime = saberTrailTimeShort;
+		}
+		if ((dosabertrail)
 			&& (cg.time < saberTrail->lastTime + 2000 || cg.time < saberTrail->lastTimeDual + 2000) // if we have a stale segment, don't draw until we have a fresh one
 			)
 		{
@@ -5279,7 +5287,7 @@ CheckTrail:
 			if(cg.time < saberTrail->lastTime + 2000) // if we have a stale segment, don't draw until we have a fresh one
 			{
 				//float oldAlpha = 1.0f - ( diff / SABER_TRAIL_TIME );
-				float oldAlpha = 1.0f - ( diff / cg_saberTrailTime.value );
+				float oldAlpha = 1.0f - ( diff / saberTrailTime);
 
 				// New muzzle
 				VectorCopy( rgb1, fx.mVerts[0].rgb );
@@ -5321,14 +5329,14 @@ CheckTrail:
 				fx.mShader = trailShader;//cgs.media.saberBlurShader;
 				fx.mSetFlags = FX_USE_ALPHA;
 				//fx.mKillTime = SABER_TRAIL_TIME;
-				fx.mKillTime = temporaryTrailSegmentBlade ? 0 : cg_saberTrailTime.value;
+				fx.mKillTime = temporaryTrailSegmentBlade ? 0 : saberTrailTime;
 
 				trap_FX_AddPrimitive(&fx);
 			}
 
 			if (*bolt2 && cg.time < saberTrail->lastTimeDual + 2000) {
 				//float oldAlpha = 1.0f - ( diff / SABER_TRAIL_TIME );
-				float oldAlpha = 1.0f - ( diff / cg_saberTrailTime.value);
+				float oldAlpha = 1.0f - ( diff / saberTrailTime);
 
 				VectorCopy( otherPos, fx.mVerts[0].origin );
 				VectorMA( otherEnd, 3.0f, otherDir, fx.mVerts[1].origin );
@@ -5378,7 +5386,7 @@ CheckTrail:
 				fx.mShader = trailShader;//cgs.media.saberBlurShader;
 				fx.mSetFlags = FX_USE_ALPHA;
 				//fx.mKillTime = SABER_TRAIL_TIME;
-				fx.mKillTime = temporaryTrailSegmentBlade2 ? 0 : cg_saberTrailTime.value;
+				fx.mKillTime = temporaryTrailSegmentBlade2 ? 0 : saberTrailTime;
 
 				trap_FX_AddPrimitive(&fx);
 			}

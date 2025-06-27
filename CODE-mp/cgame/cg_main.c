@@ -524,8 +524,9 @@ vmCvar_t	cg_saberDynamicMarks;
 vmCvar_t	cg_saberDynamicMarkTime;
 
 vmCvar_t	cg_saberContact;
-vmCvar_t	cg_saberTrail;
+vmCvar_t	cg_saberTrail; // 1 = on. 2 = always when speed. 3= always. 4= always but short if not normal (cg_saberTrailTimeShort)
 vmCvar_t	cg_saberTrailTime;
+vmCvar_t	cg_saberTrailTimeShort;
 vmCvar_t	cg_saberTrailMaxFPS;
 vmCvar_t	cg_saberTrailMinSegDist;
 
@@ -858,6 +859,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_saberContact, "cg_saberContact", "1", NULL, 0 },
 	{ &cg_saberTrail, "cg_saberTrail", "2", NULL, CVAR_ARCHIVE },
 	{ &cg_saberTrailTime, "cg_saberTrailTime", "40.0", NULL, CVAR_ARCHIVE },
+	{ &cg_saberTrailTimeShort, "cg_saberTrailTimeShort", "10.0", NULL, CVAR_ARCHIVE },
 	{ &cg_saberTrailMaxFPS, "cg_saberTrailMaxFPS", "250", NULL, CVAR_ARCHIVE },
 	{ &cg_saberTrailMinSegDist, "cg_saberTrailMinSegDist", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_saberForceOn, "cg_saberForceOn", "0", NULL, CVAR_TEMP },
