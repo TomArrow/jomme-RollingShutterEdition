@@ -962,6 +962,11 @@ mmeRollingShutterInfo_t* trap_MME_GetRollingShutterInfo() {
 	syscall(CG_MME_GETROLLINGSHUTTERINFO, &rsInfo);
 	return &rsInfo;
 }
+jitterSegmentAdvanceInfo_t* trap_CG_MME_GetJitterSegmentAdvanceInfo() {
+	static jitterSegmentAdvanceInfo_t  jsaInfo;
+	syscall(CG_MME_GETJITTERSEGMENTADVANCEINFO, &jsaInfo);
+	return &jsaInfo;
+}
 
 void trap_R_ParseWaveform(const char* text, waveForm_t* wf) {
 	syscall(CG_R_PARSEWAVEFORM, text,  wf);

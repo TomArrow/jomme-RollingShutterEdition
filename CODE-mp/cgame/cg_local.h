@@ -2758,6 +2758,7 @@ void trap_FX_AddScheduledEffects( void );
 int	trap_FX_InitSystem( void );	// called in CG_Init to purge the fx system.
 qboolean trap_FX_FreeSystem( void );	// ditches all active effects;
 void trap_FX_AdjustTime( int time, float frametime, float timeFraction, vec3_t vieworg, vec3_t viewaxis[3] );
+jitterSegmentAdvanceInfo_t* trap_CG_MME_GetJitterSegmentAdvanceInfo();
 
 void trap_FX_AddPoly( addpolyArgStruct_t *p );
 void trap_FX_AddBezier( addbezierArgStruct_t *p );

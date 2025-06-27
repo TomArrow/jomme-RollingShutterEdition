@@ -4304,7 +4304,7 @@ static void CG_RGBForSaberColor(saber_colors_t color, vec3_t rgb, int cnum) {
 
 //void CG_DoSaber( vec3_t origin, vec3_t dir, float length, saber_colors_t color, int rfx )
 //[RGBSabers]
-void CG_DoSaber(vec3_t origin, vec3_t dir, float length, saber_colors_t color, int rfx, int cnum) {
+void CG_DoSaber(vec3_t origin, vec3_t dir, float length, float traceRatio, saber_colors_t color, int rfx, int cnum) {
 	vec3_t		mid, rgb={1,1,1};
 	qhandle_t	blade = 0, glow = 0;
 	refEntity_t saber;
@@ -4314,6 +4314,7 @@ void CG_DoSaber(vec3_t origin, vec3_t dir, float length, saber_colors_t color, i
 	refEntity_t sbak;
 	float lol;
 	int i;
+	jitterSegmentAdvanceInfo_t* jsaInfo = trap_CG_MME_GetJitterSegmentAdvanceInfo();
 	//[/RGBSabers]
 
 	// if the thing is so short, just forget even adding me.
@@ -4322,7 +4323,20 @@ void CG_DoSaber(vec3_t origin, vec3_t dir, float length, saber_colors_t color, i
 	}
 
 	// Find the midpoint of the saber for lighting purposes
-	VectorMA(origin, length * 0.5f, dir, mid);
+	if (jsaInfo->isRecording) {
+		// "jitter" :)
+		// subdivide length into 3 segments.
+		// subdivide each segment into totalframes/3 parts 
+		// i didnt rly make sure this is mathematically sound and covers the range perfectly or anything, just to give roughly a decent result. why overthink it.
+		int segment = jsaInfo->currentIndex % 3;
+		int progress = jsaInfo->currentIndex / 3;
+		float progressMult = 1.0f / (float)jsaInfo->totalFrames;
+		float progressHere = (float)segment / 3.0f + (float)progress * progressMult;
+		VectorMA(origin, length * traceRatio * progressHere, dir, mid); // we use the trace ratio for light positioning, so the illumination doesn't get lost as easily.
+	}
+	else {
+		VectorMA(origin, length * traceRatio * 0.5f, dir, mid); // we use the trace ratio for light positioning, so the illumination doesn't get lost as easily.
+	}
 	
 	if ((int)length > 1 && cg.rainNumber > 0 && cg.rainTime <= cg.time && Q_irand(0,5000) <= cg.rainNumber) {
 		int pos = Q_irand(0,length);
@@ -4819,6 +4833,7 @@ static void CG_G2SaberEffects(vec3_t start, vec3_t end, centity_t *owner) {
 const vec3_t container = { -8.0f, 8.0f, 8.0f };
 void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
 	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
+	float	traceFraction, traceFractionOther;
 	trace_t	trace;
 	int i = 0;
 	float saberLen, dualSaberLen;
@@ -4874,7 +4889,11 @@ void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, 
 
 		//if (cent->saberLength < SABER_LENGTH_MAX) {
 		if (*saberLength < thisPlayerSaberLength) {
-			*saberLength += ((cg.time - *saberExtendTime) + cg.timeFraction) * (0.05f * thisPlayerSaberLength / SABER_LENGTH_MAX);
+			float growthFactor = 0.05f;
+			if (BG_SaberInAttack(*saberMove)) {
+				growthFactor = 0.15f; // if we are in a attack, expand faster. looks better for dbs
+			}
+			*saberLength += ((cg.time - *saberExtendTime) + cg.timeFraction) * (growthFactor * thisPlayerSaberLength / SABER_LENGTH_MAX);
 		}
 
 		if (*saberLength > thisPlayerSaberLength) {
@@ -5043,6 +5062,7 @@ Ghoul2 Insert Start
 			else
 			{//tracing from base to end
 				CG_Trace(&trace, org_, NULL, NULL, end, ENTITYNUM_NONE, MASK_SOLID);
+				traceFraction = trace.fraction;
 			}
 
 			if (trace.fraction < 1.0f)
@@ -5136,12 +5156,18 @@ Ghoul2 Insert Start
 			}
 		}
 	}
+	else {
+		// still need tracefraction for the light pos
+		CG_Trace(&trace, org_, NULL, NULL, end, ENTITYNUM_NONE, MASK_SOLID);
+		traceFraction = trace.fraction;
+	}
 
 	if (*bolt2)
 	{
 		for ( i = 0; i < 1; i++ )//was 2 because it would go through architecture and leave saber trails on either side of the brush - but still looks bad if we hit a corner, blade is still 8 longer than hit
 		{
 			CG_Trace( &trace, otherPos, NULL, NULL, otherEnd, ENTITYNUM_NONE, MASK_SOLID );
+			traceFractionOther = trace.fraction;
 
 			if ( trace.fraction < 1.0f )
 			{
@@ -5419,12 +5445,12 @@ JustDoIt:
 		if (sideOneLen < 1) {
 			sideOneLen = 1;
 		}		
-		CG_DoSaber(org_, axis_[0], sideOneLen, scolor, renderfx, nonPlayer ? -1: cent1->currentState.clientNum);
-		CG_DoSaber(otherPos, otherDir, sideTwoLen, scolor, renderfx, nonPlayer ? -1 : cent1->currentState.clientNum);
+		CG_DoSaber(org_, axis_[0], sideOneLen,traceFraction, scolor, renderfx, nonPlayer ? -1: cent1->currentState.clientNum);
+		CG_DoSaber(otherPos, otherDir, sideTwoLen, traceFractionOther, scolor, renderfx, nonPlayer ? -1 : cent1->currentState.clientNum);
 	} else {
 		// Pass in the renderfx flags attached to the saber weapon model...this is done so that saber glows
 		//	will get rendered properly in a mirror...not sure if this is necessary??
-		CG_DoSaber(org_, axis_[0], saberLen, scolor, renderfx, nonPlayer ? -1 : cent1->currentState.clientNum);
+		CG_DoSaber(org_, axis_[0], saberLen, traceFraction, scolor, renderfx, nonPlayer ? -1 : cent1->currentState.clientNum);
 	}
 }
 
@@ -6635,8 +6661,8 @@ void CG_G2Animated( centity_t *cent )
 	{
 		if (!cent->currentState.saberInFlight && !(cent->currentState.eFlags & EF_DEAD))
 		{
-			//they yell all the time about being not precached
-#ifndef _DEBUG
+			//they yell all the time about being not precached - TA: nah, not anymore :) 
+//#ifndef _DEBUG
 			if (cg.playerCent && cent->currentState.number == cg.playerCent->currentState.number)
 			{
 				trap_S_AddLoopingSound(cent->currentState.number, cent->lerpOrigin, vec3_origin,
@@ -6649,7 +6675,7 @@ void CG_G2Animated( centity_t *cent )
 				trap_S_AddLoopingSound(cent->currentState.number, cent->lerpOrigin, vec3_origin,
 					trap_S_RegisterSound("sound/weapons/saber/saberhum1.wav"));
 			}
-#endif
+//#endif
 		}
 
 		/*if (iwantout && !cent->currentState.saberInFlight) {
@@ -9008,8 +9034,8 @@ stillDoSaber:
 	{
 		if (!cent->currentState.saberInFlight && !(cent->currentState.eFlags & EF_DEAD))
 		{
-//they yell all the time about being not precached
-#ifndef _DEBUG
+//they yell all the time about being not precached - TA: nah, not anymore :)
+//#ifndef _DEBUG
 			if (cg.playerCent && cent->currentState.number == cg.playerCent->currentState.number)
 			{
 				trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin,
@@ -9022,7 +9048,7 @@ stillDoSaber:
 				trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
 					trap_S_RegisterSound( "sound/weapons/saber/saberhum1.wav" ) );
 			}
-#endif
+//#endif
 		}
 
 		if (iwantout && !cent->currentState.saberInFlight) {

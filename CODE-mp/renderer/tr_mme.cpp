@@ -66,6 +66,10 @@ static struct {
 	int		quickDLightJitterIndex;
 	float*	quickDLightJitter;
 
+	// for cgame jitters (cgame handles on its own, merely queries)
+	int		cgameJitterTotalCount;
+	int		cgameJitterIndex;
+
 	superRandomDofJitterControl_t superRandomDofJitterControl;
 } passData;
 
@@ -216,6 +220,11 @@ mmeRollingShutterInfo_t* R_MME_GetRollingShutterInfo() {
 	rsInfo.rollingShutterSuperSampleMultiplier = rollingShutterSuperSampleMultiplier;
 
 	return &rsInfo;
+}
+void R_MME_GetCGameJitterInfo(jitterSegmentAdvanceInfo_t* info) {
+	info->currentIndex = passData.cgameJitterIndex;
+	info->totalFrames = passData.cgameJitterTotalCount;
+	info->isRecording = tr.captureIsActive;
 }
 
 // TODO Do a softer superrandom that randoms, but doesnt random every single pixel but rather just changes a settable percentage of the samples on each frame.
@@ -621,6 +630,41 @@ static void R_MME_CheckCvars( void ) {
 
 	}
 
+	// cgame quickjitter
+	if (passTotal) { // quickjitter is incompatible with mme_dofFrames
+		passData.cgameJitterTotalCount = 0;
+	}
+	else {
+		mmeRollingShutterInfo_t* rsInfo = R_MME_GetRollingShutterInfo();
+
+		// Check how many frames it SHOULD be.
+
+		// Unify this fps calculation code somewhere. UGLY.
+		// Also TODO make this work with normal mme_blurFrames
+		int blurFrames = 0;
+		qboolean doit = qfalse;
+		if (rsInfo->rollingShutterEnabled) {
+			float captureFPS = shotData.fps * rsInfo->captureFpsMultiplier;
+			float blurDuration = mme_rollingShutterBlur->value * (1.0f / shotData.fps);
+			blurFrames = (int)(blurDuration * captureFPS);
+			doit = qtrue;
+		}
+		else if (blurControl->totalFrames) {
+			// Make this for mme_blurframes.
+			blurFrames = blurControl->totalFrames;
+			doit = qtrue;
+		}
+
+		if (doit) {
+			passData.cgameJitterTotalCount = blurFrames;
+			if (blurFrames != passData.cgameJitterTotalCount) {
+				passData.cgameJitterIndex = 0;
+			}
+		}
+
+	}
+
+
 	mme_blurOverlap->modified = qfalse;
 	mme_blurType->modified = qfalse;
 	mme_blurFrames->modified = qfalse;
@@ -819,6 +863,12 @@ int R_MME_MultiPassNext( ) {
 		// We don't really care about alignment with capture times or anything. It jitters through the wole jitterarray
 		// in the correct amount of frames, that's good enough because I think the jitter table is randomized anyway.
 		passData.quickDLightJitterIndex = 0;
+	}
+
+	if (++(passData.cgameJitterIndex) >= passData.cgameJitterTotalCount) {
+		// We don't really care about alignment with capture times or anything. It jitters through the wole jitterarray
+		// in the correct amount of frames, that's good enough because I think the jitter table is randomized anyway.
+		passData.cgameJitterIndex = 0;
 	}
 
 

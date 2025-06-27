@@ -2183,6 +2183,11 @@ typedef struct {
 	float captureFpsMultiplier;
 } mmeRollingShutterInfo_t;
 
+typedef struct {
+	qboolean isRecording;
+	int currentIndex;
+	int totalFrames;
+} jitterSegmentAdvanceInfo_t;
 
 
 // font support 

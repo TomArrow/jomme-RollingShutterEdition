@@ -249,6 +249,7 @@ static	cvar_t		*fs_copyfiles;
 static	cvar_t		*fs_gamedirvar;
 static	cvar_t		*fs_extragamedirs;
 static	cvar_t		*fs_restrict;
+static	cvar_t		*fs_precachedWarnings;
 static	searchpath_t	*fs_searchpaths;
 static	int			fs_readCount;			// total bytes read
 static	int			fs_loadCount;			// total files read
@@ -1308,7 +1309,9 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 					// Check for unprecached files when in game but not in the menus
 					if((cls.state == CA_ACTIVE) && !(cls.keyCatchers & KEYCATCH_UI))
 					{
-						Com_Printf(S_COLOR_YELLOW "WARNING: File %s not precached\n", filename);
+						if (fs_precachedWarnings->integer) {
+							Com_Printf(S_COLOR_YELLOW "WARNING: File %s not precached\n", filename);
+						}
 					}
 #endif
 #endif // DEDICATED
@@ -1376,7 +1379,9 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 			// Check for unprecached files when in game but not in the menus
 			if((cls.state == CA_ACTIVE) && !(cls.keyCatchers & KEYCATCH_UI))
 			{
-				Com_Printf(S_COLOR_YELLOW "WARNING: File %s not precached\n", filename);
+				if (fs_precachedWarnings->integer) {
+					Com_Printf(S_COLOR_YELLOW "WARNING: File %s not precached\n", filename);
+				}
 			}
 #endif
 #endif // dedicated
@@ -2915,6 +2920,7 @@ static void FS_Startup( const char *gameName ) {
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
 	fs_extragamedirs = Cvar_Get("fs_extragames", "", CVAR_INIT);
 	fs_restrict = Cvar_Get ("fs_restrict", "", CVAR_INIT );
+	fs_precachedWarnings = Cvar_Get ("fs_precachedWarnings", "0", CVAR_ARCHIVE );
 
 	// add search path elements in reverse priority order
 	if (fs_cdpath->string[0]) {

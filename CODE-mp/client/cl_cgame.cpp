@@ -1263,6 +1263,12 @@ Ghoul2 Insert End
 			Com_Memcpy(target, src, sizeof(mmeRollingShutterInfo_t)); 
 		}
 		return 0;
+	case CG_MME_GETJITTERSEGMENTADVANCEINFO:
+		{
+			jitterSegmentAdvanceInfo_t* target = (jitterSegmentAdvanceInfo_t*)VMA(1);
+			re.MMEGetCGameJitterInfo(target);
+		}
+		return 0;
 	case CG_R_PARSEWAVEFORM:
 		text = (char*)VMA(1);
 		re.ParseWaveformAlone((char**)&text,(waveForm_t*)VMA(2));

@@ -1551,6 +1551,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.MMERegisterFont = R_MME_RegisterFont;
 	re.MMEFakeAdvanceFrames = R_MME_FakeAdvanceFrames;
 	re.MMEGetRollingShutterInfo = R_MME_GetRollingShutterInfo;
+	re.MMEGetCGameJitterInfo = R_MME_GetCGameJitterInfo;
 	re.FontRatioFix = RE_FontRatioFix;
 
 	re.DemoRandomSeed = R_DemoRandomSeed;
