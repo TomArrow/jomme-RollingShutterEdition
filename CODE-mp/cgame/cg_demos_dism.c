@@ -18,7 +18,7 @@ const vec3_t saberMaxs = { 3.0f, 3.0f, 3.0f };
 void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	localEntity_t	*le;
 	refEntity_t		*re;
-	vec3_t saberorigin, saberangles;
+	vec3_t saberorigin, saberangles,saberangles_fix;
 	clientInfo_t *ci;
 	
 	if (!cent->ghoul2)
@@ -34,15 +34,33 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	le->lifeRate = 1.0 / (le->endTime - le->startTime);
 	
 	VectorCopy(cg_entities[cent->currentState.saberEntityNum].currentState.pos.trBase,saberorigin);
-	VectorCopy(cg_entities[cent->currentState.saberEntityNum].currentState.apos.trBase,saberangles);
 	
 	VectorCopy( saberorigin, re->origin );
-	AnglesToAxis( saberangles, re->axis );
+
+
+#if 1
+	VectorCopy(cg_entities[cent->currentState.saberEntityNum].currentState.apos.trBase, saberangles);
+	AnglesToAxis(saberangles, re->axis);
+	VectorCopy(saberangles, le->angles.trBase);
+#else
+	// actually, nvm, i just fixed cg_addsaberblade
+
+	// nah uh, saberangles (as counterintuitive as it seems) is actually the saber axis[0]. thats how its done in CG_AddSaberBlade
+	// so ... the saberangles var contains the vector along the saber blade based off of the *flash tag. 
+	// BUT we are setting saber angles. which has the axes arranged differently
+	// in the saber, z is up alongside the saber. x and y are perpendiculara to the saber.
+	// long story short, we need a vector thats perpendicular to the original 
+	saberangles_fix[0] = saberangles[0]; // todo
+	saberangles_fix[1] = saberangles[1];// todo
+	saberangles_fix[2] = saberangles[2];// todo
+	vectoangles(saberangles_fix, le->angles.trBase); // this will still not be accurate because we lose the rotation of the saber along its own length i think but .. meh. who cares
+	AnglesToAxis(le->angles.trBase, re->axis);
+#endif
+
 	
 	le->pos.trType = TR_GRAVITY;
 	le->angles.trType = TR_GRAVITY;
 	VectorCopy( saberorigin, le->pos.trBase );
-	VectorCopy( saberangles, le->angles.trBase ); 
 	le->pos.trTime = cg.time;
 	le->angles.trTime = cg.time;
 
@@ -75,6 +93,14 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 		trap_G2API_InitGhoul2Model(&re->ghoul2, "models/weapons2/saber/saber_w.glm", 0, 0, 0, 0, 0);
 
 	le->data.fragment.saber.icolor1 = ci->icolor1;
+	if (cgs.gametype >= GT_TEAM && (!cgs.jediVmerc || demo15detected) && mov_saberTeamColour.integer) {
+		if (ci->team == TEAM_RED)
+			le->data.fragment.saber.icolor1 = SABER_RED;
+		else if (ci->team == TEAM_BLUE)
+			le->data.fragment.saber.icolor1 = SABER_BLUE;
+	}
+
+
 	le->data.fragment.saber.saberTrail = ci->saberTrail;
 
 	trap_G2API_AddBolt(re->ghoul2, 0, "*flash");

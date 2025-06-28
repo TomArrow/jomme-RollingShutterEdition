@@ -4963,9 +4963,22 @@ Ghoul2 Insert Start
 
 	if (!fromSaber && saberEnt)
 	{
-		VectorCopy(org_, saberEnt->currentState.pos.trBase);
 
-		VectorCopy(axis_[0], saberEnt->currentState.apos.trBase);
+#if 0
+		VectorCopy(axis_[0], saberEnt->currentState.apos.trBase); // why are we copying an axis into angles?!
+#else
+		// in modview... 
+		// green = x
+		// red = y
+		// blue = z
+		// we translate the *flash axes to normal object axes
+		vec3_t	correctedAxis[3] = { 0 };
+		trap_G2API_GiveMeVectorFromMatrix(&boltMatrix, POSITIVE_X, correctedAxis[0]); // x stays the same
+		trap_G2API_GiveMeVectorFromMatrix(&boltMatrix, POSITIVE_Z, correctedAxis[1]); // y is z
+		trap_G2API_GiveMeVectorFromMatrix(&boltMatrix, NEGATIVE_Y, correctedAxis[2]); // z is negative y
+		AxisToAngles(correctedAxis, saberEnt->currentState.apos.trBase);
+#endif
+		VectorCopy(org_, saberEnt->currentState.pos.trBase);
 	}
 
 	client = nonPlayer ? NULL : &cgs.clientinfo[cent1->currentState.number];

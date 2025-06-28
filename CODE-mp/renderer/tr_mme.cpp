@@ -1794,8 +1794,8 @@ void R_MME_Init(void) {
 	mme_dofFrames = ri.Cvar_Get ( "mme_dofFrames", "0", CVAR_ARCHIVE );
 	mme_dofRadius = ri.Cvar_Get ( "mme_dofRadius", "2", CVAR_ARCHIVE );
 	mme_forceNonFishEyeDistanceCalc = ri.Cvar_Get ( "mme_forceNonFishEyeDistanceCalc", "0", CVAR_ARCHIVE );
-	mme_quickDlightJitter = ri.Cvar_Get ( "mme_quickDlightJitter", "15.0", CVAR_ARCHIVE );
-	mme_voxelShadowLightQuickJitter = ri.Cvar_Get ( "mme_voxelShadowLightQuickJitter", "15.0", CVAR_ARCHIVE );
+	mme_quickDlightJitter = ri.Cvar_Get ( "mme_quickDlightJitter", "0.0", CVAR_ARCHIVE );
+	mme_voxelShadowLightQuickJitter = ri.Cvar_Get ( "mme_voxelShadowLightQuickJitter", "5.0", CVAR_ARCHIVE );
 	mme_voxelShadowLightQuickJitterMethod = ri.Cvar_Get ( "mme_voxelShadowLightQuickJitterMethod", "2", CVAR_ARCHIVE );
 	mme_dofQuick = ri.Cvar_Get ( "mme_dofQuick", "1", CVAR_ARCHIVE );
 	mme_dofQuickRandom = ri.Cvar_Get ( "mme_dofQuickRandom", "0", CVAR_ARCHIVE ); 

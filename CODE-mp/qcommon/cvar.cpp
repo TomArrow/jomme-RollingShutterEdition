@@ -657,6 +657,12 @@ Appends lines containing "set variable value" for all variables
 with the archive flag set to qtrue.
 ============
 */
+static int QDECL Cvar_CvarCmp(const void* p1, const void* p2) {
+	const cvar_t* const* e1 = (const cvar_t* const*)p1;
+	const cvar_t* const* e2 = (const cvar_t* const*)p2;
+
+	return strcmp((*e1)->name, (*e2)->name);
+}
 void Cvar_WriteVariables( fileHandle_t f ) {
 /*	cvar_t	*var;
 	char	buffer[1024];
@@ -710,6 +716,41 @@ void Cvar_WriteVariables( fileHandle_t f ) {
 			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", (*itr)->name, (*itr)->string);
 		}
 		FS_Write( buffer, strlen( buffer ), f );
+	}
+}
+
+
+void Cvar_WriteNonDefaultVariables(fileHandle_t f, qboolean realTime) {
+	cvar_t	*var;
+	char	buffer[1024];
+	cvar_t *sortedCvars[MAX_CVARS];
+	qboolean doLatched = (qboolean)!realTime;
+
+	int i;
+	int numSorted = 0;
+	for (var = cvar_vars ; var ; var = var->next) {
+		if((var->flags & CVAR_ARCHIVE) || realTime) {
+			if (Q_stricmp(var->resetString, doLatched && var->latchedString ? var->latchedString : var->string)) {
+				sortedCvars[numSorted++] = var;
+			}
+		}
+	}
+
+	if (!numSorted)
+		return;
+
+	qsort(sortedCvars, numSorted, sizeof(sortedCvars[0]), Cvar_CvarCmp);
+
+	for (i = 0; i < numSorted ; ++i) {
+		var = sortedCvars[i];
+
+		// write the latched value, even if it hasn't taken effect yet
+		if ( var->latchedString && doLatched) {
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
+		} else {
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
+		}
+		FS_Printf (f, "%s", buffer);
 	}
 }
 

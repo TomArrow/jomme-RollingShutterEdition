@@ -456,6 +456,8 @@ typedef struct centity_s {
 	shadowlineBolts_t	shadowBolts;
 
 	qhandle_t			baseBolt; // for dismembered parts
+	vec3_t				saberAnglesNonDead;
+	vec3_t				saberAxisNonDead[3];
 } centity_t;
 
 
