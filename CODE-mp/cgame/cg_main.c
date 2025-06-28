@@ -703,6 +703,7 @@ vmCvar_t	mov_wallhack;
 vmCvar_t	mov_camerafps;
 
 vmCvar_t	mov_dismember;
+vmCvar_t	mov_dismemberTryImprove; // tried to make the new limbs align properly with the original body. couldn't get it to work and got annoyed. maybe revisit someday.
 vmCvar_t	mov_dismemberClassical;
 vmCvar_t	mov_dismemberDisallowNative;
 vmCvar_t	mov_dismemberCheckSegments;
@@ -1027,6 +1028,7 @@ Ghoul2 Insert End
 	{ &mov_dismember,		"mov_dismember",		"2",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_dismemberClassical,		"mov_dismemberClassical",		"1",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_dismemberDisallowNative,		"mov_dismemberDisallowNative",		"0",			NULL,	CVAR_ARCHIVE	}, // Should normal dismemberment be deactivated when mov_dismember is used?
+	{ &mov_dismemberTryImprove,		"mov_dismemberTryImprove",		"0",			NULL,	CVAR_ARCHIVE	}, // Should normal dismemberment be deactivated when mov_dismember is used?
 	{ &mov_gib,				"mov_gib",				"1",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_dismemberCheckSegments,		"mov_dismemberCheckSegments",		"10",			NULL,	CVAR_ARCHIVE	}, // How many segments is saber divided into to check for dismemberment? Higher segment count = more precise. Is increased if player's max saber length is higher than default.
 	{ &mov_forceNTdemo,		"mov_forceNTdemo",		"0",  CG_ForceNTDemo,	CVAR_ARCHIVE	},

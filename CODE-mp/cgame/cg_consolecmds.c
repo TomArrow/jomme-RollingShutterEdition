@@ -531,6 +531,30 @@ void cg_speedometer_f(void)
 			? "^2Enabled" : "^1Disabled"));
 	}
 }
+void demoCheckDismember(vec3_t saberhitorg, int forcepart, int forceclient);
+void CG_Dismember_f(void) {
+
+	char arg[8] = { 0 };
+	int client, part;
+	int blah = DISM_HEAD;
+	if (trap_Argc() < 3) {
+		Com_Printf("usage: dismember [clientnum] [part]\n");
+		Com_Printf("parts: 0 = head, 1 = left hand, 2 = right hand, 3 = left arm, 4 = right arm, 5 = left leg, 6 = right leg, 7 = waist, 8 = saber\n");
+		return;
+	}
+	trap_Argv(1, arg, sizeof(arg));
+	client = atoi(arg);
+	trap_Argv(2, arg, sizeof(arg));
+	part = atoi(arg);
+	if (part < 0 || part >= DISM_TOTAL) {
+		Com_Printf( "invalid part\n");
+	}
+	if (client < 0 || client >= MAX_CLIENTS) {
+		Com_Printf( "invalid client\n");
+	}
+	demoCheckDismember(vec3_origin,part,client);
+
+}
 
 void CG_ClientList_f(void)
 {
@@ -654,6 +678,7 @@ static consoleCommand_t	commands[] = {
 	{ "strafeHelper", CG_StrafeHelper_f },
 	{ "speedometer", cg_speedometer_f },
 	{ "clientlist", CG_ClientList_f },
+	{ "dismember", CG_Dismember_f },
 };
 
 

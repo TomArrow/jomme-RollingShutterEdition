@@ -1481,7 +1481,7 @@ void CG_DemoDismembermentEvent( centity_t *cent, vec3_t position ) {
 			break;
 		case EV_SABER_HIT:
 			if (es->eventParm) //Hit a person
-				demoCheckDismember(es->origin);
+				demoCheckDismember(es->origin,-1, -1);
 			break;
 		default:
 			break;

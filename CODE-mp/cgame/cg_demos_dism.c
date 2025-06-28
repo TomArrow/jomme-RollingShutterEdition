@@ -10,6 +10,10 @@
 
 // TODO Try to also allow dismemberment for dead bodies that are no longer at the original entity number < MAX_CLIENTS
 
+
+static void getDismemberPartInfo(int part, const char** limbBoneA, const char** limbNameA, const char** limbCapNameA, const char** stubCapNameA, int* limb_animA);
+static void getDismemberPartInfoProper(int part, const char** limbBoneA, const char** limbNameA, const char** limbCapNameA, const char** stubCapNameA, const char** rotateBoneA, const char** limbTagNameA, const char** stubTagNameA, int* limb_animA);
+
 const vec3_t limbMins = { -6.0f, -6.0f, -9.0f };
 const vec3_t limbMaxs = { 6.0f, 6.0f, 6.0f };
 const vec3_t saberMins = { -3.0f, -3.0f, -3.0f };
@@ -446,14 +450,192 @@ void CG_GetDismemberBolt(centity_t* self, vec3_t boltPoint, dismpart_t limbType)
 }
 
 
+static void getDismemberPartInfo(int part, const char** limbBoneA, const char** limbNameA, const char** limbCapNameA, const char** stubCapNameA, int *limb_animA) {
+
+	const char* limbBone;
+	const char* limbName;
+	const char* limbCapName;
+	const char* stubCapName;
+	int			limb_anim;
+	switch( part ) {
+		case DISM_HEAD:
+			limbBone = "cervical";
+			limbName = "head";
+			limbCapName = "head_cap_torso_off";
+			stubCapName = "torso_cap_head_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_HEAD1_15:BOTH_DISMEMBER_HEAD1;
+			break;
+		case DISM_WAIST:
+			limbBone = "pelvis";
+			limbName = "torso";
+			limbCapName = "torso_cap_hips_off";
+			stubCapName = "hips_cap_torso_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_HEAD1_15:BOTH_DISMEMBER_TORSO1;
+			break;
+		case DISM_LARM:
+			limbBone = "lhumerus";
+			limbName = "l_arm";
+			limbCapName = "l_arm_cap_torso_off";
+			stubCapName = "torso_cap_l_arm_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_LARM_15:BOTH_DISMEMBER_LARM;
+			break;
+		case DISM_RARM:
+			limbBone = "rhumerus";
+			limbName = "r_arm";
+			limbCapName = "r_arm_cap_torso_off";
+			stubCapName = "torso_cap_r_arm_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_RARM_15:BOTH_DISMEMBER_RARM;
+			break;
+		case DISM_LHAND:
+			limbBone = "lradiusX";
+			limbName = "l_hand";
+			limbCapName = "l_hand_cap_l_arm_off";
+			stubCapName = "l_arm_cap_l_hand_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_LARM_15:BOTH_DISMEMBER_LARM;
+			break;
+		case DISM_RHAND:
+			limbBone = "rradiusX";
+			limbName = "r_hand";
+			limbCapName = "r_hand_cap_r_arm_off";
+			stubCapName = "r_arm_cap_r_hand_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_RARM_15:BOTH_DISMEMBER_RARM;
+			break;
+		case DISM_LLEG:
+			limbBone = "lfemurYZ";
+			limbName = "l_leg";
+			limbCapName = "l_leg_cap_hips_off";
+			stubCapName = "hips_cap_l_leg_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_LLEG_15:BOTH_DISMEMBER_LLEG;
+			break;
+		case DISM_RLEG:
+			limbBone = "rfemurYZ";
+			limbName = "r_leg";
+			limbCapName = "r_leg_cap_hips_off";
+			stubCapName = "hips_cap_r_leg_off";
+			limb_anim = demo15detected?BOTH_DISMEMBER_RLEG_15:BOTH_DISMEMBER_RLEG;
+			break;
+		default:
+			return;	
+	}
+
+	if (limbBoneA) *limbBoneA = limbBone;
+	if (limbNameA) *limbNameA = limbName;
+	if (limbCapNameA) *limbCapNameA = limbCapName;
+	if (stubCapNameA) *stubCapNameA = stubCapName;
+	if (limb_animA) *limb_animA = limb_anim;
+}
+
+static void getDismemberPartInfoProper(int part, const char** limbBoneA, const char** limbNameA, const char** limbCapNameA, const char** stubCapNameA, const char** rotateBoneA, const char** limbTagNameA, const char** stubTagNameA, int *limb_animA) {
+
+	const char* limbBone;
+	const char* limbName;
+	const char* limbCapName;
+	const char* stubCapName;
+	const char* rotateBone;
+	const char* limbTagName;
+	const char* stubTagName;
+	int			limb_anim;
+	
+	if (part == DISM_HEAD) {
+		limbBone = "cervical";
+		rotateBone = "cranium";
+		limbName = "head";
+		limbCapName = "head_cap_torso_off";
+		stubCapName = "torso_cap_head_off";
+		limbTagName = "*head_cap_torso";
+		stubTagName = "*torso_cap_head";
+		limb_anim = demo15detected?BOTH_DISMEMBER_HEAD1_15:BOTH_DISMEMBER_HEAD1;
+	} else if (part == DISM_WAIST) {
+		limbBone = "pelvis";
+		rotateBone = "thoracic";
+		limbName = "torso";
+		limbCapName = "torso_cap_hips_off";
+		stubCapName = "hips_cap_torso_off";
+		limbTagName = "*torso_cap_hips";
+		stubTagName = "*hips_cap_torso";
+		limb_anim = demo15detected?BOTH_DISMEMBER_TORSO1_15:BOTH_DISMEMBER_TORSO1;
+	}
+	else if (part == DISM_LARM) {
+		limbBone = "lhumerus";
+		rotateBone = "lradius";
+		limbName = "l_arm";
+		limbCapName = "l_arm_cap_torso_off";
+		stubCapName = "torso_cap_l_arm_off";
+		limbTagName = "*l_arm_cap_torso";
+		stubTagName = "*torso_cap_l_arm";
+		limb_anim = demo15detected?BOTH_DISMEMBER_LARM_15:BOTH_DISMEMBER_LARM;
+	}
+	else if (part == DISM_RARM) {
+		limbBone = "rhumerus";
+		rotateBone = "rradius";
+		limbName = "r_arm";
+		limbCapName = "r_arm_cap_torso_off";
+		stubCapName = "torso_cap_r_arm_off";
+		limbTagName = "*r_arm_cap_torso";
+		stubTagName = "*torso_cap_r_arm";
+		limb_anim = demo15detected?BOTH_DISMEMBER_RARM_15:BOTH_DISMEMBER_RARM;
+	}
+	else if (part == DISM_RHAND) {
+		limbBone = "rradiusX";
+		rotateBone = "rhand";
+		limbName = "r_hand";
+		limbCapName = "r_hand_cap_r_arm_off";
+		stubCapName = "r_arm_cap_r_hand_off";
+		limbTagName = "*r_hand_cap_r_arm";
+		stubTagName = "*r_arm_cap_r_hand";
+		limb_anim = BOTH_DISMEMBER_RARM;
+	//different
+	}
+	else if (part == DISM_LLEG) {
+		limbBone = "lfemurYZ";
+		rotateBone = "ltibia";
+		limbName = "l_leg";
+		limbCapName = "l_leg_cap_hips_off";
+		stubCapName = "hips_cap_l_leg_off";
+		limbTagName = "*l_leg_cap_hips";
+		stubTagName = "*hips_cap_l_leg";
+		limb_anim = demo15detected?BOTH_DISMEMBER_LLEG_15:BOTH_DISMEMBER_LLEG;
+	//different
+	}
+	else if (part == DISM_RLEG) {
+		limbBone = "rfemurYZ";
+		rotateBone = "rtibia";
+		limbName = "r_leg";
+		limbCapName = "r_leg_cap_hips_off";
+		stubCapName = "hips_cap_r_leg_off";
+		limbTagName = "*r_leg_cap_hips";
+		stubTagName = "*hips_cap_r_leg";
+		limb_anim = demo15detected?BOTH_DISMEMBER_RLEG_15:BOTH_DISMEMBER_RLEG;
+	} else {
+		limbBone = "rfemurYZ";
+		rotateBone = "rtibia";
+		limbName = "r_leg";
+		limbCapName = "r_leg_cap_hips_off";
+		stubCapName = "hips_cap_r_leg_off";
+		limbTagName = "*r_leg_cap_hips";
+		stubTagName = "*hips_cap_r_leg";
+		limb_anim = demo15detected?BOTH_DISMEMBER_RLEG_15:BOTH_DISMEMBER_RLEG;
+	}
+
+	if (limbBoneA) *limbBoneA = limbBone;
+	if (limbNameA) *limbNameA = limbName;
+	if (limbCapNameA) *limbCapNameA = limbCapName;
+	if (stubCapNameA) *stubCapNameA = stubCapName;
+	if (rotateBoneA) *rotateBoneA = rotateBone;
+	if (limbTagNameA) *limbTagNameA = limbTagName;
+	if (stubTagNameA) *stubTagNameA = stubTagName;
+	if (limb_animA) *limb_animA = limb_anim;
+}
+
+
 //Main dismemberment function
 static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limborg, vec3_t limbang ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 	const char *limbBone;
-	char *limbName;
-	char *limbCapName;
-	char *stubCapName;
+	const char *limbName;
+	const char *limbCapName;
+	const char *stubCapName;
 	int  limb_anim;
 	int clientnum = cent->currentState.number;
 	vec3_t	boltPoint;
@@ -519,66 +701,12 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	VectorCopy(cent->modelScale,re->modelScale);
 
 	/////////ANIMATION FIXME: stop routine animations
-	
-	switch( part ) {
-		case DISM_HEAD:
-			limbBone = "cervical";
-			limbName = "head";
-			limbCapName = "head_cap_torso_off";
-			stubCapName = "torso_cap_head_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_HEAD1_15:BOTH_DISMEMBER_HEAD1;
-			break;
-		case DISM_WAIST:
-			limbBone = "pelvis";
-			limbName = "torso";
-			limbCapName = "torso_cap_hips_off";
-			stubCapName = "hips_cap_torso_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_HEAD1_15:BOTH_DISMEMBER_TORSO1;
-			break;
-		case DISM_LARM:
-			limbBone = "lhumerus";
-			limbName = "l_arm";
-			limbCapName = "l_arm_cap_torso_off";
-			stubCapName = "torso_cap_l_arm_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_LARM_15:BOTH_DISMEMBER_LARM;
-			break;
-		case DISM_RARM:
-			limbBone = "rhumerus";
-			limbName = "r_arm";
-			limbCapName = "r_arm_cap_torso_off";
-			stubCapName = "torso_cap_r_arm_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_RARM_15:BOTH_DISMEMBER_RARM;
-			break;
-		case DISM_LHAND:
-			limbBone = "lradiusX";
-			limbName = "l_hand";
-			limbCapName = "l_hand_cap_l_arm_off";
-			stubCapName = "l_arm_cap_l_hand_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_LARM_15:BOTH_DISMEMBER_LARM;
-			break;
-		case DISM_RHAND:
-			limbBone = "rradiusX";
-			limbName = "r_hand";
-			limbCapName = "r_hand_cap_r_arm_off";
-			stubCapName = "r_arm_cap_r_hand_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_RARM_15:BOTH_DISMEMBER_RARM;
-			break;
-		case DISM_LLEG:
-			limbBone = "lfemurYZ";
-			limbName = "l_leg";
-			limbCapName = "l_leg_cap_hips_off";
-			stubCapName = "hips_cap_l_leg_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_LLEG_15:BOTH_DISMEMBER_LLEG;
-			break;
-		case DISM_RLEG:
-			limbBone = "rfemurYZ";
-			limbName = "r_leg";
-			limbCapName = "r_leg_cap_hips_off";
-			stubCapName = "hips_cap_r_leg_off";
-			limb_anim = demo15detected?BOTH_DISMEMBER_RLEG_15:BOTH_DISMEMBER_RLEG;
-			break;
-		default:
-			return;	
+	if (mov_dismemberTryImprove.integer) {
+		// seemed like a good idea. turned out shit.
+		getDismemberPartInfoProper(part, NULL, &limbName, &limbCapName, &stubCapName, &limbBone, NULL, NULL, &limb_anim);
+	}
+	else {
+		getDismemberPartInfo(part, &limbBone, &limbName, &limbCapName, &stubCapName, &limb_anim);
 	}
 
 	if (mov_dismemberClassical.integer) {
@@ -595,6 +723,13 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 	trap_G2API_SetRootSurface(re->ghoul2, 0, limbName);
 	le->data.fragment.dismemberBaseBolt = trap_G2API_AddBolt(re->ghoul2, 0, limbBone);
 	trap_G2API_SetNewOrigin(re->ghoul2, le->data.fragment.dismemberBaseBolt);
+
+	if (mov_dismemberTryImprove.integer) {
+		VectorCopy(limborg, re->origin);
+		//VectorCopy(limbang, le->angles);
+		AnglesToAxis(limbang, re->axis);
+	}
+
 	trap_G2API_SetSurfaceOnOff(re->ghoul2, limbCapName, 0);
 	
 	trap_G2API_SetSurfaceOnOff(cent->ghoul2, limbName, 0x00000100);
@@ -631,34 +766,45 @@ static void demoDismember( centity_t *cent , vec3_t dir, int part, vec3_t limbor
 }
 
 // TODO Wtf is this algorithm. Seems random af. It should check for contact with body parts but it does some other random thing instead.
-void demoCheckDismember(vec3_t saberhitorg) {
+void demoCheckDismember(vec3_t saberhitorg, int forcepart, int forceclient) {
 	centity_t *attacker;
 	centity_t *target;
 	vec3_t dir;
 	float velocity;
 	int i;
 	
+	vec3_t axis[3];
 	vec3_t boltOrg[8];
+	vec3_t boltAng[8];
 	int newBolt;
 	mdxaBone_t			matrix;
 	char *limbTagName;
 	float limbdis[8];
 	qboolean cut[8];
-	int dismnum, limbnum;
+	int limbnum = 0;
 	
 	float bestlen = 999999;
 	int best = -1;
 
-	for (i = 0; i < MAX_CLIENTS; i++) {
-		centity_t *test = &cg_entities[i];		
-		if (test && test->currentState.eFlags & EF_DEAD
-			&& cg_entities[i].dism.deathtime
-			&& test->currentState.eType == ET_PLAYER ) {
-			if (cg_entities[i].dism.deathtime == cg.time ) {
-				float dist = Distance(test->lerpOrigin,saberhitorg);			
-				if (dist < bestlen) {
-					bestlen = dist;
-					best = i;
+	if (forceclient != -1) {
+		best = forceclient;
+		if (best < 0 || best >= MAX_CLIENTS) {
+			Com_Error(ERR_FATAL,"demoCheckDismember called with invalid forceclient value\n");
+		}
+	}
+	else {
+
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			centity_t* test = &cg_entities[i];
+			if (test && test->currentState.eFlags & EF_DEAD
+				&& cg_entities[i].dism.deathtime
+				&& test->currentState.eType == ET_PLAYER) {
+				if (cg_entities[i].dism.deathtime == cg.time) {
+					float dist = Distance(test->lerpOrigin, saberhitorg);
+					if (dist < bestlen) {
+						bestlen = dist;
+						best = i;
+					}
 				}
 			}
 		}
@@ -672,41 +818,60 @@ void demoCheckDismember(vec3_t saberhitorg) {
 	if (!target)
 		return;
 		
-	if (cg_entities[best].dism.lastkiller >= 0 && cg_entities[best].dism.lastkiller < MAX_CLIENTS) {
-		attacker = &cg_entities[cg_entities[best].dism.lastkiller];
-		if (!attacker)
+	if (forcepart == -1) {
+		if (cg_entities[best].dism.lastkiller >= 0 && cg_entities[best].dism.lastkiller < MAX_CLIENTS) {
+			attacker = &cg_entities[cg_entities[best].dism.lastkiller];
+			if (!attacker)
+				return;
+		}
+		else {
 			return;
-	} else {
-		return;
+		}
 	}
 	
 	
 		
 	for (i = 0 ; i < 8; i++) {				
-		if (i == DISM_HEAD) {
-			limbTagName = "*head_cap_torso";
-		} else if (i == DISM_LHAND) {
-			limbTagName = "*l_hand_cap_l_arm";
-		} else if (i == DISM_RHAND) {
-			limbTagName = "*r_hand_cap_r_arm";
-		} else if (i == DISM_LARM) {
-			limbTagName = "*l_arm_cap_torso";
-		} else if (i == DISM_RARM) {
-			limbTagName = "*r_arm_cap_torso";
-		} else if (i == DISM_LLEG) {
-			limbTagName = "*l_leg_cap_hips";
-		} else if (i == DISM_RLEG) {
-			limbTagName = "*r_leg_cap_hips";
-		} else /*if (i == DISM_WAIST)*/ {
-			limbTagName = "*torso_cap_hips";
+		//if (i == DISM_HEAD) { ?!!?!
+		//	limbTagName = "*head_cap_torso";
+		//} else if (i == DISM_LHAND) {
+		//	limbTagName = "*l_hand_cap_l_arm";
+		//} else if (i == DISM_RHAND) {
+		//	limbTagName = "*r_hand_cap_r_arm";
+		//} else if (i == DISM_LARM) {
+		//	limbTagName = "*l_arm_cap_torso";
+		//} else if (i == DISM_RARM) {
+		//	limbTagName = "*r_arm_cap_torso";
+		//} else if (i == DISM_LLEG) {
+		//	limbTagName = "*l_leg_cap_hips";
+		//} else if (i == DISM_RLEG) {
+		//	limbTagName = "*r_leg_cap_hips";
+		//} else /*if (i == DISM_WAIST)*/ {
+		//	limbTagName = "*torso_cap_hips";
+		//} 
+		
+		if (mov_dismemberTryImprove.integer) {
+			// was a nice idea. didn't work in the end.
+			getDismemberPartInfoProper(i, NULL, NULL, NULL, NULL, &limbTagName, NULL, NULL, NULL);
+		}
+		else {
+			getDismemberPartInfoProper(i, NULL, NULL, NULL, NULL, NULL, &limbTagName, NULL, NULL);
 		}
 		
 		newBolt = trap_G2API_AddBolt( target->ghoul2, 0, limbTagName );
 
 		if ( newBolt != -1 ) {
-			trap_G2API_GetBoltMatrix(target->ghoul2, 0, newBolt, &matrix, target->lerpAngles, target->lerpOrigin, cg.time, cgs.gameModels, target->modelScale);
+			trap_G2API_GetBoltMatrix(target->ghoul2, 0, newBolt, &matrix, mov_dismemberTryImprove.integer ? target->turAngles : target->lerpAngles, target->lerpOrigin, cg.time, cgs.gameModels, target->modelScale);
 
 			trap_G2API_GiveMeVectorFromMatrix(&matrix, ORIGIN, boltOrg[i]);
+			if (mov_dismemberTryImprove.integer) {
+				vec3_t test[3]; // didnt rly work :/
+				trap_G2API_GiveMeVectorFromMatrix(&matrix, POSITIVE_X, axis[0]);
+				trap_G2API_GiveMeVectorFromMatrix(&matrix, POSITIVE_Y, axis[1]);
+				trap_G2API_GiveMeVectorFromMatrix(&matrix, POSITIVE_Z, axis[2]);
+				AxisToAngles(axis, boltAng[i]);
+				AnglesToAxis(boltAng[i], test);
+			}
 			//trap_G2API_GiveMeVectorFromMatrix(&matrix, NEGATIVE_Y, boltAng[i]);
 			
 			//boltAng[i][0] = random();
@@ -724,53 +889,68 @@ void demoCheckDismember(vec3_t saberhitorg) {
 		}
 	}
 	
-	dismnum = 0;
-	
-	//CALC LIMB NUMBER TO DISMEMBER
-	if ( BG_SaberInAttack(attacker->currentState.saberMove & ~ANIM_TOGGLEBIT) ) {
-		if ( BG_SaberInSpecial(attacker->currentState.saberMove & ~ANIM_TOGGLEBIT) ) {
-			limbnum = 3;
-		} else {			
-			limbnum = 2;
-		}
-	} else {
-		limbnum = 1;
-	}
-	
-	if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTY) {
-		i = 23;
-	} else {
-		i = 16;
-	}
-	
-	limbnum += (int)(((VectorLength(attacker->currentState.pos.trDelta)/100)*(VectorLength(attacker->currentState.pos.trDelta)/100))/i);
-	
-	if (limbnum > 7) limbnum = 7;
-	///////////////////////////////
+	if (forcepart != -1) {
 
-	if (limbnum == 7) {
-		//CGCam_Shake( 1500, 1500 );
-		trap_S_StartSound(attacker->lerpOrigin, attacker->currentState.number, CHAN_AUTO, trap_S_RegisterSound("sound/gauss_shot.wav"));
-	}
-	
-	//CG_CenterPrint(va("%i",limbnum), SCREEN_HEIGHT * .05, 0);
-	
-	if (limbnum == 7) {
-		for (i = 0; i < 8; i++) {
-			cut[i] = qtrue;
+		if (forcepart < 0 || forcepart >= DISM_TOTAL) {
+			Com_Error(ERR_FATAL, "demoCheckDismember called with invalid forcepart value\n");
 		}
-	} else {
-		while (dismnum < limbnum) {
-			float bestlen = 999999999;
-			int best = 0;
+		memset(cut, 0, sizeof(cut));
+		cut[forcepart] = qtrue;
+	}
+	else {
+
+		int dismnum;
+		
+	
+		dismnum = 0;
+	
+		//CALC LIMB NUMBER TO DISMEMBER
+		if ( BG_SaberInAttack(attacker->currentState.saberMove & ~ANIM_TOGGLEBIT) ) {
+			if ( BG_SaberInSpecial(attacker->currentState.saberMove & ~ANIM_TOGGLEBIT) ) {
+				limbnum = 3;
+			} else {			
+				limbnum = 2;
+			}
+		} else {
+			limbnum = 1;
+		}
+	
+		if (cgs.gametype == GT_CTF || cgs.gametype == GT_CTY) {
+			i = 23;
+		} else {
+			i = 16;
+		}
+	
+		limbnum += (int)(((VectorLength(attacker->currentState.pos.trDelta)/100)*(VectorLength(attacker->currentState.pos.trDelta)/100))/i);
+	
+		if (limbnum > 7) limbnum = 7;
+		///////////////////////////////
+
+		if (limbnum == 7) {
+			//CGCam_Shake( 1500, 1500 );
+			trap_S_StartSound(attacker->lerpOrigin, attacker->currentState.number, CHAN_AUTO, trap_S_RegisterSound("sound/gauss_shot.wav"));
+		}
+	
+		//CG_CenterPrint(va("%i",limbnum), SCREEN_HEIGHT * .05, 0);
+
+		if (limbnum == 7) {
 			for (i = 0; i < 8; i++) {
+				cut[i] = qtrue;
+			}
+		}
+		else {
+			while (dismnum < limbnum) {
+				float bestlen = 999999999;
+				int best = 0;
+				for (i = 0; i < 8; i++) {
 					if (limbdis[i] < bestlen && !cut[i]) {
 						best = i;
 						bestlen = limbdis[i];
 					}
-			}			
-			cut[best] = qtrue;
-			dismnum ++;
+				}
+				cut[best] = qtrue;
+				dismnum++;
+			}
 		}
 	}
 	
@@ -788,7 +968,12 @@ void demoCheckDismember(vec3_t saberhitorg) {
 				dir[1] = target->currentState.pos.trDelta[1] * (0.5 + random());
 				dir[2] = target->currentState.pos.trDelta[2] * (0.5 + random());
 			}
-			demoDismember(target,dir,i,boltOrg[i],dir);
+			if (mov_dismemberTryImprove.integer) {
+				demoDismember(target, dir, i, boltOrg[i], boltAng[i]);
+			}
+			else {
+				demoDismember(target, dir, i, boltOrg[i], dir);
+			}
 		}
 	}
 }
@@ -850,7 +1035,7 @@ void demoCheckCorpseDism( centity_t *attacker ) {
 						if (part == DISM_WAIST)
 							rad = 4;
 							
-						trap_G2API_GetBoltMatrix(target->ghoul2, 0, newBolt, &matrix, target->lerpAngles, target->lerpOrigin, cg.time, cgs.gameModels, target->modelScale);
+						trap_G2API_GetBoltMatrix(target->ghoul2, 0, newBolt, &matrix, mov_dismemberTryImprove.integer ? target->turAngles : target->lerpAngles, target->lerpOrigin, cg.time, cgs.gameModels, target->modelScale);
 			
 						trap_G2API_GiveMeVectorFromMatrix(&matrix, ORIGIN, boltOrg);
 						trap_G2API_GiveMeVectorFromMatrix(&matrix, NEGATIVE_Y, boltAng);
@@ -934,7 +1119,7 @@ void demoPlayerDismember(centity_t *cent) {
 			if ( newBolt != -1 ) {
 				vec3_t boltOrg, boltAng;
 		
-				trap_G2API_GetBoltMatrix(cent->ghoul2, 0, newBolt, &matrix, cent->lerpAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale);
+				trap_G2API_GetBoltMatrix(cent->ghoul2, 0, newBolt, &matrix, mov_dismemberTryImprove.integer ? cent->turAngles : cent->lerpAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale);
 		
 				trap_G2API_GiveMeVectorFromMatrix(&matrix, ORIGIN, boltOrg);
 				trap_G2API_GiveMeVectorFromMatrix(&matrix, NEGATIVE_Y, boltAng);

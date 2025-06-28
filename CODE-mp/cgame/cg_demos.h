@@ -314,7 +314,7 @@ qboolean demoProjectLoad( const char *fileName );
 
 //DISMEMBERMENT
 void demoSaberDismember(centity_t *cent, vec3_t dir);
-void demoCheckDismember(vec3_t saberhitorg);
+void demoCheckDismember(vec3_t saberhitorg, int forcepart, int forceclient);
 void demoPlayerDismember(centity_t *cent);
 
 //WEATHER
