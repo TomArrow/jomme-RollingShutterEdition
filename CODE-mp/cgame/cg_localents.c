@@ -515,6 +515,7 @@ void CG_AddFragment( localEntity_t *le ) {
 		trap_R_AddRefEntityToScene( &le->refEntity );
 
 		if (isSaber) {
+			le->data.fragment.saber.saberMove = LS_READY; // we keep the old sabermove for trail consistency but after it bounces we turn it into an idle saber
 			CG_AddSaberBlade(le, NULL, NULL, NULL, 0, 0, le->refEntity.origin, shadowAngles, qtrue, qtrue);
 		}
 		if (isDismember) { // what about angles? uh.

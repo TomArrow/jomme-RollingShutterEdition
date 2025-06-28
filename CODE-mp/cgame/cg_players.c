@@ -4853,7 +4853,7 @@ void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, 
 	qboolean temporaryTrailSegmentBlade = qfalse;
 	qboolean temporaryTrailSegmentBlade2 = qfalse;
 	float saberTrailTimeShort =  cg_saberTrailTimeShort.value;
-	float saberTrailTime = !cent1 ? saberTrailTimeShort : cg_saberTrailTime.value;
+	float saberTrailTime = cg_saberTrailTime.value;// !cent1 ? saberTrailTimeShort : cg_saberTrailTime.value;
 
 	int saberEntityNum = cent1 ? cent1->currentState.saberEntityNum : lent->data.fragment.saber.saberEntityNum;
 	float*	saberLength = cent1 ? &cent1->saberLength : &lent->data.fragment.saber.saberLength;
@@ -5217,7 +5217,7 @@ CheckTrail:
 	{ // 2ms
 		qboolean dosabertrail = saberMoveData[*saberMove].trailLength > 0
 			|| ((*powerups & (1 << PW_SPEED) && (cg_speedTrail.integer || cg_saberTrail.integer == 2))) || saberInFlight || cg_saberTrail.integer == 3;
-		if (!dosabertrail && cg_saberTrail.integer == 4 ) {
+		if (!dosabertrail && (cg_saberTrail.integer == 4 || !cent1) ) {
 			dosabertrail = qtrue;
 			saberTrailTime = saberTrailTimeShort;
 		}
