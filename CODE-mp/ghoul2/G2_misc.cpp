@@ -148,7 +148,7 @@ public:
 	int					modelIndex;
 	skin_t				*skin;
 	shader_t			*cust_shader;
-	int					*TransformedVertsArray;
+	size_t				*TransformedVertsArray;
 	int					traceFlags;
 	bool				hitOne;
 	float				m_fRadius;
@@ -166,7 +166,7 @@ public:
 	int					initmodelIndex,
 	skin_t				*initskin,
 	shader_t			*initcust_shader,
-	int					*initTransformedVertsArray,
+	size_t				*initTransformedVertsArray,
 	int					inittraceFlags,
 	float				fRadius):
 
@@ -311,7 +311,7 @@ int G2_DecideTraceLod(CGhoul2Info &ghoul2, int useLod, model_t *mod)
 }
 
 #ifdef G2_COLLISION_ENABLED
-void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2VertSpace, int *TransformedVertsArray, mdxaBone_v &bonePtr) {
+void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2VertSpace, size_t*TransformedVertsArray, mdxaBone_v &bonePtr) {
 	int				j, k, pos;
 	int				numVerts;
 	mdxmVertex_t 	*v;
@@ -327,7 +327,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	mdxmVertexTexCoord_t *pTexCoords = (mdxmVertexTexCoord_t *) &v[numVerts];
 
 	TransformedVerts = (float *)G2VertSpace->MiniHeapAlloc(numVerts * 5 * 4);
-	TransformedVertsArray[surface->thisSurfaceIndex] = (int)TransformedVerts;
+	TransformedVertsArray[surface->thisSurfaceIndex] = (size_t)TransformedVerts;
 	if (!TransformedVerts)
 	{
 		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models.\n");
@@ -403,7 +403,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	}
 }
 #else
-void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2VertSpace, int *TransformedVertsArray, mdxaBone_v &bonePtr) {
+void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2VertSpace, size_t *TransformedVertsArray, mdxaBone_v &bonePtr) {
 	int				 j, k;
 	int				numVerts;
 	mdxmVertex_t 	*v;
@@ -415,7 +415,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
    
 	// alloc some space for the transformed verts to get put in
 	TransformedVerts = (float *)G2VertSpace->MiniHeapAlloc(surface->numVerts * 5 * 4);
-	TransformedVertsArray[surface->thisSurfaceIndex] = (int)TransformedVerts;
+	TransformedVertsArray[surface->thisSurfaceIndex] = (size_t)TransformedVerts;
 	if (!TransformedVerts)
 	{
 		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models. Please See Jake to Make space larger\n");
@@ -514,7 +514,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 #endif
 
 void G2_TransformSurfaces(int surfaceNum, surfaceInfo_v &rootSList, 
-					mdxaBone_v &bonePtr, model_t *currentModel, int lod, vec3_t scale, CMiniHeap *G2VertSpace, int *TransformedVertArray, bool secondTimeAround)
+					mdxaBone_v &bonePtr, model_t *currentModel, int lod, vec3_t scale, CMiniHeap *G2VertSpace, size_t*TransformedVertArray, bool secondTimeAround)
 {
 	int	i;
 	// back track and get the surfinfo struct for this surface
@@ -608,8 +608,8 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 		lod = G2_DecideTraceLod(ghoul2[i], useLod, currentModel);
 
 		// give us space for the transformed vertex array to be put in
-		ghoul2[i].mTransformedVertsArray = (int*)G2VertSpace->MiniHeapAlloc(currentModel->mdxm->numSurfaces * 4);
-		memset(ghoul2[i].mTransformedVertsArray, 0,(currentModel->mdxm->numSurfaces * 4)); 
+		ghoul2[i].mTransformedVertsArray = (size_t*)G2VertSpace->MiniHeapAlloc(currentModel->mdxm->numSurfaces * sizeof(size_t));
+		memset(ghoul2[i].mTransformedVertsArray, 0,(currentModel->mdxm->numSurfaces * sizeof(size_t)));
 
 		// did we get enough space?
 		assert(ghoul2[i].mTransformedVertsArray);
@@ -971,7 +971,7 @@ void TransformAndTranslatePoint_SP (const vec3_t in, vec3_t out, mdxaBone_t *mat
 }
 
 // now we're at poly level, check each model space transformed poly against the model world transfomed ray
-static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const vec3_t rayEnd, CollisionRecord_t *collRecMap, int entNum, int modelIndex, const skin_t *skin, const shader_t *cust_shader, const mdxmSurfHierarchy_t *surfInfo, int *TransformedVertsArray, int traceFlags, float fRadius)
+static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const vec3_t rayEnd, CollisionRecord_t *collRecMap, int entNum, int modelIndex, const skin_t *skin, const shader_t *cust_shader, const mdxmSurfHierarchy_t *surfInfo, size_t*TransformedVertsArray, int traceFlags, float fRadius)
 {
 	int		j;
 	vec3_t basis1;
@@ -1160,7 +1160,7 @@ static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayS
 #endif
 
 // now we're at poly level, check each model space transformed poly against the model world transfomed ray
-bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const vec3_t rayEnd, CollisionRecord_t *collRecMap, int entNum, int modelIndex, const skin_t *skin, const shader_t *cust_shader, const mdxmSurfHierarchy_t *surfInfo, int *TransformedVertsArray, int traceFlags)
+bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const vec3_t rayEnd, CollisionRecord_t *collRecMap, int entNum, int modelIndex, const skin_t *skin, const shader_t *cust_shader, const mdxmSurfHierarchy_t *surfInfo, size_t*TransformedVertsArray, int traceFlags)
 {
 	int		j, numTris;
 	
@@ -1541,7 +1541,7 @@ void *G2_FindSurface(void *mod_t, int index, int lod)
 #define BOLT_SAVE_BLOCK_SIZE (sizeof(boltInfo_t) - sizeof(mdxaBone_t))
 #define BONE_SAVE_BLOCK_SIZE sizeof(boneInfo_t)
 
-qboolean G2_SaveGhoul2Models(CGhoul2Info_v &ghoul2, char **buffer, int *size)
+qboolean G2_SaveGhoul2Models(CGhoul2Info_v &ghoul2, char **buffer, int*size)
 {
 
 	// is there anything to save?
@@ -1558,7 +1558,7 @@ qboolean G2_SaveGhoul2Models(CGhoul2Info_v &ghoul2, char **buffer, int *size)
 	*size = 0;
 
 	// this one isn't a define since I couldn't work out how to figure it out at compile time
-	int ghoul2BlockSize = (int)&ghoul2[0].mTransformedVertsArray - (int)&ghoul2[0].mModelindex;
+	size_t ghoul2BlockSize = (size_t)&ghoul2[0].mTransformedVertsArray - (size_t)&ghoul2[0].mModelindex;
 
 	// add in count for number of ghoul2 models
 	*size += 4;	
