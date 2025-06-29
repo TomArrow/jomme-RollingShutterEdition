@@ -4779,12 +4779,19 @@ static qboolean CG_G2TraceCollide(trace_t *tr, vec3_t lastValidStart, vec3_t las
 	return qfalse;
 }
 
-static void CG_G2SaberEffects(vec3_t start, vec3_t end, centity_t *owner) {
+#define G2SABEREFFECTSDELAY 16 // bit above 60fps
+static void CG_G2SaberEffects(vec3_t start, vec3_t end, int ownerNum, int* nextAllowedSaberTraceEffect) {
 	trace_t trace;
 	vec3_t startTr;
 	vec3_t endTr;
 	qboolean backWards = qfalse;
 	qboolean doneWithTraces = qfalse;
+
+	if (*nextAllowedSaberTraceEffect > cg.time + G2SABEREFFECTSDELAY) {
+		*nextAllowedSaberTraceEffect = 0;
+	}
+
+	if (cg.time < *nextAllowedSaberTraceEffect) return;
 
 	while (!doneWithTraces)
 	{
@@ -4799,7 +4806,7 @@ static void CG_G2SaberEffects(vec3_t start, vec3_t end, centity_t *owner) {
 			VectorCopy(start, endTr);
 		}
 
-		CG_Trace( &trace, startTr, NULL, NULL, endTr, owner->currentState.number, MASK_PLAYERSOLID );
+		CG_Trace( &trace, startTr, NULL, NULL, endTr, ownerNum, MASK_PLAYERSOLID);
 
 		if (trace.entityNum < MAX_CLIENTS)
 		{ //hit a client..
@@ -4808,6 +4815,7 @@ static void CG_G2SaberEffects(vec3_t start, vec3_t end, centity_t *owner) {
 			if (trace.entityNum != ENTITYNUM_NONE)
 			{ //it succeeded with the ghoul2 trace
 				trap_FX_PlayEffectID( trap_FX_RegisterEffect("saber/blood_sparks.efx"), trace.endpos, trace.plane.normal );
+				*nextAllowedSaberTraceEffect = cg.time + G2SABEREFFECTSDELAY;
 			}
 		}
 
@@ -5050,8 +5058,8 @@ Ghoul2 Insert Start
 	}
 
 #ifdef G2_COLLISION_ENABLED
-	if (cent1 && (!demo15detected || cg_saberModelTraceEffect.integer==2) && cg_saberModelTraceEffect.integer) {
-		CG_G2SaberEffects(org_, end, cent1);
+	if ((!demo15detected || cg_saberModelTraceEffect.integer==2) && cg_saberModelTraceEffect.integer) {
+		CG_G2SaberEffects(org_, end, cent1 ? cent1->currentState.number : lent->data.fragment.saber.owner, cent1 ? &cent1->nextAllowedSaberTraceEffect : &lent->data.fragment.saber.nextAllowedSaberTraceEffect);
 	}
 #endif
 

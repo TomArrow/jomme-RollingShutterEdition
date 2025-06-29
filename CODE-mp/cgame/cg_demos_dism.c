@@ -85,6 +85,7 @@ void demoSaberDismember(centity_t *cent, vec3_t dir) {
 	le->data.fragment.saber.saberLengthOld = cent->saberLengthOldNonDead;
 	le->data.fragment.saber.saberMove = cent->currentState.saberMove;
 	le->data.fragment.saber.powerups = cent->currentState.powerups;
+	le->data.fragment.saber.owner = cent->currentState.number;
 	le->data.fragment.mins = saberMins;
 	le->data.fragment.maxs = saberMaxs;
 	le->leFlags |= LEF_TUMBLE;

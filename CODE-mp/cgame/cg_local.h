@@ -458,6 +458,7 @@ typedef struct centity_s {
 	qhandle_t			baseBolt; // for dismembered parts
 	vec3_t				saberAnglesNonDead;
 	vec3_t				saberAxisNonDead[3];
+	int					nextAllowedSaberTraceEffect;
 } centity_t;
 
 
@@ -645,6 +646,8 @@ typedef struct localEntity_s {
 				int				saberHitWallSoundDebounceTime;
 				int				saberMove;
 				int				powerups;
+				int				owner;
+				int				nextAllowedSaberTraceEffect;
 			} saber;
 		} fragment;
 	} data;
