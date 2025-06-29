@@ -1,6 +1,8 @@
 joMME - Rolling Shutter Edition
 =====
 
+Quick note: The files in base and mme folders are just some assets/mods, they are not covered by the GPL 2 license. Just added for convenience.
+
 This is a modified version of joMME which aims to do a single thing: Add a rolling shutter effect. Te intended use is to save rolling shuttered AVI files with the capture avi command. Doing anything else (like depth of field etc) is likely completely broken and might even crash the game. 
 
 There are two variables you can use to modify the rolling shutter behavior:
