@@ -1,0 +1,127 @@
+// Directed spark explosion effect
+
+// Exploding tails with no gravity
+Tail
+{
+	count	5 	8
+	life	200	400
+
+	radius	6
+
+	vel	150 0 0		350 0 0
+	spawnflags 	orgOnSphere 	axisFromSphere
+
+	size
+	{
+		start	0.3	0.5
+	}
+
+	length
+	{
+		start	4.0	
+		end	16.0	28.0
+		flags 	linear
+	}
+
+	alpha
+	{
+		start	1.0
+		end	0.0
+		parms	60
+		flags 	nonlinear
+	}
+
+	shader
+	[
+		gfx/misc/spark
+	]
+}
+
+
+// Bits that fly up and bounce off of architecture
+Tail
+{
+	count	5 	8
+	life	700	1100
+
+	bounce	0.25	0.4
+
+	vel	-120 -80 -80	250 80 80
+	gravity	-350	-450
+
+	size
+	{
+		start	0.3	0.4
+	}
+
+	length
+	{
+		start	4.0	10.0
+		end	0.1	1.0
+		flags 	linear
+	}
+
+	shader
+	[
+		gfx/misc/spark
+	]
+}
+
+Particle
+{
+	count	1	2
+	life	300	400
+
+	vel	8 -12 -12		16 12 12
+
+	size
+	{
+		start 8.0	12.0
+		end	2.0	4.0
+		flags	linear
+	}
+
+	alpha
+	{
+		start	0.2	0.4
+		end 	0.0
+		flags	linear
+	}
+
+	shader
+	[
+		gfx/misc/steam
+	]
+}
+
+// Let's call another existing effect to get some smoke!
+FxRunner
+{
+	count	1	2
+	delay	0	100
+
+	playfx
+	[
+		smoke
+	]
+}
+
+Light
+		
+{
+	life				80
+			
+
+	rgb
+	{
+		start			1 0.8 0.6
+	}
+
+	size
+	{
+		start			320 330
+		end				100
+		flags			linear
+	}
+}
+
