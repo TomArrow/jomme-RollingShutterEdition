@@ -5123,6 +5123,9 @@ Ghoul2 Insert Start
 							VectorCopy(saberTrail->oldPos[i],sparkPosition);
 							int distance = VectorDistance(saberTrail->oldPos[i], trace.endpos);
 							int newSparksCount = distance / cg_saberSparksPerDistance.integer -1; // Don't need one at the old position itself
+							if (newSparksCount > 100) {
+								newSparksCount = 100; // just to be safe. might still be too high not sure
+							}
 							VectorScale(direction,1.0f/(float)newSparksCount,direction);
 							for (int sp = 0; sp < newSparksCount; sp++) {
 								VectorAdd(sparkPosition,direction, sparkPosition);
