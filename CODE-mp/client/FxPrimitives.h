@@ -25,6 +25,9 @@
 #define FX_CLAMP			0xC
 
 #define TOMFX_LIT			0x00000001
+#define TOMFX_LIT_UNIQUE	0x00000002 // the light from this can only exist once in the entire scene.
+#define TOMFX_LUX_JITTER_R	0x00000004 // random jitter for the light with blurframes
+#define TOMFX_LUX_JITTER_O	0x00000008 // ordered jitter for the light with blurframes (not currently implemented)
 
 // Group flags
 #define FX_ALPHA_SHIFT		0
@@ -389,6 +392,8 @@ protected:
 	float		mRotationDelta;
 	float		mElasticity;
 
+	int			uniqueLightId;
+
 
 	bool		UpdateOrigin();
 	void		UpdateVelocity();
@@ -420,6 +425,8 @@ public:
 
 	inline void SetVel( vec3_t vel )		{ if(vel){VectorCopy(vel,mVel);}else{VectorClear(mVel);}	}
 	inline void SetAccel( vec3_t ac )		{ if(ac){VectorCopy(ac,mAccel);}else{VectorClear(mAccel);}	}
+
+	inline void SetUniqueLightId( int li )	{ uniqueLightId = li;		}
 
 	inline void SetSizeStart( float sz )	{ mSizeStart = sz;			}
 	inline void SetSizeEnd( float sz )		{ mSizeEnd = sz;			}

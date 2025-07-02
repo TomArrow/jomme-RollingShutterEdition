@@ -884,7 +884,7 @@ int CL_CgameSystemCalls( int *args ) {
 									0,0,0,// TODO make it work with this too?
 									VMF(6), VMF(7), VMF(8), 
 									(float *)VMA(9), (float *)VMA(10), VMF(11), 
-									args[12], args[13], args[14],0);
+									args[12], args[13], args[14],0,0);
 		return 0;
 		
 /*

@@ -4328,10 +4328,7 @@ void CG_DoSaber(vec3_t origin, vec3_t dir, float length, float traceRatio, saber
 		// subdivide length into 3 segments.
 		// subdivide each segment into totalframes/3 parts 
 		// i didnt rly make sure this is mathematically sound and covers the range perfectly or anything, just to give roughly a decent result. why overthink it.
-		int segment = jsaInfo->currentIndex % 3;
-		int progress = jsaInfo->currentIndex / 3;
-		float progressMult = 1.0f / (float)jsaInfo->totalFrames;
-		float progressHere = (float)segment / 3.0f + (float)progress * progressMult;
+		float progressHere = simpleJitter(jsaInfo);
 		VectorMA(origin, length * traceRatio * progressHere, dir, mid); // we use the trace ratio for light positioning, so the illumination doesn't get lost as easily.
 	}
 	else {

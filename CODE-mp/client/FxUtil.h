@@ -41,7 +41,7 @@ CLine *FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end,
 							float light1, float light2, float lightParm,
 							float alpha1, float alpha2, float alphaParm,
 							vec3_t rgb1, vec3_t rgb2, float rgbParm,
-							int killTime, qhandle_t shader, int flags, int tomflags);
+							int killTime, qhandle_t shader, int flags, int tomflags, int uniqueLightId);
 
 CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, float size1, float size2, float sizeParm,
 							float alpha1, float alpha2, float alphaParm,

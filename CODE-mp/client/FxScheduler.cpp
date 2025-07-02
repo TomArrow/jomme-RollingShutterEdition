@@ -2283,7 +2283,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 						fx->mLightStart.GetVal(), fx->mLightEnd.GetVal(), fx->mLightParm.GetVal(),
 						fx->mAlphaStart.GetVal(), fx->mAlphaEnd.GetVal(), fx->mAlphaParm.GetVal(),
 						sRGB, eRGB, fx->mRGBParm.GetVal(),
-						fx->mLife.GetVal(), fx->mMediaHandles.GetHandle(), fx->mFlags, fx->tomFlags );
+						fx->mLife.GetVal(), fx->mMediaHandles.GetHandle(), fx->mFlags, fx->tomFlags, fx->uniqueLightId );
 		break;
 
 	//---------

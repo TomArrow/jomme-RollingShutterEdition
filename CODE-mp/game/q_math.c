@@ -1485,3 +1485,12 @@ int irand(int min, int max)
 float sRGBToLinear(const float n) {
 	return (n > 0.04045f ? (float)pow((n + 0.055) / 1.055, 2.4) : n / 12.92f);
 }
+
+float simpleJitter(jitterSegmentAdvanceInfo_t* jsaInfo) {
+	int segment = jsaInfo->currentIndex % 3;
+	int progress = jsaInfo->currentIndex / 3;
+	float progressMult = 1.0f / (float)jsaInfo->totalFrames;
+	float progressHere = (float)segment / 3.0f + (float)progress * progressMult;
+	return progressHere;
+}
+

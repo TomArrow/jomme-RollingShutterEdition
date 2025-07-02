@@ -205,6 +205,7 @@ public:
 	CFxRange		mSpawnCount;
 	CFxRange		mLife;
 	int				mCullRange;
+	int				uniqueLightId;
 
 	CMediaHandles	mMediaHandles;
 	CMediaHandles	mImpactFxHandles;
@@ -305,6 +306,7 @@ public:
 	bool ParseDelay( const char *val );
 	bool ParseCount( const char *val );
 	bool ParseLife( const char *val );
+	bool ParseUniqueLightId( const char *val );
 	bool ParseElasticity( const char *val );
 	bool ParseFlags( const char *val );
 	bool ParseTomFlags( const char *val );

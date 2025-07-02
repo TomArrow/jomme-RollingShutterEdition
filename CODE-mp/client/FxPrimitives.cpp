@@ -10,6 +10,8 @@
 
 #include <set>
 
+static int uniqueLightsDrawFrames[1024];
+
 void FX_AddPrimitive( CEffect **pEffect, CCloud *effectCloud, int killTime );
 
 // Helper function
@@ -1013,9 +1015,28 @@ void CLine::Draw()
 	theFxHelper.AddFxToScene(&mRefEnt);
 	if (tomFlags & TOMFX_LIT) {
 		vec3_t center;
-		VectorSubtract(mOrigin2, mOrigin1,center);
-		VectorMA(mOrigin1, 0.5f, center, center);
-		theFxHelper.AddLightToScene(center,lightRadius,mRefEnt.shaderRGBA[0]/255.0f,mRefEnt.shaderRGBA[1] / 255.0f,mRefEnt.shaderRGBA[2] / 255.0f);
+		jitterSegmentAdvanceInfo_t jitterInfo;
+		re.MMEGetCGameJitterInfo(&jitterInfo);
+
+		if (!(tomFlags & TOMFX_LIT_UNIQUE) || uniqueLightsDrawFrames[uniqueLightId] != com_frameNumber) {
+			VectorSubtract(mOrigin2, mOrigin1, center);
+			if ((tomFlags & TOMFX_LUX_JITTER_R) && jitterInfo.isRecording) {
+				VectorMA(mOrigin1, random(), center, center);
+			}
+			else if ((tomFlags & TOMFX_LUX_JITTER_O) && jitterInfo.isRecording) {
+				float progress = simpleJitter(&jitterInfo);
+				VectorMA(mOrigin1, progress, center, center);
+			}
+			else {
+				VectorMA(mOrigin1, 0.5f, center, center);
+			}
+			theFxHelper.AddLightToScene(center, lightRadius, mRefEnt.shaderRGBA[0] / 255.0f, mRefEnt.shaderRGBA[1] / 255.0f, mRefEnt.shaderRGBA[2] / 255.0f);
+
+			if (tomFlags & TOMFX_LIT_UNIQUE) {
+				uniqueLightsDrawFrames[uniqueLightId] = com_frameNumber;
+			}
+		}
+
 	}
 }
 

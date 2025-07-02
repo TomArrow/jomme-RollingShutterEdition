@@ -2409,3 +2409,9 @@ typedef struct {
 	float phase;
 	float frequency;
 } waveForm_t;
+
+
+
+float simpleJitter(jitterSegmentAdvanceInfo_t* jsaInfo);
+
+

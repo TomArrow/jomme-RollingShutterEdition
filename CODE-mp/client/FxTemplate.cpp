@@ -80,6 +80,7 @@ void CPrimitiveTemplate::operator=(const CPrimitiveTemplate &that)
 	mSpawnCount			= that.mSpawnCount;
 	mLife				= that.mLife;
 	mCullRange			= that.mCullRange;
+	uniqueLightId		= that.uniqueLightId;
 
 	mMediaHandles		= that.mMediaHandles;
 	mImpactFxHandles	= that.mImpactFxHandles;
@@ -381,6 +382,12 @@ bool CPrimitiveTemplate::ParseLife( const char *val )
 	}
 
 	return false;
+}
+
+bool CPrimitiveTemplate::ParseUniqueLightId( const char *val )
+{
+	uniqueLightId = atoi(val);
+	return true;
 }
 
 //------------------------------------------------------
@@ -807,6 +814,18 @@ bool CPrimitiveTemplate::ParseTomFlags( const char *val )
 		if ( !Q_stricmp( flag[i], "lit" ))
 		{
 			tomFlags |= TOMFX_LIT;
+		}
+		else if ( !Q_stricmp( flag[i], "litunique" ))
+		{
+			tomFlags |= TOMFX_LIT_UNIQUE;
+		}
+		else if ( !Q_stricmp( flag[i], "lightjitterrandom" ))
+		{
+			tomFlags |= TOMFX_LUX_JITTER_R;
+		}
+		else if ( !Q_stricmp( flag[i], "lightjitter" ))
+		{
+			tomFlags |= TOMFX_LUX_JITTER_O;
 		}
 		else
 		{ // we have badness going on, but continue on in case there are any valid fields in here
@@ -2365,6 +2384,10 @@ bool CPrimitiveTemplate::ParsePrimitive( CGPGroup *grp )
 		else if ( !Q_stricmp( key, "life" ))
 		{
 			ParseLife( val );
+		}
+		else if ( !Q_stricmp( key, "uniqueLightId" ))
+		{
+			ParseUniqueLightId( val );
 		}
 		else if ( !Q_stricmp( key, "cullrange" ))
 		{

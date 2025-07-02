@@ -515,7 +515,7 @@ CLine *FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float size1, f
 									float light1, float light2, float lightParm,
 									float alpha1, float alpha2, float alphaParm,
 									vec3_t sRGB, vec3_t eRGB, float rgbParm,
-									int killTime, qhandle_t shader, int flags = 0, int tomflags = 0)
+									int killTime, qhandle_t shader, int flags = 0, int tomflags = 0, int uniqueLightId = 0)
 {
 	if ( theFxHelper.mFrameTime < 0 )
 	{ // disallow adding new effects when the system is paused
@@ -587,6 +587,8 @@ CLine *FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float size1, f
 		fx->SetTomFlags( tomflags );
 
 		fx->SetSTScale( 1.0f, 1.0f );
+
+		fx->SetUniqueLightId(uniqueLightId);
 
 		FX_AddPrimitive( (CEffect**)&fx, effectCloud, killTime );
 		// in the editor, fx may now be NULL
