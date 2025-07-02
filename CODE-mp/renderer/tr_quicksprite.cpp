@@ -15,6 +15,7 @@ void R_BindAnimatedImage( textureBundle_t *bundle );
 //////////////////////////////////////////////////////////////////////
 CQuickSpriteSystem SQuickSprite;
 
+#define TESTTRIANGLES 0
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -49,6 +50,11 @@ CQuickSpriteSystem::~CQuickSpriteSystem()
 
 void CQuickSpriteSystem::Flush(void)
 {
+#if TESTTRIANGLES
+	qboolean triangles = qtrue;
+#else
+	qboolean triangles = (qboolean)r_fboGLSL->integer;
+#endif
 	if (mNextVert==0)
 	{
 		return;
@@ -81,11 +87,17 @@ void CQuickSpriteSystem::Flush(void)
 		GLimp_LogComment( "glLockArraysEXT\n" );
 	}
 
-	qglDrawArrays(GL_QUADS, 0, mNextVert);
+	//qglDrawArrays(GL_QUADS, 0, mNextVert);
+	if (triangles) {
+		qglDrawElements(GL_TRIANGLES, mNextIndex, GL_UNSIGNED_INT, mIndexes);
+	}
+	else {
+		qglDrawElements(GL_QUADS, mNextIndex, GL_UNSIGNED_INT, mIndexes);
+	}
 
 	backEnd.pc.c_vertexes += mNextVert;
 	backEnd.pc.c_indexes += mNextVert;
-	backEnd.pc.c_totalIndexes += mNextVert;
+	backEnd.pc.c_totalIndexes += mNextIndex;
 
 	if (mUseFog)
 	{
@@ -106,10 +118,16 @@ void CQuickSpriteSystem::Flush(void)
 
 //		qglVertexPointer (3, GL_FLOAT, 16, mVerts);	// Done above
 
-		qglDrawArrays(GL_QUADS, 0, mNextVert);
+		//qglDrawArrays(GL_QUADS, 0, mNextVert);
+		if (triangles) {
+			qglDrawElements(GL_TRIANGLES, mNextIndex, GL_UNSIGNED_INT, mIndexes);
+		}
+		else {
+			qglDrawElements(GL_QUADS, mNextIndex, GL_UNSIGNED_INT, mIndexes);
+		}
 
 		// Second pass from fog
-		backEnd.pc.c_totalIndexes += mNextVert;
+		backEnd.pc.c_totalIndexes += mNextIndex;
 	}
 
 	// 
@@ -122,12 +140,14 @@ void CQuickSpriteSystem::Flush(void)
 	}
 
 	mNextVert=0;
+	mNextIndex=0;
 }
 
 
 void CQuickSpriteSystem::StartGroup(textureBundle_t *bundle, unsigned long glbits, unsigned long fogcolor )
 {
 	mNextVert = 0;
+	mNextIndex = 0;
 
 	mTexBundle = bundle;
 	mGLStateBits = glbits;
@@ -161,6 +181,13 @@ void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec2_t fog)
 	float *curcoord;
 	float *curfogtexcoord;
 	color4f_t *curcolor;
+	int i;
+#if TESTTRIANGLES
+	qboolean triangles = qtrue;
+#else
+	qboolean triangles = (qboolean)r_fboGLSL->integer;
+#endif
+	int indexSkip = triangles ? 6 : 4;
 
 	if (mNextVert>SHADER_MAX_VERTEXES-4)
 	{
@@ -169,6 +196,27 @@ void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec2_t fog)
 
 	curcoord = mVerts[mNextVert];
 	memcpy(curcoord, pointdata, 4*sizeof(vec4_t));
+
+	if (indexSkip == 6) {
+		mIndexes[mNextIndex] = mNextVert;
+		mIndexes[mNextIndex + 1] = mNextVert + 1;
+		mIndexes[mNextIndex + 2] = mNextVert + 2;
+		mIndexes[mNextIndex + 3] = mNextVert;
+		mIndexes[mNextIndex + 4] = mNextVert + 3;
+		mIndexes[mNextIndex + 5] = mNextVert + 2;
+		//mIndexes[mNextIndex] = mNextVert;
+		//mIndexes[mNextIndex + 1] = mNextVert + 1;
+		//mIndexes[mNextIndex + 2] = mNextVert + 3;
+		//mIndexes[mNextIndex + 3] = mNextVert + 3;
+		//mIndexes[mNextIndex + 4] = mNextVert + 1;
+		//mIndexes[mNextIndex + 5] = mNextVert + 2;
+	}
+	else {
+		mIndexes[mNextIndex] = mNextVert;
+		mIndexes[mNextIndex + 1] = mNextVert + 1;
+		mIndexes[mNextIndex + 2] = mNextVert + 2;
+		mIndexes[mNextIndex + 3] = mNextVert + 3;
+	}
 
 	// Set up color
 	curcolor = &mColors[mNextVert];
@@ -204,4 +252,5 @@ void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec2_t fog)
 	}
 
 	mNextVert+=4;
+	mNextIndex += indexSkip;
 }
