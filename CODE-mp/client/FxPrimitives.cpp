@@ -634,6 +634,81 @@ void CParticle::UpdateSize()
 
 	mRefEnt.radius = (double)(((double)mSizeStart * (double)perc1) + ((double)mSizeEnd * (double)(1.0f - perc1)));
 }
+//----------------------------
+// Update Light
+//----------------------------
+void CParticle::UpdateLight()
+{
+	// completely biased towards start if it doesn't get overridden
+	float	perc1 = 1.0f, perc2 = 1.0f; 
+
+	if ( (mFlags & FX_LIGHT_LINEAR) )
+	{ 
+		// calculate element biasing
+		perc1 = 1.0f - ((float)(theFxHelper.mTime - mTimeStart) + theFxHelper.mTimeFraction) / (float)(mTimeEnd - mTimeStart);
+		if (perc1 < 0) perc1 = 0; else if (perc1 > 1) perc1 = 1;
+	}
+
+	// We can combine FX_LINEAR with _either_ FX_NONLINEAR, FX_WAVE, or FX_CLAMP
+	if (( mFlags & FX_LIGHT_PARM_MASK ) == FX_LIGHT_NONLINEAR )
+	{
+		if ((double)((double)theFxHelper.mTime + (double)theFxHelper.mTimeFraction) > (double)mLightParm)
+		{ 
+			// get percent done, using parm as the start of the non-linear fade
+			perc2 = 1.0f - ((float)((float)theFxHelper.mTime - mLightParm) + theFxHelper.mTimeFraction) / (float)(mTimeEnd - mLightParm);
+			if (perc2 < 0) perc2 = 0; else if (perc2 > 1) perc2 = 1;
+		}
+
+		if ( mFlags & FX_LIGHT_LINEAR )
+		{
+			// do an even blend
+			perc1 = perc1 * 0.5f + perc2 * 0.5f;
+		}
+		else
+		{ 
+			// just copy it over...sigh
+			perc1 = perc2;
+		}
+	}
+	else if (( mFlags & FX_LIGHT_PARM_MASK ) == FX_LIGHT_WAVE )
+	{ 
+		// wave gen, with parm being the frequency multiplier
+		perc1 = perc1 * cos(((float)(theFxHelper.mTime - mTimeStart) + theFxHelper.mTimeFraction) * mLightParm );
+	}
+	else if (( mFlags & FX_LIGHT_PARM_MASK ) == FX_LIGHT_CLAMP )
+	{
+		if ((double)((double)theFxHelper.mTime + (double)theFxHelper.mTimeFraction) < (double)mLightParm)
+		{ 
+			// get percent done, using parm as the start of the non-linear fade
+			perc2 = ((float)(mLightParm - (float)theFxHelper.mTime) - theFxHelper.mTimeFraction) / (float)(mLightParm - mTimeStart);
+			if (perc2 < 0) perc2 = 0; else if (perc2 > 1) perc2 = 1;
+		}
+		else
+		{
+			perc2 = 0.0f; // make it full light??
+		}
+
+		if ( (mFlags & FX_LIGHT_LINEAR) )
+		{ 
+			// do an even blend
+			perc1 = perc1 * 0.5f + perc2 * 0.5f;
+		}
+		else
+		{ 
+			// just copy it over...sigh
+			perc1 = perc2;
+		}
+	}
+
+	// If needed, RAND can coexist with linear and either non-linear or wave.
+	if (( mFlags & FX_LIGHT_RAND ))
+	{ 
+		// Random simply modulates the existing value
+		perc1 = random() * perc1;
+	}
+
+	lightRadius = (double)(((double)mLightStart * (double)perc1) + ((double)mLightEnd * (double)(1.0f - perc1)));
+}
 
 //----------------------------
 // Update RGB
@@ -936,6 +1011,12 @@ void CLine::Draw()
 	VectorCopy( mOrigin2, mRefEnt.oldorigin );
 
 	theFxHelper.AddFxToScene(&mRefEnt);
+	if (tomFlags & TOMFX_LIT) {
+		vec3_t center;
+		VectorSubtract(mOrigin2, mOrigin1,center);
+		VectorMA(mOrigin1, 0.5f, center, center);
+		theFxHelper.AddLightToScene(center,lightRadius,mRefEnt.shaderRGBA[0]/255.0f,mRefEnt.shaderRGBA[1] / 255.0f,mRefEnt.shaderRGBA[2] / 255.0f);
+	}
 }
 
 //----------------------------
@@ -948,6 +1029,7 @@ bool CLine::Update()
 	}
 		
 	UpdateSize();
+	UpdateLight();
 	UpdateRGB();
 	UpdateAlpha();
 

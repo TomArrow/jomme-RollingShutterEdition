@@ -213,6 +213,7 @@ public:
 	CMediaHandles	mPlayFxHandles;
 
 	int				mFlags;			// These need to get passed on to the primitive
+	int				tomFlags;			// These need to get passed on to the primitive
 	int				mSpawnFlags;	// These are only used to control spawning, but never get passed to prims.
 
 	vec3_t			mMin;
@@ -272,6 +273,11 @@ public:
 	CFxRange		mSizeEnd;
 	CFxRange		mSizeParm;
 
+	// special mod to allow us to create lights for lines and not need the Light primitive (is that the right word to use? idk)
+	CFxRange		mLightStart;
+	CFxRange		mLightEnd;
+	CFxRange		mLightParm;
+
 	CFxRange		mSize2Start;
 	CFxRange		mSize2End;
 	CFxRange		mSize2Parm;
@@ -301,6 +307,7 @@ public:
 	bool ParseLife( const char *val );
 	bool ParseElasticity( const char *val );
 	bool ParseFlags( const char *val );
+	bool ParseTomFlags( const char *val );
 	bool ParseSpawnFlags( const char *val );
 
 	bool ParseOrigin1( const char *val );
@@ -322,6 +329,7 @@ public:
 	bool ParseRGB( CGPGroup *grp );
 	bool ParseAlpha( CGPGroup *grp );
 	bool ParseSize( CGPGroup *grp );
+	bool ParseLight( CGPGroup *grp );
 	bool ParseSize2( CGPGroup *grp );
 	bool ParseLength( CGPGroup *grp );
 
@@ -349,6 +357,11 @@ public:
 	bool ParseSizeEnd( const char *val );
 	bool ParseSizeParm( const char *val );
 	bool ParseSizeFlags( const char *val );
+
+	bool ParseLightStart( const char *val );
+	bool ParseLightEnd( const char *val );
+	bool ParseLightParm( const char *val );
+	bool ParseLightFlags( const char *val );
 
 	bool ParseSize2Start( const char *val );
 	bool ParseSize2End( const char *val );

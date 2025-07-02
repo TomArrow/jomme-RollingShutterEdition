@@ -24,6 +24,8 @@
 #define FX_WAVE				0x8
 #define FX_CLAMP			0xC
 
+#define TOMFX_LIT			0x00000001
+
 // Group flags
 #define FX_ALPHA_SHIFT		0
 #define FX_ALPHA_PARM_MASK	0x0000000C
@@ -64,6 +66,14 @@
 #define	FX_SIZE2_NONLINEAR	0x00040000
 #define FX_SIZE2_WAVE		0x00080000
 #define FX_SIZE2_CLAMP		0x000C0000
+
+#define FX_LIGHT_SHIFT		20
+#define FX_LIGHT_PARM_MASK	0x00C00000
+#define	FX_LIGHT_LINEAR		0x00100000
+#define FX_LIGHT_RAND		0x00200000
+#define	FX_LIGHT_NONLINEAR	0x00400000
+#define FX_LIGHT_WAVE		0x00800000
+#define FX_LIGHT_CLAMP		0x00C00000
 
 // Feature flags
 #define	FX_DEPTH_HACK		0x00100000
@@ -149,6 +159,7 @@ protected:
 	int			mTimeStart;
 	int			mTimeEnd;
 
+	int			tomFlags;
 	int			mFlags;
 
 	// Size of our object, useful for things that have physics
@@ -168,6 +179,8 @@ protected:
 
 	miniRefEntity_t		mRefEnt;
 	CEffect				*mNext;
+
+	float		lightRadius = 0;
 
 public:
 
@@ -194,6 +207,7 @@ public:
 
 	inline void SetMin( vec3_t min )		{ if(min){VectorCopy(min,mMin);}else{VectorClear(mMin);}			}
 	inline void SetMax( vec3_t max )		{ if(max){VectorCopy(max,mMax);}else{VectorClear(mMax);}			}
+	inline void SetTomFlags( int flags )	{ tomFlags = flags;				}
 	inline void SetFlags( int flags )		{ mFlags = flags;				}
 	inline void AddFlags( int flags )		{ mFlags |= flags;				}
 	inline void ClearFlags( int flags )		{ mFlags &= ~flags;				}
@@ -360,6 +374,10 @@ protected:
 	float		mSizeEnd;
 	float		mSizeParm;
 
+	float		mLightStart;
+	float		mLightEnd;
+	float		mLightParm;
+
 	vec3_t		mRGBStart;
 	vec3_t		mRGBEnd;
 	float		mRGBParm;
@@ -375,6 +393,7 @@ protected:
 	bool		UpdateOrigin();
 	void		UpdateVelocity();
 	void		UpdateSize();
+	void		UpdateLight();
 	void		UpdateRGB();
 	void		UpdateAlpha();
 	void		UpdateRotation();
@@ -405,6 +424,10 @@ public:
 	inline void SetSizeStart( float sz )	{ mSizeStart = sz;			}
 	inline void SetSizeEnd( float sz )		{ mSizeEnd = sz;			}
 	inline void SetSizeParm( float parm )	{ mSizeParm = parm;			}
+
+	inline void SetLightStart( float sz )	{ mLightStart = sz;			}
+	inline void SetLightEnd( float sz )		{ mLightEnd = sz;			}
+	inline void SetLightParm( float parm )	{ mLightParm = parm;			}
 
 	inline void SetRGBStart( vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
 	inline void SetRGBEnd( vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}

@@ -2280,9 +2280,10 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 	//---------
 		FX_AddLine( effectCloud, org, org2, 
 						fx->mSizeStart.GetVal(), fx->mSizeEnd.GetVal(), fx->mSizeParm.GetVal(),
+						fx->mLightStart.GetVal(), fx->mLightEnd.GetVal(), fx->mLightParm.GetVal(),
 						fx->mAlphaStart.GetVal(), fx->mAlphaEnd.GetVal(), fx->mAlphaParm.GetVal(),
 						sRGB, eRGB, fx->mRGBParm.GetVal(),
-						fx->mLife.GetVal(), fx->mMediaHandles.GetHandle(), fx->mFlags );
+						fx->mLife.GetVal(), fx->mMediaHandles.GetHandle(), fx->mFlags, fx->tomFlags );
 		break;
 
 	//---------

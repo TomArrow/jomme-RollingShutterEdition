@@ -25,7 +25,7 @@ CPrimitiveTemplate::CPrimitiveTemplate()
 	mEnabled = true;
 #endif
 
-	mFlags = mSpawnFlags = 0;
+	tomFlags = mFlags = mSpawnFlags = 0;
 
 	mLife.SetRange( 1.0f, 1.0f );
 	mCullRange = 0;
@@ -87,6 +87,7 @@ void CPrimitiveTemplate::operator=(const CPrimitiveTemplate &that)
 	mEmitterFxHandles	= that.mEmitterFxHandles;
 	mPlayFxHandles		= that.mPlayFxHandles;
 
+	tomFlags			= that.tomFlags;
 	mFlags				= that.mFlags;
 	mSpawnFlags			= that.mSpawnFlags;
 
@@ -146,6 +147,10 @@ void CPrimitiveTemplate::operator=(const CPrimitiveTemplate &that)
 	mSizeStart			= that.mSizeStart;
 	mSizeEnd			= that.mSizeEnd;
 	mSizeParm			= that.mSizeParm;
+
+	mLightStart			= that.mLightStart;
+	mLightEnd			= that.mLightEnd;
+	mLightParm			= that.mLightParm;
 
 	mSize2Start			= that.mSize2Start;
 	mSize2End			= that.mSize2End;
@@ -773,6 +778,44 @@ bool CPrimitiveTemplate::ParseFlags( const char *val )
 
 	return ok;
 }
+//------------------------------------------------------
+// ParseTomFlags
+//	These are flags that are not specific to a group, 
+//	rather, they are specific to the whole primitive.
+//
+// input:
+//	string that contains the flag strings
+//
+// return:
+//	success of parse operation.
+//------------------------------------------------------
+bool CPrimitiveTemplate::ParseTomFlags( const char *val )
+{
+	char	flag[][32] = {"\0","\0","\0","\0","\0","\0","\0"};
+	bool	ok = true;
+	
+	// For a primitive, really you probably only have two or less flags set
+	int v = sscanf( val, "%s %s %s %s %s %s %s", flag[0], flag[1], flag[2], flag[3], flag[4], flag[5], flag[6] );
+
+	for ( int i = 0; i < 7; i++ )
+	{
+		if ( i + 1 > v )
+		{
+			return true;
+		}
+
+		if ( !Q_stricmp( flag[i], "lit" ))
+		{
+			tomFlags |= TOMFX_LIT;
+		}
+		else
+		{ // we have badness going on, but continue on in case there are any valid fields in here
+			ok = false;
+		}
+	}
+
+	return ok;
+}
 
 //------------------------------------------------------
 // ParseSpawnFlags
@@ -1257,6 +1300,60 @@ bool CPrimitiveTemplate::ParseSizeFlags( const char *val )
 	{
 		// Convert our generic flag values into type specific ones
 		mFlags |= ( flags << FX_SIZE_SHIFT );
+		return true;
+	}
+
+	return false;
+}
+
+// hack to do lights on lines
+bool CPrimitiveTemplate::ParseLightStart( const char *val )
+{
+	float min, max;
+
+	if ( ParseFloat( val, &min, &max ) == true )
+	{
+		mLightStart.SetRange( min, max );
+		return true;
+	}
+
+	return false;
+}
+
+bool CPrimitiveTemplate::ParseLightEnd( const char *val )
+{
+	float min, max;
+
+	if ( ParseFloat( val, &min, &max ) == true )
+	{
+		mLightEnd.SetRange( min, max );
+		return true;
+	}
+
+	return false;
+}
+
+bool CPrimitiveTemplate::ParseLightParm( const char *val )
+{
+	float min, max;
+
+	if ( ParseFloat( val, &min, &max ) == true )
+	{
+		mLightParm.SetRange( min, max );
+		return true;
+	}
+
+	return false;
+}
+
+bool CPrimitiveTemplate::ParseLightFlags( const char *val )
+{
+	int flags;
+
+	if ( ParseGroupFlags( val, &flags ) == true )
+	{
+		// Convert our generic flag values into type specific ones
+		mFlags |= ( flags << FX_LIGHT_SHIFT );
 		return true;
 	}
 
@@ -2050,6 +2147,59 @@ bool CPrimitiveTemplate::ParseSize( CGPGroup *grp )
 
 	return true;
 }
+//------------------------------------------------------
+// ParseLight
+//	Takes a size group and chomps out any pairs contained
+//	in it.
+//
+// input:
+//	the parse group to process
+//
+// return:
+//	success of parse operation.
+//------------------------------------------------------
+bool CPrimitiveTemplate::ParseLight( CGPGroup *grp )
+{
+	CGPValue	*pairs;
+	const char	*key;
+	const char	*val;
+
+	// Inside of the group, we should have a series of pairs
+	pairs = grp->GetPairs();
+
+	while( pairs )
+	{	
+		// Let's get the key field
+		key = pairs->GetName();
+		val = pairs->GetTopValue();
+
+		// Huge stricmp lists suxor
+		if ( !Q_stricmp( key, "start" ))
+		{
+			ParseLightStart( val );
+		}
+		else if ( !Q_stricmp( key, "end" ))
+		{
+			ParseLightEnd( val );
+		}
+		else if ( !Q_stricmp( key, "parm" ) || !Q_stricmp( key, "parms" ))
+		{
+			ParseLightParm( val );
+		}
+		else if ( !Q_stricmp( key, "flags" ) || !Q_stricmp( key, "flag" ))
+		{
+			ParseLightFlags( val );
+		}
+		else
+		{
+			theFxHelper.Print( "Unknown key parsing a Light subgroup: %s\n", key );
+		}
+
+		pairs = (CGPValue *)pairs->GetNext();
+	}
+
+	return true;
+}
 
 //------------------------------------------------------
 // ParseSize2
@@ -2297,6 +2447,10 @@ bool CPrimitiveTemplate::ParsePrimitive( CGPGroup *grp )
 		{ // these need to get passed on to the primitive
 			ParseFlags( val );
 		}
+		else if ( !Q_stricmp( key, "tomFlags" ) || !Q_stricmp( key, "tomFlag" ))
+		{ // these need to get passed on to the primitive
+			ParseTomFlags( val );
+		}
 		else if ( !Q_stricmp( key, "spawnFlags" ) || !Q_stricmp( key, "spawnFlag" ))
 		{ // these are used to spawn things in cool ways, but don't ever get passed on to prims.
 			ParseSpawnFlags( val );
@@ -2335,6 +2489,10 @@ bool CPrimitiveTemplate::ParsePrimitive( CGPGroup *grp )
 		else if ( !Q_stricmp( key, "size" ) || !Q_stricmp( key, "width" ))
 		{
 			ParseSize( subGrp );
+		}
+		else if ( !Q_stricmp( key, "light" )) // special mod. allow lines to have a light along its length (jittered when recording
+		{
+			ParseLight( subGrp );
 		}
 		else if ( !Q_stricmp( key, "size2" ) || !Q_stricmp( key, "width2" ))
 		{

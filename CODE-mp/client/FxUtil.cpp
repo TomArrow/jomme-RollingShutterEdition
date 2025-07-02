@@ -512,9 +512,10 @@ CParticle *FX_AddParticle( CCloud *effectCloud, CFxBoltInterface *obj, vec3_t ve
 //  FX_AddLine
 //-------------------------
 CLine *FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float size1, float size2, float sizeParm,
+									float light1, float light2, float lightParm,
 									float alpha1, float alpha2, float alphaParm,
 									vec3_t sRGB, vec3_t eRGB, float rgbParm,
-									int killTime, qhandle_t shader, int flags = 0 )
+									int killTime, qhandle_t shader, int flags = 0, int tomflags = 0)
 {
 	if ( theFxHelper.mFrameTime < 0 )
 	{ // disallow adding new effects when the system is paused
@@ -568,8 +569,22 @@ CLine *FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float size1, f
 			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
 		}
 
+		// Light----------------
+		fx->SetLightStart( light1 );
+		fx->SetLightEnd( light2 );
+
+		if (( flags & FX_LIGHT_PARM_MASK ) == FX_LIGHT_WAVE )
+		{
+			fx->SetLightParm( lightParm * PI * 0.001f );
+		}
+		else if ( flags & FX_LIGHT_PARM_MASK )
+		{
+			fx->SetLightParm( lightParm * 0.01f * killTime + theFxHelper.mTime );
+		}
+
 		fx->SetShader( shader );
 		fx->SetFlags( flags );
+		fx->SetTomFlags( tomflags );
 
 		fx->SetSTScale( 1.0f, 1.0f );
 

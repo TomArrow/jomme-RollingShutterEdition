@@ -38,9 +38,10 @@ CParticle *FX_AddParticle( CCloud *effectCloud, CFxBoltInterface *obj, vec3_t ve
 
 CLine *FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, 
 							float size1, float size2, float sizeParm,
+							float light1, float light2, float lightParm,
 							float alpha1, float alpha2, float alphaParm,
 							vec3_t rgb1, vec3_t rgb2, float rgbParm,
-							int killTime, qhandle_t shader, int flags );
+							int killTime, qhandle_t shader, int flags, int tomflags);
 
 CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, float size1, float size2, float sizeParm,
 							float alpha1, float alpha2, float alphaParm,
