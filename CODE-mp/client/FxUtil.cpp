@@ -239,7 +239,7 @@ void FX_Add( void )
 					}
 				}
 		
-				if ( ef->mEffect->Cull() == false && ef->mEffect->CullPVS() == false )
+				if ( ef->mEffect->Cull() == false)// && ef->mEffect->CullPVS() == false )
 				{ 
 					drawnFx++;
 

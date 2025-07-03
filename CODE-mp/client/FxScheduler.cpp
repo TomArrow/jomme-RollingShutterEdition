@@ -1578,6 +1578,10 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int 
 		return;
 	}
 
+	if (!re.inPVS(origin, theFxHelper.refdef.vieworg)) {
+		return;
+	}
+
 #ifndef EFFECTSED
 	int						modelNum = 0, boltNum = 0;
 	int						entityNum = entNum;

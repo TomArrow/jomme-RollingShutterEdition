@@ -260,6 +260,10 @@ void CCloud::Draw()
 	CEffect		*current = mNext;
 	refEntity_t	tempRef;
 
+	if (CullPVS()) {
+		return;
+	}
+
 	VectorCopy(current->GetRefEnt().origin, mRefEnt.origin);
 	
 	// We must clear out the full entity, otherwise the mini won't stomp everything in the refent.
