@@ -1089,7 +1089,7 @@ void CFxScheduler::PlayEffect( int id, CFxBoltInterface *obj )
 	// Get the effect.
 	fx = &mEffectTemplates[id];
 
-	effectCloud = FX_AddCloud();
+	effectCloud = FX_AddCloud(origin);
 
 	float cullRange, effectDistSq = DistanceSquared( origin, theFxHelper.refdef.vieworg );
 
@@ -1597,7 +1597,7 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int 
 	// Get the effect.
 	fx = &mEffectTemplates[id];
 
-	effectCloud = FX_AddCloud();
+	effectCloud = FX_AddCloud(origin);
 
 	float cullRange, effectDistSq = DistanceSquared( origin, theFxHelper.refdef.vieworg );
 

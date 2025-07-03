@@ -14,7 +14,7 @@ void	FX_Stop( void );	// ditches all active effects without touching the templat
 
 bool	FX_ActiveFx(void);	// returns whether there are any active or scheduled effects
 
-CCloud	*FX_AddCloud(void);
+CCloud	*FX_AddCloud(vec3_t origin);
 
 
 CParticle *FX_AddParticle( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel, 

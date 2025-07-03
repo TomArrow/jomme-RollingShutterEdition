@@ -305,6 +305,11 @@ inline void ComputeFinalVertexColor(const byte *colors, float *result)
 	result[1] = g / 256.0f;
 	result[2] = b / 256.0f;
 
+	// put this in a smarter place? idk
+	result[0] = 255.0f * sRGBToLinear(result[0] / 255.0f);
+	result[1] = 255.0f * sRGBToLinear(result[1] / 255.0f);
+	result[2] = 255.0f * sRGBToLinear(result[2] / 255.0f);
+
 	//return *(ulong *)result;
 }
 

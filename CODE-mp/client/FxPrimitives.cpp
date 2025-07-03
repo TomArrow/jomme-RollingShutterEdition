@@ -67,6 +67,13 @@ bool CEffect::Cull()
 	return false;
 }
 
+bool CEffect::CullPVS()
+{
+	vec3_t	dir;
+
+	return !re.inPVS(theFxHelper.refdef.vieworg, mOrigin1);
+}
+
 //----------------------------
 void CEffect::Draw()
 {
@@ -247,6 +254,7 @@ bool CCloud::Cull()
 	return true;
 }
 
+
 void CCloud::Draw()
 {
 	CEffect		*current = mNext;
@@ -264,13 +272,15 @@ void CCloud::Draw()
 
 	while(current)
 	{
-		if (current->GetRefEnt().customShader != tempRef.customShader)
-		{
-			tempRef.customShader = current->GetRefEnt().customShader;
-			theFxHelper.AddFxToScene( &tempRef );
-		}
+		//if (!current->CullPVS()) {
+			if (current->GetRefEnt().customShader != tempRef.customShader)
+			{
+				tempRef.customShader = current->GetRefEnt().customShader;
+				theFxHelper.AddFxToScene(&tempRef);
+			}
 
-		current->Draw();
+			current->Draw();
+		//}
 		current = current->GetNext();
 	}
 

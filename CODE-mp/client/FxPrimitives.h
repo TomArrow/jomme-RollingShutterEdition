@@ -194,6 +194,7 @@ public:
 
 	virtual bool Update();
 	virtual bool Cull();
+	virtual bool CullPVS();
 	virtual void Draw();
 
 	inline	miniRefEntity_t	&GetRefEnt(void) { return mRefEnt; } 

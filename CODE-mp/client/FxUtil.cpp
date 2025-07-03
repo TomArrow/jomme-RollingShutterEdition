@@ -239,7 +239,7 @@ void FX_Add( void )
 					}
 				}
 		
-				if ( ef->mEffect->Cull() == false )
+				if ( ef->mEffect->Cull() == false && ef->mEffect->CullPVS() == false )
 				{ 
 					drawnFx++;
 
@@ -324,11 +324,12 @@ void FX_AddPrimitive( CEffect **pEffect, CCloud *effectCloud, int killTime )
 	(*pEffect)->SetTimeEnd( theFxHelper.mTime + killTime );
 }
 
-CCloud	*FX_AddCloud(void)
+CCloud	*FX_AddCloud(vec3_t origin)
 {
 	CCloud		*cloud;
 
 	cloud = new CCloud;
+	cloud->SetOrigin1(origin);
 	OutstandClouds.insert(cloud);
 	FX_AddPrimitive((CEffect **)&cloud, 0, 99999);
 
