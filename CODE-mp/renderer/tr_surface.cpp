@@ -325,6 +325,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	float		*xyz, *normal, *texCoords;
 	float		*color;
 	float		*colorRaw;
+	int			colorRawIndex;
 	int			dlightBits;
 	qboolean	needsNormal;
 
@@ -346,6 +347,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	texCoords = tess.texCoords[ tess.numVertexes ][0];
 	color = tess.vertexColors[ tess.numVertexes ];
 	colorRaw = tess.vertexColorsRaw[ tess.numVertexes ];
+	colorRawIndex = tess.numVertexes;
 	needsNormal = tess.shader->needsNormal;
 
 	for ( i = 0 ; i < srf->numVerts ; i++, dv++) 
@@ -382,8 +384,10 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 
 		//*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
 		ComputeFinalVertexColor((byte*)dv->color,color,colorRaw);
+		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, colorRawIndex);
 		color += 4;
 		colorRaw += 4;
+		colorRawIndex++;
 	}
 
 	for ( i = 0 ; i < srf->numVerts ; i++ ) {
@@ -1360,6 +1364,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 		}
 		//*(unsigned *) &tess.vertexColors[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
 		ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR], (float*) &tess.vertexColors[ndx], (float*) &tess.vertexColorsRaw[ndx]);
+		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, ndx);
 		tess.vertexDlightBits[ndx] = dlightBits;
 	}
 
@@ -1412,6 +1417,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 	float	*normal;
 	float *color;
 	float *colorRaw;
+	int		colorRawIndex;
 	drawVert_t	*dv;
 	int		rows, irows, vrows;
 	int		used;
@@ -1490,6 +1496,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 		texCoords = tess.texCoords[numVertexes][0];
 		color = ( float * ) &tess.vertexColors[numVertexes];
 		colorRaw = ( float * ) &tess.vertexColorsRaw[numVertexes];
+		colorRawIndex = numVertexes;
 		vDlightBits = &tess.vertexDlightBits[numVertexes];
 		needsNormal = tess.shader->needsNormal;
 
@@ -1521,8 +1528,10 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 
 				//*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
 				ComputeFinalVertexColor((byte *)dv->color, color, colorRaw);
+				VERTEXCOLORRAWSET(tess.vertexColorsRawSet,colorRawIndex);
 				color += 4;
 				colorRaw += 4;
+				colorRawIndex++;
 				*vDlightBits++ = dlightBits;
 			}
 		}

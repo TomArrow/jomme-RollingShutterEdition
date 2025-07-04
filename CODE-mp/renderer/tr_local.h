@@ -1679,6 +1679,9 @@ typedef struct stageVars
 
 #define	NUM_TEX_COORDS		(MAXLIGHTMAPS+1)
 
+#define VERTEXCOLORRAWCHECK(vcr,index) (((vcr)[((index) >> 3)] & (1 << ((index) & 7))))
+#define VERTEXCOLORRAWSET(vcr,index) (vcr)[((index) >> 3)] |= (1 << ((index) & 7))
+
 struct shaderCommands_s 
 {
 	glIndex_t	indexes[SHADER_MAX_INDEXES];
@@ -1687,6 +1690,7 @@ struct shaderCommands_s
 	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS];
 	color4f_t	vertexColors[SHADER_MAX_VERTEXES];
 	color4f_t	vertexColorsRaw[SHADER_MAX_VERTEXES]; // for surfacesprites
+	byte		vertexColorsRawSet[SHADER_MAX_VERTEXES/8]; // for surfacesprites
 //	byte		vertexAlphas[SHADER_MAX_VERTEXES][4];	// only used by SOF2 glass, go ahead and implement if you want
 	int			vertexDlightBits[SHADER_MAX_VERTEXES];
 

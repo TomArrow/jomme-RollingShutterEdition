@@ -626,6 +626,7 @@ void R_BuildCloudData( shaderCommands_t *input )
 	// set up for drawing
 	tess.numIndexes = 0;
 	tess.numVertexes = 0;
+	Com_Memset(tess.vertexColorsRawSet, 0, sizeof(tess.vertexColorsRawSet));
 
 	if ( input->shader->sky.cloudHeight )
 	{

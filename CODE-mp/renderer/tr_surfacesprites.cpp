@@ -1406,8 +1406,15 @@ void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input)
 {
 	fog_t			*fog;
 	unsigned long	glbits=stage->stateBits;
-	
+	int i;
+
 	R_SurfaceSpriteFrameUpdate();
+
+	for (i = 0; i < input->numVertexes;i++) {
+		if (!VERTEXCOLORRAWCHECK(tess.vertexColorsRawSet,i)) { // combine workaround with working with other kinds of surfaces than world surfaces. meh
+			Vector4Copy(tess.vertexColors[i],tess.vertexColorsRaw[i]);
+		}
+	}
 
 	//
 	// Check fog

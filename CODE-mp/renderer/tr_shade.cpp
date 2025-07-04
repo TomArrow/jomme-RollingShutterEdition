@@ -337,6 +337,7 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 
 	tess.numIndexes = 0;
 	tess.numVertexes = 0;
+	Com_Memset(tess.vertexColorsRawSet, 0, sizeof(tess.vertexColorsRawSet));
 	tess.shader = state;
 	tess.fogNum = fogNum;
 	tess.dlightBits = 0;		// will be OR'd in by surface functions
