@@ -378,26 +378,30 @@ void GL_State( unsigned long stateBits )
 	//
 	if ( diff & GLS_ATEST_BITS )
 	{
+		int alphaFunc;
+		float alphaValue;
 		switch ( stateBits & GLS_ATEST_BITS )
 		{
 		case 0:
 			qglDisable( GL_ALPHA_TEST );
+			alphaFunc = 0;
+			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
 			break;
 		case GLS_ATEST_GT_0:
-			qglEnable( GL_ALPHA_TEST );
-			qglAlphaFunc( GL_GREATER, 0.0f );
-			break;
+			alphaFunc = GL_GREATER;
+			alphaValue = 0.0f;
 		case GLS_ATEST_LT_80:
-			qglEnable( GL_ALPHA_TEST );
-			qglAlphaFunc( GL_LESS, 0.5f );
-			break;
+			alphaFunc = GL_LESS;
+			alphaValue = 0.5f;
 		case GLS_ATEST_GE_80:
-			qglEnable( GL_ALPHA_TEST );
-			qglAlphaFunc( GL_GEQUAL, 0.5f );
-			break;
+			alphaFunc = GL_GEQUAL;
+			alphaValue = 0.5f;
 		case GLS_ATEST_GE_C0:
-			qglEnable( GL_ALPHA_TEST );
-			qglAlphaFunc( GL_GEQUAL, 0.75f );
+			alphaFunc = GL_GEQUAL;
+			alphaValue = 0.75f;
+			qglEnable(GL_ALPHA_TEST);
+			qglAlphaFunc(alphaFunc, alphaValue);
+			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc, &alphaValue);
 			break;
 		default:
 			assert( 0 );

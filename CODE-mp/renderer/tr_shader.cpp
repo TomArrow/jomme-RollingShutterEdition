@@ -1190,6 +1190,23 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 	return;
 }
 
+static void CheckStageSurfaceSprites(shaderStage_t* stage) {
+	if (stage->ss.surfaceSpriteType) {
+		int i, j;
+
+		for (i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+			for (j = 0; j < MAX_IMAGE_ANIMATIONS; j++) {
+				if (!stage->bundle[i].image[j]) break;
+				// we don't want mipmapping for surface sprites.
+				GL_Bind(stage->bundle[i].image[j]);
+				qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				stage->bundle[i].image[j]->mipmap = qfalse;
+				stage->bundle[i].image[j]->allowPicmip = qfalse;
+			}
+		}
+	}
+}
 
 /*
 ===================
@@ -2242,6 +2259,7 @@ static qboolean ParseShader( const char **text )
 			{
 				return qfalse;
 			}
+			CheckStageSurfaceSprites(&stages[s]);
 			stages[s].active = qtrue;
 #ifdef JEDIACADEMY_GLOW
 			if ( stages[s].glow )

@@ -11,6 +11,19 @@
 #define PERLINFVCKERY 1
 
 
+
+
+/* AlphaFunction */
+#define ALPHA_NEVER                          0x0200
+#define ALPHA_LESS                           0x0201
+#define ALPHA_EQUAL                          0x0202
+#define ALPHA_LEQUAL                         0x0203
+#define ALPHA_GREATER                        0x0204
+#define ALPHA_NOTEQUAL                       0x0205
+#define ALPHA_GEQUAL                         0x0206
+#define ALPHA_ALWAYS                         0x0207
+
+
 #if VOXELSTUFF
 precision highp int;
 #endif
@@ -55,6 +68,11 @@ uniform vec3 viewOriginUniform;
 
 varying vec4 eyeSpaceCoordsGeom;
 varying vec4 pureVertexCoordsGeom;
+
+
+uniform int alphaFuncUniform; 
+uniform float alphaFuncValueUniform;
+uniform int renderFlagsUniform;
 
 
 float snoise(vec4 v);
@@ -864,6 +882,20 @@ void main(void)
 		//gl_FragColor.xyz+=debugColor;
 	}
 
+	float effectiveAlpha = color.w*vertColor.w;
+
+	if(effectiveAlpha <= 0.0) {
+		return; // this seem fair?
+	} else if(alphaFuncUniform > 0){
+		if(
+		alphaFuncUniform == ALPHA_GREATER && effectiveAlpha <= alphaFuncValueUniform
+		|| alphaFuncUniform == ALPHA_LESS && effectiveAlpha >= alphaFuncValueUniform
+		|| alphaFuncUniform == ALPHA_GEQUAL && effectiveAlpha < alphaFuncValueUniform
+		){
+			return; // ok? why do light calc for shit that isnt even visible
+		}
+	}
+
 #ifdef PERLINFUCKERY
 	//{
 		gl_FragColor.x =1;
@@ -1141,7 +1173,7 @@ void main(void)
 		traceVoxel(viewOriginUniform,worldPixel,voxelcolor);
 		gl_FragColor.xyz = vec3(ivec3(voxelcolor));
 	}
-#elseif 0
+#elif 0
 	int voxelState = voxelSolid(ivec3(floor((worldPixel/float(VOXELGRIDEDGESIZE))+rangeadd)));
 	if(voxelState > 0){
 		gl_FragColor.x += 0.5;

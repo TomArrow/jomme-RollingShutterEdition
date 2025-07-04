@@ -102,6 +102,10 @@ typedef struct uniformLocations_t {
 	GLint soundDeformShortDistanceReductionUniform;
 	GLint soundDeformModeUniform;
 
+	GLint alphaFuncUniform;
+	GLint alphaFuncValueUniform;
+	GLint renderFlagsUniform;
+
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
@@ -312,6 +316,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->soundDeformShortDistanceReductionUniform, fbo.musicDeformData.shortDistanceReduction);
 		qglUniform1i(uniformLocationsTess->soundDeformModeUniform, fbo.musicDeformData.mode);
 
+		qglUniform1i(uniformLocationsTess->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
+		qglUniform1f(uniformLocationsTess->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
+		qglUniform1i(uniformLocationsTess->renderFlagsUniform, fbo.fishEyeData.renderFlags);
+
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
@@ -375,6 +383,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->soundDeformDistanceScaleUniform, fbo.musicDeformData.distanceScale);
 		qglUniform1f(uniformLocations->soundDeformShortDistanceReductionUniform, fbo.musicDeformData.shortDistanceReduction);
 		qglUniform1i(uniformLocations->soundDeformModeUniform, fbo.musicDeformData.mode);
+
+		qglUniform1i(uniformLocations->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
+		qglUniform1f(uniformLocations->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
+		qglUniform1i(uniformLocations->renderFlagsUniform, fbo.fishEyeData.renderFlags);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -566,7 +578,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isLightmap, bool* isWorldBrush, bool* isSaber) {
+qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isLightmap, bool* isWorldBrush, bool* isSaber, int* alphaFunc, float* alphaFuncValue, bool* simpleLighting) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -586,6 +598,20 @@ qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isL
 	}
 	if (isSaber) {
 		fbo.fishEyeData.isSaber = *isSaber;
+	}
+	if (alphaFunc) {
+		fbo.fishEyeData.alphaFunc = *alphaFunc;
+	}
+	if (alphaFuncValue) {
+		fbo.fishEyeData.alphaFuncValue = *alphaFuncValue;
+	}
+	if (simpleLighting) {
+		if (*simpleLighting) {
+			fbo.fishEyeData.renderFlags |= 1;
+		}
+		else {
+			fbo.fishEyeData.renderFlags &= ~1;
+		}
 	}
 
 	R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
@@ -1148,6 +1174,10 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->soundDeformDistanceScaleUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformDistanceScaleUniform");
 		locs->soundDeformShortDistanceReductionUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformShortDistanceReductionUniform");
 		locs->soundDeformModeUniform = qglGetUniformLocation(program->ShaderId(i), "soundDeformModeUniform");
+
+		locs->alphaFuncUniform = qglGetUniformLocation(program->ShaderId(i), "alphaFuncUniform");
+		locs->alphaFuncValueUniform = qglGetUniformLocation(program->ShaderId(i), "alphaFuncValueUniform");
+		locs->renderFlagsUniform = qglGetUniformLocation(program->ShaderId(i), "renderFlagsUniform");
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastUniform");
 		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderId(i), "dLightJitterUniform");
