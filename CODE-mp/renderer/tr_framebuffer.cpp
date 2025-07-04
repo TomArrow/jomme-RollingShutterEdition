@@ -578,7 +578,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isLightmap, bool* isWorldBrush, bool* isSaber, int* alphaFunc, float* alphaFuncValue, bool* simpleLighting) {
+qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isLightmap, bool* isWorldBrush, bool* isSaber, int* alphaFunc, float* alphaFuncValue, bool* simpleLighting, bool* noLighting) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -611,6 +611,14 @@ qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isL
 		}
 		else {
 			fbo.fishEyeData.renderFlags &= ~1;
+		}
+	}
+	if (noLighting) {
+		if (*noLighting) {
+			fbo.fishEyeData.renderFlags |= 2; // for sky and such
+		}
+		else {
+			fbo.fishEyeData.renderFlags &= ~2;
 		}
 	}
 

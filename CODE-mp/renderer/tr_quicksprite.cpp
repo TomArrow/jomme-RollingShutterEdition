@@ -162,6 +162,8 @@ void CQuickSpriteSystem::StartGroup(textureBundle_t *bundle, unsigned long glbit
 	}
 
 	qglDisable(GL_CULL_FACE);
+	bool istrue = true;
+	R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, &istrue); // activate simple lighting for these.
 }
 
 
@@ -171,6 +173,8 @@ void CQuickSpriteSystem::EndGroup(void)
 
 	qglColor4ub(255,255,255,255);
 	qglEnable(GL_CULL_FACE);
+	bool isfalse = false;
+	R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, &isfalse);
 }
 
 

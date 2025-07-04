@@ -69,10 +69,13 @@ uniform vec3 viewOriginUniform;
 varying vec4 eyeSpaceCoordsGeom;
 varying vec4 pureVertexCoordsGeom;
 
+#define RENDERFLAG_SIMPLELIGHTING 1
+#define RENDERFLAG_NOLIGHTING 2 // skyboxes and such
 
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
 uniform int renderFlagsUniform;
+
 
 
 float snoise(vec4 v);
@@ -865,7 +868,7 @@ void main(void)
 	vec4 color;
     if(fishEyeModeUniform == 0){
 	
-		if(isLightmapUniform == 0 && perlinFuckery == 0 && isWorldBrushUniform > 0){
+		if(isLightmapUniform == 0 && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap():parallaxMapSteep(effectiveUVPixelPos);
 		} else {
 			uvCoords = gl_TexCoord[0].st; // Don't parallax lightmaps
@@ -884,7 +887,7 @@ void main(void)
 
 	float effectiveAlpha = color.w*vertColor.w;
 
-	if(effectiveAlpha <= 0.0) {
+	if(effectiveAlpha <= 0.0 || (renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0) {
 		return; // this seem fair?
 	} else if(alphaFuncUniform > 0){
 		if(
@@ -1084,7 +1087,7 @@ void main(void)
 					//gl_FragColor.xyz += shadowDebugColor*(1.0-shadowedIntensity);
 				}
 			}
-			if(intensity > 0.0){
+			if(intensity > 0.0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0){ // dont do specular for simple-lighting (render flags 1)
 				// specular
 			
 				vec3 lightVector = eyeSpaceCoordsGeom.xyz-eyeCoordLight.xyz;

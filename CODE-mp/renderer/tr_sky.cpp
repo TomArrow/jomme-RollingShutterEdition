@@ -817,7 +817,8 @@ void RB_StageIteratorSky( void ) {
 
 
 	bool falseBool = false;
-	R_FrameBuffer_SetDynamicUniforms(NULL, &falseBool, &falseBool);
+	bool trueBool = true;
+	R_FrameBuffer_SetDynamicUniforms(NULL, &falseBool, &falseBool,0,0,0,0,&trueBool);
 
 	// go through all the polygons and project them onto
 	// the sky box to see which blocks on each side need
@@ -862,6 +863,8 @@ void RB_StageIteratorSky( void ) {
 
 	// back to normal depth range
 	qglDepthRange(0, 1.0 );
+
+	R_FrameBuffer_SetDynamicUniforms(NULL, 0,0, 0, 0, 0,0, &falseBool);
 
 	// note that sky was drawn so we will draw a sun later
 	backEnd.skyRenderedThisView = qtrue;

@@ -2253,7 +2253,7 @@ qboolean R_FrameBuffer_Blur(float scale, int frame, int total);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
-qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness = NULL, bool* isLightmap = NULL, bool* isWorldBrush=NULL, bool* isSaber = NULL, int* alphaFunc = NULL, float* alphaFuncValue = NULL, bool* simpleLighting = NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness = NULL, bool* isLightmap = NULL, bool* isWorldBrush=NULL, bool* isSaber = NULL, int* alphaFunc = NULL, float* alphaFuncValue = NULL, bool* simpleLighting = NULL, bool* noLighting = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
 qboolean R_FrameBuffer_StartHDRRead();
