@@ -4934,7 +4934,7 @@ Ghoul2 Insert Start
 
 	dualSaberLen = saberLen;
 
-	if ((cent1 && (cent1->currentState.eFlags & EF_DEAD)) && !fromSaber)
+	if ((cent1 && (cent1->currentState.eFlags & EF_DEAD)) && !fromSaber && !retracting)
 	{ //trying to draw a saber on a corpse? That's bad.
 		return;
 	}
