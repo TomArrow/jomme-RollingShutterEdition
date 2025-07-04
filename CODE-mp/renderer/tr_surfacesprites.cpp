@@ -611,7 +611,7 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 				continue;
 			}
 		}
-		l1 = input->vertexColors[curvert][2];
+		l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
 		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -635,7 +635,7 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 				continue;
 			}
 		}
-		l2 = input->vertexColors[curvert][2];
+		l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
 		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -659,7 +659,7 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 				continue;
 			}
 		}
-		l3 = input->vertexColors[curvert][2];
+		l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
 		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -951,7 +951,7 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		{
 			continue;
 		}
-		l1 = input->vertexColors[curvert][2];
+		l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
 		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -962,7 +962,7 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		{
 			continue;
 		}
-		l2 = input->vertexColors[curvert][2];
+		l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
 		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -973,7 +973,7 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		{
 			continue;
 		}
-		l3 = input->vertexColors[curvert][2];
+		l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
 		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -1257,7 +1257,7 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		{
 			continue;
 		}
-		l1 = input->vertexColors[curvert][2];
+		l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
 
 		curvert = input->indexes[curindex+1];
@@ -1266,7 +1266,7 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		{
 			continue;
 		}
-		l2 = input->vertexColors[curvert][2];
+		l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
 
 		curvert = input->indexes[curindex+2];
@@ -1275,7 +1275,7 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		{
 			continue;
 		}
-		l3 = input->vertexColors[curvert][2];
+		l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
 
 		if (a1 <= 0.0f && a2 <= 0.0f && a3 <= 0.0f)

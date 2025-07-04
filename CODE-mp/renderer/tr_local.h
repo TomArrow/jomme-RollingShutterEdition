@@ -1686,6 +1686,7 @@ struct shaderCommands_s
 	vec4_t		normal[SHADER_MAX_VERTEXES];
 	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS];
 	color4f_t	vertexColors[SHADER_MAX_VERTEXES];
+	color4f_t	vertexColorsRaw[SHADER_MAX_VERTEXES]; // for surfacesprites
 //	byte		vertexAlphas[SHADER_MAX_VERTEXES][4];	// only used by SOF2 glass, go ahead and implement if you want
 	int			vertexDlightBits[SHADER_MAX_VERTEXES];
 
