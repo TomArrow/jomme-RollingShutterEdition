@@ -491,6 +491,8 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 	mmeRollingShutterInfo_t* rsInfo = trap_MME_GetRollingShutterInfo();
 
 	float captureFPS;
+	float realFPS; // with mov_shutterAngle
+	float realFPSIndex0Advance;
 	float frameSpeed;
 	int blurTotal, blurIndex;
 	float blurFraction;
@@ -542,6 +544,18 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 		} else {
 			blurFraction = 0;
 		}
+		realFPS = captureFPS;
+		realFPSIndex0Advance = 0;
+		if (!rsInfo->rollingShutterEnabled && blurTotal > 0) {
+			float shutterRatio = 360.0f / max(0.01f,min(360.0f, mov_shutterAngle.value));
+			realFPS *= shutterRatio;
+			if (blurIndex == 0) {
+				realFPSIndex0Advance = (shutterRatio - 1.0f)/shutterRatio * (1000.0f / mov_captureFPS.value);
+			}
+			else {
+				realFPSIndex0Advance = 0;
+			}
+		}
 	}
 
 	/* Forward the demo */
@@ -592,7 +606,7 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 		demo.play.time += (int)demo.play.fraction;
 		demo.play.fraction -= (int)demo.play.fraction;
 	} else if ( captureFrame ) {
-		float frameDelay = 1000.0f / captureFPS;
+		float frameDelay = 1000.0f / realFPS + realFPSIndex0Advance;
 		demo.play.fraction += frameDelay * demo.play.speed;
 		demo.play.time += (int)demo.play.fraction;
 		demo.play.fraction -= (int)demo.play.fraction;

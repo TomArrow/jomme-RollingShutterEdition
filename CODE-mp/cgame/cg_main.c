@@ -680,6 +680,7 @@ vmCvar_t	mov_fragsOnly;
 vmCvar_t	mov_drawChatbox;
 vmCvar_t	mov_captureName;
 vmCvar_t	mov_captureFPS;
+vmCvar_t	mov_shutterAngle;
 
 vmCvar_t	mov_filterMask;
 vmCvar_t	mov_seekInterval;
@@ -1012,6 +1013,7 @@ Ghoul2 Insert End
 	{ &mov_deltaRoll,		"mov_deltaRoll",		"0",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_captureName,		"mov_captureName",		"",				NULL,	CVAR_ARCHIVE	},
 	{ &mov_captureFPS,		"mov_captureFPS",		"60",			NULL,	CVAR_ARCHIVE	},
+	{ &mov_shutterAngle,	"mov_shutterAngle",		"180",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_musicFile,		"mov_musicFile",		"",				NULL,	CVAR_TEMP		},
 	{ &mov_musicStart,		"mov_musicStart",		"0",			NULL,	CVAR_TEMP		},
 	{ &mov_chaseRange,		"mov_chaseRange",		"20",			NULL,	CVAR_ARCHIVE	},

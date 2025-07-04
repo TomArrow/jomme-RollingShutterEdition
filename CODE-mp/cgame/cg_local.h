@@ -2099,6 +2099,7 @@ extern	vmCvar_t	mov_fragsOnly;
 extern	vmCvar_t	mov_drawChatbox;
 extern	vmCvar_t	mov_captureName;
 extern	vmCvar_t	mov_captureFPS;
+extern	vmCvar_t	mov_shutterAngle;// up to 360. 
 
 extern	vmCvar_t	mov_filterMask;
 extern	vmCvar_t	mov_seekInterval;
