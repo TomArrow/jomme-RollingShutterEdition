@@ -3176,6 +3176,10 @@ static shader_t *FinishShader( void ) {
 			break;
 		}
 
+		if (pStage->stateBits & GLS_DEPTHMASK_TRUE) {
+			shader.hasDepthWrite = true;
+		}
+
     // check for a missing texture
 		if ( !pStage->bundle[0].image[0] ) {
 			ri.Printf( PRINT_WARNING, "Shader %s has a stage with no image\n", shader.name );

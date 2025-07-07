@@ -125,6 +125,8 @@ cvar_t	*r_DynamicGlowWidth;
 cvar_t	*r_DynamicGlowHeight;
 #endif
 
+cvar_t* r_zPrepass;
+
 // Gamma handling variables
 cvar_t* r_gammaSrgbLightmaps;
 cvar_t* r_gammaSrgbTextures;
@@ -910,6 +912,8 @@ void R_Register( void )
 	r_DynamicGlowWidth = ri.Cvar_Get( "r_DynamicGlowWidth", "320", CVAR_ARCHIVE|CVAR_LATCH );
 	r_DynamicGlowHeight = ri.Cvar_Get( "r_DynamicGlowHeight", "240", CVAR_ARCHIVE|CVAR_LATCH );
 #endif
+
+	r_zPrepass = ri.Cvar_Get ("r_zPrepass", "1", CVAR_ARCHIVE );
 
 	r_picmip = ri.Cvar_Get ("r_picmip", "1", CVAR_ARCHIVE | CVAR_LATCH );
 	r_colorMipLevels = ri.Cvar_Get ("r_colorMipLevels", "0", CVAR_LATCH );

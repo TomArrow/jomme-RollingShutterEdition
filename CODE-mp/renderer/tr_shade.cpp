@@ -1677,6 +1677,9 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 			continue;
 		}
 #endif
+		if (g_bRenderZPrepass && !(pStage->stateBits & GLS_DEPTHMASK_TRUE)) {
+			continue; // this stage doesnt seem to write anything to depth, so dont bother
+		}
 
 		// Tell GLSL that this is a world brush. Dumb?
 		bool isLightmap = pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap;

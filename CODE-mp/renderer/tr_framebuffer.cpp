@@ -106,6 +106,8 @@ typedef struct uniformLocations_t {
 	GLint alphaFuncValueUniform;
 	GLint renderFlagsUniform;
 
+	GLint zPrepassUniform;
+
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
@@ -320,6 +322,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
 		qglUniform1i(uniformLocationsTess->renderFlagsUniform, fbo.fishEyeData.renderFlags);
 
+		qglUniform1i(uniformLocationsTess->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
+
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
@@ -387,6 +391,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
 		qglUniform1f(uniformLocations->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
 		qglUniform1i(uniformLocations->renderFlagsUniform, fbo.fishEyeData.renderFlags);
+
+		qglUniform1i(uniformLocations->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -578,7 +584,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isLightmap, bool* isWorldBrush, bool* isSaber, int* alphaFunc, float* alphaFuncValue, bool* simpleLighting, bool* noLighting) {
+qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, const bool* isLightmap, const bool* isWorldBrush, const bool* isSaber, const int* alphaFunc, const  float* alphaFuncValue, const bool* simpleLighting, const  bool* noLighting, const  bool* zPrepass) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -620,6 +626,9 @@ qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness, bool* isL
 		else {
 			fbo.fishEyeData.renderFlags &= ~2;
 		}
+	}
+	if (zPrepass) {
+		fbo.fishEyeData.doingZPrepass = *zPrepass;
 	}
 
 	R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
@@ -1186,6 +1195,8 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->alphaFuncUniform = qglGetUniformLocation(program->ShaderId(i), "alphaFuncUniform");
 		locs->alphaFuncValueUniform = qglGetUniformLocation(program->ShaderId(i), "alphaFuncValueUniform");
 		locs->renderFlagsUniform = qglGetUniformLocation(program->ShaderId(i), "renderFlagsUniform");
+
+		locs->zPrepassUniform = qglGetUniformLocation(program->ShaderId(i), "zPrepassUniform");
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderId(i), "dLightFastUniform");
 		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderId(i), "dLightJitterUniform");

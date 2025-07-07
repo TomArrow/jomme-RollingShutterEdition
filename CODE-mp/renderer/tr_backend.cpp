@@ -18,6 +18,11 @@ backEndState_t	backEnd;
 static void RB_DrawGlowOverlay();
 static void RB_BlurGlowTexture();
 
+// whether we are rendering a z prepass
+bool g_bRenderZPrepass = false;
+// whether a z prepass has been rendered for the current surfaces
+bool g_bRenderedZPrepass = false;
+
 // Whether we are currently rendering only glowing objects or not.
 bool g_bRenderGlowingObjects = false;
 
@@ -221,7 +226,28 @@ void GL_TexEnv( int env )
 */
 void GL_State( unsigned long stateBits )
 {
-	unsigned long diff = stateBits ^ glState.glStateBits;
+	unsigned long rawStateBits = stateBits;
+	unsigned long diff;
+
+	if (g_bRenderedZPrepass) {
+		// we have a z prepass for this!
+		if (stateBits & GLS_DEPTHMASK_TRUE && !(stateBits & GLS_DEPTHTEST_DISABLE)) { // GLS_DEPTHTEST_DISABLE shouldn't apply i think (its for GUI) but lets be safe
+			// this stage or whatever does write depth.
+			// since we alreaady HAVE the depth for this,
+			// and to prevent alpha testing destroying early z,
+			// disable alpha testing for this surface
+			stateBits &= ~GLS_ATEST_BITS;
+
+			// also, let's enable GL_EQUAL for the depth testing so we don't draw any alpha-tested
+			// textures in front of this.
+			stateBits |= GLS_DEPTHFUNC_EQUAL;
+
+			// disable writing to depth. we dont need to, already done.
+			stateBits &= ~GLS_DEPTHMASK_TRUE;
+		}
+	}
+
+	diff = stateBits ^ glState.glStateBits;
 
 	if ( !diff )
 	{
@@ -376,14 +402,14 @@ void GL_State( unsigned long stateBits )
 	//
 	// alpha test
 	//
-	if ( diff & GLS_ATEST_BITS )
+	if (diff & GLS_ATEST_BITS)
 	{
 		int alphaFunc;
 		float alphaValue;
-		switch ( stateBits & GLS_ATEST_BITS )
+		switch (stateBits & GLS_ATEST_BITS)
 		{
 		case 0:
-			qglDisable( GL_ALPHA_TEST );
+			qglDisable(GL_ALPHA_TEST);
 			alphaFunc = 0;
 			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
 			break;
@@ -404,9 +430,13 @@ void GL_State( unsigned long stateBits )
 			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc, &alphaValue);
 			break;
 		default:
-			assert( 0 );
+			assert(0);
 			break;
 		}
+	}
+	else {
+		int alphaFunc = 0;
+		R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
 	}
 
 	glState.glStateBits = stateBits;
@@ -625,7 +655,8 @@ void RB_BeginDrawingView (void) {
 
 	// If this pass is to just render the glowing objects, don't clear the depth buffer since
 	// we're sharing it with the main scene (since the main scene has already been rendered). -AReis
-	if ( g_bRenderGlowingObjects )
+	// same if we already did a z prepass
+	if ( g_bRenderGlowingObjects || g_bRenderedZPrepass )
 	{
 		clearBits &= ~GL_DEPTH_BUFFER_BIT;
 	}
@@ -748,7 +779,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #ifdef JEDIACADEMY_GLOW
 		R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
 		// If we're rendering glowing objects, but this shader has no stages with glow, skip it!
-		if ( g_bRenderGlowingObjects && !shader->hasGlow ) {
+		if ( g_bRenderGlowingObjects && !shader->hasGlow || g_bRenderZPrepass && !shader->hasDepthWrite ) {
 			shader = oldShader;
 			entityNum = oldEntityNum;
 			fogNum = oldFogNum;
@@ -1296,7 +1327,24 @@ const void	*RB_DrawSurfs( const void *data ) {
 			R_RotateForWorld( wor, world );
 		}
 	}
+
+
+	// z prepass
+	if (r_zPrepass->integer) {
+		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
+
+		g_bRenderZPrepass = true;
+		qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont draw anything to color buffer
+		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
+		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		g_bRenderZPrepass = false;
+
+		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
+		g_bRenderedZPrepass = true;
+	}
+
 	RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
+	g_bRenderedZPrepass = false;
 
 #ifdef JEDIACADEMY_GLOW
 	// Dynamic Glow/Flares:

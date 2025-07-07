@@ -807,7 +807,7 @@ Other things could be stuck in here, like birds in the sky, etc
 */
 void RB_StageIteratorSky( void ) {
 #ifdef JEDIACADEMY_GLOW
-	if ( g_bRenderGlowingObjects )
+	if ( g_bRenderGlowingObjects || g_bRenderZPrepass )
 		return;
 #endif
 	//mme

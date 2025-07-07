@@ -144,6 +144,10 @@ void RB_ShadowTessEnd( void ) {
 		return;
 	}
 
+	if (g_bRenderZPrepass) {
+		return;
+	}
+
 	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
 
 	// project vertexes away from light direction
@@ -245,6 +249,9 @@ void RB_ShadowFinish( void ) {
 		return;
 	}
 	if ( glConfig.stencilBits < 4 ) {
+		return;
+	}
+	if (g_bRenderZPrepass) {
 		return;
 	}
 	qglEnable( GL_STENCIL_TEST );

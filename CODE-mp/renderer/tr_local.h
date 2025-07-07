@@ -17,6 +17,11 @@ extern const byte* voxelGrid;
 extern uint32_t voxelGridUpdated; // this is set to 0xffffffff so any module that depends on this is informed an update took place. glsl for example will use VOXELGRIDUPDATED_GLSL to check and then unset that bit
 extern size_t voxelGridSize;
 
+
+extern bool g_bRenderZPrepass;
+extern bool g_bRenderedZPrepass;
+
+
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
 
@@ -517,6 +522,8 @@ Ghoul2 Insert End
 	// True if this shader has a stage with glow in it (just an optimization).
 	bool hasGlow;
 #endif
+
+	bool hasDepthWrite;
 
 	qboolean isHud; // If it's a HUD shader, we want to scale the brightness with r_HUDBrightness
 	qboolean isSaber; // If it's a saber shader, we want to avoid dlights affecting it directly (and maybe do other stuff?)
@@ -1323,6 +1330,8 @@ extern cvar_t	*r_DynamicGlowSoft;
 extern cvar_t	*r_DynamicGlowWidth;
 extern cvar_t	*r_DynamicGlowHeight;
 #endif
+
+extern cvar_t* r_zPrepass;
 
 extern cvar_t* r_hdr;
 
@@ -2198,6 +2207,7 @@ typedef struct {
 	int renderFlags; // 1 = simple lighting, e.g. surfacesprites
 	int alphaFunc;
 	float alphaFuncValue;
+	bool doingZPrepass;
 } fishEyeData_t;
 
 typedef struct {
@@ -2253,7 +2263,7 @@ qboolean R_FrameBuffer_Blur(float scale, int frame, int total);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
-qboolean R_FrameBuffer_SetDynamicUniforms(float* texAverageBrightness = NULL, bool* isLightmap = NULL, bool* isWorldBrush=NULL, bool* isSaber = NULL, int* alphaFunc = NULL, float* alphaFuncValue = NULL, bool* simpleLighting = NULL, bool* noLighting = NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
 qboolean R_FrameBuffer_StartHDRRead();

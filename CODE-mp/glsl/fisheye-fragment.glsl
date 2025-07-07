@@ -10,8 +10,8 @@
 
 #define PERLINFVCKERY 1
 
-
-
+//need 420 if we wanna try
+//layout(early_fragment_tests) in;
 
 /* AlphaFunction */
 #define ALPHA_NEVER                          0x0200
@@ -75,6 +75,8 @@ varying vec4 pureVertexCoordsGeom;
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
 uniform int renderFlagsUniform;
+
+uniform int zPrepassUniform;
 
 
 
@@ -856,6 +858,9 @@ const mat3 HDRtoSRGB = mat3(1.660317619104158771,	-0.58757266606617910577,	-0.07
 
 void main(void)
 {
+	if(zPrepassUniform != 0){
+		return;
+	}
     //const float depth = 5.0f;
 #ifdef PERLINFUCKERY
 	int perlinFuckery = noiseFuckeryUniform;
