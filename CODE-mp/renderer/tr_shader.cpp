@@ -3107,15 +3107,20 @@ static shader_t *FinishShader( void ) {
 	{
 		if (shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX)
 		{
-			if (lmStage < MAX_SHADER_STAGES - 1)
-			{
+			if (lmStage == 0)	//< MAX_SHADER_STAGES-1)
+			{//copy the rest down over the lightmap slot
 				memmove(&stages[lmStage], &stages[lmStage + 1], sizeof(shaderStage_t) * (MAX_SHADER_STAGES - lmStage - 1));
+				memset(&stages[MAX_SHADER_STAGES - 1], 0, sizeof(shaderStage_t));
+				//change blending on the moved down stage
+				stages[lmStage].stateBits = GLS_DEFAULT;
 			}
-			memset(&stages[MAX_SHADER_STAGES - 1], 0, sizeof(shaderStage_t));
-			stages[lmStage].rgbGen = CGEN_VERTEX;
+			//if lmStage == 0 change anything that was moved down to use vertex color
+			//otherwise use *white shaded with vertex color as lightmap
+			//assumptions: 1 shader has no lightmaps loaded (so lightmap stage uses *white shader)
+			//2 alphaGen was identity or skip 3 typical lightmap usage if lmStage == 0
+			stages[lmStage].rgbGen = CGEN_EXACT_VERTEX;
 			stages[lmStage].alphaGen = AGEN_SKIP;
-			stages[lmStage].stateBits = GLS_DEFAULT;
-			lmStage = MAX_SHADER_STAGES;
+			lmStage = MAX_SHADER_STAGES;	//skip the style checking below
 		}
 	}
 
