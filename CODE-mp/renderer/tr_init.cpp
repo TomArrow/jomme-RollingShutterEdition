@@ -20,6 +20,7 @@
 #include "../ghoul2/G2_local.h"
 #endif
 
+float byteToLinearTable[256];
 
 extern float EvalWaveForm(const waveForm_t* wf);
 extern void ParseWaveformAlone(char** text, waveForm_t* output);
@@ -1260,6 +1261,10 @@ void R_Init( void ) {
 	}
 	InitOpenGL();
 
+	for (i = 0; i < 256; i++) {
+		byteToLinearTable[i] = 255.0f*R_sRGBToLinear((float)i/255.0f);
+	}
+
 	R_InitImages();
 	R_InitShaders();
 	R_InitSkins();
@@ -1443,6 +1448,7 @@ void RE_GetLightStyle(int style, color4f_t color)
 	//*(int *)color = *(int *)styleColors[style];
 }
 
+const float onedividedby255 = 1.0f / 255.0f;
 void RE_SetLightStyle(int style, int color)
 {
 	if (style >= MAX_LIGHT_STYLES)
@@ -1452,6 +1458,10 @@ void RE_SetLightStyle(int style, int color)
 	}
 
 	Vector4Copy(*(color4ub_t*)&color, styleColors[style]);
+	styleColors[style][0] = 255.0f * R_sRGBToLinear(styleColors[style][0] * onedividedby255);
+	styleColors[style][1] = 255.0f * R_sRGBToLinear(styleColors[style][1] * onedividedby255);
+	styleColors[style][2] = 255.0f * R_sRGBToLinear(styleColors[style][2] * onedividedby255);
+	styleColors[style][3] = 255.0f * R_sRGBToLinear(styleColors[style][3] * onedividedby255);
 	/*if (*(int*)styleColors[style] != color)
 	{
 		*(int *)styleColors[style] = color;

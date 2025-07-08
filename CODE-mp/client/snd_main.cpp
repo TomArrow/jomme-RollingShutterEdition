@@ -263,9 +263,6 @@ sfxHandle_t	S_RegisterSound( const char *name) {
 	hashIndex = ( hashIndex ^ (hashIndex >> 10) ^ (hashIndex >> 20) ) & (SFX_HASH - 1);
 	fileName[len] = 0;
 
-	if (!S_FileExists(fileName)) {
-		return 0;
-	}
 	entry = sfxHash[ hashIndex ];
 	while (entry) {
 		if (!strcmp( entry->name, fileName ))
@@ -274,6 +271,9 @@ sfxHandle_t	S_RegisterSound( const char *name) {
 	}
 	if (sfxEntryCount >= SFX_SOUNDS) {
 		Com_Printf( "SFX:Sound max %d reached\n", SFX_SOUNDS );
+		return 0;
+	}
+	if (!S_FileExists(fileName)) { // put this later wtf. why open the file just to get the hash?!
 		return 0;
 	}
 	entry = sfxEntries + sfxEntryCount;

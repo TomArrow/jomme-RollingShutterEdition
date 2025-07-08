@@ -266,10 +266,10 @@ inline void ComputeFinalVertexColor(const byte *colors, float *result, float *re
 	result[3] = 255; return;*/
 
 	//Com_Memcpy(result,colors,sizeof(color4f_t));
-	resultRaw[0] = result[0] = colors[0];
-	resultRaw[1] = result[1] = colors[1];
-	resultRaw[2] = result[2] = colors[2];
-	resultRaw[3] = result[3] = colors[3];
+	//resultRaw[0] = result[0] = R_sRGBToLinear(colors[0]);
+	//resultRaw[1] = result[1] = R_sRGBToLinear(colors[1]);
+	//resultRaw[2] = result[2] = R_sRGBToLinear(colors[2]);
+	resultRaw[3] = result[3] = R_sRGBToLinear(colors[3]);
 	//*(int *)result = *(int *)colors;
 	// an optimization could be added here to compute the style[0] (which is always the world normal light)
 	r = g = b = 0;
@@ -279,9 +279,9 @@ inline void ComputeFinalVertexColor(const byte *colors, float *result, float *re
 		{
 			float	*styleColor = styleColors[tess.shader->styles[k]];
 
-			r += (float)(*colors++) * (*styleColor++);
-			g += (float)(*colors++) * (*styleColor++);
-			b += (float)(*colors++) * (*styleColor);
+			r += (float)(R_sRGBToLinear(*colors++)) * (*styleColor++);
+			g += (float)(R_sRGBToLinear(*colors++)) * (*styleColor++);
+			b += (float)(R_sRGBToLinear(*colors++)) * (*styleColor);
 			colors++;
 		}
 		else
@@ -290,14 +290,14 @@ inline void ComputeFinalVertexColor(const byte *colors, float *result, float *re
 		}
 	}
 
-	result[0] = r / 256.0f;
-	result[1] = g / 256.0f;
-	result[2] = b / 256.0f;
+	resultRaw[0] = result[0] = r / 256.0f;
+	resultRaw[1] = result[1] = g / 256.0f;
+	resultRaw[2] = result[2] = b / 256.0f;
 
 	// put this in a smarter place? idk
-	resultRaw[0] = result[0] = 255.0f * sRGBToLinear(result[0] / 255.0f);
-	resultRaw[1] = result[1] = 255.0f * sRGBToLinear(result[1] / 255.0f);
-	resultRaw[2] = result[2] = 255.0f * sRGBToLinear(result[2] / 255.0f);
+	//resultRaw[0] = result[0] = 255.0f * sRGBToLinear(result[0] / 255.0f);
+	//resultRaw[1] = result[1] = 255.0f * sRGBToLinear(result[1] / 255.0f);
+	//resultRaw[2] = result[2] = 255.0f * sRGBToLinear(result[2] / 255.0f);
 
 	if (tess.shader->lightmapIndex[0] != LIGHTMAP_BY_VERTEX || r_fullbright->integer)
 	{

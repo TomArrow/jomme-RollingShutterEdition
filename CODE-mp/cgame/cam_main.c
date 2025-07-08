@@ -55,7 +55,7 @@ void Cam_DrawClientNames(void) //FIXME: draw entitynums
 					clientInfo_t* ci = cgs.clientinfo + i;
 					if (ci->bolt_head) {
 						mdxaBone_t boneMatrix;
-						if (trap_G2API_GetBoltMatrix(cent->ghoul2, 0, ci->bolt_head, &boneMatrix, cent->turAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale)) {
+						if (trap_G2API_GetBoltMatrix_NoReconstruct(cent->ghoul2, 0, ci->bolt_head, &boneMatrix, cent->turAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale)) {
 							vec3_t betterOrigin;
 							trap_G2API_GiveMeVectorFromMatrix(&boneMatrix, ORIGIN, betterOrigin);
 							VectorCopy(betterOrigin, org);
@@ -148,7 +148,7 @@ static qboolean GetBoltPositionReal( centity_t* cent, qhandle_t bolt, vec3_t res
 		return qfalse;
 	}
 	mdxaBone_t boneMatrix;
-	if (trap_G2API_GetBoltMatrix(cent->ghoul2, 0, bolt, &boneMatrix, cent->turAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale)) {
+	if (trap_G2API_GetBoltMatrix_NoReconstruct(cent->ghoul2, 0, bolt, &boneMatrix, cent->turAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale)) {
 		vec3_t betterOrigin;
 		trap_G2API_GiveMeVectorFromMatrix(&boneMatrix, ORIGIN, betterOrigin);
 		VectorCopy(betterOrigin, result);
@@ -163,7 +163,7 @@ static qboolean GetBoltPositionRealRefEnt( refEntity_t* rent,vec3_t angles, qhan
 	mdxaBone_t boneMatrix;
 
 #if 0
-	if (basebolt != -1 && trap_G2API_GetBoltMatrix(rent->ghoul2, 0, basebolt, &boneMatrix, angles, rent->origin, cg.time, cgs.gameModels, rent->modelScale)) {
+	if (basebolt != -1 && trap_G2API_GetBoltMatrix_NoReconstruct(rent->ghoul2, 0, basebolt, &boneMatrix, angles, rent->origin, cg.time, cgs.gameModels, rent->modelScale)) {
 		vec3_t test;
 		trap_G2API_GiveMeVectorFromMatrix(&boneMatrix, ORIGIN, test);
 		if (VectorDistance(test, rent->origin) > 1) {
@@ -174,7 +174,7 @@ static qboolean GetBoltPositionRealRefEnt( refEntity_t* rent,vec3_t angles, qhan
 	}
 #endif 
 	
-	if (trap_G2API_GetBoltMatrix(rent->ghoul2, 0, bolt, &boneMatrix, angles, rent->origin, cg.time, cgs.gameModels, rent->modelScale)) {
+	if (trap_G2API_GetBoltMatrix_NoReconstruct(rent->ghoul2, 0, bolt, &boneMatrix, angles, rent->origin, cg.time, cgs.gameModels, rent->modelScale)) {
 		vec3_t betterOrigin;
 		trap_G2API_GiveMeVectorFromMatrix(&boneMatrix, ORIGIN, betterOrigin);
 		VectorCopy(betterOrigin, result);

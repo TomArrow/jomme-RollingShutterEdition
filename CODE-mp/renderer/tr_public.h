@@ -13,8 +13,13 @@ extern cvar_t* r_gammaSrgbLightvalues;
 
 extern cvar_t* mme_forceDM15Optics;
 
+extern float byteToLinearTable[256];
+
 inline float R_sRGBToLinear(const float n) {
 	return (n > 0.04045f ? (float)pow((n + 0.055) / 1.055, 2.4) : n / 12.92f);
+}
+inline float R_sRGBToLinear(const byte n) {
+	return byteToLinearTable[n];
 }
 
 //

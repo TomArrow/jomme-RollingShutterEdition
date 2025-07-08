@@ -2785,7 +2785,7 @@ void R_SetColorMappings( void ) {
 	// Overbright bits multiplier is for float stuff.
 	// We can't reproduce it perfectly for obvious reasons, but, we can at least have the peak light end up with 
 	// the same intensity change
-	tr.overbrightBitsMultiplier = 1.0f / R_sRGBToLinear(1.0f/pow(2, tr.overbrightBits));
+	tr.overbrightBitsMultiplier = 1.0f / R_sRGBToLinear(1.0f/(float)pow(2, tr.overbrightBits));
 
 #ifndef QSDL
 	// never overbright in windowed mode

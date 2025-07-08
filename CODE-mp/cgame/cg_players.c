@@ -6401,9 +6401,12 @@ void CG_G2Animated( centity_t *cent )
 	vec3_t			efOrg;
 	mdxaBone_t 		boltMatrix, lHandMatrix;
 
+	if (!trap_R_inPVS(cg.refdef.vieworg, cent->lerpOrigin)) {
+		return;
+	}
+
 	forceSaberOn = (cg_saberForceOn.integer & 1) && cent->currentState.clientNum == cg.predictedPlayerState.clientNum || (cg_saberForceOn.integer & 2) && cent->currentState.clientNum != cg.predictedPlayerState.clientNum;
 	
-
 	cent->ghoul2 = cg_entities[cent->currentState.number].ghoul2;
 
 	if (!cent->ghoul2)
@@ -7658,6 +7661,10 @@ void CG_Player( centity_t *cent ) {
 	{
 		CG_ActualLoadDeferredPlayers();
 		cgQueueLoad = qfalse;
+	}
+
+	if (!trap_R_inPVS(cg.refdef.vieworg,cent->lerpOrigin)) {
+		return;
 	}
 
 	// the client number is stored in clientNum.  It can't be derived

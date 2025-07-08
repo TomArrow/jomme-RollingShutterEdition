@@ -1331,9 +1331,9 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 	// z prepass
 	if (r_zPrepass->integer) {
+		g_bRenderZPrepass = true;
 		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
 
-		g_bRenderZPrepass = true;
 		qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont draw anything to color buffer
 		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
 		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -1343,7 +1343,9 @@ const void	*RB_DrawSurfs( const void *data ) {
 		g_bRenderedZPrepass = true;
 	}
 
-	RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
+	if (!g_bRenderedZPrepass) {
+		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
+	}
 	g_bRenderedZPrepass = false;
 
 #ifdef JEDIACADEMY_GLOW
