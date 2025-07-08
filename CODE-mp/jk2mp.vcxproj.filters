@@ -1254,6 +1254,9 @@
     <CopyFileToFolders Include="glsl\fisheye-tessellation-evaluation.glsl">
       <Filter>Renderer\glsl</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="glsl\fisheye-fragment-simple.glsl">
+      <Filter>Renderer\glsl</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="win32\q3asm.asm">

@@ -10,17 +10,21 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 	// No point doing the tessellation if we don't have a geometry shader, since there's no way to take advantage of the improved subdivision then
 	bool doTessellationShader = doGeometryShader && glConfig.tesselationShaderAvailable && strlen(filenameTessellationControlShader) && strlen(filenameTessellationEvaluationShader);
 
+	char* filenameFragmentShaderSimple = "glsl/fisheye-fragment-simple.glsl";
+
 	//shaderId =
 	const char* vertexText;
 	const char* geometryText;
 	const char* tessellationControlText;
 	const char* tessellationEvaluationText;
 	const char* fragmentText;
+	const char* fragmentTextSimple;
 	char* fragmentTextPerlinFuckery;
 	bool success = true;
 	try {
 		vertexText = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameVertexShader).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
 		fragmentText = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameFragmentShader).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
+		fragmentTextSimple = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameFragmentShaderSimple).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
 		int fragmentLength = strlen(fragmentText)+1;
 		fragmentTextPerlinFuckery = new char[fragmentLength + 1];
 		for (int i = fragmentLength-1; i >= 0; i--) {
@@ -103,6 +107,14 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 		success = false;
 	}
 
+	GLuint fragmentShaderSimpleId = qglCreateShader(GL_FRAGMENT_SHADER);
+	ri.Printf(PRINT_WARNING, "DEBUG: Fragment shader simple id is %d.\n", (int)fragmentShaderSimpleId);
+	qglShaderSource(fragmentShaderSimpleId, 1, &fragmentTextSimple, NULL);
+	qglCompileShader(fragmentShaderSimpleId);
+	if (hasErrored(fragmentShaderSimpleId, filenameFragmentShaderSimple, false)) {
+		success = false;
+	}
+
 	GLuint fragmentShaderPerlinId = qglCreateShader(GL_FRAGMENT_SHADER);
 	ri.Printf(PRINT_WARNING, "DEBUG: Fragment shader (perlin fuckery) id is %d.\n", (int)fragmentShaderPerlinId);
 	//const char* withPerlin[2] = {"#define PERLINFUCKERY\n",fragmentText };
@@ -114,52 +126,39 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 		success = false;
 	}
 
-	// Normal shader
-	shaderId = qglCreateProgram();
-	ri.Printf(PRINT_WARNING, "DEBUG: Program shader id is %d.\n", (int)shaderId);
-	qglAttachShader(shaderId, vertexShaderId);
-	if (doTessellationShader) {
-		qglAttachShader(shaderId, tessellationControlShaderId);
-		qglAttachShader(shaderId, tessellationEvaluationShaderId);
-	}
-	if (doGeometryShader) {
-		qglAttachShader(shaderId, geometryShaderId);
-		qglProgramParameteri(shaderId, GL_GEOMETRY_VERTICES_OUT_ARB, 6);
-		qglProgramParameteri(shaderId, GL_GEOMETRY_INPUT_TYPE_ARB, GL_TRIANGLES);
-		qglProgramParameteri(shaderId, GL_GEOMETRY_OUTPUT_TYPE_ARB, GL_TRIANGLE_STRIP);
-	}
-	if (!noFragment) {
-		qglAttachShader(shaderId, fragmentShaderId);
-	}
-	qglLinkProgram(shaderId);
-	if (hasErrored(shaderId, "[shader program]", true)) {
-		qglDeleteProgram(shaderId);
-		shaderId = 0;
-		success = false;
-	}
+	for (int shaderbits = 0; shaderbits < GLSLSHAD_MAX; shaderbits++) {
 
-	// Shader with perlin fuckery (thanks AMD for not letting me include it in the normal shader program because you like to create graphical artifacts from code that is literally never executed)
-	shaderIdPerlinFuckery = qglCreateProgram();
-	ri.Printf(PRINT_WARNING, "DEBUG: Program shader (perlin fuckery) id is %d.\n", (int)shaderId);
-	qglAttachShader(shaderIdPerlinFuckery, vertexShaderId);
-	if (doTessellationShader) {
-		qglAttachShader(shaderIdPerlinFuckery, tessellationControlShaderId);
-		qglAttachShader(shaderIdPerlinFuckery, tessellationEvaluationShaderId);
-	}
-	if (doGeometryShader) {
-		qglAttachShader(shaderIdPerlinFuckery, geometryShaderId);
-		qglProgramParameteri(shaderIdPerlinFuckery, GL_GEOMETRY_VERTICES_OUT_ARB, 6);
-		qglProgramParameteri(shaderIdPerlinFuckery, GL_GEOMETRY_INPUT_TYPE_ARB, GL_TRIANGLES);
-		qglProgramParameteri(shaderIdPerlinFuckery, GL_GEOMETRY_OUTPUT_TYPE_ARB, GL_TRIANGLE_STRIP);
-	}
-	if (!noFragment) {
-		qglAttachShader(shaderIdPerlinFuckery, fragmentShaderPerlinId);
-	}
-	qglLinkProgram(shaderIdPerlinFuckery);
-	if (hasErrored(shaderId, "[shader program perlin]", true)) {
-		qglDeleteProgram(shaderIdPerlinFuckery);
-		shaderIdPerlinFuckery = 0;
-		success = false;
+		// Normal shader
+		shaderId[shaderbits] = qglCreateProgram();
+		ri.Printf(PRINT_WARNING, "DEBUG: Program shader (bits %d) id is %d.\n",shaderbits, (int)shaderId[shaderbits]);
+		qglAttachShader(shaderId[shaderbits], vertexShaderId);
+		if (doTessellationShader) {
+			qglAttachShader(shaderId[shaderbits], tessellationControlShaderId);
+			qglAttachShader(shaderId[shaderbits], tessellationEvaluationShaderId);
+		}
+		if (doGeometryShader) {
+			qglAttachShader(shaderId[shaderbits], geometryShaderId);
+			qglProgramParameteri(shaderId[shaderbits], GL_GEOMETRY_VERTICES_OUT_ARB, 6);
+			qglProgramParameteri(shaderId[shaderbits], GL_GEOMETRY_INPUT_TYPE_ARB, GL_TRIANGLES);
+			qglProgramParameteri(shaderId[shaderbits], GL_GEOMETRY_OUTPUT_TYPE_ARB, GL_TRIANGLE_STRIP);
+		}
+		if (!noFragment) {
+			if (shaderbits & GLSLSHAD_ZPREPASS) {
+				qglAttachShader(shaderId[shaderbits], fragmentShaderSimpleId);
+			}
+			else if (shaderbits & GLSLSHAD_PERLIN) {
+				qglAttachShader(shaderId[shaderbits], fragmentShaderPerlinId);
+			}
+			else {
+				qglAttachShader(shaderId[shaderbits], fragmentShaderId);
+			}
+		}
+		qglLinkProgram(shaderId[shaderbits]);
+		if (hasErrored(shaderId[shaderbits], va("[shader program bits %d]",shaderbits), true)) {
+			qglDeleteProgram(shaderId[shaderbits]);
+			shaderId[shaderbits] = 0;
+			success = false;
+		}
 	}
 
 
@@ -172,6 +171,8 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 	}
 	qglDeleteShader(vertexShaderId);
 	qglDeleteShader(fragmentShaderId);
+	qglDeleteShader(fragmentShaderPerlinId);
+	qglDeleteShader(fragmentShaderSimpleId);
 
 	//if (!success && shaderId) {
 		//qglDeleteProgram(shaderId);

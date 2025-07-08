@@ -406,6 +406,7 @@ void GL_State( unsigned long stateBits )
 	{
 		int alphaFunc;
 		float alphaValue;
+		bool activate = false;
 		switch (stateBits & GLS_ATEST_BITS)
 		{
 		case 0:
@@ -416,27 +417,37 @@ void GL_State( unsigned long stateBits )
 		case GLS_ATEST_GT_0:
 			alphaFunc = GL_GREATER;
 			alphaValue = 0.0f;
+			activate = true;
+			break;
 		case GLS_ATEST_LT_80:
 			alphaFunc = GL_LESS;
 			alphaValue = 0.5f;
+			activate = true;
+			break;
 		case GLS_ATEST_GE_80:
 			alphaFunc = GL_GEQUAL;
 			alphaValue = 0.5f;
+			activate = true;
+			break;
 		case GLS_ATEST_GE_C0:
 			alphaFunc = GL_GEQUAL;
 			alphaValue = 0.75f;
-			qglEnable(GL_ALPHA_TEST);
-			qglAlphaFunc(alphaFunc, alphaValue);
-			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc, &alphaValue);
+			activate = true;
 			break;
 		default:
 			assert(0);
 			break;
 		}
+		if (activate) {
+			qglEnable(GL_ALPHA_TEST);
+			qglAlphaFunc(alphaFunc, alphaValue);
+			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc, &alphaValue);
+		}
 	}
 	else {
-		int alphaFunc = 0;
-		R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
+		//qglDisable(GL_ALPHA_TEST);
+		//int alphaFunc = 0;
+		//R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
 	}
 
 	glState.glStateBits = stateBits;
@@ -1343,7 +1354,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 		g_bRenderedZPrepass = true;
 	}
 
-	if (!g_bRenderedZPrepass) {
+	if (!g_bRenderedZPrepass || r_zPrepass->integer != 2) {
 		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
 	}
 	g_bRenderedZPrepass = false;
