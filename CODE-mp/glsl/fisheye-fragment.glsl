@@ -35,6 +35,9 @@ varying vec4 vertColor;
 in vec3 texUVTransform[2];
 
 
+//flat in uint shadowLineLightBitmasks[1152];
+
+
 uniform mat4x4 worldModelViewMatrixUniform;
 in mat4x4 worldModelViewMatrixReverseGeom;
 
@@ -764,6 +767,14 @@ float distanceToLineProper(vec3 point, vec3 linePoint1, vec3 linePoint2){
   }
 }
 
+float distanceToLineProperMaybefast(vec3 point, vec3 linePoint1, vec3 linePoint2) {
+    vec3 thing1 = linePoint2 - linePoint1;
+    vec3 thing2 = point - linePoint1;
+    float ratio = clamp(dot(thing2, thing1) / dot(thing1, thing1), 0.0, 1.0);
+    vec3 near = linePoint1 + ratio * thing1;
+    return length(point - near);
+}
+
 float shortestDistanceLinesNew( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold) {
     vec3 u = a1 - a0;
     vec3 v = b1 - b0;
@@ -861,6 +872,7 @@ void main(void)
 	if(zPrepassUniform != 0){
 		return;
 	}
+	//bool test[500];
     //const float depth = 5.0f;
 #ifdef PERLINFUCKERY
 	int perlinFuckery = noiseFuckeryUniform;
@@ -1006,6 +1018,7 @@ void main(void)
 #if VOXELSTUFF
 	bvec3 collision;
 #endif
+	float dLightFastSkipThresholdUniformSquared = dLightFastSkipThresholdUniform*dLightFastSkipThresholdUniform;
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		for(int i=0;i<dLightsCountUniform;i++){
@@ -1115,7 +1128,9 @@ void main(void)
 
 				vec3 addVal = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius)*specIntensity*dLightSpecIntensityUniform/totalDist;
 
+
 				bool fastSkip2 =  length(addVal) < dLightFastSkipThresholdUniform || specIntensity <= 0;
+				//bool fastSkip2 =  dot(addVal,addVal) < dLightFastSkipThresholdUniformSquared || specIntensity <= 0;
 
 				float fastSkipThresSpec = dLightFastSkipThresholdUniform/length(addVal);
 			
