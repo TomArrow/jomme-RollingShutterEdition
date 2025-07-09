@@ -6488,17 +6488,20 @@ void CG_G2Animated( centity_t *cent )
 	}
 
 #ifdef SMOOTH_G2ANIM_LERPORIGIN
-	if (DistanceSquared(cent->turAngles,cent->lerpOrigin)>12000.0f)
-	{
-		VectorCopy(cent->lerpOrigin, cent->turAngles);
-	}
+	if (cg_smoothG2AnimLerpOrigin.integer && (cent->currentState.pos.trType != TR_LINEAR_STOP || cg_smoothG2AnimLerpOrigin.integer > 1)) {
 
-	VectorSubtract(cent->lerpOrigin, cent->turAngles, posDif);
-	
-	for (k=0;k<3;k++)
-	{
-		cent->turAngles[k]=(cent->turAngles[k]+posDif[k]*smoothFactor);
-		cent->lerpOrigin[k]=cent->turAngles[k];
+		if (DistanceSquared(cent->turAngles, cent->lerpOrigin) > 12000.0f)
+		{
+			VectorCopy(cent->lerpOrigin, cent->turAngles);
+		}
+
+		VectorSubtract(cent->lerpOrigin, cent->turAngles, posDif);
+
+		for (k = 0; k < 3; k++)
+		{
+			cent->turAngles[k] = (cent->turAngles[k] + posDif[k] * smoothFactor);
+			cent->lerpOrigin[k] = cent->turAngles[k];
+		}
 	}
 #endif
 

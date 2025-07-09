@@ -2334,13 +2334,13 @@ static void CG_InterpolateEntityPosition( centity_t *cent ) {
 		f = cg.frameInterpolation;
 	}
 
-	if (cg_commandSmooth.integer > 1 && cent->currentState.number < MAX_CLIENTS && cent != &cg_entities[cg.snap->ps.clientNum]) {
+	if (cg_commandSmooth.integer > 1 && (cent->currentState.number < MAX_CLIENTS || cent->currentState.eType == ET_GRAPPLE && cent->currentState.pos.trType == TR_LINEAR_STOP) && cent != &cg_entities[cg.snap->ps.clientNum]) {
 		CG_ComputeCommandSmoothStates(cent, &curEsh, &nextEsh);
 		currentState = &curEsh->es;
 		currentStateTime = curEsh->time;
 		if (nextEsh == NULL) {
 #ifdef _DEBUG
-			Com_Printf("Missing nextEsh for client %d\n", currentState->number);
+			Com_Printf("Missing nextEsh for client/grapple %d\n", currentState->number);
 #endif
 			// TODO: timeFraction???
 			BG_EvaluateTrajectory(&currentState->pos, cg.time, cent->lerpOrigin);
@@ -2413,7 +2413,7 @@ void CG_CalcEntityLerpPositions( centity_t *cent ) {
 
 	entityState_t* currentState, * nextState;
 
-	if (cg_commandSmooth.integer > 1 && cent->currentState.number < MAX_CLIENTS && cent != &cg_entities[cg.snap->ps.clientNum]) {
+	if (cg_commandSmooth.integer > 1 && (cent->currentState.number < MAX_CLIENTS || cent->currentState.eType == ET_GRAPPLE && cent->currentState.pos.trType == TR_LINEAR_STOP) && cent != &cg_entities[cg.snap->ps.clientNum]) {
 		timedEntityState_t* curEsh, * nextEsh;
 		CG_ComputeCommandSmoothStates(cent, &curEsh, &nextEsh);
 		currentState = &curEsh->es;
@@ -2444,7 +2444,7 @@ void CG_CalcEntityLerpPositions( centity_t *cent ) {
 	// first see if we can interpolate between two snaps for
 	// linear extrapolated clients
 	if (cent->interpolate && currentState->pos.trType == TR_LINEAR_STOP &&
-											cent->currentState.number < MAX_CLIENTS) {
+											(cent->currentState.number < MAX_CLIENTS || cent->currentState.eType == ET_GRAPPLE)) {
 		CG_InterpolateEntityPosition( cent );
 		return;
 	}
