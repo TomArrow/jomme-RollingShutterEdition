@@ -784,6 +784,14 @@ float distanceToLineProperMaybefastSquared(vec3 point, vec3 linePoint1, vec3 lin
 	vec3 pointto = point-near;
     return dot(pointto,pointto);
 }
+float distanceToLineProperMaybefastSquaredInfinite(vec3 point, vec3 linePoint1, vec3 linePoint2) {
+    vec3 thing1 = linePoint2 - linePoint1;
+    vec3 thing2 = point - linePoint1;
+    float ratio = dot(thing2, thing1) / dot(thing1, thing1);
+    vec3 near = linePoint1 + ratio * thing1;
+	vec3 pointto = point-near;
+    return dot(pointto,pointto);
+}
 
 float shortestDistanceLinesSquared( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold) {
     vec3 u = a1 - a0;
@@ -1080,7 +1088,7 @@ void main(void)
 				lightVoxelPathChecked = true;
 #endif
 		
-				vec3 shadowDebugColor = vec3(1.0,1.0,1.0);
+				//vec3 shadowDebugColor = vec3(1.0,1.0,1.0);
 				//vec3 lightVectorAbs = worldPixel-dlightOrigin;
 				//vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
 				int s =mainLightShadowLinesCalculated;
@@ -1092,6 +1100,11 @@ void main(void)
 					//if(dot(shadowLines[s].point2.xyz-worldPixel,normal) <=0.0 && dot(shadowLines[s].point1.xyz-worldPixel,normal) <=0.0){ // actually makes performance worse
 					//	continue;
 					//}
+
+					float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
+					if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint*10){
+						continue;
+					}
 
 					int type= 0;
 					float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
@@ -1171,6 +1184,12 @@ void main(void)
 						if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
 							continue;
 						}
+						
+						float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
+						if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint){
+							continue;
+						}
+
 						int type= 0;
 						float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
 						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
