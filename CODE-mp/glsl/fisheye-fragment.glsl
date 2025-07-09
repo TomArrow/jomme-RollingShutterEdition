@@ -1035,6 +1035,13 @@ void main(void)
 	float dLightFastSkipThresholdUniformSquared = dLightFastSkipThresholdUniform*dLightFastSkipThresholdUniform;
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
+		
+		vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
+		vec3 viewerVectorNorm = normalize(viewerVector);
+		float cosviewercomponent = 1.0 - max(0.0,dot(lightNormal,viewerVectorNorm));
+		float specIntensitySchlickMult = dLightSpecBaseReflectivityUniform+(1.0-dLightSpecBaseReflectivityUniform)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
+		float viewerDistance = length(viewerVector);
+
 		for(int i=0;i<dLightsCountUniform;i++){
 		
 			vec3 dlightRawOrigin = dLightsUniform[i].origin;
@@ -1074,8 +1081,8 @@ void main(void)
 #endif
 		
 				vec3 shadowDebugColor = vec3(1.0,1.0,1.0);
-				vec3 lightVectorAbs = worldPixel-dlightOrigin;
-				vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
+				//vec3 lightVectorAbs = worldPixel-dlightOrigin;
+				//vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
 				int s =mainLightShadowLinesCalculated;
 				for(;s<shadowLinesCountUniform;s++){
 
@@ -1087,11 +1094,9 @@ void main(void)
 					//}
 
 					int type= 0;
-					float shadowLineWidthSquared = shadowLines[s].width;
+					float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
 					float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-				
-					float lightIntensityHere = max(0.0f,maxDistanceSquared / shadowLineWidthSquared);
-					shadowedIntensity *= min(lightIntensityHere,1.0);
+					shadowedIntensity *= clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
 
 					if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
 						break;
@@ -1123,23 +1128,21 @@ void main(void)
 			if(intensity > 0.0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0){ // dont do specular for simple-lighting (render flags 1)
 				// specular
 			
-				vec3 lightVector = eyeSpaceCoordsGeom.xyz-eyeCoordLight.xyz;
-				vec3 lightVectorNorm = normalize(lightVector);
+				//vec3 lightVector = eyeSpaceCoordsGeom.xyz-eyeCoordLight.xyz;
+				//vec3 lightVectorNorm = normalize(lightVector);
+				vec3 lightVector1Norm = -lightVectorNorm;
 
 				// now mirror the lightVector around the normal
-				vec3 mirroredVec = lightVectorNorm - 2.0*lightNormal*dot(lightVectorNorm,lightNormal);
+				vec3 mirroredVec = lightVector1Norm - 2.0*lightNormal*dot(lightVector1Norm,lightNormal);
 				vec3 mirroredVecNorm = normalize(mirroredVec);
-
-				vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
-				vec3 viewerVectorNorm = normalize(viewerVector);
 
 				float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
 
+				
 				// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
-				float cosviewercomponent = 1.0 - max(0.0,dot(lightNormal,viewerVectorNorm));
-				specIntensity *= dLightSpecBaseReflectivityUniform+(1.0-dLightSpecBaseReflectivityUniform)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
+				specIntensity *= specIntensitySchlickMult;
 
-				float totalDist = dist + length(viewerVector);
+				float totalDist = dist + viewerDistance;
 
 				vec3 addVal = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius)*specIntensity*dLightSpecIntensityUniform/totalDist;
 
@@ -1169,11 +1172,10 @@ void main(void)
 							continue;
 						}
 						int type= 0;
-						float shadowLineWidthSquared = shadowLines[s].width;
+						float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
 						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
 						float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-						float lightIntensityHere = max(0.0f,maxDistanceSquared / shadowLineWidthSquared);
-						shadowedIntensity *= min(lightIntensityHere,1.0);
+						shadowedIntensity *= clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
 						if(allInvocationsARB(shadowedIntensity < fastSkipThresSpec)){
 							break;
 						}
