@@ -1,6 +1,7 @@
 #version 400 compatibility
 #define VOXELSTUFF 1
 #extension GL_ARB_shader_storage_buffer_object : enable
+#extension GL_ARB_shader_group_vote : enable
 #if VOXELSTUFF
 	#define USE64BITINDEX 0
 	#if USE64BITINDEX
@@ -1038,7 +1039,7 @@ void main(void)
 
 			vec3 value = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius*50.0*dLightIntensityUniform)*intensity/(dist*dist);
 
-			bool fastSkip = intensity <= 0.0 || length(value) < dLightFastSkipThresholdUniform;
+			bool fastSkip = allInvocationsARB(intensity <= 0.0 || length(value) < dLightFastSkipThresholdUniform);
 
 			float fastSkipThresMain = dLightFastSkipThresholdUniform/length(value);
 		
@@ -1078,24 +1079,24 @@ void main(void)
 					float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
 					shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
 
-					if(shadowedIntensity < fastSkipThresMain){
+					if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
 						break;
 					}
 
-					switch(type){
-						case 0:
-						shadowDebugColor = vec3(1.0,0.0,0.0);
-						break;
-						case 1:
-						shadowDebugColor = vec3(0.0,1.0,0.0);
-						break;
-						case 2:
-						shadowDebugColor = vec3(0.0,0.0,1.0);
-						break;
-						case 3:
-						shadowDebugColor = vec3(1.0,1.0,0.0);
-						break;
-					}
+//					switch(type){
+//						case 0:
+//						shadowDebugColor = vec3(1.0,0.0,0.0);
+//						break;
+//						case 1:
+//						shadowDebugColor = vec3(0.0,1.0,0.0);
+//						break;
+//						case 2:
+//						shadowDebugColor = vec3(0.0,0.0,1.0);
+//						break;
+//						case 3:
+//						shadowDebugColor = vec3(1.0,1.0,0.0);
+//						break;
+//					}
 
 				}
 				mainLightShadowLinesCalculated= s;
@@ -1129,7 +1130,7 @@ void main(void)
 				vec3 addVal = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius)*specIntensity*dLightSpecIntensityUniform/totalDist;
 
 
-				bool fastSkip2 =  length(addVal) < dLightFastSkipThresholdUniform || specIntensity <= 0;
+				bool fastSkip2 = allInvocationsARB( length(addVal) < dLightFastSkipThresholdUniform || specIntensity <= 0);
 				//bool fastSkip2 =  dot(addVal,addVal) < dLightFastSkipThresholdUniformSquared || specIntensity <= 0;
 
 				float fastSkipThresSpec = dLightFastSkipThresholdUniform/length(addVal);
@@ -1138,7 +1139,7 @@ void main(void)
 					//if( !mainLightShadowLinesCalculated){
 
 #if VOXELSTUFF
-					if(!lightVoxelPathChecked ){
+					if(!lightVoxelPathChecked){
 						vec3 voxeltarget = worldPixel +worldNormal*11.0;
 						vec3 lightpos = transformDLightForVoxelShadow(dlightRawOrigin+worldNormal*11.0,voxeltarget);
 						if(traceVoxel(lightpos,voxeltarget,collision)){
@@ -1158,7 +1159,7 @@ void main(void)
 						float maxDistance = shortestDistanceLines(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
 						float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
 						shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
-						if(shadowedIntensity < fastSkipThresSpec){
+						if(allInvocationsARB(shadowedIntensity < fastSkipThresSpec)){
 							break;
 						}
 				
