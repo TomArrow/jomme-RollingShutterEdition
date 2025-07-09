@@ -776,7 +776,16 @@ float distanceToLineProperMaybefast(vec3 point, vec3 linePoint1, vec3 linePoint2
     return length(point - near);
 }
 
-float shortestDistanceLinesNew( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold) {
+float distanceToLineProperMaybefastSquared(vec3 point, vec3 linePoint1, vec3 linePoint2) {
+    vec3 thing1 = linePoint2 - linePoint1;
+    vec3 thing2 = point - linePoint1;
+    float ratio = clamp(dot(thing2, thing1) / dot(thing1, thing1), 0.0, 1.0);
+    vec3 near = linePoint1 + ratio * thing1;
+	vec3 pointto = point-near;
+    return dot(pointto,pointto);
+}
+
+float shortestDistanceLinesSquared( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold) {
     vec3 u = a1 - a0;
     vec3 v = b1 - b0;
     vec3 w = a0 - b0;
@@ -808,11 +817,12 @@ float shortestDistanceLinesNew( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int typ
     //vec3 closestPoint1 = a0 + s * u;
     //vec3 closestPoint2 = b0 + t * v;
 	
-	return length(w + s * u -  t * v);
+	vec3 shortestvec = w + s * u -  t * v;
+	return dot(shortestvec,shortestvec);
     //return length(closestPoint1 - closestPoint2);
 }
 
-float shortestDistanceLinesOld(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
+float shortestDistanceLinesSquaredOld(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
 
   vec3 a=normalize(a1-a0);
 	vec3 b=normalize(b1-b0);
@@ -820,7 +830,7 @@ float shortestDistanceLinesOld(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type,
 	float distanceInfinite = abs(dot(crossBoth,a1-b1));
 
 	if(quitThreshold < distanceInfinite){ // attempt to exit early when possible
-		return quitThreshold;
+		return quitThreshold*quitThreshold;
 	}
 
 	vec3 perp1 = normalize(cross(crossBoth,a));
@@ -856,12 +866,12 @@ float shortestDistanceLinesOld(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type,
 		maxDistance = min(maxDistance,min(dist1,dist2));
 		type = 3;
 	}
-	return maxDistance;
+	return maxDistance*maxDistance;
 }
 
-float shortestDistanceLines(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
-	return dLightFastUniform > 0 ? shortestDistanceLinesNew(a0,a1,b0,b1,type,quitThreshold):shortestDistanceLinesOld(a0,a1,b0,b1,type,quitThreshold);
-}
+//float shortestDistanceLinesSquaredMeh(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold){
+//	return anyInvocationARB(dLightFastUniform > 0) ? shortestDistanceLinesSquaredNew(a0,a1,b0,b1,type,quitThreshold):shortestDistanceLinesSquaredOld(a0,a1,b0,b1,type,quitThreshold);
+//}
 
 // 	1.660317619104158771	-0.58757266606617910577	-0.072916573137668344234
 //	-0.12440670211719027597	1.1328007408693037184	-0.0083489374502384976625
@@ -997,16 +1007,19 @@ void main(void)
 				float lightIntensityHere = min(1.0,max(0.0f,maxDistance / (shadowLines[s].width+widenRatio*shadowLines[s].b)));
 				float maxWidenFade = shadowLines[s].b / (shadowLines[s].width+shadowLines[s].b);
 				//lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,4.0)*(1.0-(4.0*widenRatio)*maxWidenFade-0.3)));
-				lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,1.0)*(1.0-(widenRatio)*maxWidenFade-0.4));
+				//lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,1.0)*(1.0-(widenRatio)*maxWidenFade-0.4));
+				lightIntensityHere = max(0.0f,1.0-(1.0-lightIntensityHere)*(1.0-(widenRatio)*maxWidenFade-0.4));
 				boringShadowingIntensity = min(lightIntensityHere,boringShadowingIntensity);
 
 			}
 			else if(0 < (shadowLines[s].flags & 2)){ // Flag 2 means ambient occlusion thing (we use less of them to not have even more performance loss)
 				
-				float maxDistance = distanceToLineProper(worldPixel,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz );
+				float maxDistance = distanceToLineProperMaybefast(worldPixel,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz );
 				
 				float lightIntensityHere = min(1.0,max(0.0f,maxDistance / shadowLines[s].width)); // only max 0.2, this is supposed to be mild
-				lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,2.0)*0.5);
+				lightIntensityHere = 1.0-lightIntensityHere;
+				//lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,2.0)*0.5);
+				lightIntensityHere = max(0.0f,1.0-lightIntensityHere*lightIntensityHere*0.5);
 				boringShadowingIntensity = min(lightIntensityHere,boringShadowingIntensity);
 			}
 		}
@@ -1074,10 +1087,11 @@ void main(void)
 					//}
 
 					int type= 0;
-					float maxDistance = shortestDistanceLines(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+					float shadowLineWidthSquared = shadowLines[s].width;
+					float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
 				
-					float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
-					shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
+					float lightIntensityHere = max(0.0f,maxDistanceSquared / shadowLineWidthSquared);
+					shadowedIntensity *= min(lightIntensityHere,1.0);
 
 					if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
 						break;
@@ -1155,10 +1169,11 @@ void main(void)
 							continue;
 						}
 						int type= 0;
+						float shadowLineWidthSquared = shadowLines[s].width;
 						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
-						float maxDistance = shortestDistanceLines(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-						float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
-						shadowedIntensity *= min(lightIntensityHere*lightIntensityHere,1.0);
+						float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+						float lightIntensityHere = max(0.0f,maxDistanceSquared / shadowLineWidthSquared);
+						shadowedIntensity *= min(lightIntensityHere,1.0);
 						if(allInvocationsARB(shadowedIntensity < fastSkipThresSpec)){
 							break;
 						}
