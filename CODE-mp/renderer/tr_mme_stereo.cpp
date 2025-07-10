@@ -1,7 +1,7 @@
 #include "tr_mme.h"
 
 static char *workAlloc = 0;
-static char *workAlign = 0;
+static byte* workAlign = 0;
 static int workSize, workUsed;
 static qboolean allocFailed = qfalse;
 
@@ -425,15 +425,22 @@ const void *R_MME_CaptureShotCmdStereo( const void *data ) {
 			shotData.main.format = mmeShotFormatPNG;
 		} else if (!Q_stricmp(mme_screenShotFormat->string, "avi")) {
 			shotData.main.format = mmeShotFormatAVI;
+		} else if (!Q_stricmp(mme_screenShotFormat->string, "pipe")) {
+			shotData.main.format = mmeShotFormatPIPE;
 		} else {
 			shotData.main.format = mmeShotFormatTGA;
 		}
 		
 		//grayscale works fine only with compressed avi :(
-		if (shotData.main.format != mmeShotFormatAVI || !mme_aviFormat->integer) {
+		if ((shotData.main.format != mmeShotFormatAVI && shotData.main.format != mmeShotFormatPIPE) || !mme_aviFormat->integer) {
 			shotData.depth.format = mmeShotFormatPNG;
 			shotData.stencil.format = mmeShotFormatPNG;
-		} else {
+		}
+		else if (shotData.main.format == mmeShotFormatPIPE) {
+			shotData.depth.format = mmeShotFormatPIPE;
+			shotData.stencil.format = mmeShotFormatPIPE;
+		}
+		else {
 			shotData.depth.format = mmeShotFormatAVI;
 			shotData.stencil.format = mmeShotFormatAVI;
 		}
@@ -494,6 +501,6 @@ void R_MME_InitStereo(void) {
 			allocFailed = qtrue;
 			return;
 		}
-		workAlign = (char *)(((int)workAlloc + 15) & ~15);
+		workAlign = (byte*)PADP(workAlloc, 16);
 	}
 }

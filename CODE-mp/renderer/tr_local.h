@@ -1450,6 +1450,8 @@ extern cvar_t	*mme_saveStencil;
 extern cvar_t	*mme_saveShot;
 extern cvar_t	*mme_saveAEKeyframes;
 extern cvar_t	*mme_saveDepth;
+extern cvar_t	*mme_pipeCommand;
+extern cvar_t	*mme_aviLimit;
 extern cvar_t	* mme_saveADM;
 extern cvar_t	*mme_rollingShutterEnabled;
 extern cvar_t	*mme_rollingShutterBlur;

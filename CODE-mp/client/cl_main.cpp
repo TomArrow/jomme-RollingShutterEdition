@@ -2442,6 +2442,10 @@ void CL_InitRef( void ) {
 	ri.FS_Write = FS_Write;
 	ri.FS_FDirectOpenFileWrite = FS_FDirectOpenFileWrite;
 
+	ri.FS_PipeOpen = FS_PipeOpen;
+	ri.FS_PipeClose = FS_PipeClose;
+	//ri.FS_PipeWrite = FS_PipeWrite;
+
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
 

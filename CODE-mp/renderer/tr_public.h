@@ -193,6 +193,10 @@ typedef struct {
 	int		(*FS_Write)( const void *buffer, int len, fileHandle_t f );
 	fileHandle_t (*FS_FDirectOpenFileWrite)( const char *filename, const char *mode );
 
+	fileHandle_t(*FS_PipeOpen)(const char* qcmd, const char* qpath, const char* mode);
+	void	(*FS_PipeClose)(fileHandle_t f);
+	//int		(*FS_PipeWrite)(const void* buffer, int len, fileHandle_t f);
+
 	// cinematic stuff
 	void	(*CIN_UploadCinematic)(int handle);
 	int		(*CIN_PlayCinematic)( const char *arg0, int xpos, int ypos, int width, int height, int bits);

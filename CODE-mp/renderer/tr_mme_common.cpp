@@ -185,9 +185,15 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 	case mmeShotFormatPNG:
 		extension = "png";
 		break;
+	case mmeShotFormatPIPE:
+		if (!shot->avi.f) {
+			shot->avi.pipe = qtrue;
+		}
 	case mmeShotFormatAVI:
 		if (audio)
 			mmeAviSound( &shot->avi, shot->name, shot->type, width, height, fps, aBuf, aSize );
+		else if(shot->avi.pipe)
+			mmeAviSoundFake(&shot->avi, shot->name, shot->type, width, height, fps, 0); // make sure ffmpeg actually flushes aand doesnt wait literally forever (technically until we stop the video) to receive the audio (since we'd never send it)
 		mmeAviShot( &shot->avi, shot->name, shot->type, width, height, fps, inBuf, audio );
 		return;
 	}
