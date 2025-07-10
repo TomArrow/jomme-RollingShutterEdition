@@ -30,7 +30,7 @@ typedef struct {
 #define BLURMAX 8192
 
 
-#define PIPE_COMMAND_DEFAULT "ffmpeg -fflags nobuffer -thread_queue_size 512 -f avi -i - -threads 0 -max_muxing_queue_size 8192  -vcodec magicyuv -acodec pcm_s24le -flush_packets 1 \"%o-magicyuv.avi\" -vcodec libx264   -max_muxing_queue_size 8192  -vf \"zscale=min=bt2020nc:pin=bt2020:tin=smpte2084:transfer=bt709:primaries=bt709:matrix=bt709,format=yuv420p\" -acodec aac -colorspace bt709 -color_primaries bt709 -color_trc bt709 -preset ultrafast -pix_fmt yuv420p -crf 23 -movflags +frag_keyframe+empty_moov+default_base_moof -flush_packets 1 \"%o-preview.mp4\" 2> ffmpeglog.txt"
+#define PIPE_COMMAND_DEFAULT "ffmpeg -fflags nobuffer -thread_queue_size 512 -f avi -i - -threads 0 -max_muxing_queue_size 8192  -vcodec magicyuv -acodec pcm_s24le -flush_packets 1 \"%o-magicyuv.avi\" -vcodec libx264   -max_muxing_queue_size 8192  -vf \"zscale=min=bt2020nc:pin=bt2020:tin=smpte2084:transfer=bt709:primaries=bt709:matrix=bt709,format=yuv420p\" -acodec aac -colorspace bt709 -color_primaries bt709 -color_trc bt709 -preset ultrafast -pix_fmt yuv420p -crf 23 -movflags +frag_keyframe+empty_moov+default_base_moof -g 60 -flush_packets 1 \"%o-preview.mp4\" 2> ffmpeglog.txt"
 
 
 typedef struct mmeAviFile_s {
