@@ -400,6 +400,17 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 
 	R_BindAnimatedImage( &pStage->bundle[1] );
 
+	/*
+	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
+		if (pStage->bundle[i].image[0]) {
+			GL_SelectTexture(i);
+			qglEnable(GL_TEXTURE_2D);
+			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+			R_BindAnimatedImage(&pStage->bundle[i]);
+		}
+	}*/
+
 	R_DrawElements( input->numIndexes, input->indexes );
 
 	//

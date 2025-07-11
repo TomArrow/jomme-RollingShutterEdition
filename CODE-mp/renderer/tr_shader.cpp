@@ -2819,6 +2819,12 @@ static qboolean CollapseMultitexture( void ) {
 	else
 	{
 		stages[0].bundle[1] = stages[1].bundle[0];
+		if (stages[1].bundle[0].isLightmap) {
+			for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) {
+				// might have style lightmappies in here we need to copy over :)
+				stages[0].bundle[i] = stages[1].bundle[i];
+			}
+		}
 	}
 
 	// set the new blend state bits
@@ -3140,29 +3146,54 @@ static shader_t *FinishShader( void ) {
 		numStyles--;
 		if (numStyles > 0)
 		{
-			for(i = MAX_SHADER_STAGES - 1; i > lmStage + numStyles; i--)
-			{
-				stages[i] = stages[i - numStyles];
-			}
-
-			for(i = 0; i < numStyles; i++)
-			{
-				if (shader.lightmapIndex[i + 1] < 0)
+			if(qglActiveTextureARB && r_fboGLSL->integer && ENABLEGLSL){
+				// we are gonna do giga hack multitexture this :)
+				for (i = 0; i < numStyles; i++)
 				{
-					ri.Error( ERR_DROP, "FinishShader: light style with no light map for shader %s", shader.name);
+					if (shader.lightmapIndex[i + 1] < 0)
+					{
+						ri.Error(ERR_DROP, "FinishShader: light style with no light map for shader %s", shader.name);
+					}
+					stages[lmStage].bundle[i + 2] = stages[lmStage].bundle[0];
+					stages[lmStage].bundle[i + 2].image[0] = tr.lightmaps[shader.lightmapIndex[i + 1]];
+					stages[lmStage].bundle[i + 2].tcGen = (texCoordGen_t)(TCGEN_LIGHTMAP + i + 1);
+					stages[lmStage].bundle[i + 2].isLightmap = qtrue;
+
+					//stages[lmStage + i + 1].rgbGen = (colorGen_t)(CGEN_LIGHTMAP1 + i); // rgbgen i will haave to hack somehow. prolly just stylecolors as uniform
+
+					//stages[lmStage + i + 1].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[i + 1]];
+					//stages[lmStage + i + 1].bundle[0].tcGen = (texCoordGen_t)(TCGEN_LIGHTMAP + i + 1);
+					//stages[lmStage + i + 1].stateBits &= ~(GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS);
+					//				stages[lmStage +i + 1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_COLOR;
+					//stages[lmStage + i + 1].stateBits |= GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE;
+				}
+			}
+			else {
+
+				for(i = MAX_SHADER_STAGES - 1; i > lmStage + numStyles; i--)
+				{
+					stages[i] = stages[i - numStyles];
 				}
 
-				stages[lmStage +i + 1] = stages[lmStage];
-				stages[lmStage +i + 1].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[i + 1]];
-				stages[lmStage +i + 1].bundle[0].tcGen = (texCoordGen_t)(TCGEN_LIGHTMAP + i + 1);
-				stages[lmStage +i + 1].rgbGen = (colorGen_t)(CGEN_LIGHTMAP1 + i);
-				stages[lmStage +i + 1].stateBits &= ~(GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS);
-//				stages[lmStage +i + 1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_COLOR;
-				stages[lmStage +i + 1].stateBits |= GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE;
-			}
-			if (shader.fogPass == FP_GLFOG)
-			{
-				shader.fogPass = FP_EQUAL;
+				for(i = 0; i < numStyles; i++)
+				{
+					if (shader.lightmapIndex[i + 1] < 0)
+					{
+						ri.Error( ERR_DROP, "FinishShader: light style with no light map for shader %s", shader.name);
+					}
+
+					stages[lmStage +i + 1] = stages[lmStage];
+					stages[lmStage +i + 1].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[i + 1]];
+					stages[lmStage +i + 1].bundle[0].tcGen = (texCoordGen_t)(TCGEN_LIGHTMAP + i + 1);
+					stages[lmStage +i + 1].rgbGen = (colorGen_t)(CGEN_LIGHTMAP1 + i);
+					stages[lmStage +i + 1].stateBits &= ~(GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS);
+	//				stages[lmStage +i + 1].stateBits |= GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_COLOR;
+					stages[lmStage +i + 1].stateBits |= GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE;
+				}
+				if (shader.fogPass == FP_GLFOG)
+				{
+					shader.fogPass = FP_EQUAL;
+				}
 			}
 		}
 

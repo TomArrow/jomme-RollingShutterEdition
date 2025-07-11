@@ -74,7 +74,7 @@ void GL_Bind( image_t *image ) {
 		image->frameUsed = tr.frameCount;
 		glState.currenttextures[glState.currenttmu] = texnum;
 		qglBindTexture (GL_TEXTURE_2D, texnum);
-		if (r_fboGLSLParallaxMapping->integer) {
+		if (r_fboGLSLParallaxMapping->integer && glState.currenttmu == 0) {
 			R_FrameBuffer_SetDynamicUniforms(&averageBrightness);
 		}
 	}
@@ -103,6 +103,12 @@ void GL_SelectTexture( int unit )
 		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE1_ARB )\n" );
 		qglClientActiveTextureARB( GL_TEXTURE1_ARB );
 		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE1_ARB )\n" );
+	} else if ( unit > 1 && unit < 32 )
+	{
+		qglActiveTextureARB( GL_TEXTURE0_ARB + unit );
+		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE0_ARB + unit )\n" );
+		qglClientActiveTextureARB( GL_TEXTURE0_ARB + unit );
+		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE0_ARB + unit )\n" );
 	} else {
 		ri.Error( ERR_DROP, "GL_SelectTexture: unit = %i", unit );
 	}
