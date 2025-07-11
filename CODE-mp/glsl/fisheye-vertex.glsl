@@ -1,5 +1,7 @@
 #version 400 compatibility
 
+#define TEXTURE_COUNT 6
+
 uniform vec3 dofJitterUniform;
 uniform float dofFocusUniform;
 uniform float dofRadiusUniform;
@@ -10,10 +12,15 @@ out mat4x4 worldModelViewMatrixReverse;
 
 out vec3 debugColor;
 out vec4 color;
-out vec4 texCoord;
+out texCoord_interface {
+	vec4 coord[TEXTURE_COUNT];
+} texCoord;
+//out vec4 texCoord[TEXTURE_COUNT];
 out vec4 colorVertex;
 
-out vec4 geomTexCoord;
+out geomTexCoord_interface {
+	vec4 coord[TEXTURE_COUNT];
+} geomTexCoord;
 
 out float realDepth;
 
@@ -122,9 +129,12 @@ void equirectangular()
 
 	pureVertexCoords = gl_Vertex;
 
-	gl_TexCoord[0] = gl_MultiTexCoord0;
-	texCoord = gl_MultiTexCoord0;
-	geomTexCoord = gl_MultiTexCoord0;
+	geomTexCoord.coord[0] = texCoord.coord[0] = gl_TexCoord[0] = gl_MultiTexCoord0;
+	geomTexCoord.coord[1] = texCoord.coord[1] = gl_TexCoord[1] = gl_MultiTexCoord1;
+	geomTexCoord.coord[2] = texCoord.coord[2] = gl_TexCoord[2] = gl_MultiTexCoord2;
+	geomTexCoord.coord[3] = texCoord.coord[3] = gl_TexCoord[3] = gl_MultiTexCoord3;
+	geomTexCoord.coord[4] = texCoord.coord[4] = gl_TexCoord[4] = gl_MultiTexCoord4;
+	geomTexCoord.coord[5] = texCoord.coord[5] = gl_TexCoord[5] = gl_MultiTexCoord5;
 
 	color = gl_Color;
 	colorVertex = gl_Color;

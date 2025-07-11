@@ -1,6 +1,8 @@
 #version 400 compatibility
 #extension GL_ARB_shader_storage_buffer_object : enable
 
+#define TEXTURE_COUNT 6
+
 // Geometry Shader
 #extension GL_ARB_geometry_shader4 : enable
 //in float realDepth[3];
@@ -9,7 +11,10 @@ varying out vec4 vertColor;
 out vec3 debugColor;
 out vec3 texUVTransform[2];
 
-in vec4 geomTexCoord[3];
+//in vec4 geomTexCoord[3];
+in geomTexCoord_interface {
+	vec4 coord[TEXTURE_COUNT];
+} geomTexCoord[];
 
 in vec4 gl_TexCoordIn[3][1];
 
@@ -194,7 +199,12 @@ void standard(vec3 myNormal){
 		//positionAdjustment.z = musicDeformSampleCount;
 		gl_Position = projectionMatrix[0]* (gl_PositionIn[i]+positionAdjustment);
 		//gl_TexCoord[0] = gl_TexCoordIn[i][0];
-		gl_TexCoord[0] = geomTexCoord[i];
+		gl_TexCoord[0] = geomTexCoord[i].coord[0];
+		gl_TexCoord[1] = geomTexCoord[i].coord[1];
+		gl_TexCoord[2] = geomTexCoord[i].coord[2];
+		gl_TexCoord[3] = geomTexCoord[i].coord[3];
+		gl_TexCoord[4] = geomTexCoord[i].coord[4];
+		gl_TexCoord[5] = geomTexCoord[i].coord[5];
 		//gl_TexCoord[0].s = dot(gl_PositionIn[i].xyz,uvtransform[0]);
 		//gl_TexCoord[0].t = dot(gl_PositionIn[i].xyz,uvtransform[1]);
 		eyeSpaceCoordsGeom = eyeSpaceCoords[i];
@@ -309,8 +319,13 @@ void equirect(){
 		for (int i = 0; i < 3; i++)
 		{
 			gl_Position = positions[i];
-			gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i];
+			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
+			gl_TexCoord[0] = geomTexCoord[i].coord[0];
+			gl_TexCoord[1] = geomTexCoord[i].coord[1];
+			gl_TexCoord[2] = geomTexCoord[i].coord[2];
+			gl_TexCoord[3] = geomTexCoord[i].coord[3];
+			gl_TexCoord[4] = geomTexCoord[i].coord[4];
+			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
@@ -330,8 +345,13 @@ void equirect(){
 				if (thisPosition.x <= 0) thisPosition.x += 2.0;
 			}
 			gl_Position = thisPosition;
-			gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i];
+			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
+			gl_TexCoord[0] = geomTexCoord[i].coord[0];
+			gl_TexCoord[1] = geomTexCoord[i].coord[1];
+			gl_TexCoord[2] = geomTexCoord[i].coord[2];
+			gl_TexCoord[3] = geomTexCoord[i].coord[3];
+			gl_TexCoord[4] = geomTexCoord[i].coord[4];
+			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
@@ -347,8 +367,13 @@ void equirect(){
 				if (thisPosition.x > 0) thisPosition.x -= 2.0;
 			}
 			gl_Position = thisPosition;
-			gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i];
+			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
+			gl_TexCoord[0] = geomTexCoord[i].coord[0];
+			gl_TexCoord[1] = geomTexCoord[i].coord[1];
+			gl_TexCoord[2] = geomTexCoord[i].coord[2];
+			gl_TexCoord[3] = geomTexCoord[i].coord[3];
+			gl_TexCoord[4] = geomTexCoord[i].coord[4];
+			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
@@ -471,8 +496,13 @@ void fisheye(){
 		for (int i = 0; i < 3; i++)
 		{
 			gl_Position = positions[i];
-			gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i];
+			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
+			gl_TexCoord[0] = geomTexCoord[i].coord[0];
+			gl_TexCoord[1] = geomTexCoord[i].coord[1];
+			gl_TexCoord[2] = geomTexCoord[i].coord[2];
+			gl_TexCoord[3] = geomTexCoord[i].coord[3];
+			gl_TexCoord[4] = geomTexCoord[i].coord[4];
+			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
@@ -503,7 +533,9 @@ void main()
 
 	// Calculate UV vectors (dunno what im doing, i want parallax mapping lol)
 	vec3 uvtransform[2];
-	makeUVTransformationMatrix(eyeSpaceCoords[0].xyz,geomTexCoord[0].st,eyeSpaceCoords[1].xyz,geomTexCoord[1].st,eyeSpaceCoords[2].xyz,geomTexCoord[2].st,uvtransform);
+	// TODO in multitexture environment, we need to make sure to use the corret one
+	const int maintexnum = 0;
+	makeUVTransformationMatrix(eyeSpaceCoords[0].xyz,geomTexCoord[0].coord[maintexnum].st,eyeSpaceCoords[1].xyz,geomTexCoord[1].coord[maintexnum].st,eyeSpaceCoords[2].xyz,geomTexCoord[2].coord[maintexnum].st,uvtransform);
 	texUVTransform= uvtransform;
 
 

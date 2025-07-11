@@ -1233,7 +1233,8 @@ void main(void)
 		traceVoxel(viewOriginUniform,worldPixel,voxelcolor);
 		gl_FragColor.xyz = vec3(ivec3(voxelcolor));
 	}
-#elif 0
+#endif
+#if 0
 	int voxelState = voxelSolid(ivec3(floor((worldPixel/float(VOXELGRIDEDGESIZE))+rangeadd)));
 	if(voxelState > 0){
 		gl_FragColor.x += 0.5;

@@ -1,11 +1,22 @@
 #version 400 compatibility
 #extension GL_ARB_tessellation_shader : enable
 
+#define TEXTURE_COUNT 6
+
 layout(vertices = 3) out;
 
-in vec4 texCoord[];
+//in vec4 texCoord[];
+in texCoord_interface {
+	vec4 coord[TEXTURE_COUNT];
+} texCoord[];
+
 in vec4 colorVertex[];
-out vec4 vertexTexCoord[];
+
+//out vec4 vertexTexCoord[];
+out vertexTexCoord_interface {
+	vec4 coord[TEXTURE_COUNT];
+} vertexTexCoord[];
+
 out vec4 colorTCS[];
 
 
@@ -146,7 +157,12 @@ void main()
 
 
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-	vertexTexCoord[gl_InvocationID] = texCoord[gl_InvocationID];
+	vertexTexCoord[gl_InvocationID].coord[0] = texCoord[gl_InvocationID].coord[0];
+	vertexTexCoord[gl_InvocationID].coord[1] = texCoord[gl_InvocationID].coord[1];
+	vertexTexCoord[gl_InvocationID].coord[2] = texCoord[gl_InvocationID].coord[2];
+	vertexTexCoord[gl_InvocationID].coord[3] = texCoord[gl_InvocationID].coord[3];
+	vertexTexCoord[gl_InvocationID].coord[4] = texCoord[gl_InvocationID].coord[4];
+	vertexTexCoord[gl_InvocationID].coord[5] = texCoord[gl_InvocationID].coord[5];
 	colorTCS[gl_InvocationID] = colorVertex[gl_InvocationID];
 
 
