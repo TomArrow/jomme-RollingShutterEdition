@@ -244,7 +244,30 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 
 			factor = fraction[i];
 			totalFactor += factor;
-			if (world->hdrLightGrid)
+			if (world->hdrLightGridV2)
+			{
+				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
+				for (j = 0; j < MAXLIGHTMAPS; j++)
+				{
+					if (hdrData->styles[j] != LS_LSNONE)
+					{
+						const byte	style = hdrData->styles[j];
+
+						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else if (world->hdrLightGrid)
 			{
 				float* hdrData = world->hdrLightGrid + (gridPos * 6);
 				ent->ambientLight[0] += factor * hdrData[0] * r_LightBrightness->value * 255.0f;
@@ -378,7 +401,30 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 
 			totalFactor += factor;
 
-			if (world->hdrLightGrid)
+			if (world->hdrLightGridV2)
+			{
+				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
+				for (j = 0; j < MAXLIGHTMAPS; j++)
+				{
+					if (hdrData->styles[j] != LS_LSNONE)
+					{
+						const byte	style = hdrData->styles[j];
+
+						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else if (world->hdrLightGrid)
 			{
 				float* hdrData = world->hdrLightGrid + (gridPos * 6);
 				ent->ambientLight[0] += factor * hdrData[0] * r_LightBrightness->value * 255.0f;

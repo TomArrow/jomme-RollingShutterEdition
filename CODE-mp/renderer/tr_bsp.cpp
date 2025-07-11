@@ -1820,6 +1820,8 @@ void R_LoadLightGrid(lump_t *l ) {
 			}
 		}
 	}
+
+
 	// load hdr lightgrid
 	if (r_hdr->integer)
 	{
@@ -1834,22 +1836,47 @@ void R_LoadLightGrid(lump_t *l ) {
 
 		if (hdrLightGrid)
 		{
-			if (size != sizeof(float) * 6 * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2])
-			{
-				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)(sizeof(float)) * 6 * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2]);
+			size_t oldStyleHDRGridSize = sizeof(float) * 6 * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
+			size_t newStyleHDRGridSize = sizeof(bspGridPointHDR_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
+
+			if (size == oldStyleHDRGridSize) {
+				w->hdrLightGrid = (float*)ri.Hunk_Alloc(size, h_low);
+
+				for (i = 0; i < w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2]; i++)
+				{
+					w->hdrLightGrid[i * 6] = hdrLightGrid[i * 6];// / M_PI;
+					w->hdrLightGrid[i * 6 + 1] = hdrLightGrid[i * 6 + 1];// / M_PI;
+					w->hdrLightGrid[i * 6 + 2] = hdrLightGrid[i * 6 + 2];// / M_PI;
+					w->hdrLightGrid[i * 6 + 3] = hdrLightGrid[i * 6 + 3];// / M_PI;
+					w->hdrLightGrid[i * 6 + 4] = hdrLightGrid[i * 6 + 4];// / M_PI;
+					w->hdrLightGrid[i * 6 + 5] = hdrLightGrid[i * 6 + 5];// / M_PI;
+				}
+				if (w->hdrLightGridV2) {
+					w->hdrLightGridV2 = NULL; // do i need to free this? idk
+				}
+			}
+			else if (size == newStyleHDRGridSize) {
+				w->hdrLightGridV2 = (bspGridPointHDR_t*)ri.Hunk_Alloc(size, h_low);
+
+				Com_Memcpy(w->hdrLightGridV2,hdrLightGrid,size);
+
+				if (w->hdrLightGrid) {
+					w->hdrLightGrid = NULL; // do i need to free this? idk
+				}
+				//for (i = 0; i < w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2]; i++)
+				//{
+				//	w->hdrLightGrid[i * 6] = hdrLightGrid[i * 6];// / M_PI;
+				//	w->hdrLightGrid[i * 6 + 1] = hdrLightGrid[i * 6 + 1];// / M_PI;
+				//	w->hdrLightGrid[i * 6 + 2] = hdrLightGrid[i * 6 + 2];// / M_PI;
+				//	w->hdrLightGrid[i * 6 + 3] = hdrLightGrid[i * 6 + 3];// / M_PI;
+				//	w->hdrLightGrid[i * 6 + 4] = hdrLightGrid[i * 6 + 4];// / M_PI;
+				//	w->hdrLightGrid[i * 6 + 5] = hdrLightGrid[i * 6 + 5];// / M_PI;
+				//}
+			}
+			else {
+				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i or %i)!", filename, size, (int)oldStyleHDRGridSize , (int)newStyleHDRGridSize);
 			}
 
-			w->hdrLightGrid = (float*)ri.Hunk_Alloc(size, h_low);
-
-			for (i = 0; i < w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2]; i++)
-			{
-				w->hdrLightGrid[i * 6] = hdrLightGrid[i * 6];// / M_PI;
-				w->hdrLightGrid[i * 6 + 1] = hdrLightGrid[i * 6 + 1];// / M_PI;
-				w->hdrLightGrid[i * 6 + 2] = hdrLightGrid[i * 6 + 2];// / M_PI;
-				w->hdrLightGrid[i * 6 + 3] = hdrLightGrid[i * 6 + 3];// / M_PI;
-				w->hdrLightGrid[i * 6 + 4] = hdrLightGrid[i * 6 + 4];// / M_PI;
-				w->hdrLightGrid[i * 6 + 5] = hdrLightGrid[i * 6 + 5];// / M_PI;
-			}
 		}
 
 		if (hdrLightGrid)
