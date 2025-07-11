@@ -385,7 +385,7 @@ typedef struct {
 
 } textureBundle_t;
 
-#define NUM_TEXTURE_BUNDLES 2
+#define NUM_TEXTURE_BUNDLES 6 // 2. i'm adding 2-5, 4 extra ones, because i want to do all the light styles in one go.
 
 typedef struct {
 	qboolean		active;
@@ -412,6 +412,9 @@ typedef struct {
 	// Whether this object emits a glow or not.
 	bool			glow;
 #endif
+	int				stageImageBitmask;		// to tell glsl what images exist
+	int				stageLightmapBitmask;	// to tell glsl what images are lightmaps
+	int				multitextureEnv;		// to tell glsl the multitex env info
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -2219,6 +2222,11 @@ typedef struct {
 	int alphaFunc;
 	float alphaFuncValue;
 	bool doingZPrepass;
+
+	// for multitexturing
+	int stageImageBitmask;
+	int stageLightmapBitmask;
+	int multiTexMode;
 } fishEyeData_t;
 
 typedef struct {
@@ -2274,7 +2282,7 @@ qboolean R_FrameBuffer_Blur(float scale, int frame, int total);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
-qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
 qboolean R_FrameBuffer_StartHDRRead();

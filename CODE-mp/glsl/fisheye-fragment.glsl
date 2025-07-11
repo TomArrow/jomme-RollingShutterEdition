@@ -29,7 +29,12 @@
 precision highp int;
 #endif
 
-uniform sampler2D text_in;
+uniform sampler2D text_in0;
+uniform sampler2D text_in1;
+uniform sampler2D text_in2;
+uniform sampler2D text_in3;
+uniform sampler2D text_in4;
+uniform sampler2D text_in5;
 
 in vec3 debugColor;
 varying vec4 vertColor;
@@ -81,6 +86,16 @@ uniform float alphaFuncValueUniform;
 uniform int renderFlagsUniform;
 
 uniform int zPrepassUniform;
+
+
+// multipass stuff
+#define MYGL_MODULATE                       0x2100
+#define MYGL_DECAL                          0x2101
+#define MYGL_ADD							0x0104
+uniform int stageImageBitmaskUniform;
+uniform int stageLightmapBitmaskUniform;
+uniform int multiTexModeUniform;
+
 
 
 
@@ -307,7 +322,7 @@ vec2 parallaxMap(){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		vec4 color = texture2D(text_in, gl_TexCoord[0].st);
+		vec4 color = texture2D(text_in0, gl_TexCoord[0].st);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -347,7 +362,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition){
 		float texDepth = 0.0f;
 		for(int i=0; i< layers;i++){
 			
-			vec4 color = texture2D(text_in, uvCoords);
+			vec4 color = texture2D(text_in0, uvCoords);
 			oldtexDepth = texDepth;
 			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
 			
@@ -714,7 +729,7 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition){
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		vec4 color = texture2D(text_in, uvCoords);
+		vec4 color = texture2D(text_in0, uvCoords);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -726,13 +741,13 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition){
 		vec3 transposedCoords = startPosition + offset3d;
 		uvCoords.s = dot(transposedCoords,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
-		vec4 color2 = texture2D(text_in, uvCoords);
+		vec4 color2 = texture2D(text_in0, uvCoords);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,normal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
-		vec4 color3 = texture2D(text_in, uvCoords);
+		vec4 color3 = texture2D(text_in0, uvCoords);
 		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 place1 = startPosition + normalComponent * offset;
@@ -898,28 +913,33 @@ void main(void)
 #else 
 	int perlinFuckery = 0;
 #endif
+	
+	bool multitex = (stageImageBitmaskUniform & 2) > 0;
+	bool standAloneLightmap = !multitex && (stageLightmapBitmaskUniform & 1) > 0;
+	bool haveLightmap = (stageLightmapBitmaskUniform & 1) > 0 || multitex && (stageLightmapBitmaskUniform & 3) > 0;
 
 	vec2 uvCoords = gl_TexCoord[0].st;
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
 	vec4 color;
     if(fishEyeModeUniform == 0){
 	
-		if(isLightmapUniform == 0 && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
+		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap():parallaxMapSteep(effectiveUVPixelPos);
 		} else {
 			uvCoords = gl_TexCoord[0].st; // Don't parallax lightmaps
 		}
-		color = texture2D(text_in, uvCoords);
+		color = texture2D(text_in0, uvCoords);
 
 		gl_FragColor = color*vertColor; 
 		//gl_FragColor.xyz+=debugColor;
 		
 	} else {
 		
-		color = texture2D(text_in, uvCoords);
+		color = texture2D(text_in0, uvCoords);
 		gl_FragColor = color*vertColor; 
 		//gl_FragColor.xyz+=debugColor;
 	}
+
 
 	float effectiveAlpha = color.w*vertColor.w;
 
@@ -989,7 +1009,9 @@ void main(void)
 	float boringShadowingIntensity = 1.0f;
 
 	vec3 baseColorForLightingReal = gl_FragColor.xyz;
-	vec3 baseColorForLighting = isLightmapUniform > 0 ? vec3(1.0) : gl_FragColor.xyz;
+	vec3 baseColorForLighthmapLighting  = vec3(1.0);
+	vec3 baseColorForTexLighting  = gl_FragColor.xyz;
+	vec3 baseColorForLighting = haveLightmap ? baseColorForLighthmapLighting : baseColorForTexLighting;
 
 	if(isWorldBrushUniform > 0){
 		// Bit of boring standard shadow and ambient occlusion to replace cg_shadows 1
@@ -1213,18 +1235,44 @@ void main(void)
 			}
 
 		}
-
-		if(isLightmapUniform > 0){ // this is super lame xd. idk, cba to code something that actually makes sense :) at least it kinda works
-			baseColorForLighting.x = max(baseColorForLightingReal.x,addValue.x);
-			baseColorForLighting.y = max(baseColorForLightingReal.y,addValue.y);
-			baseColorForLighting.z = max(baseColorForLightingReal.z,addValue.z);
-			addValue *= baseColorForLighting;
-		} 
 	
 	}
+
+	vec3 addValueForLightmap = addValue;
+	if(haveLightmap){// this is super lame xd. idk, cba to code something that actually makes sense :) at least it kinda works
+		addValue *= baseColorForLightingReal; // because if we have a lightmap, we 100% used 1.0 as the baseColorForLighting, so we revert that here.
+		baseColorForLighting.x = max(baseColorForLightingReal.x,addValueForLightmap.x);
+		baseColorForLighting.y = max(baseColorForLightingReal.y,addValueForLightmap.y);
+		baseColorForLighting.z = max(baseColorForLightingReal.z,addValueForLightmap.z);
+		addValueForLightmap *= baseColorForLighting;
+	}
 	
-	gl_FragColor.xyz += addValue;
+	vec3 finalColor = gl_FragColor.xyz;
+	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap : addValue;
 	gl_FragColor.xyz -= boringShadowSubtractVal;
+
+	vec4 color2 = vec4(0);
+	if(multitex){
+		color2 = texture2D(text_in1, gl_TexCoord[1].st);
+		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
+		color2.xyz -= boringShadowSubtractVal;
+		switch(multiTexModeUniform){
+			case MYGL_ADD:
+				gl_FragColor += color2;
+			break;
+			case MYGL_MODULATE:
+				gl_FragColor *= color2;
+			break;
+		}
+	}
+
+	//if( (stageLightmapBitmaskUniform & 1) > 0 && multitex){
+	//	gl_FragColor.x = 1.0f;
+	//}
+	//if( (stageLightmapBitmaskUniform & 2) > 0 && multitex){
+	//	gl_FragColor.z = 1.0f;
+	//}
+	
 
 #if VOXELSTUFF
 #if 0

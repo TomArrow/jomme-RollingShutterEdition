@@ -2825,6 +2825,7 @@ static qboolean CollapseMultitexture( void ) {
 	shader.multitextureEnv = collapse[i].multitextureEnv;
 	stages[0].stateBits &= ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
 	stages[0].stateBits |= collapse[i].multitextureBlend;
+	stages[0].multitextureEnv = collapse[i].multitextureEnv;
 
 	//
 	// move down subsequent shaders

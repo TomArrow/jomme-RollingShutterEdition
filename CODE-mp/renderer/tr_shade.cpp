@@ -1683,7 +1683,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 
 		// Tell GLSL that this is a world brush. Dumb?
 		bool isLightmap = pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap;
-		R_FrameBuffer_SetDynamicUniforms(NULL, &isLightmap, NULL);
+		R_FrameBuffer_SetDynamicUniforms(NULL, &isLightmap, NULL,0,0,0,0,0,0,pStage);
 
 		if ( stage && r_lightmap->integer && !( pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap || pStage->bundle[0].vertexLightmap ) )
 		{

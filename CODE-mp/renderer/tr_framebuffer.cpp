@@ -108,6 +108,11 @@ typedef struct uniformLocations_t {
 
 	GLint zPrepassUniform;
 
+	GLint text_in[NUM_TEXTURE_BUNDLES];
+	GLint stageImageBitmaskUniform;
+	GLint stageLightmapBitmaskUniform;
+	GLint multiTexModeUniform;
+
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
@@ -330,6 +335,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocationsTess->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
+		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
+		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
+		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
+
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
@@ -351,7 +360,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 				qglUniform1f(uniformLocationsTess->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
 			}*/
 		}
-
+		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+			qglUniform1i(uniformLocationsTess->text_in[i], i);
+		}
 
 		if (fbo.fishEyeData.tessellationActive) {
 
@@ -400,6 +411,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocations->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
+		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
+		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
+		qglUniform1i(uniformLocations->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
+
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocations->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
@@ -421,6 +436,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 				qglUniform3fv(uniformLocations.dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
 				qglUniform1f(uniformLocations.dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
 			}*/
+		}
+
+		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+			qglUniform1i(uniformLocations->text_in[i], i);
 		}
 	}
 
@@ -591,7 +610,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, const bool* isLightmap, const bool* isWorldBrush, const bool* isSaber, const int* alphaFunc, const  float* alphaFuncValue, const bool* simpleLighting, const  bool* noLighting, const  bool* zPrepass) {
+qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, const bool* isLightmap, const bool* isWorldBrush, const bool* isSaber, const int* alphaFunc, const  float* alphaFuncValue, const bool* simpleLighting, const  bool* noLighting, const  bool* zPrepass,const shaderStage_t* stageInfoForMultipass) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -606,6 +625,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 	}
 	if (isLightmap) {
 		fbo.fishEyeData.isLightmap = *isLightmap;
+		fbo.fishEyeData.stageLightmapBitmask = 0;
 	}
 	if (isWorldBrush) {
 		fbo.fishEyeData.isWorldBrush = *isWorldBrush;
@@ -633,6 +653,19 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 		}
 		else {
 			fbo.fishEyeData.renderFlags &= ~2;
+		}
+	}
+	if (stageInfoForMultipass) {
+		fbo.fishEyeData.stageImageBitmask = 0;
+		fbo.fishEyeData.stageLightmapBitmask = 0;
+		fbo.fishEyeData.multiTexMode = stageInfoForMultipass->multitextureEnv;
+		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+			if (stageInfoForMultipass->bundle[i].image[0]) {
+				fbo.fishEyeData.stageImageBitmask |= (1 << i);
+				if (stageInfoForMultipass->bundle[i].isLightmap) {
+					fbo.fishEyeData.stageLightmapBitmask |= (1 << i);
+				}
+			}
 		}
 	}
 	if (zPrepass) {
@@ -1216,6 +1249,14 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->renderFlagsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "renderFlagsUniform");
 
 		locs->zPrepassUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "zPrepassUniform");
+
+		locs->stageImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
+		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
+		locs->multiTexModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
+
+		for (int j = 0; j < NUM_TEXTURE_BUNDLES; j++) {
+			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in%d",j));
+		}
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastUniform");
 		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightJitterUniform");
