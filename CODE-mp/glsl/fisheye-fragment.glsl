@@ -1238,8 +1238,26 @@ void main(void)
 	
 	}
 
+	
+	vec4 lightmapStyleAdd = vec4(0);
+
 	vec3 addValueForLightmap = addValue;
 	if(haveLightmap){// this is super lame xd. idk, cba to code something that actually makes sense :) at least it kinda works
+
+		// styles
+		if((stageLightmapBitmaskUniform & (1<<2))>0){
+			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
+		}
+		if((stageLightmapBitmaskUniform & (1<<3))>0){
+			lightmapStyleAdd += texture2D(text_in3, gl_TexCoord[3].st);				
+		}
+		if((stageLightmapBitmaskUniform & (1<<4))>0){
+			lightmapStyleAdd += texture2D(text_in4, gl_TexCoord[4].st);				
+		}
+		if((stageLightmapBitmaskUniform & (1<<5))>0){
+			lightmapStyleAdd += texture2D(text_in5, gl_TexCoord[5].st);				
+		}
+
 		addValue *= baseColorForLightingReal; // because if we have a lightmap, we 100% used 1.0 as the baseColorForLighting, so we revert that here.
 		baseColorForLighting.x = max(baseColorForLightingReal.x,addValueForLightmap.x);
 		baseColorForLighting.y = max(baseColorForLightingReal.y,addValueForLightmap.y);
@@ -1248,13 +1266,13 @@ void main(void)
 	}
 	
 	vec3 finalColor = gl_FragColor.xyz;
-	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap : addValue;
+	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
 	gl_FragColor.xyz -= boringShadowSubtractVal;
 
 	vec4 color2 = vec4(0);
 	if(multitex){
 		color2 = texture2D(text_in1, gl_TexCoord[1].st);
-		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
+		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
 		color2.xyz -= boringShadowSubtractVal;
 		switch(multiTexModeUniform){
 			case MYGL_ADD:
