@@ -53,6 +53,13 @@ in vec3 texUVTransform[2];
 uniform mat4x4 worldModelViewMatrixUniform;
 in mat4x4 worldModelViewMatrixReverseGeom;
 
+const mat4 lightdirtransform = mat4(
+	2.0f,0.0f,0.0f,0.0f,
+	0.0f,2.0f,0.0f,0.0f,
+	0.0f,0.0f,2.0f,0.0f,
+	-1.0f,-1.0f,-1.0f,1.0f
+);
+
 in vec3 normal;
 in vec3 worldNormal;
 
@@ -736,16 +743,18 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 #endif
 
 
-vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 worldLightNormal){
+vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat){
 	vec4 color;
 	if((stageLightmapBitmaskUniform & (1<<2))>0){
 		color = texture2D(sampler, lmtexcoord);		
 		
 		if(havedeluxe){
 			vec4 direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
-			direction -= 0.5f;
-			direction *= 2.0f;
-			float alignment = dot(worldLightNormal,direction.xyz);
+			//direction = lightdirtransform*direction;
+			//direction -= 0.5f;
+			//direction *= 2.0f;
+			float alignment = dot(lightNormal,(dirmat*direction).xyz);
+			//float alignment = dot(worldLightNormal,direction.xyz);
 			color *=alignment*alignment*alignment;
 		}
 	}
@@ -1030,8 +1039,11 @@ void main(void)
 	//vec3 lightNormal = normal;
 	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos);
 	
-	mat3 rotatematrev = mat3(worldModelViewMatrixReverseGeom);
-	vec3 worldlightnormal = (rotatematrev*lightNormal).xyz;
+	mat3 rotatemat = mat3(worldModelViewMatrixUniform);
+	//mat3 rotatematrev = mat3(worldModelViewMatrixReverseGeom);
+	//vec3 worldlightnormal = (rotatematrev*lightNormal).xyz;
+
+	mat4 deluxedirmat = mat4(rotatemat)*lightdirtransform; // takes the raw deluxe map value and turns it into the light direction in eye space
 	
 	vec3 worldPixel = (worldModelViewMatrixReverseGeom*eyeSpaceCoordsGeom).xyz;
 
@@ -1277,16 +1289,16 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, worldlightnormal);		
+			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, lightNormal,deluxedirmat);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, worldlightnormal);		
+			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, lightNormal,deluxedirmat);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, worldlightnormal);		
+			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, lightNormal,deluxedirmat);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0, worldlightnormal);			
+			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0,lightNormal, deluxedirmat);			
 		}/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
 			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
@@ -1318,9 +1330,10 @@ void main(void)
 		color2 = texture2D(text_in1, gl_TexCoord[1].st);
 		if((stageLightmapBitmaskUniform & 2) > 0 && (stageLightmapBitmaskUniform & (1<<6)) > 0){
 			vec4 direction = texture2D(text_in6, gl_TexCoord[1].st); // visualize n
-			direction -= 0.5f;
-			direction *= 2.0f;
-			float alignment = dot(worldlightnormal,direction.xyz);
+			//direction -= 0.5f;
+			//direction *= 2.0f;
+			//float alignment = dot(worldlightnormal,direction.xyz);
+			float alignment = dot(lightNormal,(deluxedirmat*direction).xyz);
 			color2 *=alignment*alignment*alignment;
 			//color2 = vec4(vec3(alignment*alignment*alignment),1.0f);
 		}
