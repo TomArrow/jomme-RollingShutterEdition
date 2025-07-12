@@ -745,7 +745,8 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 
 vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
 	vec4 color;
-	if((stageLightmapBitmaskUniform & (1<<2))>0){
+	//if((stageLightmapBitmaskUniform & (1<<2))>0)
+	{
 		color = texture2D(sampler, lmtexcoord);		
 		
 		if(havedeluxe){
@@ -1351,11 +1352,6 @@ void main(void)
 		} else{
 			color2 = texture2D(text_in1, gl_TexCoord[1].st);
 		}
-		//if((stageLightmapBitmaskUniform & 2)> 0 && (stageLightmapBitmaskUniform & (1<<6)) > 0){
-		//	vec4 direction = texture2D(text_in6, gl_TexCoord[1].st); // visualize n
-		//	float alignment = dot(lightNormal,(deluxedirmat*direction).xyz);
-		//	color2 *=alignment*alignment*alignment;
-		//}
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
@@ -1376,7 +1372,7 @@ void main(void)
 	//	gl_FragColor.z = 1.0f;
 	//}
 	//if((stageLightmapBitmaskUniform & (1<<2))>0 && multitex){
-		//gl_FragColor.z = 1.0f;
+	//	gl_FragColor.z = 1.0f;
 	//	gl_FragColor.xyz = addValueForLightmap.xyz;
 	//}
 	//if(dot(lightmapStyleAdd,lightmapStyleAdd) > 0.01f){
