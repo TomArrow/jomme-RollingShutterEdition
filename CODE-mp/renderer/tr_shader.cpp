@@ -3570,6 +3570,15 @@ void R_FindLightmap(int* lightmapIndex) {
 		return;
 	}
 
+	if (image->bpc == BPC_32FLOAT) {
+		tr.hdrLightmap = qtrue;
+	}
+	else {
+		tr.hdrLightmap = qfalse;
+	}
+
+	if(image->iLastLevelUsedOn)
+
 	// add it to the lightmap list
 	if (*lightmapIndex >= tr.numLightmaps) {
 		tr.numLightmaps = *lightmapIndex + 1;

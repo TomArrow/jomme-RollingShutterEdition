@@ -150,6 +150,13 @@ typedef struct {
 	int	minimize, maximize;
 } textureMode_t;
 
+enum TextureBitsPerChannel {
+	BPC_8BIT,
+	BPC_16BIT,
+	BPC_32BIT,
+	BPC_32FLOAT
+};
+
 const textureMode_t* GetTextureMode(const char* name);
 
 typedef struct image_s {
@@ -170,6 +177,8 @@ typedef struct image_s {
 	int			iLastLevelUsedOn;
 
 	float		averageBrightnessLevel;
+
+	TextureBitsPerChannel bpc;
 
 } image_t;
 
@@ -1150,6 +1159,7 @@ typedef struct {
 
 	int						numLightmaps;
 	image_t					*lightmaps[MAX_LIGHTMAPS];
+	qboolean				hdrLightmap;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
@@ -1590,12 +1600,6 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 
 model_t		*R_AllocModel( void );
 
-enum TextureBitsPerChannel {
-	BPC_8BIT,
-	BPC_16BIT,
-	BPC_32BIT,
-	BPC_32FLOAT
-};
 
 typedef struct {
 	byte* ptr;

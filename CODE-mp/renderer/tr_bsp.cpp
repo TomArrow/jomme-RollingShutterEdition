@@ -181,6 +181,8 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	// we are about to upload textures
 	R_SyncRenderThread();
 
+	tr.hdrLightmap = qfalse;
+
 	// create all the lightmaps
 	tr.numLightmaps = len / (LIGHTMAP_SIZE * LIGHTMAP_SIZE * 3);
 

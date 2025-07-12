@@ -1253,6 +1253,8 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 	image->height = height;
 	image->wrapClampMode = glWrapClampMode;
 
+	image->bpc = picWrap->bpc;
+
 	// lightmaps are always allocated on TMU 1
 	if ( qglActiveTextureARB && isLightmap ) {
 		image->TMU = 1;

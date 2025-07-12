@@ -279,9 +279,16 @@ inline void ComputeFinalVertexColor(const byte *colors, float *result, float *re
 		{
 			float	*styleColor = styleColors[tess.shader->styles[k]];
 
-			r += (float)(R_sRGBToLinear(*colors++)) * (*styleColor++);
-			g += (float)(R_sRGBToLinear(*colors++)) * (*styleColor++);
-			b += (float)(R_sRGBToLinear(*colors++)) * (*styleColor);
+			if (!tr.hdrLightmap) {
+				r += (float)(R_sRGBToLinear(*colors++)) * (*styleColor++);
+				g += (float)(R_sRGBToLinear(*colors++)) * (*styleColor++);
+				b += (float)(R_sRGBToLinear(*colors++)) * (*styleColor);
+			}
+			else {
+				r += (float)((*colors++)) * (*styleColor++);
+				g += (float)((*colors++)) * (*styleColor++);
+				b += (float)((*colors++)) * (*styleColor);
+			}
 			colors++;
 		}
 		else
