@@ -743,7 +743,7 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 #endif
 
 
-vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat){
+vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
 	vec4 color;
 	if((stageLightmapBitmaskUniform & (1<<2))>0){
 		color = texture2D(sampler, lmtexcoord);		
@@ -753,9 +753,27 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			//direction = lightdirtransform*direction;
 			//direction -= 0.5f;
 			//direction *= 2.0f;
-			float alignment = dot(lightNormal,(dirmat*direction).xyz);
+			direction = dirmat*direction;
+			float alignment = dot(lightNormal,(direction).xyz);
 			//float alignment = dot(worldLightNormal,direction.xyz);
-			color *=alignment*alignment*alignment;
+
+
+			//do some specular
+			vec3 lightVector1Norm = -normalize(direction.xyz);
+			vec3 mirroredVec = lightVector1Norm - 2.0*lightNormal*dot(lightVector1Norm,lightNormal);
+			vec3 mirroredVecNorm = normalize(mirroredVec);
+
+			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
+			
+			// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
+			specIntensity *= specIntensitySchlickMult;
+			
+			float totalDist = viewerDistance; // + dist // dont know distance to light
+			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
+			float specIntensityTotal = 1000.0f*specIntensity*dLightSpecIntensityUniform/totalDist;
+
+			color *=alignment*alignment*alignment+specIntensityTotal;
+
 		}
 	}
 	return color;
@@ -1105,15 +1123,16 @@ void main(void)
 	bvec3 collision;
 #endif
 	float dLightFastSkipThresholdUniformSquared = dLightFastSkipThresholdUniform*dLightFastSkipThresholdUniform;
+	
+	vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
+	vec3 viewerVectorNorm = normalize(viewerVector);
+	float viewerDistance = length(viewerVector);
+	float cosviewercomponent = 1.0 - max(0.0,dot(lightNormal,viewerVectorNorm));
+	float specIntensitySchlickMult = dLightSpecBaseReflectivityUniform+(1.0-dLightSpecBaseReflectivityUniform)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
+
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		
-		vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
-		vec3 viewerVectorNorm = normalize(viewerVector);
-		float cosviewercomponent = 1.0 - max(0.0,dot(lightNormal,viewerVectorNorm));
-		float specIntensitySchlickMult = dLightSpecBaseReflectivityUniform+(1.0-dLightSpecBaseReflectivityUniform)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
-		float viewerDistance = length(viewerVector);
-
 		for(int i=0;i<dLightsCountUniform;i++){
 		
 			vec3 dlightRawOrigin = dLightsUniform[i].origin;
@@ -1289,16 +1308,16 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, lightNormal,deluxedirmat);		
+			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, lightNormal,deluxedirmat);		
+			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, lightNormal,deluxedirmat);		
+			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0,lightNormal, deluxedirmat);			
+			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);			
 		}/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
 			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
