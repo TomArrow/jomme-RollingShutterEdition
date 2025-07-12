@@ -1258,6 +1258,9 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 					stage->bundle[0].image[0] = tr.whiteImage;
 				} else {
 					stage->bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[0]];
+					if (tr.deluxeMapping) {
+						stage->bundle[0].deluxeMapImage[0] = tr.lightmaps[shader.lightmapIndex[0]+1];
+					}
 				}
 				continue;
 			}
@@ -3156,6 +3159,9 @@ static shader_t *FinishShader( void ) {
 					}
 					stages[lmStage].bundle[i + 2] = stages[lmStage].bundle[0];
 					stages[lmStage].bundle[i + 2].image[0] = tr.lightmaps[shader.lightmapIndex[i + 1]];
+					if (tr.deluxeMapping) {
+						stages[lmStage].bundle[i + 2].deluxeMapImage[0] = tr.lightmaps[shader.lightmapIndex[i + 1] + 1];
+					}
 					stages[lmStage].bundle[i + 2].tcGen = (texCoordGen_t)(TCGEN_LIGHTMAP + i + 1);
 					stages[lmStage].bundle[i + 2].isLightmap = qtrue;
 
@@ -3768,6 +3774,9 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	} else {
 		// two pass lightmap
 		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[0]];
+		if (tr.deluxeMapping) {
+			stages[0].bundle[0].deluxeMapImage[0] = tr.lightmaps[shader.lightmapIndex[0] + 1];
+		}
 		stages[0].bundle[0].isLightmap = qtrue;
 		stages[0].active = qtrue;
 		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
@@ -3866,6 +3875,9 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte 
 	} else {
 		// two pass lightmap
 		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[0]];
+		if (tr.deluxeMapping) {
+			stages[0].bundle[0].deluxeMapImage[0] = tr.lightmaps[shader.lightmapIndex[0]+1];
+		}
 		stages[0].bundle[0].isLightmap = qtrue;
 		stages[0].active = qtrue;
 		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation

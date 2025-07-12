@@ -87,6 +87,8 @@ uniform int renderFlagsUniform;
 
 uniform int zPrepassUniform;
 
+uniform int deluxeMappingUniform;
+
 
 // multipass stuff
 #define MYGL_MODULATE                       0x2100

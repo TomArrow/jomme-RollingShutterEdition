@@ -353,6 +353,30 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 
 }
 
+static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* input) {
+
+	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
+		if (pStage->bundle[i].image[0]) {
+			GL_SelectTexture(i);
+			qglEnable(GL_TEXTURE_2D);
+			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+			R_BindAnimatedImage(&pStage->bundle[i]);
+		}
+	}
+}
+static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* input) {
+
+
+	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
+		if (pStage->bundle[i].image[0]) {
+			GL_SelectTexture(i);
+			qglDisable(GL_TEXTURE_2D);
+			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+	}
+}
+
 /*
 ===================
 DrawMultitextured
@@ -400,46 +424,11 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 
 	R_BindAnimatedImage( &pStage->bundle[1] );
 
-	static int howfar = 5;
-	int glErr = 0;
-	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
-		if (pStage->bundle[i].image[0]) {
-			if (howfar > 0) {
-				GL_SelectTexture(i);
-				//GL_SelectTexture(1);
-			}
-			if (howfar > 1)
-				qglEnable(GL_TEXTURE_2D);
-			if (howfar > 2)
-				qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			if (howfar > 3)
-				qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
-			if (howfar > 4)
-				R_BindAnimatedImage(&pStage->bundle[i]);
-
-			glErr = qglGetError();
-
-		}
-	}
-
+	R_BindStyleLightmapsEtc(pStage,input);
 
 	R_DrawElements( input->numIndexes, input->indexes );
 
-	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
-		if (pStage->bundle[i].image[0]) {
-			if (howfar > 0) {
-				GL_SelectTexture(i);
-				//GL_SelectTexture(1);
-			}
-			if (howfar > 1)
-				qglDisable(GL_TEXTURE_2D);
-			if (howfar > 2)
-				qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-			glErr = qglGetError();
-
-		}
-	}
+	R_UnbindStyleLightmapsEtc(pStage, input);
 
 	//
 	// disable texturing on TEXTURE1, then select TEXTURE0
@@ -2129,6 +2118,9 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
 	qglTexCoordPointer( 2, GL_FLOAT, 16, tess.texCoords[0][1] );
 
+
+	R_BindStyleLightmapsEtc(tess.xstages[0], &tess);
+
 	//
 	// lock arrays
 	//
@@ -2138,6 +2130,8 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	}
 
 	R_DrawElements( input->numIndexes, input->indexes );
+
+	R_UnbindStyleLightmapsEtc(tess.xstages[0], &tess);
 
 	//
 	// disable texturing on TEXTURE1, then select TEXTURE0

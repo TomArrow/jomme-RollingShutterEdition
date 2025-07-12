@@ -376,6 +376,7 @@ typedef struct surfaceSprite_s
 
 typedef struct {
 	image_t			*image[MAX_IMAGE_ANIMATIONS];
+	image_t			*deluxeMapImage[MAX_IMAGE_ANIMATIONS];
 	int				numImageAnimations;
 	float			imageAnimationSpeed;
 
@@ -1160,6 +1161,7 @@ typedef struct {
 	int						numLightmaps;
 	image_t					*lightmaps[MAX_LIGHTMAPS];
 	qboolean				hdrLightmap;
+	qboolean				deluxeMapping;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world

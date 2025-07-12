@@ -108,6 +108,8 @@ typedef struct uniformLocations_t {
 
 	GLint zPrepassUniform;
 
+	GLint deluxeMappingUniform;
+
 	GLint text_in[NUM_TEXTURE_BUNDLES];
 	GLint stageImageBitmaskUniform;
 	GLint stageLightmapBitmaskUniform;
@@ -335,6 +337,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocationsTess->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
+		qglUniform1i(uniformLocationsTess->deluxeMappingUniform, tr.deluxeMapping);
+
 		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
 		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
@@ -410,6 +414,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->renderFlagsUniform, fbo.fishEyeData.renderFlags);
 
 		qglUniform1i(uniformLocations->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
+
+		qglUniform1i(uniformLocations->deluxeMappingUniform, tr.deluxeMapping);
 
 		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
@@ -1249,6 +1255,8 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->renderFlagsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "renderFlagsUniform");
 
 		locs->zPrepassUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "zPrepassUniform");
+
+		locs->deluxeMappingUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "deluxeMappingUniform");
 
 		locs->stageImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
 		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");

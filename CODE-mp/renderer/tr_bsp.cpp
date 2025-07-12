@@ -160,8 +160,9 @@ R_LoadLightmaps
 
 ===============
 */
+extern void R_FindLightmap(int* lightmapIndex);
 #define	LIGHTMAP_SIZE	128
-static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
+static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	byte		*buf, *buf_p;
 	int			len;
 	MAC_STATIC byte		image[LIGHTMAP_SIZE*LIGHTMAP_SIZE*4];
@@ -169,8 +170,10 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	picWrap.bpc = BPC_8BIT;
 	picWrap.ptr = (byte*)image;
 	int			i, j;
+	int			maxLightmapNum;
 	float maxIntensity = 0;
 	double sumIntensity = 0;
+	dsurface_t* surf;
 
     len = l->filelen;
 	if ( !len ) {
@@ -185,6 +188,48 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 
 	// create all the lightmaps
 	tr.numLightmaps = len / (LIGHTMAP_SIZE * LIGHTMAP_SIZE * 3);
+
+	// check if we have deluxemaps
+	// detection based on ioq3
+	if (tr.numLightmaps == 1) {
+		// we have internal lightmaps, but only 1. so we defo dont have deluxemaps
+		tr.deluxeMapping = qfalse;
+	}
+	else {
+		tr.deluxeMapping = (qboolean)(qglActiveTextureARB && r_fboGLSL->integer && ENABLEGLSL);
+		if (tr.deluxeMapping) {
+			maxLightmapNum = 0;
+			for (i = 0, surf = (dsurface_t*)(fileBase + surfs->fileofs);
+				i < surfs->filelen / sizeof(dsurface_t); i++, surf++) {
+				for (j = 0; j < MAXLIGHTMAPS; j++) {
+					int lightmapNum = LittleLong(surf->lightmapNum[j]);
+
+					if (lightmapNum > maxLightmapNum) {
+						maxLightmapNum = lightmapNum;
+					}
+					if (lightmapNum >= 0 && (lightmapNum & 1) != 0) { // any uneven number referenced means we dont have deluxemaps
+						tr.deluxeMapping = qfalse;
+						break;
+					}
+				}
+			}
+		}
+		if (tr.deluxeMapping ) {
+			if (tr.numLightmaps > 0 && maxLightmapNum == tr.numLightmaps - 1) {
+				// e.g. we found a reference to lightmapnum 5, but theres only 6 total, so there cant be an index 6 for the deluxemap
+				tr.deluxeMapping = qfalse;
+			}
+			else if (tr.numLightmaps <= 0 && maxLightmapNum == 0) {
+				// we are using external lightmaps, but we only ever referenced index 0.
+				// so lets check if we can find an index 1.
+				int lightmapToFind = 1;
+				R_FindLightmap(&lightmapToFind);
+				if (tr.lightmaps[1] == NULL) {
+					tr.deluxeMapping = qfalse;
+				}
+			}
+		}
+	}
 
 	// if we are in r_vertexLight mode, we don't need the lightmaps at all
 	if ( r_vertexLight->integer ) {
@@ -2086,7 +2131,7 @@ static void RE_LoadWorldMap_Actual( const char *name ) {
 
 	// load into heap
 	R_LoadShaders( &header->lumps[LUMP_SHADERS] );
-	R_LoadLightmaps( &header->lumps[LUMP_LIGHTMAPS], name );
+	R_LoadLightmaps( &header->lumps[LUMP_LIGHTMAPS], &header->lumps[LUMP_SURFACES], name );
 	R_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	R_LoadFogs( &header->lumps[LUMP_FOGS], &header->lumps[LUMP_BRUSHES], &header->lumps[LUMP_BRUSHSIDES] );
 	R_LoadSurfaces( &header->lumps[LUMP_SURFACES], &header->lumps[LUMP_DRAWVERTS], &header->lumps[LUMP_DRAWINDEXES] );
