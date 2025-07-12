@@ -35,6 +35,12 @@ uniform sampler2D text_in2;
 uniform sampler2D text_in3;
 uniform sampler2D text_in4;
 uniform sampler2D text_in5;
+uniform sampler2D text_in6;
+uniform sampler2D text_in7;
+uniform sampler2D text_in8;
+uniform sampler2D text_in9;
+uniform sampler2D text_in10;
+uniform sampler2D text_in11;
 
 in vec3 debugColor;
 varying vec4 vertColor;
@@ -1276,6 +1282,15 @@ void main(void)
 	vec4 color2 = vec4(0);
 	if(multitex){
 		color2 = texture2D(text_in1, gl_TexCoord[1].st);
+		if((stageLightmapBitmaskUniform & 2) > 0 && (stageLightmapBitmaskUniform & (1<<6)) > 0){
+			vec4 direction = texture2D(text_in6, gl_TexCoord[1].st); // visualize n
+			direction -= 0.5f;
+			direction *= 2.0f;
+			mat3 rotatemat = mat3(worldModelViewMatrixReverseGeom);
+			vec3 translatednormal = (rotatemat*lightNormal).xyz;
+			//color2 *= dot(translatednormal.xyz,direction.xyz);
+			color2 = vec4(translatednormal,1.0);
+		}
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
 		switch(multiTexModeUniform){

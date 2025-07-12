@@ -66,6 +66,8 @@
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
+#define NUM_TEXTURE_SAMPLERS 12
+
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
 	GLint pixelJitterUniform;
@@ -110,7 +112,7 @@ typedef struct uniformLocations_t {
 
 	GLint deluxeMappingUniform;
 
-	GLint text_in[NUM_TEXTURE_BUNDLES];
+	GLint text_in[NUM_TEXTURE_SAMPLERS];
 	GLint stageImageBitmaskUniform;
 	GLint stageLightmapBitmaskUniform;
 	GLint multiTexModeUniform;
@@ -364,7 +366,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 				qglUniform1f(uniformLocationsTess->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
 			}*/
 		}
-		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocationsTess->text_in[i], i);
 		}
 
@@ -444,7 +446,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 			}*/
 		}
 
-		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocations->text_in[i], i);
 		}
 	}
@@ -670,6 +672,11 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 				fbo.fishEyeData.stageImageBitmask |= (1 << i);
 				if (stageInfoForMultipass->bundle[i].isLightmap) {
 					fbo.fishEyeData.stageLightmapBitmask |= (1 << i);
+				}
+				if (stageInfoForMultipass->bundle[i].deluxeMapImage[0]) {
+					int actualIndex = i < 2 ? 6 : i + 5;
+					fbo.fishEyeData.stageImageBitmask |= (1 << actualIndex);
+					fbo.fishEyeData.stageLightmapBitmask |= (1 << actualIndex);
 				}
 			}
 		}
@@ -1262,7 +1269,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
 		locs->multiTexModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
 
-		for (int j = 0; j < NUM_TEXTURE_BUNDLES; j++) {
+		for (int j = 0; j < NUM_TEXTURE_SAMPLERS; j++) {
 			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in%d",j));
 		}
 

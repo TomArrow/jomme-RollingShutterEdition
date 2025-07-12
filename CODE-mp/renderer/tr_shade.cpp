@@ -209,7 +209,7 @@ R_BindAnimatedImage
 =================
 */
 // de-static'd because tr_quicksprite wants it
-void R_BindAnimatedImage( textureBundle_t *bundle ) {
+void R_BindAnimatedImage( textureBundle_t *bundle, qboolean deluxeMap) {
 	uint64_t index;
 
 	if ( bundle->isVideoMap ) {
@@ -224,8 +224,14 @@ void R_BindAnimatedImage( textureBundle_t *bundle ) {
 	}
 
 	if ( bundle->numImageAnimations <= 1 ) {
-		if ( bundle->image[0] )
-			GL_Bind( bundle->image[0] );
+		if (deluxeMap) {
+			if (bundle->deluxeMapImage[0])
+				GL_Bind(bundle->deluxeMapImage[0]);
+		}
+		else {
+			if (bundle->image[0])
+				GL_Bind(bundle->image[0]);
+		}
 		return;
 	}
 
@@ -247,8 +253,12 @@ void R_BindAnimatedImage( textureBundle_t *bundle ) {
 		// loop
 		index %= bundle->numImageAnimations;
 	}
-
-	GL_Bind( bundle->image[ (int)index ] );
+	if (deluxeMap) {
+		GL_Bind(bundle->deluxeMapImage[(int)index]);
+	}
+	else {
+		GL_Bind(bundle->image[(int)index]);
+	}
 }
 
 /*
@@ -354,7 +364,17 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 }
 
 static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* input) {
+	for (int i = 0; i < 2; i++) {
 
+		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
+			GL_SelectTexture(6);
+			qglEnable(GL_TEXTURE_2D);
+			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+			R_BindAnimatedImage(&pStage->bundle[i], qtrue);
+			break;
+		}
+	}
 	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
 		if (pStage->bundle[i].image[0]) {
 			GL_SelectTexture(i);
@@ -362,17 +382,38 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
 			R_BindAnimatedImage(&pStage->bundle[i]);
+
+			if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
+				GL_SelectTexture(i+5);
+				qglEnable(GL_TEXTURE_2D);
+				qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+				R_BindAnimatedImage(&pStage->bundle[i],qtrue);
+			}
 		}
 	}
 }
 static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* input) {
 
+	for (int i = 0; i < 2; i++) {
 
+		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
+			GL_SelectTexture(6);
+			qglDisable(GL_TEXTURE_2D);
+			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			break;
+		}
+	}
 	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
 		if (pStage->bundle[i].image[0]) {
 			GL_SelectTexture(i);
 			qglDisable(GL_TEXTURE_2D);
 			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
+				GL_SelectTexture(i + 5);
+				qglDisable(GL_TEXTURE_2D);
+				qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
 		}
 	}
 }

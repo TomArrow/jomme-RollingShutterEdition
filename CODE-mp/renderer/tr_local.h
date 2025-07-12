@@ -2293,3 +2293,7 @@ qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
 qboolean R_FrameBuffer_StartHDRRead();
 qboolean R_FrameBuffer_EndHDRRead();
+
+
+void R_BindAnimatedImage(textureBundle_t* bundle, qboolean deluxeMap = qfalse);
+

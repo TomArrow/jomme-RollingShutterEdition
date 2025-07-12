@@ -3636,7 +3636,12 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 
 	// ydnar: validate lightmap index
 	for (i = 0; i < MAXLIGHTMAPS; i++) {
+		int theindex = lightmapIndex[i];
 		R_FindLightmap((int*)lightmapIndex+i);
+		if (tr.deluxeMapping) {
+			theindex++;
+			R_FindLightmap(&theindex); // find the deluxe map too
+		}
 	}
 
 	// use (fullbright) vertex lighting if the bsp file doesn't have

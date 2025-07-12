@@ -176,9 +176,6 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	dsurface_t* surf;
 
     len = l->filelen;
-	if ( !len ) {
-		return;
-	}
 	buf = fileBase + l->fileofs;
 
 	// we are about to upload textures
@@ -229,6 +226,10 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 				}
 			}
 		}
+	}
+
+	if (!len) {
+		return;
 	}
 
 	// if we are in r_vertexLight mode, we don't need the lightmaps at all

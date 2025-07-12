@@ -6,7 +6,6 @@
 
 #include "tr_quicksprite.h"
 
-void R_BindAnimatedImage( textureBundle_t *bundle );
 
 //extern color4f_t	tmpScaledColors[SHADER_MAX_VERTEXES];
 
