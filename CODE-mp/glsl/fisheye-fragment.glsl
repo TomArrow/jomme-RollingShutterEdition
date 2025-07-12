@@ -1288,8 +1288,9 @@ void main(void)
 			direction *= 2.0f;
 			mat3 rotatemat = mat3(worldModelViewMatrixReverseGeom);
 			vec3 translatednormal = (rotatemat*lightNormal).xyz;
-			//color2 *= dot(translatednormal.xyz,direction.xyz);
-			color2 = vec4(translatednormal,1.0);
+			float alignment = dot(translatednormal,direction.xyz);
+			color2 *=alignment*alignment*alignment;
+			//color2 = vec4(vec3(alignment*alignment*alignment),1.0f);
 		}
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
