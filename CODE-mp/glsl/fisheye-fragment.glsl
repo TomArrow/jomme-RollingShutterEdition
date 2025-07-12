@@ -1054,8 +1054,9 @@ void main(void)
 			}
 		}
 	}
-
-	vec3 boringShadowSubtractVal = baseColorForLightingReal * (1.0f - boringShadowingIntensity);
+	
+	float boringShadowSubtractValBase = (1.0f - boringShadowingIntensity);
+	vec3 boringShadowSubtractVal = baseColorForLightingReal * boringShadowSubtractValBase;
 	
 	vec3 addValue = vec3(0.0);
 
@@ -1242,6 +1243,7 @@ void main(void)
 	vec4 lightmapStyleAdd = vec4(0);
 
 	vec3 addValueForLightmap = addValue;
+
 	if(haveLightmap){// this is super lame xd. idk, cba to code something that actually makes sense :) at least it kinda works
 
 		// styles
@@ -1272,8 +1274,8 @@ void main(void)
 	vec4 color2 = vec4(0);
 	if(multitex){
 		color2 = texture2D(text_in1, gl_TexCoord[1].st);
-		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
-		color2.xyz -= boringShadowSubtractVal;
+		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
+		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
 		switch(multiTexModeUniform){
 			case MYGL_ADD:
 				gl_FragColor += color2;
