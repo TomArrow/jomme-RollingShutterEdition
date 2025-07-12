@@ -734,6 +734,24 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 	return res;
 }
 #endif
+
+
+vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 worldLightNormal){
+	vec4 color;
+	if((stageLightmapBitmaskUniform & (1<<2))>0){
+		color = texture2D(sampler, lmtexcoord);		
+		
+		if(havedeluxe){
+			vec4 direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
+			direction -= 0.5f;
+			direction *= 2.0f;
+			float alignment = dot(worldLightNormal,direction.xyz);
+			color *=alignment*alignment*alignment;
+		}
+	}
+	return color;
+}
+
 vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition){
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
@@ -1012,6 +1030,9 @@ void main(void)
 	//vec3 lightNormal = normal;
 	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos);
 	
+	mat3 rotatematrev = mat3(worldModelViewMatrixReverseGeom);
+	vec3 worldlightnormal = (rotatematrev*lightNormal).xyz;
+	
 	vec3 worldPixel = (worldModelViewMatrixReverseGeom*eyeSpaceCoordsGeom).xyz;
 
 	float boringShadowingIntensity = 1.0f;
@@ -1256,6 +1277,18 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
+			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, worldlightnormal);		
+		}
+		if((stageLightmapBitmaskUniform & (1<<3))>0){
+			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, worldlightnormal);		
+		}
+		if((stageLightmapBitmaskUniform & (1<<4))>0){
+			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, worldlightnormal);		
+		}
+		if((stageLightmapBitmaskUniform & (1<<5))>0){
+			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0, worldlightnormal);			
+		}/*
+		if((stageLightmapBitmaskUniform & (1<<2))>0){
 			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
@@ -1266,7 +1299,7 @@ void main(void)
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
 			lightmapStyleAdd += texture2D(text_in5, gl_TexCoord[5].st);				
-		}
+		}*/
 
 		addValue *= baseColorForLightingReal; // because if we have a lightmap, we 100% used 1.0 as the baseColorForLighting, so we revert that here.
 		baseColorForLighting.x = max(baseColorForLightingReal.x,addValueForLightmap.x);
@@ -1276,8 +1309,9 @@ void main(void)
 	}
 	
 	vec3 finalColor = gl_FragColor.xyz;
-	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
+	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 	gl_FragColor.xyz -= boringShadowSubtractVal;
+	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
 
 	vec4 color2 = vec4(0);
 	if(multitex){
@@ -1286,12 +1320,11 @@ void main(void)
 			vec4 direction = texture2D(text_in6, gl_TexCoord[1].st); // visualize n
 			direction -= 0.5f;
 			direction *= 2.0f;
-			mat3 rotatemat = mat3(worldModelViewMatrixReverseGeom);
-			vec3 translatednormal = (rotatemat*lightNormal).xyz;
-			float alignment = dot(translatednormal,direction.xyz);
+			float alignment = dot(worldlightnormal,direction.xyz);
 			color2 *=alignment*alignment*alignment;
 			//color2 = vec4(vec3(alignment*alignment*alignment),1.0f);
 		}
+		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
 		switch(multiTexModeUniform){
@@ -1309,6 +1342,14 @@ void main(void)
 	//}
 	//if( (stageLightmapBitmaskUniform & 2) > 0 && multitex){
 	//	gl_FragColor.z = 1.0f;
+	//}
+	//if((stageLightmapBitmaskUniform & (1<<2))>0 && multitex){
+		//gl_FragColor.z = 1.0f;
+	//	gl_FragColor.xyz = addValueForLightmap.xyz;
+	//}
+	//if(dot(lightmapStyleAdd,lightmapStyleAdd) > 0.01f){
+	//	//gl_FragColor.z = 1.0f;
+	//	gl_FragColor.xyz = addValueForLightmap.xyz;
 	//}
 	
 
