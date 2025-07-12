@@ -1346,16 +1346,16 @@ void main(void)
 
 	vec4 color2 = vec4(0);
 	if(multitex){
-		color2 = texture2D(text_in1, gl_TexCoord[1].st);
-		if((stageLightmapBitmaskUniform & 2) > 0 && (stageLightmapBitmaskUniform & (1<<6)) > 0){
-			vec4 direction = texture2D(text_in6, gl_TexCoord[1].st); // visualize n
-			//direction -= 0.5f;
-			//direction *= 2.0f;
-			//float alignment = dot(worldlightnormal,direction.xyz);
-			float alignment = dot(lightNormal,(deluxedirmat*direction).xyz);
-			color2 *=alignment*alignment*alignment;
-			//color2 = vec4(vec3(alignment*alignment*alignment),1.0f);
+		if((stageLightmapBitmaskUniform & 2) >0){
+			color2 = getLightmapIntensity(text_in1,text_in6,gl_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<6)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
+		} else{
+			color2 = texture2D(text_in1, gl_TexCoord[1].st);
 		}
+		//if((stageLightmapBitmaskUniform & 2)> 0 && (stageLightmapBitmaskUniform & (1<<6)) > 0){
+		//	vec4 direction = texture2D(text_in6, gl_TexCoord[1].st); // visualize n
+		//	float alignment = dot(lightNormal,(deluxedirmat*direction).xyz);
+		//	color2 *=alignment*alignment*alignment;
+		//}
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
