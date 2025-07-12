@@ -770,7 +770,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			
 			float totalDist = viewerDistance; // + dist // dont know distance to light
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
-			float specIntensityTotal = 1000.0f*specIntensity*dLightSpecIntensityUniform/totalDist;
+			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/totalDist;
 
 			color *=alignment*alignment*alignment+specIntensityTotal;
 
