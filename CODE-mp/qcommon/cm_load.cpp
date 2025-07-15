@@ -471,7 +471,7 @@ CMod_LoadPatches
 */
 #define	MAX_PATCH_VERTS		1024
 void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
-	drawVert_t	*dv, *dv_p;
+	mapVert_t	*dv, *dv_p;
 	dsurface_t	*in;
 	int			count;
 	int			i, j;
@@ -487,7 +487,7 @@ void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
 	cm.numSurfaces = count = surfs->filelen / sizeof(*in);
 	cm.surfaces = (cPatch_t ** )Hunk_Alloc( cm.numSurfaces * sizeof( cm.surfaces[0] ), h_high );
 
-	dv = (drawVert_t *)(cmod_base + verts->fileofs);
+	dv = (mapVert_t *)(cmod_base + verts->fileofs);
 	if (verts->filelen % sizeof(*dv))
 		Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
 

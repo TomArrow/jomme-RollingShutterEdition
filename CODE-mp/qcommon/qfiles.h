@@ -448,8 +448,8 @@ typedef struct {
 	float		st[2];
 	float		lightmap[MAXLIGHTMAPS][2];
 	vec3_t		normal;
-	byte		color[MAXLIGHTMAPS][4];
-	//float		color[MAXLIGHTMAPS][4];
+	//byte		color[MAXLIGHTMAPS][4];
+	vec4_t		color[MAXLIGHTMAPS];
 } drawVert_t;
 
 typedef struct

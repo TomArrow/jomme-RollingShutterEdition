@@ -42,10 +42,10 @@ static void LerpDrawVert( drawVert_t *a, drawVert_t *b, drawVert_t *out )
 		out->lightmap[k][0] = 0.5 * (a->lightmap[k][0] + b->lightmap[k][0]);
 		out->lightmap[k][1] = 0.5 * (a->lightmap[k][1] + b->lightmap[k][1]);
 
-		out->color[k][0] = (a->color[k][0] + b->color[k][0]) >> 1;
-		out->color[k][1] = (a->color[k][1] + b->color[k][1]) >> 1;
-		out->color[k][2] = (a->color[k][2] + b->color[k][2]) >> 1;
-		out->color[k][3] = (a->color[k][3] + b->color[k][3]) >> 1;
+		out->color[k][0] = (a->color[k][0] + b->color[k][0]) * 0.5f;
+		out->color[k][1] = (a->color[k][1] + b->color[k][1]) * 0.5f;
+		out->color[k][2] = (a->color[k][2] + b->color[k][2]) * 0.5f;
+		out->color[k][3] = (a->color[k][3] + b->color[k][3]) * 0.5f;
 	}
 }
 

@@ -253,7 +253,7 @@ void RB_SurfacePolychain( srfPoly_t *p ) {
 	tess.numVertexes = numv;
 }
 
-inline void ComputeFinalVertexColor(const byte *colors, float *result, float *resultRaw)
+inline void ComputeFinalVertexColor(const float* colors, float *result, float *resultRaw)
 {
 	int			k;
 	//float		result[4];
@@ -390,7 +390,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 		texCoords += NUM_TEX_COORDS*2;
 
 		//*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
-		ComputeFinalVertexColor((byte*)dv->color,color,colorRaw);
+		ComputeFinalVertexColor((float*)dv->color,color,colorRaw);
 		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, colorRawIndex);
 		color += 4;
 		colorRaw += 4;
@@ -1370,7 +1370,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 			}
 		}
 		//*(unsigned *) &tess.vertexColors[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
-		ComputeFinalVertexColor((byte *)&v->color, (float*) &tess.vertexColors[ndx], (float*) &tess.vertexColorsRaw[ndx]);
+		ComputeFinalVertexColor((float*)v->color, (float*) &tess.vertexColors[ndx], (float*) &tess.vertexColorsRaw[ndx]);
 		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, ndx);
 		tess.vertexDlightBits[ndx] = dlightBits;
 	}
@@ -1534,7 +1534,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 				normal += 4;
 
 				//*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
-				ComputeFinalVertexColor((byte *)dv->color, color, colorRaw);
+				ComputeFinalVertexColor((float*)dv->color, color, colorRaw);
 				VERTEXCOLORRAWSET(tess.vertexColorsRawSet,colorRawIndex);
 				color += 4;
 				colorRaw += 4;

@@ -114,6 +114,47 @@ static	void R_ColorShiftLightingBytes( byte in[4], byte out[4] ) {
 	out[3] = in[3];
 }
 
+static	void R_ColorShiftLightingToFloat( byte in[4], float out[4] ) {
+	int		shift=0, r, g, b;
+	float	mult;
+
+	// should NOT do it if overbrightBits is 0
+	if (tr.overbrightBits)
+		shift = 1 - tr.overbrightBits;
+
+	if (!shift)
+	{
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = in[3];
+		return;
+	}
+
+	mult = (float)(1<<shift);
+
+	// shift the data based on overbright range
+	r = (float)in[0] * mult;
+	g = (float)in[1] * mult;
+	b = (float)in[2] * mult;
+	
+	//// normalize by color instead of saturating to white
+	//if ( ( r | g | b ) > 255 ) {
+	//	int		max;
+
+	//	max = r > g ? r : g;
+	//	max = max > b ? max : b;
+	//	r = r * 255 / max;
+	//	g = g * 255 / max;
+	//	b = b * 255 / max;
+	//}
+
+	out[0] = r;
+	out[1] = g;
+	out[2] = b;
+	out[3] = in[3];
+}
+
 /*
 ===============
 R_ColorShiftLightingBytes
@@ -516,7 +557,7 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 		}
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
-			R_ColorShiftLightingBytes( verts[i].color[k], points[i].color[k] );
+			R_ColorShiftLightingToFloat( verts[i].color[k], points[i].color[k] );
 		}
 	}
 
@@ -588,7 +629,7 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
-			R_ColorShiftLightingBytes( verts[i].color[k], tri->verts[i].color[k] );
+			R_ColorShiftLightingToFloat( verts[i].color[k], tri->verts[i].color[k] );
 		}
 	}
 
