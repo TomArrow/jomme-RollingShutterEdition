@@ -429,18 +429,18 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	verts += LittleLong( ds->firstVert );
 	for ( i = 0 ; i < numPoints ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
-			cv->points[i][j] = LittleFloat( verts[i].xyz[j] );
+			cv->points[i].xyz[j] = LittleFloat( verts[i].xyz[j] );
 		}
 		for ( j = 0 ; j < 2 ; j++ ) {
-			cv->points[i][3+j] = LittleFloat( verts[i].st[j] );
+			cv->points[i].st[j] = LittleFloat( verts[i].st[j] );
 			for(k=0;k<MAXLIGHTMAPS;k++)
 			{
-				cv->points[i][VERTEX_LM+j+(k*2)] = LittleFloat( verts[i].lightmap[k][j] );
+				cv->points[i].lightmap[k][j] = LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
-			R_ColorShiftLightingBytes( verts[i].color[k], (byte *)&cv->points[i][VERTEX_COLOR+k] );
+			R_ColorShiftLightingBytes( verts[i].color[k], (byte *)&cv->points[i].color[k] );
 		}
 	}
 
@@ -453,7 +453,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	for ( i = 0 ; i < 3 ; i++ ) {
 		cv->plane.normal[i] = LittleFloat( ds->lightmapVecs[2][i] );
 	}
-	cv->plane.dist = DotProduct( cv->points[0], cv->plane.normal );
+	cv->plane.dist = DotProduct( cv->points[0].xyz, cv->plane.normal );
 	SetPlaneSignbits( &cv->plane );
 	cv->plane.type = PlaneTypeForNormal( cv->plane.normal );
 

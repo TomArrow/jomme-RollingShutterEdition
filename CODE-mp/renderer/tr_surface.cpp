@@ -1317,7 +1317,7 @@ RB_SurfaceFace
 void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 	int			i, k;
 	unsigned	*indices, *tessIndexes;
-	float		*v;
+	drawVert_t	*v;
 	float		*normal;
 	int			ndx;
 	int			Bob;
@@ -1339,7 +1339,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 
 	tess.numIndexes += surf->numIndices;
 
-	v = surf->points[0];
+	v = surf->points;
 
 	ndx = tess.numVertexes;
 
@@ -1352,17 +1352,17 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 		}
 	}
 
-	for ( i = 0, v = surf->points[0], ndx = tess.numVertexes; i < numPoints; i++, v += VERTEXSIZE, ndx++ ) 
+	for ( i = 0, v = surf->points, ndx = tess.numVertexes; i < numPoints; i++, v ++, ndx++ ) 
 	{
-		VectorCopy( v, tess.xyz[ndx]);
-		tess.texCoords[ndx][0][0] = v[3];
-		tess.texCoords[ndx][0][1] = v[4];
+		VectorCopy( v->xyz, tess.xyz[ndx]);
+		tess.texCoords[ndx][0][0] = v->st[0];
+		tess.texCoords[ndx][0][1] = v->st[1]; // looks funny when we accidentally leave it as tess.texCoords[ndx][0][1] = v->st[0]. streaky.
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
 			if (tess.shader->lightmapIndex[k] >= 0)
 			{
-				tess.texCoords[ndx][k+1][0] = v[VERTEX_LM+(k*2)];
-				tess.texCoords[ndx][k+1][1] = v[VERTEX_LM+(k*2)+1];
+				tess.texCoords[ndx][k+1][0] = v->lightmap[k][0];
+				tess.texCoords[ndx][k+1][1] = v->lightmap[k][1];
 			}
 			else
 			{
@@ -1370,7 +1370,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 			}
 		}
 		//*(unsigned *) &tess.vertexColors[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
-		ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR], (float*) &tess.vertexColors[ndx], (float*) &tess.vertexColorsRaw[ndx]);
+		ComputeFinalVertexColor((byte *)&v->color, (float*) &tess.vertexColors[ndx], (float*) &tess.vertexColorsRaw[ndx]);
 		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, ndx);
 		tess.vertexDlightBits[ndx] = dlightBits;
 	}

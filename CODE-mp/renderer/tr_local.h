@@ -742,10 +742,10 @@ typedef struct srfFlare_s {
 	vec3_t			color;
 } srfFlare_t;
 
-#define	VERTEXSIZE			(6+(MAXLIGHTMAPS*3))
-#define VERTEX_LM			5
-#define	VERTEX_COLOR		(5+(MAXLIGHTMAPS*2))
-#define	VERTEX_FINAL_COLOR	(5+(MAXLIGHTMAPS*3))
+//#define	VERTEXSIZE			(6+(MAXLIGHTMAPS*3))
+//#define VERTEX_LM			5
+//#define	VERTEX_COLOR		(5+(MAXLIGHTMAPS*2))
+//#define	VERTEX_FINAL_COLOR	(5+(MAXLIGHTMAPS*3))
 
 typedef struct srfGridMesh_s {
 	surfaceType_t	surfaceType;
@@ -771,7 +771,7 @@ typedef struct srfGridMesh_s {
 	float			*widthLodError;
 	float			*heightLodError;
 	drawVert_t		verts[1];		// variable sized
-} srfGridMesh_t;
+} srfGridMesh_t; 
 
 
 typedef struct {
@@ -785,8 +785,9 @@ typedef struct {
 	int			numPoints;
 	int			numIndices;
 	int			ofsIndices;
-	float		points[1][VERTEXSIZE];	// variable sized
+	//float		points[1][VERTEXSIZE];	// variable sized
 										// there is a variable length list of indices here also
+	drawVert_t	points[1];		// variable sized
 } srfSurfaceFace_t;
 
 

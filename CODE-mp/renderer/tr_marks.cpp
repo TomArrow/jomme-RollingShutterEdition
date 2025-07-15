@@ -241,7 +241,7 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 	float			dists[MAX_VERTS_ON_POLY+2];
 	vec3_t			clipPoints[2][MAX_VERTS_ON_POLY];
 	int				numClipPoints;
-	float			*v;
+	drawVert_t		*v;
 	srfSurfaceFace_t *surf;
 	srfGridMesh_t	*cv;
 	drawVert_t		*dv;
@@ -394,8 +394,8 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 			indexes = (int *)( (byte *)surf + surf->ofsIndices );
 			for ( k = 0 ; k < surf->numIndices ; k += 3 ) {
 				for ( j = 0 ; j < 3 ; j++ ) {
-					v = surf->points[0] + VERTEXSIZE * indexes[k+j];;
-					VectorMA( v, MARKER_OFFSET, surf->plane.normal, clipPoints[0][j] );
+					v = &surf->points[indexes[k + j]];
+					VectorMA( v->xyz, MARKER_OFFSET, surf->plane.normal, clipPoints[0][j] );
 				}
 				// add the fragments of this face
 				R_AddMarkFragments( 3 , clipPoints,
