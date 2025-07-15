@@ -3583,8 +3583,6 @@ void R_FindLightmap(int* lightmapIndex) {
 		tr.hdrLightmap = qfalse;
 	}
 
-	if(image->iLastLevelUsedOn)
-
 	// add it to the lightmap list
 	if (*lightmapIndex >= tr.numLightmaps) {
 		tr.numLightmaps = *lightmapIndex + 1;

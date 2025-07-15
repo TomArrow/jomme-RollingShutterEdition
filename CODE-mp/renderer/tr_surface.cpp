@@ -269,7 +269,7 @@ inline void ComputeFinalVertexColor(const byte *colors, float *result, float *re
 	//resultRaw[0] = result[0] = R_sRGBToLinear(colors[0]);
 	//resultRaw[1] = result[1] = R_sRGBToLinear(colors[1]);
 	//resultRaw[2] = result[2] = R_sRGBToLinear(colors[2]);
-	resultRaw[3] = result[3] = R_sRGBToLinear(colors[3]);
+	resultRaw[3] = result[3] = !tr.hdrLightmap ? R_sRGBToLinear(colors[3]) : colors[3];
 	//*(int *)result = *(int *)colors;
 	// an optimization could be added here to compute the style[0] (which is always the world normal light)
 	r = g = b = 0;
