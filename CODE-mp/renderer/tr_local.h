@@ -883,6 +883,13 @@ typedef struct bspGridPointHDR_s
 	byte		styles[MAXLIGHTMAPS];         /* RBSP - whole */
 	vec3_t		direction;
 } bspGridPointHDR_t;
+typedef struct bspGridPointHDRV3_s
+{
+	vec3_t		ambient[MAXLIGHTMAPS];    /* RBSP - array */
+	vec3_t		directed[MAXLIGHTMAPS];   /* RBSP - array */
+	byte		styles[MAXLIGHTMAPS];         /* RBSP - whole */
+	vec3_t		directions[MAXLIGHTMAPS];
+} bspGridPointHDRV3_t;
 
 typedef struct {
 	char		name[MAX_QPATH];		// ie: maps/tim_dm2.bsp
@@ -919,6 +926,7 @@ typedef struct {
 	int			lightGridBounds[3];
 	float*		hdrLightGrid;
 	bspGridPointHDR_t*		hdrLightGridV2;
+	bspGridPointHDRV3_t*	hdrLightGridV3;
 	int			lightGridOffsets[8];
 
 	vec3_t		lightGridStep;

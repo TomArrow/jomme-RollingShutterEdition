@@ -962,6 +962,9 @@ typedef enum shaderFlags_t {
 	SHAD_SABER
 };
 
+// lazy copypaste from q3map2. rough luminance estimate.
+#define RGBTOGRAY( x ) ( (float)( ( x )[0] ) * 0.2989f + (float)( ( x )[1] ) * 0.5870f + (float)( ( x )[2] ) * 0.1140f )
+
 #if	1
 
 #define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])

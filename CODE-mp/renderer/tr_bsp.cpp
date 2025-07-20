@@ -1927,6 +1927,7 @@ void R_LoadLightGrid(lump_t *l ) {
 		{
 			size_t oldStyleHDRGridSize = sizeof(float) * 6 * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 			size_t newStyleHDRGridSize = sizeof(bspGridPointHDR_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
+			size_t newStyleHDRGridSizeV3 = sizeof(bspGridPointHDRV3_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 
 			if (size == oldStyleHDRGridSize) {
 				w->hdrLightGrid = (float*)ri.Hunk_Alloc(size, h_low);
@@ -1943,6 +1944,21 @@ void R_LoadLightGrid(lump_t *l ) {
 				if (w->hdrLightGridV2) {
 					w->hdrLightGridV2 = NULL; // do i need to free this? idk
 				}
+				if (w->hdrLightGridV3) {
+					w->hdrLightGridV3 = NULL; // do i need to free this? idk
+				}
+			}
+			else if (size == newStyleHDRGridSizeV3) {
+				w->hdrLightGridV3 = (bspGridPointHDRV3_t*)ri.Hunk_Alloc(size, h_low);
+
+				Com_Memcpy(w->hdrLightGridV3,hdrLightGrid,size);
+
+				if (w->hdrLightGrid) {
+					w->hdrLightGrid = NULL; // do i need to free this? idk
+				}
+				if (w->hdrLightGridV2) {
+					w->hdrLightGridV2 = NULL; // do i need to free this? idk
+				}
 			}
 			else if (size == newStyleHDRGridSize) {
 				w->hdrLightGridV2 = (bspGridPointHDR_t*)ri.Hunk_Alloc(size, h_low);
@@ -1952,15 +1968,9 @@ void R_LoadLightGrid(lump_t *l ) {
 				if (w->hdrLightGrid) {
 					w->hdrLightGrid = NULL; // do i need to free this? idk
 				}
-				//for (i = 0; i < w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2]; i++)
-				//{
-				//	w->hdrLightGrid[i * 6] = hdrLightGrid[i * 6];// / M_PI;
-				//	w->hdrLightGrid[i * 6 + 1] = hdrLightGrid[i * 6 + 1];// / M_PI;
-				//	w->hdrLightGrid[i * 6 + 2] = hdrLightGrid[i * 6 + 2];// / M_PI;
-				//	w->hdrLightGrid[i * 6 + 3] = hdrLightGrid[i * 6 + 3];// / M_PI;
-				//	w->hdrLightGrid[i * 6 + 4] = hdrLightGrid[i * 6 + 4];// / M_PI;
-				//	w->hdrLightGrid[i * 6 + 5] = hdrLightGrid[i * 6 + 5];// / M_PI;
-				//}
+				if (w->hdrLightGridV3) {
+					w->hdrLightGridV3 = NULL; // do i need to free this? idk
+				}
 			}
 			else {
 				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i or %i)!", filename, size, (int)oldStyleHDRGridSize , (int)newStyleHDRGridSize);

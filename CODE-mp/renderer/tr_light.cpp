@@ -134,6 +134,8 @@ inline void VectorScaleVector(const vec3_t a, const vec3_t b, vec3_t out)
 	out[2] = a[2] * b[2];
 }
 
+static const float onedividedby255 = 1.0f / 255.0f;
+
 /*
 =================
 R_SetupEntityLightingGrid
@@ -150,6 +152,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 	float			totalFactor;
 	//unsigned short	*startGridPos;
 	int				startGridPos;
+	qboolean		latlongdir = qtrue;
 
 
 	if (r_fullbright->integer)
@@ -244,9 +247,38 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 
 			factor = fraction[i];
 			totalFactor += factor;
-			if (world->hdrLightGridV2)
+			if (world->hdrLightGridV3)
+			{
+				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
+				latlongdir = qfalse;
+				VectorClear(normal);
+				for (j = 0; j < MAXLIGHTMAPS; j++)
+				{
+					if (hdrData->styles[j] != LS_LSNONE)
+					{
+						const byte	style = hdrData->styles[j];
+						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
+						VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else if (world->hdrLightGridV2)
 			{
 				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
+				latlongdir = qfalse;
+				VectorCopy(hdrData->direction, normal);
 				for (j = 0; j < MAXLIGHTMAPS; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
@@ -301,21 +333,24 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				}
 			}
 
-			lat = data->latLong[1];// << 2;
-			lng = data->latLong[0];// << 2;
-			lat /= 256;
-			lng /= 256;
+			if (latlongdir) {
 
-			// decode X as cos( lat ) * sin( long )
-			// decode Y as sin( lat ) * sin( long )
-			// decode Z as cos( long )
+				lat = data->latLong[1];// << 2;
+				lng = data->latLong[0];// << 2;
+				lat /= 256;
+				lng /= 256;
 
-/*			normal[0] = tr.sinTable[(lat + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK] * tr.sinTable[lng];
-			normal[1] = tr.sinTable[lat] * tr.sinTable[lng];
-			normal[2] = tr.sinTable[(lng + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK];*/
-			normal[0] = NewCosTable(lat) * NewSinTable(lng);
-			normal[1] = NewSinTable(lat) * NewSinTable(lng);
-			normal[2] = NewCosTable(lng);
+				// decode X as cos( lat ) * sin( long )
+				// decode Y as sin( lat ) * sin( long )
+				// decode Z as cos( long )
+
+	/*			normal[0] = tr.sinTable[(lat + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK] * tr.sinTable[lng];
+				normal[1] = tr.sinTable[lat] * tr.sinTable[lng];
+				normal[2] = tr.sinTable[(lng + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK];*/
+				normal[0] = NewCosTable(lat) * NewSinTable(lng);
+				normal[1] = NewSinTable(lat) * NewSinTable(lng);
+				normal[2] = NewCosTable(lng);
+			}
 
 			VectorMA( direction, factor, normal, direction );
 		}
@@ -401,9 +436,38 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 
 			totalFactor += factor;
 
-			if (world->hdrLightGridV2)
+			if (world->hdrLightGridV3)
+			{
+				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
+				latlongdir = qfalse;
+				VectorClear(normal);
+				for (j = 0; j < MAXLIGHTMAPS; j++)
+				{
+					if (hdrData->styles[j] != LS_LSNONE)
+					{
+						const byte	style = hdrData->styles[j];
+						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
+						VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else if (world->hdrLightGridV2)
 			{
 				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
+				latlongdir = qfalse;
+				VectorCopy(hdrData->direction, normal);
 				for (j = 0; j < MAXLIGHTMAPS; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
@@ -458,23 +522,26 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				}
 			}
 
-			lat = data->latLong[1];
-			lng = data->latLong[0];
-//			lat *= (FUNCTABLE_SIZE/256);
-//			lng *= (FUNCTABLE_SIZE/256);
-			lat /= 256;
-			lng /= 256;
+			if (latlongdir) {
 
-			// decode X as cos( lat ) * sin( long )
-			// decode Y as sin( lat ) * sin( long )
-			// decode Z as cos( long )
+				lat = data->latLong[1];
+				lng = data->latLong[0];
+				//			lat *= (FUNCTABLE_SIZE/256);
+				//			lng *= (FUNCTABLE_SIZE/256);
+				lat /= 256;
+				lng /= 256;
 
-/*			normal[0] = tr.sinTable[(lat + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK] * tr.sinTable[lng];
-			normal[1] = tr.sinTable[lat] * tr.sinTable[lng];
-			normal[2] = tr.sinTable[(lng + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK];*/
-			normal[0] = NewCosTable(lat) * NewSinTable(lng);
-			normal[1] = NewSinTable(lat) * NewSinTable(lng);
-			normal[2] = NewCosTable(lng);
+				// decode X as cos( lat ) * sin( long )
+				// decode Y as sin( lat ) * sin( long )
+				// decode Z as cos( long )
+
+	/*			normal[0] = tr.sinTable[(lat + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK] * tr.sinTable[lng];
+				normal[1] = tr.sinTable[lat] * tr.sinTable[lng];
+				normal[2] = tr.sinTable[(lng + (FUNCTABLE_SIZE / 4)) & FUNCTABLE_MASK];*/
+				normal[0] = NewCosTable(lat) * NewSinTable(lng);
+				normal[1] = NewSinTable(lat) * NewSinTable(lng);
+				normal[2] = NewCosTable(lng);
+			}
 
 			VectorMA( direction, factor, normal, direction );
 		}
