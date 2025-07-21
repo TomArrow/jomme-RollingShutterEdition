@@ -297,9 +297,9 @@ inline void ComputeFinalVertexColor(const float* colors, float *result, float *r
 		}
 	}
 
-	resultRaw[0] = result[0] = r / 256.0f;
-	resultRaw[1] = result[1] = g / 256.0f;
-	resultRaw[2] = result[2] = b / 256.0f;
+	resultRaw[0] = result[0] = r / 255.0f;
+	resultRaw[1] = result[1] = g / 255.0f;
+	resultRaw[2] = result[2] = b / 255.0f;
 
 	// put this in a smarter place? idk
 	//resultRaw[0] = result[0] = 255.0f * sRGBToLinear(result[0] / 255.0f);
@@ -320,6 +320,40 @@ inline void ComputeFinalVertexColor(const float* colors, float *result, float *r
 	//return *(ulong *)result;
 }
 
+inline void ComputeFinalLightDirection(const float* lightdirs, float *result)
+{
+	int			k;
+	//float		result[4];
+	float		r, g, b;
+
+	//Debug
+	r = g = b = 0;
+
+	if (tr.haveVertLightDirs) {
+		for (k = 0; k < MAXLIGHTMAPS; k++)
+		{
+			if (tess.shader->styles[k] < LS_UNUSED)
+			{
+				float* styleColor = styleColors[tess.shader->styles[k]];
+				float styleIntensity = RGBTOGRAY(styleColor);
+
+				r += (float)((*lightdirs++)) * styleIntensity;
+				g += (float)((*lightdirs++)) * styleIntensity;
+				b += (float)((*lightdirs++)) * styleIntensity;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	result[0] = r / 255.0f;
+	result[1] = g / 255.0f;
+	result[2] = b / 255.0f;
+
+}
+
 
 /*
 =============
@@ -331,6 +365,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	drawVert_t	*dv;
 	float		*xyz, *normal, *texCoords;
 	float		*color;
+	float		*lightdir;
 	float		*colorRaw;
 	int			colorRawIndex;
 	int			dlightBits;
@@ -353,6 +388,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	normal = tess.normal[ tess.numVertexes ];
 	texCoords = tess.texCoords[ tess.numVertexes ][0];
 	color = tess.vertexColors[ tess.numVertexes ];
+	lightdir = tess.lightdir[ tess.numVertexes ];
 	colorRaw = tess.vertexColorsRaw[ tess.numVertexes ];
 	colorRawIndex = tess.numVertexes;
 	needsNormal = tess.shader->needsNormal;
@@ -391,9 +427,11 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 
 		//*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
 		ComputeFinalVertexColor((float*)dv->color,color,colorRaw);
+		ComputeFinalLightDirection((float*)dv->lightdir,lightdir);
 		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, colorRawIndex);
 		color += 4;
 		colorRaw += 4;
+		lightdir += 3;
 		colorRawIndex++;
 	}
 
@@ -1371,6 +1409,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 		}
 		//*(unsigned *) &tess.vertexColors[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
 		ComputeFinalVertexColor((float*)v->color, (float*) &tess.vertexColors[ndx], (float*) &tess.vertexColorsRaw[ndx]);
+		ComputeFinalLightDirection((float*)v->lightdir, (float*) &tess.lightdir[ndx]);
 		VERTEXCOLORRAWSET(tess.vertexColorsRawSet, ndx);
 		tess.vertexDlightBits[ndx] = dlightBits;
 	}
@@ -1422,6 +1461,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 	float	*xyz;
 	float	*texCoords;
 	float	*normal;
+	float *lightdir;
 	float *color;
 	float *colorRaw;
 	int		colorRawIndex;
@@ -1502,6 +1542,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 		normal = tess.normal[numVertexes];
 		texCoords = tess.texCoords[numVertexes][0];
 		color = ( float * ) &tess.vertexColors[numVertexes];
+		lightdir = ( float * ) &tess.lightdir[numVertexes];
 		colorRaw = ( float * ) &tess.vertexColorsRaw[numVertexes];
 		colorRawIndex = numVertexes;
 		vDlightBits = &tess.vertexDlightBits[numVertexes];
@@ -1535,9 +1576,11 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 
 				//*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
 				ComputeFinalVertexColor((float*)dv->color, color, colorRaw);
+				ComputeFinalLightDirection((float*)dv->lightdir, lightdir);
 				VERTEXCOLORRAWSET(tess.vertexColorsRawSet,colorRawIndex);
 				color += 4;
 				colorRaw += 4;
+				lightdir += 3;
 				colorRawIndex++;
 				*vDlightBits++ = dlightBits;
 			}
