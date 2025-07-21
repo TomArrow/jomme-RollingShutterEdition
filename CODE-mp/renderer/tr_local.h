@@ -21,6 +21,9 @@ extern size_t voxelGridSize;
 extern bool g_bRenderZPrepass;
 extern bool g_bRenderedZPrepass;
 
+extern const bool trueBool;
+extern const bool falseBool;
+
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
@@ -1171,6 +1174,7 @@ typedef struct {
 	image_t					*lightmaps[MAX_LIGHTMAPS];
 	qboolean				hdrLightmap;
 	qboolean				deluxeMapping;
+	qboolean				haveVertLightDirs;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
@@ -2243,6 +2247,10 @@ typedef struct {
 	int stageImageBitmask;
 	int stageLightmapBitmask;
 	int multiTexMode;
+
+	// for vertexlit stuff
+	bool haveVertexLightDirection;
+	int	stageColorGen;
 } fishEyeData_t;
 
 typedef struct {
@@ -2299,6 +2307,7 @@ qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY);
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
 qboolean R_FrameBuffer_StartHDRRead();

@@ -102,6 +102,9 @@ uniform int zPrepassUniform;
 
 uniform int deluxeMappingUniform;
 
+uniform int haveVertexLightDirectionUniform;
+uniform int stageColorGenUniform;
+
 
 // multipass stuff
 #define MYGL_MODULATE                       0x2100

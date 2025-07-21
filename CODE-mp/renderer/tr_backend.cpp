@@ -722,6 +722,8 @@ void RB_BeginDrawingView (void) {
 
 #define	MAC_EVENT_PUMP_MSEC		5
 
+const bool trueBool = true;
+const bool falseBool = false;
 /*
 ==================
 RB_RenderDrawSurfList
@@ -826,6 +828,9 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				}
 #endif
 				RB_EndSurface();
+			}
+			if (entityNum != oldEntityNum) {
+				R_FrameBuffer_SetDynamicUniforms2((entityNum == REFENTITYNUM_WORLD && tr.haveVertLightDirs) ? &trueBool : &falseBool);
 			}
 			RB_BeginSurface( shader, fogNum );
 

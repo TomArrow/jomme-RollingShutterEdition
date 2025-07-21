@@ -815,10 +815,9 @@ void RB_StageIteratorSky( void ) {
 		return;
 	}
 
-
-	bool falseBool = false;
-	bool trueBool = true;
 	R_FrameBuffer_SetDynamicUniforms(NULL, &falseBool, &falseBool,0,0,0,0,&trueBool);
+	int colorGen = CGEN_BAD;
+	R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen);
 
 	// go through all the polygons and project them onto
 	// the sky box to see which blocks on each side need

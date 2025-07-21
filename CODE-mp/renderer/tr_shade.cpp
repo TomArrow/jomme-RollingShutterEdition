@@ -18,6 +18,7 @@ color4f_t	styleColors[MAX_LIGHT_STYLES];
 
 const float floatColorsScaleFactor = 1.0f / 255.0f;
 
+
 //color4f_t	tmpScaledColors[SHADER_MAX_VERTEXES];
 
 #ifdef JEDIACADEMY_GLOW
@@ -1756,6 +1757,8 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 		// Tell GLSL that this is a world brush. Dumb?
 		bool isLightmap = pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap;
 		R_FrameBuffer_SetDynamicUniforms(NULL, &isLightmap, NULL,0,0,0,0,0,0,pStage);
+		int colorGen = pStage->rgbGen;
+		R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen);
 
 		if ( stage && r_lightmap->integer && !( pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap || pStage->bundle[0].vertexLightmap ) )
 		{
@@ -2047,6 +2050,8 @@ void RB_StageIteratorVertexLitTexture( void )
 
 	bool isLightmap = false;
 	R_FrameBuffer_SetDynamicUniforms(NULL, &isLightmap, NULL);
+	int colorGen = tess.xstages[0]->rgbGen;
+	R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen);
 
 	//
 	// call special shade routine

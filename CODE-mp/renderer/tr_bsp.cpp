@@ -1473,6 +1473,8 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	s_worldData.surfaces = out;
 	s_worldData.numsurfaces = count;
 
+	tr.haveVertLightDirs = qfalse;
+
 	// load hdr vertex colors
 	if (r_hdr->integer)
 	{
@@ -1499,6 +1501,8 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 			//ri.Printf(PRINT_ALL, "Found!\n");
 			if (size != sizeof(bspVertHDR_t)* verts->filelen / sizeof(*dv))
 				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)((sizeof(bspVertHDR_t)) *verts->filelen / sizeof(*dv)));
+			else
+				tr.haveVertLightDirs = qtrue;
 		}
 		
 	}

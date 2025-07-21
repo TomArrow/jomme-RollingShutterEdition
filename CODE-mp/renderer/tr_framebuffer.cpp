@@ -117,6 +117,9 @@ typedef struct uniformLocations_t {
 	GLint stageLightmapBitmaskUniform;
 	GLint multiTexModeUniform;
 
+	GLint haveVertexLightDirectionUniform;
+	GLint stageColorGenUniform;
+
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
@@ -341,6 +344,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocationsTess->deluxeMappingUniform, tr.deluxeMapping);
 
+		qglUniform1i(uniformLocationsTess->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
+		qglUniform1i(uniformLocationsTess->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
+
 		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
 		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
@@ -418,6 +424,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
 		qglUniform1i(uniformLocations->deluxeMappingUniform, tr.deluxeMapping);
+
+		qglUniform1i(uniformLocations->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
+		qglUniform1i(uniformLocations->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
 
 		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
@@ -692,6 +701,31 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 			R_FrameBuffer_ReactivateFisheye();
 			uniformsSet = true;
 		}
+	}
+
+	//if (!uniformsSet) {
+		R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
+	//}
+
+	return qtrue;
+#endif
+}
+
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen) {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	bool uniformsSet = false;
+	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+		return qfalse;
+	}
+
+	if (haveVertexLightDir) {
+		fbo.fishEyeData.haveVertexLightDirection = *haveVertexLightDir;
+	}
+	if (stageColorGen) {
+		fbo.fishEyeData.stageColorGen = *stageColorGen;
 	}
 
 	//if (!uniformsSet) {
@@ -1264,6 +1298,9 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->zPrepassUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "zPrepassUniform");
 
 		locs->deluxeMappingUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "deluxeMappingUniform");
+
+		locs->haveVertexLightDirectionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
+		locs->stageColorGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageColorGenUniform");
 
 		locs->stageImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
 		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
