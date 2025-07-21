@@ -1731,6 +1731,7 @@ struct shaderCommands_s
 	byte		vertexColorsRawSet[SHADER_MAX_VERTEXES/8]; // for surfacesprites
 //	byte		vertexAlphas[SHADER_MAX_VERTEXES][4];	// only used by SOF2 glass, go ahead and implement if you want
 	int			vertexDlightBits[SHADER_MAX_VERTEXES];
+	vec3_t		lightdir[SHADER_MAX_VERTEXES];
 
 	stageVars_t	svars;
 

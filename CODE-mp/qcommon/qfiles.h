@@ -443,6 +443,13 @@ typedef struct {
 	byte		color[MAXLIGHTMAPS][4];
 } mapVert_t;
 
+typedef struct bspVertHDR_s
+{
+	vec3_t color[MAXLIGHTMAPS];
+	byte styles[MAXLIGHTMAPS];
+	vec3_t direction[MAXLIGHTMAPS];
+} bspVertHDR_t;
+
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
@@ -450,6 +457,7 @@ typedef struct {
 	vec3_t		normal;
 	//byte		color[MAXLIGHTMAPS][4];
 	vec4_t		color[MAXLIGHTMAPS];
+	vec3_t		lightdir[MAXLIGHTMAPS];
 } drawVert_t;
 
 typedef struct

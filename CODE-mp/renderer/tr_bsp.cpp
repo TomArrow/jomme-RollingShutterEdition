@@ -426,7 +426,7 @@ static shader_t *ShaderForShaderNum( int shaderNum, const int *lightmapNum, cons
 ParseFace
 ===============
 */
-static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors) {
+static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe) {
 	int					i, j, k;
 	srfSurfaceFace_t	*cv;
 	int					numPoints, numIndexes;
@@ -481,7 +481,23 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 		}
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
-			R_ColorShiftLightingBytes( verts[i].color[k], (byte *)&cv->points[i].color[k] );
+			if (hdrVertColorsDeluxe) {
+				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f, cv->points[i].color[k]);
+				VectorCopy(hdrVertColorsDeluxe[i].direction[k], cv->points[i].lightdir[k]);
+				cv->points[i].color[k][3] = 255.0f;
+			}
+			else if (hdrVertColors) {
+				if (k == 0) {
+					VectorScale((hdrVertColors + i * 3), 255.0f, cv->points[i].color[k]);
+				}
+				else {
+					VectorClear(cv->points[i].color[k]);
+				}
+				cv->points[i].color[k][3] = 255.0f;
+			}
+			else {
+				R_ColorShiftLightingToFloat(verts[i].color[k], cv->points[i].color[k]);
+			}
 		}
 	}
 
@@ -507,7 +523,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 ParseMesh
 ===============
 */
-static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, float* hdrVertColors) {
+static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe) {
 	srfGridMesh_t			*grid;
 	int						i, j, k;
 	int						width, height, numPoints;
@@ -557,7 +573,23 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 		}
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
-			R_ColorShiftLightingToFloat( verts[i].color[k], points[i].color[k] );
+			if (hdrVertColorsDeluxe) {
+				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f, points[i].color[k]);
+				VectorCopy(hdrVertColorsDeluxe[i].direction[k], points[i].lightdir[k]);
+				points[i].color[k][3] = 255.0f;
+			}
+			else if (hdrVertColors) {
+				if (k == 0) {
+					VectorScale((hdrVertColors + i * 3), 255.0f, points[i].color[k]);
+				}
+				else {
+					VectorClear(points[i].color[k]);
+				}
+				points[i].color[k][3] = 255.0f;
+			}
+			else {
+				R_ColorShiftLightingToFloat(verts[i].color[k], points[i].color[k]);
+			}
 		}
 	}
 
@@ -583,7 +615,7 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 ParseTriSurf
 ===============
 */
-static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors) {
+static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe) {
 	srfTriangles_t	*tri;
 	int				i, j, k;
 	int				numVerts, numIndexes;
@@ -629,7 +661,23 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
-			R_ColorShiftLightingToFloat( verts[i].color[k], tri->verts[i].color[k] );
+			if (hdrVertColorsDeluxe) {
+				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f, tri->verts[i].color[k]);
+				VectorCopy(hdrVertColorsDeluxe[i].direction[k], tri->verts[i].lightdir[k]);
+				tri->verts[i].color[k][3] = 255.0f;
+			}
+			else if (hdrVertColors) {
+				if (k == 0) {
+					VectorScale((hdrVertColors + i * 3), 255.0f, tri->verts[i].color[k]);
+				}
+				else {
+					VectorClear(tri->verts[i].color[k]);
+				}
+				tri->verts[i].color[k][3] = 255.0f;
+			}
+			else {
+				R_ColorShiftLightingToFloat(verts[i].color[k], tri->verts[i].color[k]);
+			}
 		}
 	}
 
@@ -1400,6 +1448,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	int			numFaces, numMeshes, numTriSurfs, numFlares;
 	int			i;
 	float* hdrVertColors = NULL;
+	bspVertHDR_t* hdrVertColorsDeluxe = NULL;
 
 	numFaces = 0;
 	numMeshes = 0;
@@ -1431,7 +1480,6 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 		int size;
 
 		Com_sprintf(filename, sizeof(filename), "maps/%s/vertlight.raw", s_worldData.baseName);
-		//ri.Printf(PRINT_ALL, "looking for %s\n", filename);
 
 		size = ri.FS_ReadFile(filename, (void**)&hdrVertColors);
 
@@ -1441,20 +1489,32 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 			if (size != sizeof(float) * 3 * verts->filelen / sizeof(*dv))
 				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)((sizeof(float)) * 3 * verts->filelen / sizeof(*dv)));
 		}
+
+		Com_sprintf(filename, sizeof(filename), "maps/%s/vertlightDeluxe.raw", s_worldData.baseName);
+
+		size = ri.FS_ReadFile(filename, (void**)&hdrVertColorsDeluxe);
+
+		if (hdrVertColorsDeluxe)
+		{
+			//ri.Printf(PRINT_ALL, "Found!\n");
+			if (size != sizeof(bspVertHDR_t)* verts->filelen / sizeof(*dv))
+				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)((sizeof(bspVertHDR_t)) *verts->filelen / sizeof(*dv)));
+		}
+		
 	}
 
 	for ( i = 0 ; i < count ; i++, in++, out++ ) {
 		switch ( LittleLong( in->surfaceType ) ) {
 		case MST_PATCH:
-			ParseMesh ( in, dv, out, hdrVertColors);
+			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe);
 			numMeshes++;
 			break;
 		case MST_TRIANGLE_SOUP:
-			ParseTriSurf( in, dv, out, indexes, hdrVertColors);
+			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe);
 			numTriSurfs++;
 			break;
 		case MST_PLANAR:
-			ParseFace( in, dv, out, indexes, hdrVertColors);
+			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe);
 			numFaces++;
 			break;
 		case MST_FLARE:
@@ -1475,6 +1535,13 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 #ifdef PATCH_STITCHING
 	R_MovePatchSurfacesToHunk();
 #endif
+
+	if (hdrVertColors) {
+		ri.FS_FreeFile(hdrVertColors);
+	}
+	if (hdrVertColorsDeluxe) {
+		ri.FS_FreeFile(hdrVertColorsDeluxe);
+	}
 
 	ri.Printf( PRINT_ALL, "...loaded %d faces, %i meshes, %i trisurfs, %i flares\n", 
 		numFaces, numMeshes, numTriSurfs, numFlares );
