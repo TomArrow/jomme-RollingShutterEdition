@@ -902,6 +902,11 @@ extern void (APIENTRY* qglBlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint sr
 //added fragment/vertex program extensions
 extern  void (APIENTRYP qglAttachShader) (GLuint, GLuint);
 extern  void (APIENTRYP qglBindAttribLocation) (GLuint, GLuint, const GLchar*);
+extern  void (APIENTRYP qglVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const void*);
+extern  void (APIENTRYP qglVertexAttribIPointer) (GLuint, GLint, GLenum, GLsizei, const void*);
+extern  void (APIENTRYP qglVertexAttribDivisor) (GLuint, GLint, GLenum, GLsizei, const void*);
+extern  void (APIENTRYP qglEnableVertexAttribArray) (GLuint);
+extern  void (APIENTRYP qglDisableVertexAttribArray) (GLuint);;
 extern  void (APIENTRYP qglCompileShader) (GLuint);
 extern GLuint(APIENTRYP qglCreateProgram) (void);
 extern GLuint(APIENTRYP qglCreateShader) (GLenum);

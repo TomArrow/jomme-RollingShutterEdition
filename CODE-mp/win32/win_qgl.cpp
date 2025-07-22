@@ -423,6 +423,11 @@ void (APIENTRY* qglBlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GL
 //added fragment/vertex program extensions
 void (APIENTRYP qglAttachShader) (GLuint, GLuint);
 void (APIENTRYP qglBindAttribLocation) (GLuint, GLuint, const GLchar*);
+void (APIENTRYP qglVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const void*);
+void (APIENTRYP qglVertexAttribIPointer) (GLuint, GLint, GLenum, GLsizei, const void*);
+void (APIENTRYP qglVertexAttribDivisor) (GLuint, GLint, GLenum, GLsizei, const void*);
+void (APIENTRYP qglEnableVertexAttribArray) (GLuint);
+void (APIENTRYP qglDisableVertexAttribArray) (GLuint);;
 void (APIENTRYP qglCompileShader) (GLuint);
 GLuint(APIENTRYP qglCreateProgram) (void);
 GLuint(APIENTRYP qglCreateShader) (GLenum);

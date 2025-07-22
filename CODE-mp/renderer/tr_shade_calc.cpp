@@ -1184,7 +1184,7 @@ void RB_CalcDiffuseColor( float *colors, float* directions) {
 		colors[i * 4 + 3] = 255;
 		continue;*/
 
-		VectorCopy(lightDir, directions);
+		VectorCopy(ent->worldLightDir, directions);
 		
 		incoming = DotProduct (normal, lightDir);
 		if ( incoming <= 0 ) {

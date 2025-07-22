@@ -468,6 +468,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	cv->ofsIndices = ofsIndexes;
 
 	verts += LittleLong( ds->firstVert );
+	hdrVertColorsDeluxe += LittleLong( ds->firstVert );
 	for ( i = 0 ; i < numPoints ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			cv->points[i].xyz[j] = LittleFloat( verts[i].xyz[j] );
@@ -558,6 +559,7 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 	height = LittleLong( ds->patchHeight );
 
 	verts += LittleLong( ds->firstVert );
+	hdrVertColorsDeluxe += LittleLong( ds->firstVert );
 	numPoints = width * height;
 	for ( i = 0 ; i < numPoints ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
@@ -645,6 +647,7 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 	// copy vertexes
 	ClearBounds( tri->bounds[0], tri->bounds[1] );
 	verts += LittleLong( ds->firstVert );
+	hdrVertColorsDeluxe += LittleLong( ds->firstVert );
 	for ( i = 0 ; i < numVerts ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			tri->verts[i].xyz[j] = LittleFloat( verts[i].xyz[j] );

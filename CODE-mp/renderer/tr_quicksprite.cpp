@@ -79,6 +79,8 @@ void CQuickSpriteSystem::Flush(void)
 	//qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, mColors );
 
 	qglVertexPointer (3, GL_FLOAT, 16, mVerts);
+	//qglEnableVertexAttribArray(10); // TODO
+	//qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
 
 	if ( qglLockArraysEXT )
 	{

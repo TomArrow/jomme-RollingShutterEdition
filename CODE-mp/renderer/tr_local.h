@@ -135,6 +135,7 @@ typedef struct {
 	qboolean	needDlights;	// true for bmodels that touch a dlight
 	qboolean	lightingCalculated;
 	vec3_t		lightDir;		// normalized direction towards light
+	vec3_t		worldLightDir;		// absolute direction towards light
 	vec3_t		ambientLight;	// color normalized to 0-255
 	int			ambientLightInt;	// 32 bit rgba packed
 	vec3_t		directedLight;

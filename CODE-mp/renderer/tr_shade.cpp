@@ -290,6 +290,8 @@ static void DrawTris (shaderCommands_t *input) {
 	}
 
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
+	qglEnableVertexAttribArray(10);
+	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
 
 	if (qglLockArraysEXT) {
 		qglLockArraysEXT(0, input->numVertexes);
@@ -1069,6 +1071,8 @@ static void ProjectDlightTexture2( void ) {
 	if (needResetVerts)
 	{
 		qglVertexPointer (3, GL_FLOAT, 16, tess.xyz);	// padded for SIMD
+		qglEnableVertexAttribArray(10);
+		qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, tess.lightdir);
 		if (qglLockArraysEXT)
 		{
 			qglLockArraysEXT(0, tess.numVertexes);
@@ -1923,6 +1927,8 @@ void RB_StageIteratorGeneric( void )
 	// lock XYZ
 	//
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
+	qglEnableVertexAttribArray(10);
+	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
 	if (qglLockArraysEXT)
 	{
 		qglLockArraysEXT(0, input->numVertexes);
@@ -2041,6 +2047,8 @@ void RB_StageIteratorVertexLitTexture( void )
 
 	qglTexCoordPointer( 2, GL_FLOAT, 16, tess.texCoords[0][0] );
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);
+	qglEnableVertexAttribArray(10);
+	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
 
 	if ( qglLockArraysEXT )
 	{
@@ -2127,6 +2135,8 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	//
 	GL_State( GLS_DEFAULT );
 	qglVertexPointer( 3, GL_FLOAT, 16, input->xyz );
+	qglEnableVertexAttribArray(10);
+	qglVertexAttribPointer(10,3,GL_FLOAT,qfalse,12,input->lightdir);
 
 #ifdef REPLACE_MODE
 	qglDisableClientState( GL_COLOR_ARRAY );
