@@ -829,9 +829,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #endif
 				RB_EndSurface();
 			}
-			if (entityNum != oldEntityNum) {
-				R_FrameBuffer_SetDynamicUniforms2((entityNum == REFENTITYNUM_WORLD && tr.haveVertLightDirs) ? &trueBool : &falseBool);
-			}
 			RB_BeginSurface( shader, fogNum );
 
 			oldShader = shader;
@@ -853,6 +850,9 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				// from the wrong frame
 				tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
 
+				// vertex lightdir exists for CGEN_LIGHTING_DIFFUSE from R_SetupEntityLighting and RB_CalcDiffuseColor
+				R_FrameBuffer_SetDynamicUniforms2(backEnd.currentEntity->lightingCalculated ? &trueBool : &falseBool);
+
 				// set up the transformation matrix
 				R_RotateForEntity( backEnd.currentEntity, &backEnd.viewParms, &backEnd.ori );
 
@@ -870,6 +870,9 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 					depthRange = 1;
 				}
 			} else {
+
+				// vertex lightdir exists if hdr deluxe lightverts were provided
+				R_FrameBuffer_SetDynamicUniforms2(tr.haveVertLightDirs ? &trueBool : &falseBool);
 				backEnd.currentEntity = &tr.worldEntity;
 				backEnd.refdef.floatTime = originalTime;
 				backEnd.ori = backEnd.viewParms.world;

@@ -1498,11 +1498,18 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 
 		if (hdrVertColorsDeluxe)
 		{
+			int vertCount = verts->filelen / sizeof(*dv);
 			//ri.Printf(PRINT_ALL, "Found!\n");
-			if (size != sizeof(bspVertHDR_t)* verts->filelen / sizeof(*dv))
+			if (size != sizeof(bspVertHDR_t)* vertCount)
 				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)((sizeof(bspVertHDR_t)) *verts->filelen / sizeof(*dv)));
-			else
-				tr.haveVertLightDirs = qtrue;
+			else {
+				for (i = 0; i < vertCount; i++) {
+					// check that the direction data is actually filled
+					if (hdrVertColorsDeluxe[i].direction[0] || hdrVertColorsDeluxe[i].direction[1] || hdrVertColorsDeluxe[i].direction[2]) {
+						tr.haveVertLightDirs = qtrue;
+					}
+				}
+			}
 		}
 		
 	}

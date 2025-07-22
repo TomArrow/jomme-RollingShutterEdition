@@ -1978,7 +1978,7 @@ void	RB_CalcStretchTexCoords( const waveForm_t *wf, float *texCoords );
 void	RB_CalcColorFromEntity(float *dstColors );
 void	RB_CalcColorFromOneMinusEntity( float *dstColors );
 void	RB_CalcSpecularAlpha(float *alphas );
-void	RB_CalcDiffuseColor( float *colors );
+void	RB_CalcDiffuseColor( float *colors, float* directions );
 void	RB_CalcDisintegrateColors( float *colors );
 void	RB_CalcDisintegrateVertDeform( void );
 

@@ -1154,7 +1154,7 @@ void RB_CalcSpecularAlpha( float *alphas ) {
 **
 ** The basic vertex lighting calc
 */
-void RB_CalcDiffuseColor( float *colors ) {
+void RB_CalcDiffuseColor( float *colors, float* directions) {
 	int				i;
 	float			*v, *normal;
 	float			incoming, j;
@@ -1175,7 +1175,7 @@ void RB_CalcDiffuseColor( float *colors ) {
 	normal = tess.normal[0];
 
 	numVertexes = tess.numVertexes;
-	for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4) {
+	for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, directions+=3) {
 		// Debug
 
 		/*colors[i * 4 + 0] = 255;
@@ -1183,6 +1183,8 @@ void RB_CalcDiffuseColor( float *colors ) {
 		colors[i * 4 + 2] = 255;
 		colors[i * 4 + 3] = 255;
 		continue;*/
+
+		VectorCopy(lightDir, directions);
 		
 		incoming = DotProduct (normal, lightDir);
 		if ( incoming <= 0 ) {

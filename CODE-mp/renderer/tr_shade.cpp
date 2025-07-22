@@ -1345,7 +1345,7 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 			//Com_Memset( tess.svars.colors, tr.identityLightByte, tess.numVertexes * 4 );
 			break;
 		case CGEN_LIGHTING_DIFFUSE:
-			RB_CalcDiffuseColor( ( float * ) tess.svars.colors );
+			RB_CalcDiffuseColor( ( float * ) tess.svars.colors, (float*) tess.lightdir);
 			break;
 		case CGEN_EXACT_VERTEX:
 			Com_Memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
@@ -2009,7 +2009,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	//
 	// compute colors
 	//
-	RB_CalcDiffuseColor( (float* ) tess.svars.colors );
+	RB_CalcDiffuseColor( (float* ) tess.svars.colors, (float*)tess.lightdir);
 
 	//
 	// log this call
