@@ -872,7 +872,9 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			} else {
 
 				// vertex lightdir exists if hdr deluxe lightverts were provided
-				R_FrameBuffer_SetDynamicUniforms2(tr.haveVertLightDirs ? &trueBool : &falseBool);
+				//R_FrameBuffer_SetDynamicUniforms2(tr.haveVertLightDirs ? &trueBool : &falseBool);
+				bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
+				R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool);
 				backEnd.currentEntity = &tr.worldEntity;
 				backEnd.refdef.floatTime = originalTime;
 				backEnd.ori = backEnd.viewParms.world;
