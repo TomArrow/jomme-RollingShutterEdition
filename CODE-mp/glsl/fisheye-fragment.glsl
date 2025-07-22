@@ -1003,7 +1003,7 @@ void main(void)
 		//gl_FragColor = texture2D(text_in6, gl_TexCoord[1].st);
 		//return;
 	//}
-	if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0){
+	if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0){
 		
 		//gl_FragColor.xyz = lightDir+vec3(1.0f);
 		//gl_FragColor.xyz = normalize(lightDir)+vec3(1.0f);
