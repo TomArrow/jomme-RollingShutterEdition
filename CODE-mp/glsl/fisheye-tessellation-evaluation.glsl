@@ -2,6 +2,7 @@
 //#extension GL_ARB_tessellation_shader : enable
 
 #define TEXTURE_COUNT 6
+#define VEC3_ATTRIBUTE_COUNT 2
 
 //layout(quads, equal_spacing, ccw) in;
 layout(triangles, equal_spacing, ccw) in;
@@ -12,11 +13,13 @@ out vec4 color;
 
 out geomTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } geomTexCoord;
 
 //in vec4 vertexTexCoord[];
 in vertexTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } vertexTexCoord[];
 
 in vec4 colorTCS[];
@@ -64,7 +67,10 @@ void main()
   //color = vec4(1,1,1,1);
   //geomTexCoord = teUv;
   //geomTexCoord = vertexTexCoord;
-
+  
+	for(int i=0;i<VEC3_ATTRIBUTE_COUNT;i++){
+		geomTexCoord.attribs[i] = (gl_TessCoord.x * vertexTexCoord[0].attribs[i] + gl_TessCoord.y * vertexTexCoord[1].attribs[i] + gl_TessCoord.z * vertexTexCoord[2].attribs[i]);
+	}
   
   //worldModelViewMatrixReverse = (gl_TessCoord.x * worldModelViewMatrixReverseTCS[0] + gl_TessCoord.y * worldModelViewMatrixReverseTCS[1] + gl_TessCoord.z * worldModelViewMatrixReverseTCS[2]);
   worldModelViewMatrixReverse = worldModelViewMatrixReverseTCS[0];

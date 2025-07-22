@@ -44,6 +44,7 @@ uniform sampler2D text_in11;
 
 in vec3 debugColor;
 varying vec4 vertColor;
+varying vec3 lightDir;
 in vec3 texUVTransform[2];
 
 

@@ -2,12 +2,14 @@
 #extension GL_ARB_tessellation_shader : enable
 
 #define TEXTURE_COUNT 6
+#define VEC3_ATTRIBUTE_COUNT 2
 
 layout(vertices = 3) out;
 
 //in vec4 texCoord[];
 in texCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } texCoord[];
 
 in vec4 colorVertex[];
@@ -15,6 +17,7 @@ in vec4 colorVertex[];
 //out vec4 vertexTexCoord[];
 out vertexTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } vertexTexCoord[];
 
 out vec4 colorTCS[];
@@ -163,6 +166,9 @@ void main()
 	vertexTexCoord[gl_InvocationID].coord[3] = texCoord[gl_InvocationID].coord[3];
 	vertexTexCoord[gl_InvocationID].coord[4] = texCoord[gl_InvocationID].coord[4];
 	vertexTexCoord[gl_InvocationID].coord[5] = texCoord[gl_InvocationID].coord[5];
+	for(int i=0;i<VEC3_ATTRIBUTE_COUNT;i++){
+		vertexTexCoord[gl_InvocationID].attribs[i] = texCoord[gl_InvocationID].attribs[i];
+	}
 	colorTCS[gl_InvocationID] = colorVertex[gl_InvocationID];
 
 
