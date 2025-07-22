@@ -1006,8 +1006,10 @@ void main(void)
 	if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0){
 		
 		//gl_FragColor.xyz = lightDir+vec3(1.0f);
-		gl_FragColor.xyz = normalize(lightDir)+vec3(1.0f);
+		//gl_FragColor.xyz = normalize(lightDir)+vec3(1.0f);
+		//gl_FragColor.x = dot(lightDir,worldNormal);
 		//gl_FragColor.x = dot(normalize(lightDir),worldNormal);
+		gl_FragColor.xyz = vec3(max(dot(lightDir,worldNormal),0.0f));
 		//gl_FragColor.xyz = vec3(max(dot(normalize(lightDir),worldNormal),0.0f));
 		return;
 	}
