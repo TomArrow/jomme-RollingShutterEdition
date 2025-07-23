@@ -409,6 +409,8 @@ typedef struct {
 
 	waveForm_t		rgbWave;
 	colorGen_t		rgbGen;
+	vec3_t			rgbMult;
+	qboolean		rgbMultSet;
 
 	waveForm_t		alphaWave;
 	alphaGen_t		alphaGen;

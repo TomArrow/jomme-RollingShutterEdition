@@ -1521,6 +1521,19 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			}
 		}
 		//
+		// rgbMult (TA mod)
+		//
+		else if ( !Q_stricmp( token, "rgbMult" ) )
+		{
+			vec3_t	color;
+			if (ParseVector(text, 3, color)) {
+				stage->rgbMult[0] = 255.0f * color[0];
+				stage->rgbMult[1] = 255.0f * color[1];
+				stage->rgbMult[2] = 255.0f * color[2];
+				stage->rgbMultSet = qtrue;
+			}
+		}
+		//
 		// alphaGen 
 		//
 		else if ( !Q_stricmp( token, "alphaGen" ) )

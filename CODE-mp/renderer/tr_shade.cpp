@@ -1272,7 +1272,8 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 	color4f_t	*colors = tess.svars.colors;
 	qboolean killGen = qfalse;
 	qboolean isLit = qtrue;
-	float variousStuffMultiplier = 1.0f;
+	//float variousStuffMultiplier = 1.0f;
+	vec3_t variousStuffMultiplier = {1.0f,1.0f,1.0f};
 
 	if ( tess.shader != tr.projectionShadowShader && tess.shader != tr.shadowShader && 
 			( backEnd.currentEntity->e.renderfx & (RF_DISINTEGRATE1|RF_DISINTEGRATE2)))
@@ -1456,30 +1457,34 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 
 	}
 
-	
+	if (pStage->rgbMultSet) {
+		variousStuffMultiplier[0] *= pStage->rgbMult[0];
+		variousStuffMultiplier[1] *= pStage->rgbMult[1];
+		variousStuffMultiplier[2] *= pStage->rgbMult[2];
+	}
 
 	if (isHUD && r_HUDBrightness->value != 1.0f) { // Brightness scaling for HUD elements
-		variousStuffMultiplier *= r_HUDBrightness->value;
+		VectorScale(variousStuffMultiplier, r_HUDBrightness->value, variousStuffMultiplier);
 	}
 
 	if ((shaderFlags & SHAD_LEFTRIGHTHUD) && r_HUDBrightnessOld->value != 1.0f) { // Brightness scaling for HUD elements
-		variousStuffMultiplier *= r_HUDBrightnessOld->value;
+		VectorScale(variousStuffMultiplier, r_HUDBrightnessOld->value, variousStuffMultiplier);
 	}
 
 	if (tess.shader->hasLightmapStage && r_LightmapBrightness->value != 1.0f) {
-		variousStuffMultiplier *= r_LightmapBrightness->value;
+		VectorScale(variousStuffMultiplier, r_LightmapBrightness->value, variousStuffMultiplier);
 	}
 
 	if ((/*isLit ||*/ tess.shader->hasLightmapStage) && r_LightBrightness->value != 1.0f) {
-		variousStuffMultiplier *= r_LightBrightness->value;
+		VectorScale(variousStuffMultiplier, r_LightBrightness->value, variousStuffMultiplier);
 	}
-
-	if (variousStuffMultiplier != 1.0f) {
+	
+	if (variousStuffMultiplier[0] != 1.0f || variousStuffMultiplier[1] != 1.0f || variousStuffMultiplier[2] != 1.0f) {
 		for (i = 0; i < tess.numVertexes; i++)
 		{
-			tess.svars.colors[i][0] *= variousStuffMultiplier;
-			tess.svars.colors[i][1] *= variousStuffMultiplier;
-			tess.svars.colors[i][2] *= variousStuffMultiplier;
+			tess.svars.colors[i][0] *= variousStuffMultiplier[0];
+			tess.svars.colors[i][1] *= variousStuffMultiplier[1];
+			tess.svars.colors[i][2] *= variousStuffMultiplier[2];
 		}
 	}
 
