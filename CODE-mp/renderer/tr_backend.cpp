@@ -235,6 +235,11 @@ void GL_State( unsigned long stateBits )
 	unsigned long rawStateBits = stateBits;
 	unsigned long diff;
 
+	if ((g_bRenderedZPrepass || g_bRenderZPrepass) && (stateBits & GLS_DEPTHMASK_TRUE) && (stateBits & (GLS_DSTBLEND_BITS|GLS_SRCBLEND_BITS))) {
+		// depthwrite on trarnsparent surfaces is used by some shaders but with z prepass it causes issues
+		stateBits &= ~(GLS_DEPTHMASK_TRUE);
+	}
+
 	if (g_bRenderedZPrepass) {
 		// we have a z prepass for this!
 		if (stateBits & GLS_DEPTHMASK_TRUE && !(stateBits & GLS_DEPTHTEST_DISABLE)) { // GLS_DEPTHTEST_DISABLE shouldn't apply i think (its for GUI) but lets be safe
