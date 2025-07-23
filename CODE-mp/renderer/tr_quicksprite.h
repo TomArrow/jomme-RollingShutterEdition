@@ -25,6 +25,7 @@ private:
 			vec2_t			mTextureCoords[SHADER_MAX_VERTEXES];	// Ideally this would be static, cause it never changes
 			vec2_t			mFogTextureCoords[SHADER_MAX_VERTEXES];
 			color4f_t		mColors[SHADER_MAX_VERTEXES];
+			vec3_t			mLightDirs[SHADER_MAX_VERTEXES];
 			color4f_t		mColorsScaled[SHADER_MAX_VERTEXES];
 			int				mNextVert;
 			int				mNextIndex;
@@ -38,7 +39,7 @@ public:
 			void StartGroup(textureBundle_t *bundle, unsigned long glbits, unsigned long fogcolor=0x00000000);
 			void EndGroup(void);
 
-			void Add(float *pointdata, color4f_t color, vec2_t fog=NULL);
+			void Add(float *pointdata, color4f_t color, vec3_t lightdir, vec2_t fog=NULL);
 };
 
 extern CQuickSpriteSystem SQuickSprite;

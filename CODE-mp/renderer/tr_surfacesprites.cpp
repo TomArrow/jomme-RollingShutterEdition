@@ -311,8 +311,8 @@ qboolean SSUsingFog=qfalse;
 /////////////////////////////////////////////
 // Vertical surface sprites
 
-static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte light, 
-										byte alpha, float wind, float windidle, vec2_t fog, int hangdown, vec2_t skew, bool flattened)
+static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, vec3_t light, vec3_t lightDir,
+										float alpha, float wind, float windidle, vec2_t fog, int hangdown, vec2_t skew, bool flattened)
 {
 	vec3_t loc2, right;
 	float angle;
@@ -377,9 +377,9 @@ static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte
 		VectorScale(ssrightvectors[rightvectorcount], width * 0.5f, right);
 	}
 
-	color[0]=light;
-	color[1]=light;
-	color[2]=light;
+	color[0]=light[0];
+	color[1]=light[1];
+	color[2]=light[2];
 	color[3]=alpha;
 
 	// Bottom right
@@ -411,11 +411,11 @@ static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte
 	points[15] = 0;
 
 	// Add the sprite to the render list.
-	SQuickSprite.Add(points, color, fog);
+	SQuickSprite.Add(points, color, lightDir, fog);
 }
 
-static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float height, byte light, 
-												byte alpha, float wind, float windidle, vec2_t fog, 
+static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float height, vec3_t light, vec3_t lightDir,
+												float alpha, float wind, float windidle, vec2_t fog, 
 												int hangdown, vec2_t skew, vec2_t winddiff, float windforce, bool flattened)
 {
 	vec3_t loc2, right;
@@ -469,9 +469,9 @@ static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float hei
 		VectorScale(ssrightvectors[rightvectorcount], width * 0.5f, right);
 	}
 
-	color[0]=light;
-	color[1]=light;
-	color[2]=light;
+	color[0]=light[0];
+	color[1]=light[1];
+	color[2]=light[2];
 	color[3]=alpha;
 
 	// Bottom right
@@ -503,7 +503,7 @@ static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float hei
 	points[15] = 0;
 
 	// Add the sprite to the render list.
-	SQuickSprite.Add(points, color, fog);
+	SQuickSprite.Add(points, color, lightDir, fog);
 }
 
 static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input) 
@@ -515,10 +515,13 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 	vec3_t v1,v2,v3;
 	float a1,a2,a3;
-	float l1,l2,l3;
+	vec3_t l1,l2,l3;
 	vec2_t fog1, fog2, fog3;
 	vec2_t winddiff1, winddiff2, winddiff3;
 	float  windforce1, windforce2, windforce3;
+
+	vec3_t ld1, ld2, ld3;
+	vec3_t lightdir;
 
 	float posi, posj;
 	float step;
@@ -526,7 +529,8 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 	vec3_t curpoint;
 	float width, height;
-	float alpha, alphapos, thisspritesfadestart, light;
+	float alpha, alphapos, thisspritesfadestart;
+	vec3_t light;
 
 	byte randomindex2;
 
@@ -611,7 +615,9 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 				continue;
 			}
 		}
-		l1 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l1);
+		VectorCopy(input->lightdir[curvert], ld1);
+		//l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
 		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -635,7 +641,9 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 				continue;
 			}
 		}
-		l2 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l2);
+		VectorCopy(input->lightdir[curvert], ld2);
+		//l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
 		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -659,7 +667,9 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 				continue;
 			}
 		}
-		l3 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l3);
+		VectorCopy(input->lightdir[curvert], ld3);
+		//l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
 		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -742,11 +752,18 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 					VectorMA(curpoint, fb, v2, curpoint);
 					VectorMA(curpoint, fc, v3, curpoint);
 
-					light = l1*fa + l2*fb + l3*fc;
+					light[0] = l1[0]*fa + l2[0]*fb + l3[0]*fc;
+					light[1] = l1[1]*fa + l2[1]*fb + l3[1]*fc;
+					light[2] = l1[2]*fa + l2[2]*fb + l3[2]*fc;
+					lightdir[0] = ld1[0]*fa + ld2[0]*fb + ld3[0]*fc;
+					lightdir[1] = ld1[1]*fa + ld2[1]*fb + ld3[1]*fc;
+					lightdir[2] = ld1[2]*fa + ld2[2]*fb + ld3[2]*fc;
 					if (SSAdditiveTransparency)
 					{	// Additive transparency, scale light value
 //						light *= alpha;
-						light = (128 + (light*0.5))*alpha;
+						light[0] = (128 + (light[0]*0.5))*alpha;
+						light[1] = (128 + (light[1]*0.5))*alpha;
+						light[2] = (128 + (light[2]*0.5))*alpha;
 						alpha = 1.0;
 					}
 
@@ -772,13 +789,13 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 					{
 						if (SSUsingFog)
 						{
-							RB_VerticalSurfaceSpriteWindPoint(curpoint, width, height, (byte)light, (byte)(alpha*255.0), 
+							RB_VerticalSurfaceSpriteWindPoint(curpoint, width, height, light, lightdir, (alpha * 255.0),
 										stage->ss.wind, stage->ss.windIdle, fogv, stage->ss.facing, skew,
 										winddiffv, windforce, SURFSPRITE_FLATTENED == stage->ss.surfaceSpriteType);
 						}
 						else
 						{
-							RB_VerticalSurfaceSpriteWindPoint(curpoint, width, height, (byte)light, (byte)(alpha*255.0), 
+							RB_VerticalSurfaceSpriteWindPoint(curpoint, width, height, light, lightdir, (alpha*255.0),
 										stage->ss.wind, stage->ss.windIdle, NULL, stage->ss.facing, skew, 
 										winddiffv, windforce, SURFSPRITE_FLATTENED == stage->ss.surfaceSpriteType);
 						}
@@ -787,12 +804,12 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 					{
 						if (SSUsingFog)
 						{
-							RB_VerticalSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0), 
+							RB_VerticalSurfaceSprite(curpoint, width, height, light, lightdir, (alpha*255.0),
 										stage->ss.wind, stage->ss.windIdle, fogv, stage->ss.facing, skew, SURFSPRITE_FLATTENED == stage->ss.surfaceSpriteType);
 						}
 						else
 						{
-							RB_VerticalSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0), 
+							RB_VerticalSurfaceSprite(curpoint, width, height, light, lightdir, (alpha*255.0),
 										stage->ss.wind, stage->ss.windIdle, NULL, stage->ss.facing, skew, SURFSPRITE_FLATTENED == stage->ss.surfaceSpriteType);
 						}
 					}
@@ -808,15 +825,15 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 /////////////////////////////////////////////
 // Oriented surface sprites
 
-static void RB_OrientedSurfaceSprite(vec3_t loc, float width, float height, byte light, byte alpha, vec2_t fog, int faceup)
+static void RB_OrientedSurfaceSprite(vec3_t loc, float width, float height, vec3_t light, vec3_t lightDir, float alpha, vec2_t fog, int faceup)
 {
 	vec3_t loc2, right;
 	float points[16];
 	color4f_t color;
 
-	color[0]=light;
-	color[1]=light;
-	color[2]=light;
+	color[0]=light[0];
+	color[1]=light[1];
+	color[2]=light[2];
 	color[3]=alpha;
 
 	if (faceup)
@@ -887,7 +904,7 @@ static void RB_OrientedSurfaceSprite(vec3_t loc, float width, float height, byte
 	}
 
 	// Add the sprite to the render list.
-	SQuickSprite.Add(points, color, fog);
+	SQuickSprite.Add(points, color, lightDir, fog);
 }
 
 static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input) 
@@ -899,7 +916,8 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 	vec3_t v1,v2,v3;
 	float a1,a2,a3;
-	float l1,l2,l3;
+	vec3_t l1,l2,l3;
+	vec3_t ld1,ld2,ld3;
 	vec2_t fog1, fog2, fog3;
 
 	float posi, posj;
@@ -908,9 +926,11 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 	vec3_t curpoint;
 	float width, height;
-	float alpha, alphapos, thisspritesfadestart, light;
+	float alpha, alphapos, thisspritesfadestart;
 	byte randomindex2;
 	vec2_t fogv;
+
+	vec3_t light, lightdir;
 	
 	float cutdist=stage->ss.fadeMax*rangescalefactor, cutdist2=cutdist*cutdist;
 	float fadedist=stage->ss.fadeDist*rangescalefactor, fadedist2=fadedist*fadedist;
@@ -951,7 +971,9 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		{
 			continue;
 		}
-		l1 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l1);
+		VectorCopy(input->lightdir[curvert], ld1);
+		//l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
 		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -962,7 +984,9 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		{
 			continue;
 		}
-		l2 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l2);
+		VectorCopy(input->lightdir[curvert], ld2);
+		//l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
 		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -973,7 +997,9 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		{
 			continue;
 		}
-		l3 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l3);
+		VectorCopy(input->lightdir[curvert], ld3);
+		//l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
 		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
 		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
@@ -1043,11 +1069,18 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 					VectorMA(curpoint, fb, v2, curpoint);
 					VectorMA(curpoint, fc, v3, curpoint);
 
-					light = l1*fa + l2*fb + l3*fc;
+					light[0] = l1[0]*fa + l2[0]*fb + l3[0]*fc;
+					light[1] = l1[1]*fa + l2[1]*fb + l3[1]*fc;
+					light[2] = l1[2]*fa + l2[2]*fb + l3[2]*fc;
+					lightdir[0] = ld1[0] * fa + ld2[0] * fb + ld3[0] * fc;
+					lightdir[1] = ld1[1] * fa + ld2[1] * fb + ld3[1] * fc;
+					lightdir[2] = ld1[2] * fa + ld2[2] * fb + ld3[2] * fc;
 					if (SSAdditiveTransparency)
 					{	// Additive transparency, scale light value
 //						light *= alpha;
-						light = (128 + (light*0.5))*alpha;
+						light[0] = (128 + (light[0]*0.5))*alpha;
+						light[1] = (128 + (light[1]*0.5))*alpha;
+						light[2] = (128 + (light[2]*0.5))*alpha;
 						alpha = 1.0;
 					}
 
@@ -1065,11 +1098,11 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 					if (SSUsingFog)
 					{
-						RB_OrientedSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0), fogv, stage->ss.facing);
+						RB_OrientedSurfaceSprite(curpoint, width, height, light, lightdir, (alpha*255.0), fogv, stage->ss.facing);
 					}
 					else
 					{
-						RB_OrientedSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0), NULL, stage->ss.facing);
+						RB_OrientedSurfaceSprite(curpoint, width, height, light, lightdir, (alpha*255.0), NULL, stage->ss.facing);
 					}
 
 					totalsurfsprites++;
@@ -1083,15 +1116,15 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 /////////////////////////////////////////////
 // Effect surface sprites
 
-static void RB_EffectSurfaceSprite(vec3_t loc, float width, float height, byte light, byte alpha, float life, int faceup)
+static void RB_EffectSurfaceSprite(vec3_t loc, float width, float height, vec3_t light, vec3_t lightDir, float alpha, float life, int faceup)
 {
 	vec3_t loc2, right;
 	float points[16];
 	color4f_t color;
 
-	color[0]=light;	//light;
-	color[1]=light;	//light;
-	color[2]=light;	//light;
+	color[0]=light[0];	//light;
+	color[1]=light[1];	//light;
+	color[2]=light[2];	//light;
 	color[3]=alpha;	//alpha;
 
 	if (faceup)
@@ -1162,7 +1195,7 @@ static void RB_EffectSurfaceSprite(vec3_t loc, float width, float height, byte l
 	}
 
 	// Add the sprite to the render list.
-	SQuickSprite.Add(points, color, NULL);
+	SQuickSprite.Add(points, color, lightDir, NULL);
 }
 
 static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input) 
@@ -1174,7 +1207,8 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 
 	vec3_t v1,v2,v3;
 	float a1,a2,a3;
-	float l1,l2,l3;
+	vec3_t l1,l2,l3;
+	vec3_t ld1,ld2,ld3;
 
 	float posi, posj;
 	float step;
@@ -1184,8 +1218,11 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 
 	vec3_t curpoint;
 	float width, height;
-	float alpha, alphapos, thisspritesfadestart, light;
+	float alpha, alphapos, thisspritesfadestart;
 	byte randomindex2;
+
+	vec3_t light;
+	vec3_t lightdir;
 	
 	float cutdist=stage->ss.fadeMax*rangescalefactor, cutdist2=cutdist*cutdist;
 	float fadedist=stage->ss.fadeDist*rangescalefactor, fadedist2=fadedist*fadedist;
@@ -1257,7 +1294,9 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		{
 			continue;
 		}
-		l1 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l1);
+		VectorCopy(input->lightdir[curvert], ld1);
+		//l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
 
 		curvert = input->indexes[curindex+1];
@@ -1266,7 +1305,9 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		{
 			continue;
 		}
-		l2 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l2);
+		VectorCopy(input->lightdir[curvert], ld2);
+		//l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
 
 		curvert = input->indexes[curindex+2];
@@ -1275,7 +1316,9 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		{
 			continue;
 		}
-		l3 = input->vertexColorsRaw[curvert][2];
+		VectorCopy(input->vertexColorsRaw[curvert], l3);
+		VectorCopy(input->lightdir[curvert], ld3);
+		//l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
 
 		if (a1 <= 0.0f && a2 <= 0.0f && a3 <= 0.0f)
@@ -1338,7 +1381,12 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 					VectorMA(curpoint, fb, v2, curpoint);
 					VectorMA(curpoint, fc, v3, curpoint);
 
-					light = l1*fa + l2*fb + l3*fc;
+					light[0] = l1[0] * fa + l2[0] * fb + l3[0] * fc;
+					light[1] = l1[1] * fa + l2[1] * fb + l3[1] * fc;
+					light[2] = l1[2] * fa + l2[2] * fb + l3[2] * fc;
+					lightdir[0] = ld1[0] * fa + ld2[0] * fb + ld3[0] * fc;
+					lightdir[1] = ld1[1] * fa + ld2[1] * fb + ld3[1] * fc;
+					lightdir[2] = ld1[2] * fa + ld2[2] * fb + ld3[2] * fc;
 					randomindex2 = randomindex;
 					width = stage->ss.width*(1.0f + (stage->ss.variance[0]*randomchart[randomindex2]));
 					height = stage->ss.height*(1.0f + (stage->ss.variance[1]*randomchart[randomindex2++]));
@@ -1366,7 +1414,9 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 					if (SSAdditiveTransparency)
 					{	// Additive transparency, scale light value
 //						light *= alpha;
-						light = (128 + (light*0.5))*alpha;
+						light[0] = (128 + (light[0]*0.5))*alpha;
+						light[1] = (128 + (light[1]*0.5))*alpha;
+						light[2] = (128 + (light[2]*0.5))*alpha;
 						alpha = 1.0;
 					}
 
@@ -1384,11 +1434,11 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 						vec3_t drawpoint;
 
 						VectorMA(curpoint, effectpos*stage->ss.wind, curWindBlowVect, drawpoint);
-						RB_EffectSurfaceSprite(drawpoint, width, height, (byte)light, (byte)(alpha*255.0f), stage->ss.fxDuration, stage->ss.facing);
+						RB_EffectSurfaceSprite(drawpoint, width, height, light, lightdir, (alpha*255.0f), stage->ss.fxDuration, stage->ss.facing);
 					}
 					else
 					{
-						RB_EffectSurfaceSprite(curpoint, width, height, (byte)light, (byte)(alpha*255.0f), stage->ss.fxDuration, stage->ss.facing);
+						RB_EffectSurfaceSprite(curpoint, width, height, light, lightdir, (alpha*255.0f), stage->ss.fxDuration, stage->ss.facing);
 					}
 
 					totalsurfsprites++;

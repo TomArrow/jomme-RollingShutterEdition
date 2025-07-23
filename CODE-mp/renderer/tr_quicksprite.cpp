@@ -79,8 +79,8 @@ void CQuickSpriteSystem::Flush(void)
 	//qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, mColors );
 
 	qglVertexPointer (3, GL_FLOAT, 16, mVerts);
-	//qglEnableVertexAttribArray(10); // TODO
-	//qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
+	qglEnableVertexAttribArray(10); // TODO
+	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, mLightDirs);
 
 	if ( qglLockArraysEXT )
 	{
@@ -181,11 +181,12 @@ void CQuickSpriteSystem::EndGroup(void)
 
 
 
-void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec2_t fog)
+void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec3_t lightdir, vec2_t fog)
 {
 	float *curcoord;
 	float *curfogtexcoord;
 	color4f_t *curcolor;
+	vec3_t *curlightdir;
 	int i;
 #if TESTTRIANGLES
 	qboolean triangles = qtrue;
@@ -233,6 +234,13 @@ void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec2_t fog)
 	//*curcolor++ = *(unsigned long *)color;
 	//*curcolor++ = *(unsigned long *)color;
 	//*curcolor++ = *(unsigned long *)color;
+
+	// Set up color
+	curlightdir = &mLightDirs[mNextVert];
+	Vector4Copy(lightdir, *curlightdir); curlightdir++;
+	Vector4Copy(lightdir, *curlightdir); curlightdir++;
+	Vector4Copy(lightdir, *curlightdir); curlightdir++;
+	Vector4Copy(lightdir, *curlightdir); curlightdir++;
 
 	if (fog)
 	{
