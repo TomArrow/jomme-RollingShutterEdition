@@ -113,9 +113,11 @@ static	void R_ColorShiftLightingBytes( byte in[4], byte out[4] ) {
 	out[2] = b;
 	out[3] = in[3];
 }
+static const float onedividedby255 = 1.0f / 255.0f;
 
 static	void R_ColorShiftLightingToFloat( byte in[4], float out[4] ) {
-	int		shift=0, r, g, b;
+	int		shift = 0;
+	float r, g, b;
 	float	mult;
 
 	// should NOT do it if overbrightBits is 0
@@ -149,10 +151,27 @@ static	void R_ColorShiftLightingToFloat( byte in[4], float out[4] ) {
 	//	b = b * 255 / max;
 	//}
 
-	out[0] = r;
-	out[1] = g;
-	out[2] = b;
+	out[0] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
+	out[1] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
+	out[2] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
 	out[3] = in[3];
+}
+static	float R_ColorShiftLightingMultiplier( ) {
+	int		shift = 0;
+	float	mult;
+
+	// should NOT do it if overbrightBits is 0
+	if (tr.overbrightBits)
+		shift = 1 - tr.overbrightBits;
+
+	if (!shift)
+	{
+		return 1.0f;
+	}
+
+	mult = (float)(1<<shift);
+
+	return mult;
 }
 
 /*
@@ -432,6 +451,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	int					numPoints, numIndexes;
 	int					lightmapNum[MAXLIGHTMAPS];
 	int					sfaceSize, ofsIndexes;
+	float				hdrMult = R_ColorShiftLightingMultiplier();
 
 	for(i = 0; i < MAXLIGHTMAPS; i++)
 	{
@@ -468,7 +488,12 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	cv->ofsIndices = ofsIndexes;
 
 	verts += LittleLong( ds->firstVert );
-	hdrVertColorsDeluxe += LittleLong( ds->firstVert );
+	if (hdrVertColorsDeluxe) {
+		hdrVertColorsDeluxe += LittleLong( ds->firstVert );
+	}
+	if (hdrVertColors) {
+		hdrVertColors += LittleLong( ds->firstVert ) * 3;
+	}
 	for ( i = 0 ; i < numPoints ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			cv->points[i].xyz[j] = LittleFloat( verts[i].xyz[j] );
@@ -483,13 +508,13 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
 			if (hdrVertColorsDeluxe) {
-				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f, cv->points[i].color[k]);
+				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, cv->points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], cv->points[i].lightdir[k]);
 				cv->points[i].color[k][3] = 255.0f;
 			}
 			else if (hdrVertColors) {
 				if (k == 0) {
-					VectorScale((hdrVertColors + i * 3), 255.0f, cv->points[i].color[k]);
+					VectorScale((hdrVertColors + i * 3), 255.0f * hdrMult, cv->points[i].color[k]);
 				}
 				else {
 					VectorClear(cv->points[i].color[k]);
@@ -533,6 +558,7 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 	vec3_t					bounds[2];
 	vec3_t					tmpVec;
 	static surfaceType_t	skipData = SF_SKIP;
+	float					hdrMult = R_ColorShiftLightingMultiplier();
 
 	for(i=0;i<MAXLIGHTMAPS;i++)
 	{
@@ -559,7 +585,12 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 	height = LittleLong( ds->patchHeight );
 
 	verts += LittleLong( ds->firstVert );
-	hdrVertColorsDeluxe += LittleLong( ds->firstVert );
+	if (hdrVertColorsDeluxe) {
+		hdrVertColorsDeluxe += LittleLong(ds->firstVert);
+	}
+	if (hdrVertColors) {
+		hdrVertColors += LittleLong(ds->firstVert)*3;
+	}
 	numPoints = width * height;
 	for ( i = 0 ; i < numPoints ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
@@ -576,13 +607,13 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
 			if (hdrVertColorsDeluxe) {
-				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f, points[i].color[k]);
+				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], points[i].lightdir[k]);
 				points[i].color[k][3] = 255.0f;
 			}
 			else if (hdrVertColors) {
 				if (k == 0) {
-					VectorScale((hdrVertColors + i * 3), 255.0f, points[i].color[k]);
+					VectorScale((hdrVertColors + i * 3), 255.0f * hdrMult, points[i].color[k]);
 				}
 				else {
 					VectorClear(points[i].color[k]);
@@ -621,6 +652,7 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 	srfTriangles_t	*tri;
 	int				i, j, k;
 	int				numVerts, numIndexes;
+	float			hdrMult = R_ColorShiftLightingMultiplier();
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
@@ -647,7 +679,12 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 	// copy vertexes
 	ClearBounds( tri->bounds[0], tri->bounds[1] );
 	verts += LittleLong( ds->firstVert );
-	hdrVertColorsDeluxe += LittleLong( ds->firstVert );
+	if (hdrVertColorsDeluxe) {
+		hdrVertColorsDeluxe += LittleLong( ds->firstVert );
+	}
+	if (hdrVertColors) {
+		hdrVertColors += LittleLong( ds->firstVert )*3;
+	}
 	for ( i = 0 ; i < numVerts ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			tri->verts[i].xyz[j] = LittleFloat( verts[i].xyz[j] );
@@ -665,13 +702,13 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
 			if (hdrVertColorsDeluxe) {
-				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f, tri->verts[i].color[k]);
+				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, tri->verts[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], tri->verts[i].lightdir[k]);
 				tri->verts[i].color[k][3] = 255.0f;
 			}
 			else if (hdrVertColors) {
 				if (k == 0) {
-					VectorScale((hdrVertColors + i * 3), 255.0f, tri->verts[i].color[k]);
+					VectorScale((hdrVertColors + i * 3), 255.0f * hdrMult, tri->verts[i].color[k]);
 				}
 				else {
 					VectorClear(tri->verts[i].color[k]);
