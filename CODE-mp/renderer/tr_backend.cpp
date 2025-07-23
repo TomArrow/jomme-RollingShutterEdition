@@ -733,6 +733,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	shader_t		*shader, *oldShader;
 	int64_t			fogNum, oldFogNum;
 	int64_t			entityNum, oldEntityNum;
+	int64_t			oldSurfaceType = SF_BAD;
 	int64_t			dlighted, oldDlighted;
 	int				depthRange, oldDepthRange;
 	int				i;
@@ -836,6 +837,14 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			oldDlighted = dlighted;
 		}
 
+		if (entityNum == REFENTITYNUM_WORLD && *drawSurf->surface != oldSurfaceType) {
+			// this is kinda shitty. polys may have saame shaders as world in theory, and we may be unable to set uniforms separately.
+			// if that becomes a problem, maybe do an endsurface here or sth idk if the state of having lightdirs changes
+			bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
+			R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool);
+			oldSurfaceType = *drawSurf->surface;
+		}
+
 		//
 		// change the modelview matrix if needed
 		//
@@ -873,8 +882,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 				// vertex lightdir exists if hdr deluxe lightverts were provided
 				//R_FrameBuffer_SetDynamicUniforms2(tr.haveVertLightDirs ? &trueBool : &falseBool);
-				bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
-				R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool);
 				backEnd.currentEntity = &tr.worldEntity;
 				backEnd.refdef.floatTime = originalTime;
 				backEnd.ori = backEnd.viewParms.world;

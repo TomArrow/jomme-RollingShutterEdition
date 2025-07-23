@@ -1013,7 +1013,7 @@ void main(void)
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
 	vec4 color;
 	
-	bool vertexLit = haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
+	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 
     if(fishEyeModeUniform == 0){
 	
