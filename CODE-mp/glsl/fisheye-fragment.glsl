@@ -747,6 +747,39 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 #endif
 
 
+// direction mustt be in eye space and normalized
+vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
+
+	//if((stageLightmapBitmaskUniform & (1<<2))>0)
+	{
+		
+		//if(true){
+			
+			float alignment = max(0.0f,dot(lightNormal,(direction).xyz));
+			//float alignment = dot(worldLightNormal,direction.xyz);
+
+
+			//do some specular
+			vec3 lightVector1Norm = -normalize(direction.xyz);
+			vec3 mirroredVec = lightVector1Norm - 2.0*lightNormal*dot(lightVector1Norm,lightNormal);
+			vec3 mirroredVecNorm = normalize(mirroredVec);
+
+			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
+			
+			// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
+			specIntensity *= specIntensitySchlickMult;
+			
+			float totalDist = viewerDistance; // + dist // dont know distance to light
+			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
+			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/totalDist;
+
+			color *=alignment*alignment*alignment+specIntensityTotal;
+
+		//}
+	}
+	return color;
+}
+
 vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
 	vec4 color;
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
@@ -979,6 +1012,9 @@ void main(void)
 	vec2 uvCoords = gl_TexCoord[0].st;
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
 	vec4 color;
+	
+	bool vertexLit = haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
+
     if(fishEyeModeUniform == 0){
 	
 		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
@@ -988,14 +1024,21 @@ void main(void)
 		}
 		color = texture2D(text_in0, uvCoords);
 
-		gl_FragColor = color*vertColor; 
+		gl_FragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
 		
 	} else {
 		
 		color = texture2D(text_in0, uvCoords);
-		gl_FragColor = color*vertColor; 
+		gl_FragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
+	}
+
+	vec4 vertexLitMult = vec4(1.0f);
+	if(vertexLit){
+		vertexLitMult = vertColor;
+	} else {
+		gl_FragColor *= vertColor;
 	}
 	
 	//if((stageLightmapBitmaskUniform & (1<<6))>0){
@@ -1003,16 +1046,16 @@ void main(void)
 		//gl_FragColor = texture2D(text_in6, gl_TexCoord[1].st);
 		//return;
 	//}
-	if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0){
+	//if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0){
 		
 		//gl_FragColor.xyz = lightDir+vec3(1.0f);
 		//gl_FragColor.xyz = normalize(lightDir)+vec3(1.0f);
 		//gl_FragColor.x = dot(lightDir,worldNormal);
 		//gl_FragColor.x = dot(normalize(lightDir),worldNormal);
-		gl_FragColor.xyz = vec3(max(dot(lightDir,worldNormal),0.0f));
+		//gl_FragColor.xyz = vec3(max(dot(lightDir,worldNormal),0.0f));
 		//gl_FragColor.xyz = vec3(max(dot(normalize(lightDir),worldNormal),0.0f));
-		return;
-	}
+		//return;
+	//}
 
 
 	float effectiveAlpha = color.w*vertColor.w;
@@ -1091,7 +1134,7 @@ void main(void)
 	vec3 baseColorForLightingReal = gl_FragColor.xyz;
 	vec3 baseColorForLighthmapLighting  = vec3(1.0);
 	vec3 baseColorForTexLighting  = gl_FragColor.xyz;
-	vec3 baseColorForLighting = haveLightmap ? baseColorForLighthmapLighting : baseColorForTexLighting;
+	vec3 baseColorForLighting = (vertexLit || haveLightmap) ? baseColorForLighthmapLighting : baseColorForTexLighting;
 
 	if(isWorldBrushUniform > 0){
 		// Bit of boring standard shadow and ambient occlusion to replace cg_shadows 1
@@ -1361,9 +1404,21 @@ void main(void)
 	}
 	
 	vec3 finalColor = gl_FragColor.xyz;
-	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
-	gl_FragColor.xyz -= boringShadowSubtractVal;
-	gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
+	if(vertexLit){
+		addValue *= baseColorForLightingReal;
+		vec3 eyeSpaceLightdir = normalize(rotatemat*lightDir);
+		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
+		//vertexLitMult.xyz -= boringShadowSubtractVal;
+		gl_FragColor.xyz -= boringShadowSubtractVal;
+		vertexLitMult.xyz += addValue;
+		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
+		gl_FragColor.xyz *= vertexLitMult.xyz;
+	} else {
+
+		gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
+		gl_FragColor.xyz -= boringShadowSubtractVal;
+		gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
+	}
 
 	vec4 color2 = vec4(0);
 	if(multitex){
