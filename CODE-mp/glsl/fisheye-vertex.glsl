@@ -21,6 +21,7 @@ out texCoord_interface {
 out vec4 colorVertex;
 
 layout(location = 10) in vec3 lightDirAttrib;
+layout(location = 11) in vec3 ambientLightAttrib;
 
 out geomTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
@@ -141,6 +142,7 @@ void equirectangular()
 	geomTexCoord.coord[4] = texCoord.coord[4] = gl_TexCoord[4] = gl_MultiTexCoord4;
 	geomTexCoord.coord[5] = texCoord.coord[5] = gl_TexCoord[5] = gl_MultiTexCoord5;
 	geomTexCoord.attribs[0] = texCoord.attribs[0] = lightDirAttrib;
+	geomTexCoord.attribs[1] = texCoord.attribs[1] = ambientLightAttrib;
 
 	color = gl_Color;
 	colorVertex = gl_Color;

@@ -1739,6 +1739,7 @@ struct shaderCommands_s
 //	byte		vertexAlphas[SHADER_MAX_VERTEXES][4];	// only used by SOF2 glass, go ahead and implement if you want
 	int			vertexDlightBits[SHADER_MAX_VERTEXES];
 	vec3_t		lightdir[SHADER_MAX_VERTEXES];
+	vec3_t		ambientLight[SHADER_MAX_VERTEXES];
 
 	stageVars_t	svars;
 
@@ -1981,7 +1982,7 @@ void	RB_CalcStretchTexCoords( const waveForm_t *wf, float *texCoords );
 void	RB_CalcColorFromEntity(float *dstColors );
 void	RB_CalcColorFromOneMinusEntity( float *dstColors );
 void	RB_CalcSpecularAlpha(float *alphas );
-void	RB_CalcDiffuseColor( float *colors, float* directions );
+void	RB_CalcDiffuseColor( float *colors, float* directions, float* ambientLightOut);
 void	RB_CalcDisintegrateColors( float *colors );
 void	RB_CalcDisintegrateVertDeform( void );
 

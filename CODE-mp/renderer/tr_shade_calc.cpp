@@ -1154,7 +1154,7 @@ void RB_CalcSpecularAlpha( float *alphas ) {
 **
 ** The basic vertex lighting calc
 */
-void RB_CalcDiffuseColor( float *colors, float* directions) {
+void RB_CalcDiffuseColor( float *colors, float* directions, float* ambientLightOut) {
 	int				i;
 	float			*v, *normal;
 	float			incoming, j;
@@ -1175,7 +1175,7 @@ void RB_CalcDiffuseColor( float *colors, float* directions) {
 	normal = tess.normal[0];
 
 	numVertexes = tess.numVertexes;
-	for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, directions+=3) {
+	for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, directions+=3, ambientLightOut +=3) {
 		// Debug
 
 		/*colors[i * 4 + 0] = 255;
@@ -1186,33 +1186,43 @@ void RB_CalcDiffuseColor( float *colors, float* directions) {
 
 		VectorCopy(ent->worldLightDir, directions);
 		
-		incoming = DotProduct (normal, lightDir);
-		if ( incoming <= 0 ) {
-			//VectorCopy( ambientLight, &colors[i * 4]); // TODO Is this correct?!?
-			Com_Memcpy(colors+i * 4,ambientLight,sizeof(vec3_t)); 
+
+		if (r_fboGLSL->integer && ENABLEGLSL) {
+			Com_Memcpy(colors + i * 4, directedLight, sizeof(vec3_t));
 			colors[i * 4 + 3] = 255;
-			//*(int *)&colors[i*4] = ambientLightInt;
-			continue;
-		} 
-		j = ( ambientLight[0] + incoming * directedLight[0] );
-		/*if ( j > 255 ) { // Todo: find way to not clamp this.
-			j = 255;
-		}*/
-		colors[i*4+0] = j;
+			VectorCopy(ambientLight, ambientLightOut);
+		}
+		else {
 
-		j = ( ambientLight[1] + incoming * directedLight[1] );
-		/*if ( j > 255 ) {
-			j = 255;
-		}*/
-		colors[i*4+1] = j;
+			incoming = DotProduct (normal, lightDir);
+			if ( incoming <= 0 ) {
+				//VectorCopy( ambientLight, &colors[i * 4]); // TODO Is this correct?!?
+				Com_Memcpy(colors+i * 4,ambientLight,sizeof(vec3_t)); 
+				colors[i * 4 + 3] = 255;
+				//*(int *)&colors[i*4] = ambientLightInt;
+				continue;
+			} 
 
-		j = ( ambientLight[2] + incoming * directedLight[2] );
-		/*if ( j > 255 ) {
-			j = 255;
-		}*/
-		colors[i*4+2] = j;
+			j = ( ambientLight[0] + incoming * directedLight[0] );
+			/*if ( j > 255 ) { // Todo: find way to not clamp this.
+				j = 255;
+			}*/
+			colors[i*4+0] = j;
 
-		colors[i*4+3] = 255;
+			j = ( ambientLight[1] + incoming * directedLight[1] );
+			/*if ( j > 255 ) {
+				j = 255;
+			}*/
+			colors[i*4+1] = j;
+
+			j = ( ambientLight[2] + incoming * directedLight[2] );
+			/*if ( j > 255 ) {
+				j = 255;
+			}*/
+			colors[i*4+2] = j;
+
+			colors[i*4+3] = 255;
+		}
 	}
 }
 

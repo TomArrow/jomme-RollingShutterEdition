@@ -292,6 +292,8 @@ static void DrawTris (shaderCommands_t *input) {
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
 	qglEnableVertexAttribArray(10);
 	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
+	qglEnableVertexAttribArray(11);
+	qglVertexAttribPointer(11, 3, GL_FLOAT, qfalse, 12, input->ambientLight);
 
 	if (qglLockArraysEXT) {
 		qglLockArraysEXT(0, input->numVertexes);
@@ -1073,6 +1075,8 @@ static void ProjectDlightTexture2( void ) {
 		qglVertexPointer (3, GL_FLOAT, 16, tess.xyz);	// padded for SIMD
 		qglEnableVertexAttribArray(10);
 		qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, tess.lightdir);
+		qglEnableVertexAttribArray(11);
+		qglVertexAttribPointer(11, 3, GL_FLOAT, qfalse, 12, tess.ambientLight);
 		if (qglLockArraysEXT)
 		{
 			qglLockArraysEXT(0, tess.numVertexes);
@@ -1350,7 +1354,7 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 			//Com_Memset( tess.svars.colors, tr.identityLightByte, tess.numVertexes * 4 );
 			break;
 		case CGEN_LIGHTING_DIFFUSE:
-			RB_CalcDiffuseColor( ( float * ) tess.svars.colors, (float*) tess.lightdir);
+			RB_CalcDiffuseColor( ( float * ) tess.svars.colors, (float*) tess.lightdir, (float*) tess.ambientLight);
 			break;
 		case CGEN_EXACT_VERTEX:
 			Com_Memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
@@ -1934,6 +1938,8 @@ void RB_StageIteratorGeneric( void )
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
 	qglEnableVertexAttribArray(10);
 	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
+	qglEnableVertexAttribArray(11);
+	qglVertexAttribPointer(11, 3, GL_FLOAT, qfalse, 12, input->ambientLight);
 	if (qglLockArraysEXT)
 	{
 		qglLockArraysEXT(0, input->numVertexes);
@@ -2020,7 +2026,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	//
 	// compute colors
 	//
-	RB_CalcDiffuseColor( (float* ) tess.svars.colors, (float*)tess.lightdir);
+	RB_CalcDiffuseColor( (float* ) tess.svars.colors, (float*)tess.lightdir, (float*)tess.ambientLight);
 
 	//
 	// log this call
@@ -2054,6 +2060,8 @@ void RB_StageIteratorVertexLitTexture( void )
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);
 	qglEnableVertexAttribArray(10);
 	qglVertexAttribPointer(10, 3, GL_FLOAT, qfalse, 12, input->lightdir);
+	qglEnableVertexAttribArray(11);
+	qglVertexAttribPointer(11, 3, GL_FLOAT, qfalse, 12, input->ambientLight);
 
 	if ( qglLockArraysEXT )
 	{

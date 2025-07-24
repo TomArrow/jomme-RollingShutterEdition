@@ -11,6 +11,23 @@
 
 #define PERLINFVCKERY 1
 
+#define	CGEN_BAD 0
+#define	CGEN_IDENTITY_LIGHTING 1	// tr.identityLight
+#define	CGEN_IDENTITY 2		// always (1 11 11 11)
+#define	CGEN_ENTITY 3			// grabbed from entity's modulate field
+#define	CGEN_ONE_MINUS_ENTITY 4	// grabbed from 1 - entity.modulate
+#define	CGEN_EXACT_VERTEX 5		// tess.vertexColors
+#define	CGEN_VERTEX 6			// tess.vertexColors * tr.identityLight
+#define	CGEN_ONE_MINUS_VERTEX 7
+#define	CGEN_WAVEFORM 8			// programmatically generated
+#define	CGEN_LIGHTING_DIFFUSE 9
+#define	CGEN_FOG 10				// standard fog
+#define	CGEN_CONST 11				// fixed color
+#define	CGEN_LIGHTMAP0 12
+#define	CGEN_LIGHTMAP1 13
+#define	CGEN_LIGHTMAP2 14
+#define	CGEN_LIGHTMAP3 15
+
 //need 420 if we wanna try
 //layout(early_fragment_tests) in;
 
@@ -45,11 +62,12 @@ uniform sampler2D text_in11;
 in vec3 debugColor;
 varying vec4 vertColor;
 varying vec3 lightDir;
+varying vec3 ambientLight;
 in vec3 texUVTransform[2];
 
 
 //flat in uint shadowLineLightBitmasks[1152];
-
+#define MULTDIVIDE255 0.0039215686274509803921568627451f
 
 uniform mat4x4 worldModelViewMatrixUniform;
 in mat4x4 worldModelViewMatrixReverseGeom;
@@ -750,6 +768,7 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 // direction mustt be in eye space and normalized
 vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
 
+	if(dot(direction,normal)<0) return vec4(0.0f);
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		
@@ -1408,6 +1427,10 @@ void main(void)
 		addValue *= baseColorForLightingReal;
 		vec3 eyeSpaceLightdir = normalize(rotatemat*lightDir);
 		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
+		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
+			//vertexLitMult.xyz +=ambientLight * MULTDIVIDE255;
+			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),normal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance).xyz * MULTDIVIDE255;
+		}
 		//vertexLitMult.xyz -= boringShadowSubtractVal;
 		gl_FragColor.xyz -= boringShadowSubtractVal;
 		vertexLitMult.xyz += addValue;

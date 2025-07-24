@@ -10,6 +10,7 @@
 float realDepth[3]; in vec4 color[3];
 varying out vec4 vertColor;
 varying out vec3 lightDir;
+varying out vec3 ambientLight;
 out vec3 debugColor;
 out vec3 texUVTransform[2];
 
@@ -215,6 +216,7 @@ void standard(vec3 myNormal){
 
 		vertColor = color[i];
 		lightDir = geomTexCoord[i].attribs[0];
+		ambientLight = geomTexCoord[i].attribs[1];
 		//vertColor.xyz += colorAdd;
 		//vertColor.x += redAdd;
 		EmitVertex();
@@ -332,6 +334,7 @@ void equirect(){
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			lightDir = geomTexCoord[i].attribs[0];
+			ambientLight = geomTexCoord[i].attribs[1];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
@@ -359,6 +362,7 @@ void equirect(){
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			lightDir = geomTexCoord[i].attribs[0];
+			ambientLight = geomTexCoord[i].attribs[1];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
@@ -382,6 +386,7 @@ void equirect(){
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			lightDir = geomTexCoord[i].attribs[0];
+			ambientLight = geomTexCoord[i].attribs[1];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
@@ -512,6 +517,7 @@ void fisheye(){
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
 			lightDir = geomTexCoord[i].attribs[0];
+			ambientLight = geomTexCoord[i].attribs[1];
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
