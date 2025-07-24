@@ -1,7 +1,7 @@
 #version 400 compatibility
 
 #define TEXTURE_COUNT 6
-#define VEC3_ATTRIBUTE_COUNT 2
+#define VEC3_ATTRIBUTE_COUNT 3
 
 uniform vec3 dofJitterUniform;
 uniform float dofFocusUniform;
@@ -22,6 +22,7 @@ out vec4 colorVertex;
 
 layout(location = 10) in vec3 lightDirAttrib;
 layout(location = 11) in vec3 ambientLightAttrib;
+layout(location = 12) in vec3 normalAttrib;
 
 out geomTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
@@ -143,6 +144,7 @@ void equirectangular()
 	geomTexCoord.coord[5] = texCoord.coord[5] = gl_TexCoord[5] = gl_MultiTexCoord5;
 	geomTexCoord.attribs[0] = texCoord.attribs[0] = lightDirAttrib;
 	geomTexCoord.attribs[1] = texCoord.attribs[1] = ambientLightAttrib;
+	geomTexCoord.attribs[2] = texCoord.attribs[2] = normalAttrib;
 
 	color = gl_Color;
 	colorVertex = gl_Color;

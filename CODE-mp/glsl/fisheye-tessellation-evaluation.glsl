@@ -2,7 +2,7 @@
 //#extension GL_ARB_tessellation_shader : enable
 
 #define TEXTURE_COUNT 6
-#define VEC3_ATTRIBUTE_COUNT 2
+#define VEC3_ATTRIBUTE_COUNT 3
 
 //layout(quads, equal_spacing, ccw) in;
 layout(triangles, equal_spacing, ccw) in;

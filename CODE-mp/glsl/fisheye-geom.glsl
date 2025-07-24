@@ -2,7 +2,7 @@
 #extension GL_ARB_shader_storage_buffer_object : enable
 
 #define TEXTURE_COUNT 6
-#define VEC3_ATTRIBUTE_COUNT 2
+#define VEC3_ATTRIBUTE_COUNT 3
 
 // Geometry Shader
 #extension GL_ARB_geometry_shader4 : enable
@@ -11,6 +11,8 @@ float realDepth[3]; in vec4 color[3];
 varying out vec4 vertColor;
 varying out vec3 lightDir;
 varying out vec3 ambientLight;
+varying out vec3 vertexNormal;
+//varying out vec3 worldVertexNormal;
 out vec3 debugColor;
 out vec3 texUVTransform[2];
 
@@ -31,6 +33,8 @@ out mat4x4 worldModelViewMatrixReverseGeom;
 
 out vec3 normal;
 out vec3 worldNormal;
+
+#define SETATTRIBS lightDir = geomTexCoord[i].attribs[0];ambientLight = geomTexCoord[i].attribs[1];vertexNormal = geomTexCoord[i].attribs[2];
 
 in vec4 eyeSpaceCoords[3];
 varying out vec4 eyeSpaceCoordsGeom;
@@ -215,8 +219,7 @@ void standard(vec3 myNormal){
 		pureVertexCoordsGeom = pureVertexCoords[i];
 
 		vertColor = color[i];
-		lightDir = geomTexCoord[i].attribs[0];
-		ambientLight = geomTexCoord[i].attribs[1];
+		SETATTRIBS
 		//vertColor.xyz += colorAdd;
 		//vertColor.x += redAdd;
 		EmitVertex();
@@ -333,8 +336,7 @@ void equirect(){
 			gl_TexCoord[4] = geomTexCoord[i].coord[4];
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
-			lightDir = geomTexCoord[i].attribs[0];
-			ambientLight = geomTexCoord[i].attribs[1];
+			SETATTRIBS
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
@@ -361,8 +363,7 @@ void equirect(){
 			gl_TexCoord[4] = geomTexCoord[i].coord[4];
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
-			lightDir = geomTexCoord[i].attribs[0];
-			ambientLight = geomTexCoord[i].attribs[1];
+			SETATTRIBS
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
@@ -385,8 +386,7 @@ void equirect(){
 			gl_TexCoord[4] = geomTexCoord[i].coord[4];
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
-			lightDir = geomTexCoord[i].attribs[0];
-			ambientLight = geomTexCoord[i].attribs[1];
+			SETATTRIBS
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];
@@ -516,8 +516,7 @@ void fisheye(){
 			gl_TexCoord[4] = geomTexCoord[i].coord[4];
 			gl_TexCoord[5] = geomTexCoord[i].coord[5];
 			vertColor = color[i];
-			lightDir = geomTexCoord[i].attribs[0];
-			ambientLight = geomTexCoord[i].attribs[1];
+			SETATTRIBS
 			
 			eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 			pureVertexCoordsGeom = pureVertexCoords[i];

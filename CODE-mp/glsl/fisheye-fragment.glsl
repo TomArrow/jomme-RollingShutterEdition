@@ -63,6 +63,7 @@ in vec3 debugColor;
 varying vec4 vertColor;
 varying vec3 lightDir;
 varying vec3 ambientLight;
+varying vec3 vertexNormal;
 in vec3 texUVTransform[2];
 
 
@@ -766,9 +767,9 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 
 
 // direction mustt be in eye space and normalized
-vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
+vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
 
-	if(dot(direction,normal)<0) return vec4(0.0f);
+	if(dot(direction,referenceNormal)<0) return vec4(0.0f);
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		
@@ -836,7 +837,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	return color;
 }
 
-vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition){
+vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal){
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
 		vec4 color = texture2D(text_in0, uvCoords);
@@ -844,7 +845,7 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition){
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 offset3d =  normalize(startPosition);
-		vec3 normalComponent = normal * dot(normal,offset3d);
+		vec3 normalComponent = referenceNormal * dot(referenceNormal,offset3d);
 		offset3d -= normalComponent; // project onto surface aka get rid of any 3d component that aligns with the normal of the surface
 		offset3d = normalize(offset3d)*0.1;
 
@@ -854,7 +855,7 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition){
 		vec4 color2 = texture2D(text_in0, uvCoords);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
-		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,normal))*0.1;
+		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
 		vec4 color3 = texture2D(text_in0, uvCoords);
@@ -1136,11 +1137,13 @@ void main(void)
 		//gl_FragColor.xyz+=eyeSpaceCoordsGeom.xyz/1000.0f; // cool effect lol
 	//}
 #endif
+	mat3 rotatemat = mat3(worldModelViewMatrixUniform);
+	
+	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? mat3(gl_ModelViewMatrix)*vertexNormal : normal; // can be normal instead. trying vertexnormal so things are smoother
 
 	//vec3 lightNormal = normal;
-	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos);
+	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightReferenceNormal);
 	
-	mat3 rotatemat = mat3(worldModelViewMatrixUniform);
 	//mat3 rotatematrev = mat3(worldModelViewMatrixReverseGeom);
 	//vec3 worldlightnormal = (rotatematrev*lightNormal).xyz;
 
@@ -1223,7 +1226,7 @@ void main(void)
 			bool lightVoxelPathChecked = false;
 			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dlightOrigin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
-			if(dot(lightVector1,normal) <= 0.0){
+			if(dot(lightVector1,lightReferenceNormal) <= 0.0){
 				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
 			}
 						
@@ -1424,17 +1427,19 @@ void main(void)
 	
 	vec3 finalColor = gl_FragColor.xyz;
 	if(vertexLit){
-		addValue *= baseColorForLightingReal;
+		//addValue *= baseColorForLightingReal;
 		vec3 eyeSpaceLightdir = normalize(rotatemat*lightDir);
-		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
+		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
 		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
 			//vertexLitMult.xyz +=ambientLight * MULTDIVIDE255;
-			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),normal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance).xyz * MULTDIVIDE255;
+			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance).xyz * MULTDIVIDE255;
 		}
 		//vertexLitMult.xyz -= boringShadowSubtractVal;
 		gl_FragColor.xyz -= boringShadowSubtractVal;
 		vertexLitMult.xyz += addValue;
 		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
+		addValue *= baseColorForLightingReal;
+		gl_FragColor.xyz += addValue;
 		gl_FragColor.xyz *= vertexLitMult.xyz;
 	} else {
 
