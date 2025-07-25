@@ -149,6 +149,7 @@ void GL_BindMultitexture( image_t *image0, GLuint env0, image_t *image1, GLuint 
 ** GL_Cull
 */
 void GL_Cull( int cullType ) {
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, cullType == CT_TWO_SIDED ? &trueBool : &falseBool);
 	if ( glState.faceCulling == cullType ) {
 		return;
 	}

@@ -779,6 +779,7 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 			float alignment = max(0.0f,dot(maybeMirroredLightNormal,(direction).xyz));
 			//float alignment = dot(worldLightNormal,direction.xyz);
 
+			float ambientFactor = twoSided ? 0.25f : 0.0f; // twosided is stuff like leafs etc. dont let them get totally black
 
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
@@ -794,7 +795,9 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
 			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/totalDist;
 
-			color *=alignment*alignment*alignment+specIntensityTotal;
+			color *= (1.0f-ambientFactor)*alignment*alignment*alignment+specIntensityTotal + ambientFactor;
+			//color *= alignment*alignment*alignment+specIntensityTotal;
+			//color *= 100.0f;
 
 		//}
 	}
@@ -1432,6 +1435,11 @@ void main(void)
 	
 	vec3 finalColor = gl_FragColor.xyz;
 	if(vertexLit){
+		//gl_FragColor.xyz *= vertexLitMult.xyz;
+		//if(twoSided){
+		//	gl_FragColor.x = 1.0f;
+		//}
+		//return;
 		//addValue *= baseColorForLightingReal;
 		vec3 eyeSpaceLightdir = normalize(rotatemat*lightDir);
 		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
