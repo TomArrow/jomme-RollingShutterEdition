@@ -711,7 +711,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen) {
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen, const bool* nocull) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -726,6 +726,14 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	}
 	if (stageColorGen) {
 		fbo.fishEyeData.stageColorGen = *stageColorGen;
+	}
+	if (nocull) {
+		if (*nocull) {
+			fbo.fishEyeData.renderFlags |= 4; // for grass and foliage and such
+		}
+		else {
+			fbo.fishEyeData.renderFlags &= ~4;
+		}
 	}
 
 	//if (!uniformsSet) {

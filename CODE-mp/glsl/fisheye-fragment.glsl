@@ -767,21 +767,22 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 
 
 // direction mustt be in eye space and normalized
-vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
-
-	if(dot(direction,referenceNormal)<0) return vec4(0.0f);
+vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided){
+	
+	vec3 maybeMirroredLightNormal = twoSided && dot(referenceNormal,direction) < 0 ? -lightNormal : lightNormal;
+	if(dot(direction,referenceNormal)<0 && !twoSided) return vec4(0.0f);
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		
 		//if(true){
 			
-			float alignment = max(0.0f,dot(lightNormal,(direction).xyz));
+			float alignment = max(0.0f,dot(maybeMirroredLightNormal,(direction).xyz));
 			//float alignment = dot(worldLightNormal,direction.xyz);
 
 
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
-			vec3 mirroredVec = lightVector1Norm - 2.0*lightNormal*dot(lightVector1Norm,lightNormal);
+			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredLightNormal*dot(lightVector1Norm,maybeMirroredLightNormal);
 			vec3 mirroredVecNorm = normalize(mirroredVec);
 
 			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
@@ -800,7 +801,7 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 	return color;
 }
 
-vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance){
+vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, bool havedeluxe, vec3 lightNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided){
 	vec4 color;
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
@@ -812,13 +813,14 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			//direction -= 0.5f;
 			//direction *= 2.0f;
 			direction = dirmat*direction;
-			float alignment = dot(lightNormal,(direction).xyz);
+			vec3 maybeMirroredLightNormal = twoSided && dot(normal,direction.xyz) < 0 ? -lightNormal : lightNormal;
+			float alignment = dot(maybeMirroredLightNormal,(direction).xyz);
 			//float alignment = dot(worldLightNormal,direction.xyz);
 
 
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
-			vec3 mirroredVec = lightVector1Norm - 2.0*lightNormal*dot(lightVector1Norm,lightNormal);
+			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredLightNormal*dot(lightVector1Norm,maybeMirroredLightNormal);
 			vec3 mirroredVecNorm = normalize(mirroredVec);
 
 			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
@@ -1024,6 +1026,8 @@ void main(void)
 #else 
 	int perlinFuckery = 0;
 #endif
+
+	bool twoSided = (renderFlagsUniform & 4) > 0;
 	
 	bool multitex = (stageImageBitmaskUniform & 2) > 0;
 	bool standAloneLightmap = !multitex && (stageLightmapBitmaskUniform & 1) > 0;
@@ -1226,12 +1230,13 @@ void main(void)
 			bool lightVoxelPathChecked = false;
 			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dlightOrigin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
-			if(dot(lightVector1,lightReferenceNormal) <= 0.0){
+			if(dot(lightVector1,lightReferenceNormal) <= 0.0 && !twoSided){
 				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
 			}
-						
+			
 			vec3 lightVectorNorm = normalize( lightVector1);
-			float intensity = max(dot(lightNormal,lightVectorNorm),0.0);
+			vec3 maybeMirroredLightNormal  = twoSided && dot(lightReferenceNormal,lightVectorNorm) < 0 ? -lightNormal : lightNormal;
+			float intensity = max(dot(maybeMirroredLightNormal,lightVectorNorm),0.0f);
 			float dist = length(lightVector1);
 
 			vec3 value = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius*50.0*dLightIntensityUniform)*intensity/(dist*dist);
@@ -1315,7 +1320,7 @@ void main(void)
 				vec3 lightVector1Norm = -lightVectorNorm;
 
 				// now mirror the lightVector around the normal
-				vec3 mirroredVec = lightVector1Norm - 2.0*lightNormal*dot(lightVector1Norm,lightNormal);
+				vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredLightNormal*dot(lightVector1Norm,maybeMirroredLightNormal);
 				vec3 mirroredVecNorm = normalize(mirroredVec);
 
 				float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
@@ -1394,16 +1399,16 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);		
+			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);		
+			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);		
+			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);			
+			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
 			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
@@ -1429,10 +1434,10 @@ void main(void)
 	if(vertexLit){
 		//addValue *= baseColorForLightingReal;
 		vec3 eyeSpaceLightdir = normalize(rotatemat*lightDir);
-		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
+		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
 		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
 			//vertexLitMult.xyz +=ambientLight * MULTDIVIDE255;
-			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance).xyz * MULTDIVIDE255;
+			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided).xyz * MULTDIVIDE255;
 		}
 		//vertexLitMult.xyz -= boringShadowSubtractVal;
 		gl_FragColor.xyz -= boringShadowSubtractVal;
@@ -1451,7 +1456,7 @@ void main(void)
 	vec4 color2 = vec4(0);
 	if(multitex){
 		if((stageLightmapBitmaskUniform & 2) >0){
-			color2 = getLightmapIntensity(text_in1,text_in6,gl_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<6)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance);
+			color2 = getLightmapIntensity(text_in1,text_in6,gl_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<6)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
 		} else{
 			color2 = texture2D(text_in1, gl_TexCoord[1].st);
 		}

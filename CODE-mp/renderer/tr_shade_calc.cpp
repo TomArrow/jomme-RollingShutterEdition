@@ -1190,7 +1190,7 @@ void RB_CalcDiffuseColor( float *colors, float* directions, float* ambientLightO
 		if (r_fboGLSL->integer && ENABLEGLSL) {
 			Com_Memcpy(colors + i * 4, directedLight, sizeof(vec3_t));
 			colors[i * 4 + 3] = 255;
-			VectorCopy(ambientLight, ambientLightOut);
+			VectorScale(ambientLight, r_LightBrightness->value, ambientLightOut);
 		}
 		else {
 
