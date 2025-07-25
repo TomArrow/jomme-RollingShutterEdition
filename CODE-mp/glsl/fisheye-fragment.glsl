@@ -1139,7 +1139,7 @@ void main(void)
 #endif
 	mat3 rotatemat = mat3(worldModelViewMatrixUniform);
 	
-	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? mat3(gl_ModelViewMatrix)*vertexNormal : normal; // can be normal instead. trying vertexnormal so things are smoother
+	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 
 	//vec3 lightNormal = normal;
 	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightReferenceNormal);
