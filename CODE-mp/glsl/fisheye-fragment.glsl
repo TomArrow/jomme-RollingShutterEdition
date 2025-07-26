@@ -1064,6 +1064,7 @@ void main(void)
 	vec4 vertexLitMult = vec4(1.0f);
 	if(vertexLit){
 		vertexLitMult = vertColor;
+		gl_FragColor.w *= vertColor.w;
 	} else {
 		gl_FragColor *= vertColor;
 	}
@@ -1433,21 +1434,17 @@ void main(void)
 		addValueForLightmap *= baseColorForLighting;
 	}
 	
-	vec3 finalColor = gl_FragColor.xyz;
 	if(vertexLit){
 		//gl_FragColor.xyz *= vertexLitMult.xyz;
 		//if(twoSided){
 		//	gl_FragColor.x = 1.0f;
 		//}
 		//return;
-		//addValue *= baseColorForLightingReal;
 		vec3 eyeSpaceLightdir = normalize(rotatemat*lightDir);
 		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
 		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
-			//vertexLitMult.xyz +=ambientLight * MULTDIVIDE255;
 			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided).xyz * MULTDIVIDE255;
 		}
-		//vertexLitMult.xyz -= boringShadowSubtractVal;
 		gl_FragColor.xyz -= boringShadowSubtractVal;
 		vertexLitMult.xyz += addValue;
 		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
