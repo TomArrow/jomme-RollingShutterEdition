@@ -315,6 +315,15 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 	}
 
 	if (!strcmp(value,var->string)) {
+
+		if ((var->flags & CVAR_LATCH) && var->latchedString) {
+			Com_Printf("Cvar %s is no longer latched to \"%s\".\n", var->name, var->latchedString);
+			Z_Free((void*)var->latchedString);
+			var->latchedString = NULL;
+			var->modified = qtrue;
+			var->modificationCount++;
+		}
+
 		return var;
 	}
 	// note what types of cvars have been modified (userinfo, archive, serverinfo, systeminfo)
