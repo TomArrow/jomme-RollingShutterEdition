@@ -730,37 +730,6 @@ static qboolean CM_LoadMap_Actual( const char *name, qboolean clientload, int *c
 	return qtrue;
 }
 
-template<size_t bits>
-class EzBitmask {
-	//byte data[(bits / 8) + 1] = { 0 };
-	const size_t dataSize = (bits / 8) + 1;
-	byte* data = new byte[dataSize]{ 0 };
-public:
-	~EzBitmask() {
-		if (data) {
-			delete[] data;
-		}
-	}
-	inline const bool operator [](size_t bit) {
-		return (data[(bit >> 3)] & (1 << (bit & 7)));
-	}
-	inline void setbit(size_t bit) {
-		data[(bit >> 3)] |= (1 << (bit & 7));
-	}
-	inline void clearbit(size_t bit) {
-		data[(bit >> 3)] &= ~(1 << (bit & 7));
-	}
-	inline const byte* getData(bool release) {
-		byte* retVal = data;
-		if (release) {
-			data = NULL;
-		}
-		return retVal;
-	}
-	inline const size_t getDataSize() {
-		return dataSize;
-	}
-};
 
 const byte* voxelGrid = NULL;
 size_t voxelGridSize = 0;

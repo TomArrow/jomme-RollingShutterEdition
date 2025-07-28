@@ -1005,6 +1005,77 @@ void RB_CalcScaleTexCoords( const float scale[2], float *st ) {
 	}
 }
 
+static void generateTransformationMatrixRow(vec3_t vec1i, vec3_t vec2i, vec3_t vec3i, float resultValue1, float resultValue2, float resultValue3, vec3_t transformVec) {
+
+	transformVec[0] = (vec2i[2] * vec3i[1] * resultValue1 - vec2i[1] * vec3i[2] * resultValue1 - vec1i[2] * vec3i[1] * resultValue2 + vec1i[1] * vec3i[2] * resultValue2 + vec1i[2] * vec2i[1] * resultValue3 - vec1i[1] * vec2i[2] * resultValue3) / (vec1i[2] * vec2i[1] * vec3i[0] - vec1i[1] * vec2i[2] * vec3i[0] - vec1i[2] * vec2i[0] * vec3i[1] + vec1i[0] * vec2i[2] * vec3i[1] + vec1i[1] * vec2i[0] * vec3i[2] - vec1i[0] * vec2i[1] * vec3i[2]);
+	transformVec[1] = (-vec2i[2] * vec3i[0] * resultValue1 + vec2i[0] * vec3i[2] * resultValue1 + vec1i[2] * vec3i[0] * resultValue2 - vec1i[0] * vec3i[2] * resultValue2 - vec1i[2] * vec2i[0] * resultValue3 + vec1i[0] * vec2i[2] * resultValue3) / (vec1i[2] * vec2i[1] * vec3i[0] - vec1i[1] * vec2i[2] * vec3i[0] - vec1i[2] * vec2i[0] * vec3i[1] + vec1i[0] * vec2i[2] * vec3i[1] + vec1i[1] * vec2i[0] * vec3i[2] - vec1i[0] * vec2i[1] * vec3i[2]);
+	transformVec[2] = (-vec2i[1] * vec3i[0] * resultValue1 + vec2i[0] * vec3i[1] * resultValue1 + vec1i[1] * vec3i[0] * resultValue2 - vec1i[0] * vec3i[1] * resultValue2 - vec1i[1] * vec2i[0] * resultValue3 + vec1i[0] * vec2i[1] * resultValue3) / (-vec1i[2] * vec2i[1] * vec3i[0] + vec1i[1] * vec2i[2] * vec3i[0] + vec1i[2] * vec2i[0] * vec3i[1] - vec1i[0] * vec2i[2] * vec3i[1] - vec1i[1] * vec2i[0] * vec3i[2] + vec1i[0] * vec2i[1] * vec3i[2]);
+
+}
+
+// Calculates matrix from 2 pairs of vectors that transforms the i vec3 ones to the o vec2 ones.
+static void makeUVTransformationMatrix(vec3_t vec1i, vec2_t vec1o, vec3_t vec2i, vec2_t vec2o, vec3_t vec3i, vec2_t vec3o, vec3_t matrix[2]) {
+
+	generateTransformationMatrixRow(vec1i, vec2i, vec3i, vec1o[0], vec2o[0], vec3o[0], matrix[0]);
+	generateTransformationMatrixRow(vec1i, vec2i, vec3i, vec1o[1], vec2o[1], vec3o[1], matrix[1]);
+}
+
+/*
+** RB_CalcParallaxTexCoords
+*/
+void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
+	int i,j;
+	static vec2_t stOutTmp[SHADER_MAX_VERTEXES]; // else we overwrite our own sources.
+	//static EzBitmask<SHADER_MAX_VERTEXES> verticesDone; // we have to do triangle after triangle, but they may share vertices. so don't douple dip on individual ones. this could cause issues in some cases but the only way to solve it is to prevent double-usage of vertices to begin wtih, so we can't do much more
+	//verticesDone.clear(tess.numVertexes);
+
+	vec3_t		viewer;
+	vec_t* p[3];
+	float* st[3];
+	vec2_t stVec1, stVec2;
+	vec3_t vec1, vec2;
+	vec3_t side1, side2;
+	vec3_t normal = { 0,0,0 };
+	vec3_t uvTransformMatrix[2];
+	float zComp;
+	for (i = 0; i < tess.numIndexes; i += 3) {
+		p[0] = tess.xyz[tess.indexes[i]];
+		p[1] = tess.xyz[tess.indexes[i+1]];
+		p[2] = tess.xyz[tess.indexes[i+2]];
+		st[0] = stAll + tess.indexes[i]*2;
+		st[1] = stAll + tess.indexes[i+1]*2;
+		st[2] = stAll + tess.indexes[i+2]*2;
+		//VectorAdd(tess.normal[tess.indexes[i]],normal,normal);
+		//VectorAdd(tess.normal[tess.indexes[i+1]],normal,normal);
+		//VectorAdd(tess.normal[tess.indexes[i+2]],normal,normal);
+		//VectorScale(normal,1.0/3.0f,normal);
+		VectorSubtract(p[2],p[1],side1);
+		VectorSubtract(p[2],p[0],side2);
+		CrossProduct(side1, side2, normal);
+		VectorNormalize(normal);
+		makeUVTransformationMatrix(p[0],st[0],p[1],st[1],p[2],st[2],uvTransformMatrix);
+
+		vec2_t sanityCheck; // should be equal to st1
+		sanityCheck[0] = DotProduct(uvTransformMatrix[0], p[0]);
+		sanityCheck[1] = DotProduct(uvTransformMatrix[1], p[0]);
+
+		for (j = 0; j < 3; j++) {
+			VectorSubtract(backEnd.ori.viewOrigin, p[j], viewer);
+			VectorNormalize(viewer);
+			VectorScale(viewer, offset, viewer);
+			zComp = DotProduct(viewer,normal);
+			VectorMA(viewer,-zComp,normal,viewer);
+			VectorAdd(p[j],viewer,viewer);
+			stOutTmp[tess.indexes[i + j]][0] = DotProduct(uvTransformMatrix[0], viewer);
+			stOutTmp[tess.indexes[i + j]][1] = DotProduct(uvTransformMatrix[1], viewer);
+		}
+
+	}
+
+	memcpy(stAll,stOutTmp,tess.numVertexes*sizeof(vec2_t));
+
+}
+
 /*
 ** RB_CalcScrollTexCoords
 */

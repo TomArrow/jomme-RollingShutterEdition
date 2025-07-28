@@ -571,6 +571,21 @@ static void ParseTexMod( const char *_text, shaderStage_t *stage )
 		tmi->type = TMOD_SCALE;
 	}
 	//
+	// TA mod: parallax. simulate depth.
+	//
+	else if ( !Q_stricmp( token, "parallax" ) )
+	{
+		token = COM_ParseExt( text, qfalse );
+		if ( token[0] == 0 )
+		{
+			ri.Printf( PRINT_WARNING, "WARNING: missing parallax distance parm in shader '%s'\n", shader.name );
+			return;
+		}
+		tmi->scale[0] = atof( token );
+
+		tmi->type = TMOD_PARALLAX;
+	}
+	//
 	// scroll
 	//
 	else if ( !Q_stricmp( token, "scroll" ) )

@@ -1706,6 +1706,11 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 				RB_CalcScaleTexCoords( pStage->bundle[b].texMods[tm].scale,
 									 ( float * ) tess.svars.texcoords[b] );
 				break;
+
+			case TMOD_PARALLAX:
+				RB_CalcParallaxTexCoords( pStage->bundle[b].texMods[tm].scale[0],
+									 ( float * ) tess.svars.texcoords[b] );
+				break;
 			
 			case TMOD_STRETCH:
 				RB_CalcStretchTexCoords( &pStage->bundle[b].texMods[tm].wave, 
