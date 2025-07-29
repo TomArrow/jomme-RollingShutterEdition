@@ -812,13 +812,11 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 		
 		if(havedeluxe){
 			vec4 direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
-			//direction = lightdirtransform*direction;
-			//direction -= 0.5f;
-			//direction *= 2.0f;
+			float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 			direction = dirmat*direction;
 			vec3 maybeMirroredLightNormal = twoSided && dot(normal,direction.xyz) < 0 ? -lightNormal : lightNormal;
 			float alignment = dot(maybeMirroredLightNormal,(direction).xyz);
-			//float alignment = dot(worldLightNormal,direction.xyz);
+			alignment /= max(0.00001,dot(normal,(direction).xyz));
 
 
 			//do some specular
