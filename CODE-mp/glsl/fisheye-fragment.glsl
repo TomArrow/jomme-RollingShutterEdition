@@ -814,9 +814,10 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			vec4 direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
 			float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 			direction = dirmat*direction;
+			float divider = max(0.00001,dot(normal,(direction).xyz));
 			vec3 maybeMirroredLightNormal = twoSided && dot(normal,direction.xyz) < 0 ? -lightNormal : lightNormal;
 			float alignment = dot(maybeMirroredLightNormal,(direction).xyz);
-			alignment /= max(0.00001,dot(normal,(direction).xyz));
+			color /= divider;
 
 
 			//do some specular
@@ -831,7 +832,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			
 			float totalDist = viewerDistance; // + dist // dont know distance to light
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
-			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/totalDist;
+			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/totalDist/divider;
 
 			color *=alignment*alignment*alignment+specIntensityTotal;
 
