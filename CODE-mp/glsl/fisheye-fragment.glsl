@@ -130,6 +130,7 @@ uniform int stageColorGenUniform;
 #define MYGL_MODULATE                       0x2100
 #define MYGL_DECAL                          0x2101
 #define MYGL_ADD							0x0104
+#define MYGL_REPLACE                        0x1E01
 uniform int stageImageBitmaskUniform;
 uniform int stageLightmapBitmaskUniform;
 uniform int multiTexModeUniform;
@@ -809,17 +810,20 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		color = texture2D(sampler, lmtexcoord);		
-		
+		//return color;
 		if(havedeluxe){
 			vec4 direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
 			//float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
-			direction = dirmat*direction;
-			float divider = max(0.00001,dot(normal,(direction).xyz));
+			//return direction;
+			direction = (dirmat*direction);
+			vec3 maybeMirroredNormal = twoSided && dot(normal,direction.xyz) < 0 ? -normal : normal;
+			float divider = max(0.05f,dot((maybeMirroredNormal),(direction).xyz)); // 0.05f because that's about the limit before we start seeing ugly seams at lightmaps/deluxemaps wrapping around corners/light bleeding.
 			vec3 maybeMirroredLightNormal = twoSided && dot(normal,direction.xyz) < 0 ? -lightNormal : lightNormal;
-			float alignment = dot(maybeMirroredLightNormal,(direction).xyz);
+			float alignment = max(0.05f,dot((maybeMirroredLightNormal),(direction).xyz));
 			alignment /= divider;
+			//return vec4(vec3(alignment),1.0f);
 			//color /= max(0.00001,dot(normal,(direction).xyz));
-
+			alignment = max(0.0f,alignment);
 
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
@@ -1474,6 +1478,9 @@ void main(void)
 			break;
 			case MYGL_MODULATE:
 				gl_FragColor *= color2;
+			break;
+			case MYGL_REPLACE:
+				gl_FragColor = color2;
 			break;
 		}
 	}

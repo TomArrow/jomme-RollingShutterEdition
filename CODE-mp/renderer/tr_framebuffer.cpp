@@ -689,6 +689,9 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 				}
 			}
 		}
+		if (r_lightmap->integer && fbo.fishEyeData.stageLightmapBitmask & (1<<1)) {
+			fbo.fishEyeData.multiTexMode = GL_REPLACE;
+		}
 	}
 	if (zPrepass) {
 		bool mustSwitchProgram = false;
