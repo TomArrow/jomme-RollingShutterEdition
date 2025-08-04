@@ -46,6 +46,8 @@
 precision highp int;
 #endif
 
+#define NUM_GLSL_EXTRA_LIGHTMAPS_MAX 14
+
 uniform sampler2D text_in0;
 uniform sampler2D text_in1;
 uniform sampler2D text_in2;
@@ -58,6 +60,22 @@ uniform sampler2D text_in8;
 uniform sampler2D text_in9;
 uniform sampler2D text_in10;
 uniform sampler2D text_in11;
+uniform sampler2D text_in12;
+uniform sampler2D text_in13;
+uniform sampler2D text_in14;
+uniform sampler2D text_in15;
+uniform sampler2D text_in16;
+uniform sampler2D text_in17;
+uniform sampler2D text_in18;
+uniform sampler2D text_in19;
+uniform sampler2D text_in20;
+uniform sampler2D text_in21;
+uniform sampler2D text_in22;
+uniform sampler2D text_in23;
+uniform sampler2D text_in24;
+uniform sampler2D text_in25;
+uniform sampler2D text_in26;
+uniform sampler2D text_in27;
 
 in vec3 debugColor;
 varying vec4 vertColor;
@@ -1407,16 +1425,16 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in7,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<7)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in17,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in8,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<8)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in18,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in9,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<9)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in19,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in10,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<10)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in20,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
 			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
@@ -1465,9 +1483,9 @@ void main(void)
 	vec4 color2 = vec4(0);
 	if(multitex){
 		if((stageLightmapBitmaskUniform & 2) >0){
-			color2 = getLightmapIntensity(text_in1,text_in6,gl_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<6)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
+			color2 = getLightmapIntensity(text_in1,text_in16,gl_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
 		} else{
-			color2 = texture2D(text_in1, gl_TexCoord[1].st);
+			color2 = texture2D(text_in16, gl_TexCoord[1].st);
 		}
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;

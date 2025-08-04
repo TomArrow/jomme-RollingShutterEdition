@@ -400,7 +400,9 @@ typedef struct {
 
 } textureBundle_t;
 
-#define NUM_TEXTURE_BUNDLES 6 // 2. i'm adding 2-5, 4 extra ones, because i want to do all the light styles in one go.
+#define NUM_GLSL_EXTRA_LIGHTMAPS_MAX 14
+
+#define NUM_TEXTURE_BUNDLES (2+NUM_GLSL_EXTRA_LIGHTMAPS_MAX) // 2. i'm adding 2-5, 4 extra ones, because i want to do all the light styles in one go. update: 14 now :) gonna do extra many ligthstyles
 
 typedef struct {
 	qboolean		active;

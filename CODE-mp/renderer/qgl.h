@@ -249,7 +249,9 @@ extern void (APIENTRYP qglDebugMessageCallback) (DEBUGPROC callback, const void*
 */
 #define GL_ACTIVE_TEXTURE_ARB               0x84E0
 #define GL_CLIENT_ACTIVE_TEXTURE_ARB        0x84E1
-#define GL_MAX_ACTIVE_TEXTURES_ARB          0x84E2
+#define GL_MAX_ACTIVE_TEXTURES_ARB          0x84E2 // this is same as GL_MAX_TEXTURE_UNITS
+#define GL_MAX_TEXTURE_UNITS                0x84E2 // this is same as GL_MAX_ACTIVE_TEXTURES_ARB
+#define GL_MAX_TEXTURE_IMAGE_UNITS          0x8872
 
 #define GL_TEXTURE0_ARB                     0x84C0
 #define GL_TEXTURE1_ARB                     0x84C1

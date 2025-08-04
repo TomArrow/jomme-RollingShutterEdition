@@ -66,7 +66,7 @@
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
-#define NUM_TEXTURE_SAMPLERS 12
+#define NUM_TEXTURE_SAMPLERS 28
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
@@ -683,7 +683,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 					fbo.fishEyeData.stageLightmapBitmask |= (1 << i);
 				}
 				if (stageInfoForMultipass->bundle[i].deluxeMapImage[0]) {
-					int actualIndex = i < 2 ? 6 : i + 5;
+					int actualIndex = i < 2 ? (2+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX) : (i + 1 + NUM_GLSL_EXTRA_LIGHTMAPS_MAX);
 					fbo.fishEyeData.stageImageBitmask |= (1 << actualIndex);
 					fbo.fishEyeData.stageLightmapBitmask |= (1 << actualIndex);
 				}

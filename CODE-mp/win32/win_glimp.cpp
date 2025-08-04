@@ -1545,7 +1545,8 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 
 			if ( qglActiveTextureARB )
 			{
-				qglGetIntegerv( GL_MAX_ACTIVE_TEXTURES_ARB, &glConfig.maxActiveTextures );
+				qglGetIntegerv( GL_MAX_TEXTURE_UNITS, &glConfig.maxActiveTextures );
+				qglGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS, &glConfig.maxActiveTextureUnits );
 
 				if ( glConfig.maxActiveTextures > 1 )
 				{

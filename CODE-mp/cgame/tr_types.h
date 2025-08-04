@@ -295,6 +295,7 @@ typedef struct {
 
 	int						maxTextureSize;			// queried from GL
 	int						maxActiveTextures;		// multitexture ability
+	int						maxActiveTextureUnits;	// multitexture ability - fragment shader units, more modern, higher value
 
 	int						colorBits, depthBits, stencilBits;
 
