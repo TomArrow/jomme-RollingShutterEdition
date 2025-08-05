@@ -1,6 +1,7 @@
 // cmodel.c -- model loading
 
 #include "cm_local.h"
+#include "rle.h"
 
 #ifdef BSPC
 
@@ -101,6 +102,7 @@ CMod_LoadSubmodels
 */
 #include "../server/server.h"
 #include "../client/client.h"
+#include <vector>
 void CMod_LoadSubmodels( lump_t *l ) {
 	dmodel_t	*in;
 	cmodel_t	*out;
@@ -743,8 +745,54 @@ uint32_t voxelGridUpdated = 0;
 static void CM_MakeVoxelGrid(const char* name) {
 
 	const char* voxelname = va("%s.voxels1",name);
+	const char* voxelnameRLE = va("%s.voxels1rle",name);
 	
-	if (FS_FileExists(voxelname)) {
+	if (FS_FileExists(voxelnameRLE)) {
+		Com_Printf("RLE voxels for %s exist\n", name);
+		fileHandle_t f;
+		int size = FS_FOpenFileRead(voxelnameRLE, &f, qtrue);
+		if (size > 8) {
+
+			if (voxelGrid) {
+				delete[] voxelGrid;
+			}
+			byte* data = new byte[size];
+
+			FS_Read(data, size, f);
+
+			uint64_t fullSize = *(uint64_t*)data;
+			uint64_t decompressedSize = 0;
+
+			byte* offsetData = data + 8;
+
+			byte* fullRawData = new byte[fullSize];
+
+			byte* offsetOutData = fullRawData;
+
+			while (decompressedSize < fullSize) {
+				uint32_t compressedSize = *(uint32_t*)offsetData;
+				uint32_t rawSize = *(uint32_t*)(offsetData + 4);
+				uint8_t* pDecompressedData = new uint8_t[rawSize + rle_decompress_additional_size()];
+				const uint32_t decompressedSizeHere = rle8_decompress(offsetData + 8, compressedSize, pDecompressedData, rawSize);
+				Com_Printf("RLE voxel segment decompressed from %d (%u) to %u (%u)\n", size, compressedSize, rawSize, decompressedSizeHere);
+				memcpy(offsetOutData,pDecompressedData,rawSize);
+				offsetOutData += rawSize;
+				decompressedSize += rawSize;
+				offsetData += compressedSize+8;
+				delete[] pDecompressedData;
+			}
+
+			delete[] data;
+
+
+			voxelGrid = fullRawData;
+			voxelGridSize = fullSize;
+			voxelGridUpdated = 0xffffffff;
+
+			FS_FCloseFile(f);
+		}
+		return;
+	} else if (FS_FileExists(voxelname)) {
 		Com_Printf("voxels for %s exist\n", name);
 		fileHandle_t f;
 		int size = FS_FOpenFileRead(voxelname, &f, qtrue);
@@ -867,9 +915,42 @@ static void CM_MakeVoxelGrid(const char* name) {
 	voxelGridSize = voxels->getDataSize();
 	voxelGridUpdated = 0xffffffff;
 
-	fileHandle_t f = FS_FOpenFileWrite(voxelname);
+	fileHandle_t f = FS_FOpenFileWrite(voxelnameRLE);
 	if (f > 0) {
-		FS_Write(voxelGrid, voxelGridSize, f);
+
+		std::vector<byte> output;
+
+		size_t remainingSize = voxelGridSize;
+
+		uint64_t fullSize = voxelGridSize;
+
+		output.insert(output.end(),(byte*)&fullSize, (byte*)&fullSize+8);
+
+		const byte* offsetData = voxelGrid;
+
+		while (remainingSize > 0) {
+
+			size_t segmentSize = min(1<<30ULL,remainingSize);
+			const uint32_t compressedBufferSize = rle_compress_bounds(segmentSize);
+			uint8_t* pCompressedData = (uint8_t*)malloc(compressedBufferSize + 8);
+
+			// Compress.
+			const uint32_t compressedSize = rle8_multi_compress(offsetData, segmentSize, pCompressedData + 8, compressedBufferSize);
+
+			offsetData += segmentSize;
+			remainingSize -= segmentSize;
+
+			*((uint32_t*)pCompressedData) = compressedSize;
+			*((uint32_t*)(pCompressedData + 4)) = segmentSize;
+
+			output.insert(output.end(), pCompressedData, pCompressedData + compressedSize + 8);
+
+			free(pCompressedData);
+		}
+
+		FS_Write(output.data(), output.size(), f);
+
+
 		FS_FCloseFile(f);
 	}
 	delete voxels;

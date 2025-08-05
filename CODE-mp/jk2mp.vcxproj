@@ -109,14 +109,14 @@
     <IntDir>.build\rs\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
     <ExtensionsToDeleteOnClean>$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
-    <IncludePath>.;..;$(ProjectDir)\libs\win32\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.;..;$(ProjectDir)\hypersonic-rle;$(ProjectDir)\libs\win32\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(WindowsSDK_LibraryPath_x86);$(ProjectDir)\libs\win32\libdebug;$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>.build\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
     <ExtensionsToDeleteOnClean>$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
-    <IncludePath>.;..;$(ProjectDir)\libs\win32\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>.;..;$(ProjectDir)\hypersonic-rle;$(ProjectDir)\libs\win32\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(WindowsSDK_LibraryPath_x64);$(ProjectDir)\libs\win64\libdebug;$(VC_LibraryPath_x64);$(WindowsSdk_71A_LibraryPath_x64);</LibraryPath>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\build\</OutDir>
@@ -125,26 +125,26 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\build\</OutDir>
     <IntDir>.build\rs\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-    <IncludePath>.;..;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
+    <IncludePath>.;..;$(ProjectDir)\hypersonic-rle;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\win32\lib;$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\build\</OutDir>
     <IntDir>.build\rs\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-    <IncludePath>.;..;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
+    <IncludePath>.;..;$(ProjectDir)\hypersonic-rle;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\win32\libreldebug;$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>.build\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-    <IncludePath>.;..;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
+    <IncludePath>.;..;$(ProjectDir)\hypersonic-rle;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\win64\lib;$(WindowsSdk_71A_LibraryPath_x64);</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\build\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|x64'">
     <IntDir>.build\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-    <IncludePath>.;..;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
+    <IncludePath>.;..;$(ProjectDir)\hypersonic-rle;$(ProjectDir)\libs\win32\include;$(WindowsSdk_71A_IncludePath);</IncludePath>
     <LibraryPath>$(ProjectDir)\libs\win64\libreldebug;$(WindowsSdk_71A_LibraryPath_x64);</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\build\</OutDir>
@@ -477,6 +477,23 @@
     <ClCompile Include="ghoul2\G2_bones.cpp" />
     <ClCompile Include="ghoul2\G2_misc.cpp" />
     <ClCompile Include="ghoul2\G2_surfaces.cpp" />
+    <ClCompile Include="hypersonic-rle\bit_mmtf.c" />
+    <ClCompile Include="hypersonic-rle\main.c" />
+    <ClCompile Include="hypersonic-rle\mmtf.c" />
+    <ClCompile Include="hypersonic-rle\rle128_extreme_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rle24_extreme_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rle48_extreme_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rle8_extreme_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rle8_low_entropy_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rle8_low_entropy_short_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rle8_mmtf.c" />
+    <ClCompile Include="hypersonic-rle\rle8_ocl.c" />
+    <ClCompile Include="hypersonic-rle\rleX_extreme_cpu.c" />
+    <ClCompile Include="hypersonic-rle\rleX_Xsl.c" />
+    <ClCompile Include="hypersonic-rle\rleX_Xsl_short.c" />
+    <ClCompile Include="hypersonic-rle\rle_fuzz.c" />
+    <ClCompile Include="hypersonic-rle\rle_sh.c" />
+    <ClCompile Include="hypersonic-rle\simd_platform.c" />
     <ClCompile Include="jpeg-9a\jaricom.c" />
     <ClCompile Include="jpeg-9a\jcapimin.c" />
     <ClCompile Include="jpeg-9a\jcapistd.c" />
@@ -723,6 +740,27 @@
     <ClInclude Include="ghoul2\G2_gore.h" />
     <ClInclude Include="ghoul2\G2_local.h" />
     <ClInclude Include="ghoul2\ghoul2_shared.h" />
+    <ClInclude Include="hypersonic-rle\bitpack.h" />
+    <ClInclude Include="hypersonic-rle\codec_funcs.h" />
+    <ClInclude Include="hypersonic-rle\rle.h" />
+    <ClInclude Include="hypersonic-rle\rle128_extreme_cpu.h" />
+    <ClInclude Include="hypersonic-rle\rle24_extreme_cpu.h" />
+    <ClInclude Include="hypersonic-rle\rle24_extreme_cpu_decode.h" />
+    <ClInclude Include="hypersonic-rle\rle24_extreme_cpu_encode.h" />
+    <ClInclude Include="hypersonic-rle\rle48_extreme_cpu.h" />
+    <ClInclude Include="hypersonic-rle\rle48_extreme_cpu_decode.h" />
+    <ClInclude Include="hypersonic-rle\rle48_extreme_cpu_encode.h" />
+    <ClInclude Include="hypersonic-rle\rle8_extreme_cpu.h" />
+    <ClInclude Include="hypersonic-rle\rle8_ocl_kernel.h" />
+    <ClInclude Include="hypersonic-rle\rleX_extreme_common.h" />
+    <ClInclude Include="hypersonic-rle\rleX_extreme_cpu.h" />
+    <ClInclude Include="hypersonic-rle\rleX_extreme_cpu_decode.h" />
+    <ClInclude Include="hypersonic-rle\rleX_extreme_cpu_encode.h" />
+    <ClInclude Include="hypersonic-rle\rleX_Xsl.h" />
+    <ClInclude Include="hypersonic-rle\rleX_Xsl_multibyte_encoder.h" />
+    <ClInclude Include="hypersonic-rle\rleX_Xsl_short.h" />
+    <ClInclude Include="hypersonic-rle\rleX_Xsl_short_multibyte_encoder.h" />
+    <ClInclude Include="hypersonic-rle\simd_platform.h" />
     <ClInclude Include="jpeg-9a\cderror.h" />
     <ClInclude Include="jpeg-9a\cdjpeg.h" />
     <ClInclude Include="jpeg-9a\include\jconfig.h" />

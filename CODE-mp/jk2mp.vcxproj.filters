@@ -81,6 +81,9 @@
     <Filter Include="Sound\soxr">
       <UniqueIdentifier>{cb44e4bd-9ffa-4592-8c11-1438c4f4fd26}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hypersonic-rle">
+      <UniqueIdentifier>{fff16e4b-5b81-4883-a452-79527bd27784}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client\0_SH_Leak.cpp">
@@ -764,6 +767,57 @@
     <ClCompile Include="client\cl_demos_cut.cpp">
       <Filter>Client</Filter>
     </ClCompile>
+    <ClCompile Include="hypersonic-rle\bit_mmtf.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\main.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\mmtf.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle_fuzz.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle_sh.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle8_extreme_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle8_low_entropy_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle8_low_entropy_short_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle8_mmtf.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle8_ocl.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle24_extreme_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle48_extreme_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rle128_extreme_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rleX_extreme_cpu.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rleX_Xsl.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\rleX_Xsl_short.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
+    <ClCompile Include="hypersonic-rle\simd_platform.c">
+      <Filter>hypersonic-rle</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client\client.h">
@@ -1215,6 +1269,69 @@
     </ClInclude>
     <ClInclude Include="client\snd_resample.hpp">
       <Filter>Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\bitpack.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\codec_funcs.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle8_extreme_cpu.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle8_ocl_kernel.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle24_extreme_cpu.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle24_extreme_cpu_decode.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle24_extreme_cpu_encode.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle48_extreme_cpu.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle48_extreme_cpu_decode.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle48_extreme_cpu_encode.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rle128_extreme_cpu.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_extreme_common.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_extreme_cpu.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_extreme_cpu_decode.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_extreme_cpu_encode.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_Xsl.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_Xsl_multibyte_encoder.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_Xsl_short.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\rleX_Xsl_short_multibyte_encoder.h">
+      <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="hypersonic-rle\simd_platform.h">
+      <Filter>hypersonic-rle</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
