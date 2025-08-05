@@ -458,6 +458,7 @@ typedef struct bspVertHDRV2_s
 	vec3_t direction[MAXLIGHTMAPS_REAL];
 } bspVertHDRV2_t;
 
+
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];

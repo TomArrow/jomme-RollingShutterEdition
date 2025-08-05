@@ -943,6 +943,7 @@ typedef struct {
 	float*		hdrLightGrid;
 	bspGridPointHDR_t*		hdrLightGridV2;
 	bspGridPointHDRV3_t*	hdrLightGridV3;
+	bspGridPointHDRV4_t*	hdrLightGridV4;
 	int			lightGridOffsets[8];
 
 	vec3_t		lightGridStep;

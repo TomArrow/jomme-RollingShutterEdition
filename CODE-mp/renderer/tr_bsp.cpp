@@ -445,7 +445,7 @@ static shader_t *ShaderForShaderNum( int shaderNum, const int *lightmapNum, cons
 ParseFace
 ===============
 */
-static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe) {
+static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2) {
 	int					i, j, k;
 	srfSurfaceFace_t	*cv;
 	int					numPoints, numIndexes;
@@ -491,6 +491,9 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	if (hdrVertColorsDeluxe) {
 		hdrVertColorsDeluxe += LittleLong( ds->firstVert );
 	}
+	if (hdrVertColorsDeluxeV2) {
+		hdrVertColorsDeluxeV2 += LittleLong( ds->firstVert );
+	}
 	if (hdrVertColors) {
 		hdrVertColors += LittleLong( ds->firstVert ) * 3;
 	}
@@ -507,7 +510,12 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 		}
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
+			if (hdrVertColorsDeluxeV2) {
+				VectorScale(hdrVertColorsDeluxeV2[i].color[k], 255.0f * hdrMult, cv->points[i].color[k]);
+				VectorCopy(hdrVertColorsDeluxeV2[i].direction[k], cv->points[i].lightdir[k]);
+				cv->points[i].color[k][3] = 255.0f;
+			}
+			else if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
 				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, cv->points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], cv->points[i].lightdir[k]);
 				cv->points[i].color[k][3] = 255.0f;
@@ -551,7 +559,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 ParseMesh
 ===============
 */
-static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe) {
+static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2) {
 	srfGridMesh_t			*grid;
 	int						i, j, k;
 	int						width, height, numPoints;
@@ -590,6 +598,9 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 	if (hdrVertColorsDeluxe) {
 		hdrVertColorsDeluxe += LittleLong(ds->firstVert);
 	}
+	if (hdrVertColorsDeluxeV2) {
+		hdrVertColorsDeluxeV2 += LittleLong(ds->firstVert);
+	}
 	if (hdrVertColors) {
 		hdrVertColors += LittleLong(ds->firstVert)*3;
 	}
@@ -608,7 +619,12 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 		}
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
+			if (hdrVertColorsDeluxeV2) {
+				VectorScale(hdrVertColorsDeluxeV2[i].color[k], 255.0f * hdrMult, points[i].color[k]);
+				VectorCopy(hdrVertColorsDeluxeV2[i].direction[k], points[i].lightdir[k]);
+				points[i].color[k][3] = 255.0f;
+			}
+			else if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
 				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], points[i].lightdir[k]);
 				points[i].color[k][3] = 255.0f;
@@ -653,7 +669,7 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 ParseTriSurf
 ===============
 */
-static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe) {
+static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2) {
 	srfTriangles_t	*tri;
 	int				i, j, k;
 	int				numVerts, numIndexes;
@@ -687,6 +703,9 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 	if (hdrVertColorsDeluxe) {
 		hdrVertColorsDeluxe += LittleLong( ds->firstVert );
 	}
+	if (hdrVertColorsDeluxeV2) {
+		hdrVertColorsDeluxeV2 += LittleLong( ds->firstVert );
+	}
 	if (hdrVertColors) {
 		hdrVertColors += LittleLong( ds->firstVert )*3;
 	}
@@ -706,7 +725,12 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
+			if (hdrVertColorsDeluxeV2) {
+				VectorScale(hdrVertColorsDeluxeV2[i].color[k], 255.0f * hdrMult, tri->verts[i].color[k]);
+				VectorCopy(hdrVertColorsDeluxeV2[i].direction[k], tri->verts[i].lightdir[k]);
+				tri->verts[i].color[k][3] = 255.0f;
+			}
+			else if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
 				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, tri->verts[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], tri->verts[i].lightdir[k]);
 				tri->verts[i].color[k][3] = 255.0f;
@@ -1494,9 +1518,10 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	int			*indexes;
 	int			count;
 	int			numFaces, numMeshes, numTriSurfs, numFlares;
-	int			i;
+	int			i,k;
 	float* hdrVertColors = NULL;
 	bspVertHDR_t* hdrVertColorsDeluxe = NULL;
+	bspVertHDRV2_t* hdrVertColorsDeluxeV2 = NULL;
 
 	numFaces = 0;
 	numMeshes = 0;
@@ -1547,16 +1572,32 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 		if (hdrVertColorsDeluxe)
 		{
 			int vertCount = verts->filelen / sizeof(*dv);
+			size_t v1Size = sizeof(bspVertHDR_t) * vertCount;
+			size_t v2Size = sizeof(bspVertHDRV2_t) * vertCount;
 			//ri.Printf(PRINT_ALL, "Found!\n");
-			if (size != sizeof(bspVertHDR_t)* vertCount)
-				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)((sizeof(bspVertHDR_t)) *verts->filelen / sizeof(*dv)));
-			else {
+			if (size == v1Size) {
 				for (i = 0; i < vertCount; i++) {
 					// check that the direction data is actually filled
-					if (hdrVertColorsDeluxe[i].direction[0] || hdrVertColorsDeluxe[i].direction[1] || hdrVertColorsDeluxe[i].direction[2]) {
-						tr.haveVertLightDirs = qtrue;
+					for (k = 0; k < MAXLIGHTMAPS_BSP; k++) {
+						if (hdrVertColorsDeluxe[i].direction[k][0] || hdrVertColorsDeluxe[i].direction[k][1] || hdrVertColorsDeluxe[i].direction[k][2]) {
+							tr.haveVertLightDirs = qtrue;
+						}
 					}
 				}
+			} else if (size == v2Size) {
+				hdrVertColorsDeluxeV2 = (bspVertHDRV2_t*)hdrVertColorsDeluxe;
+				hdrVertColorsDeluxe = NULL;
+				for (i = 0; i < vertCount; i++) {
+					// check that the direction data is actually filled
+					for (k = 0; k < MAXLIGHTMAPS_REAL; k++) {
+						if (hdrVertColorsDeluxeV2[i].direction[k][0] || hdrVertColorsDeluxeV2[i].direction[k][1] || hdrVertColorsDeluxeV2[i].direction[k][2]) {
+							tr.haveVertLightDirs = qtrue;
+						}
+					}
+				}
+			}
+			else {
+				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i or %i)!", filename, size, (int)v1Size, (int)v2Size);
 			}
 		}
 		
@@ -1565,15 +1606,15 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	for ( i = 0 ; i < count ; i++, in++, out++ ) {
 		switch ( LittleLong( in->surfaceType ) ) {
 		case MST_PATCH:
-			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe);
+			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2);
 			numMeshes++;
 			break;
 		case MST_TRIANGLE_SOUP:
-			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe);
+			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2);
 			numTriSurfs++;
 			break;
 		case MST_PLANAR:
-			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe);
+			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2);
 			numFaces++;
 			break;
 		case MST_FLARE:
@@ -1600,6 +1641,9 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	}
 	if (hdrVertColorsDeluxe) {
 		ri.FS_FreeFile(hdrVertColorsDeluxe);
+	}
+	if (hdrVertColorsDeluxeV2) {
+		ri.FS_FreeFile(hdrVertColorsDeluxeV2);
 	}
 
 	ri.Printf( PRINT_ALL, "...loaded %d faces, %i meshes, %i trisurfs, %i flares\n", 
@@ -2054,6 +2098,7 @@ void R_LoadLightGrid(lump_t *l ) {
 			size_t oldStyleHDRGridSize = sizeof(float) * 6 * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 			size_t newStyleHDRGridSize = sizeof(bspGridPointHDR_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 			size_t newStyleHDRGridSizeV3 = sizeof(bspGridPointHDRV3_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
+			size_t newStyleHDRGridSizeV4 = sizeof(bspGridPointHDRV4_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 
 			if (size == oldStyleHDRGridSize) {
 				w->hdrLightGrid = (float*)ri.Hunk_Alloc(size, h_low);
@@ -2073,6 +2118,9 @@ void R_LoadLightGrid(lump_t *l ) {
 				if (w->hdrLightGridV3) {
 					w->hdrLightGridV3 = NULL; // do i need to free this? idk
 				}
+				if (w->hdrLightGridV4) {
+					w->hdrLightGridV4 = NULL; // do i need to free this? idk
+				}
 			}
 			else if (size == newStyleHDRGridSizeV3) {
 				w->hdrLightGridV3 = (bspGridPointHDRV3_t*)ri.Hunk_Alloc(size, h_low);
@@ -2084,6 +2132,24 @@ void R_LoadLightGrid(lump_t *l ) {
 				}
 				if (w->hdrLightGridV2) {
 					w->hdrLightGridV2 = NULL; // do i need to free this? idk
+				}
+				if (w->hdrLightGridV4) {
+					w->hdrLightGridV4 = NULL; // do i need to free this? idk
+				}
+			}
+			else if (size == newStyleHDRGridSizeV4) {
+				w->hdrLightGridV4 = (bspGridPointHDRV4_t*)ri.Hunk_Alloc(size, h_low);
+
+				Com_Memcpy(w->hdrLightGridV4,hdrLightGrid,size);
+
+				if (w->hdrLightGrid) {
+					w->hdrLightGrid = NULL; // do i need to free this? idk
+				}
+				if (w->hdrLightGridV2) {
+					w->hdrLightGridV2 = NULL; // do i need to free this? idk
+				}
+				if (w->hdrLightGridV3) {
+					w->hdrLightGridV3 = NULL; // do i need to free this? idk
 				}
 			}
 			else if (size == newStyleHDRGridSize) {
@@ -2097,9 +2163,12 @@ void R_LoadLightGrid(lump_t *l ) {
 				if (w->hdrLightGridV3) {
 					w->hdrLightGridV3 = NULL; // do i need to free this? idk
 				}
+				if (w->hdrLightGridV4) {
+					w->hdrLightGridV4 = NULL; // do i need to free this? idk
+				}
 			}
 			else {
-				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i or %i)!", filename, size, (int)oldStyleHDRGridSize , (int)newStyleHDRGridSize);
+				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i or %i or %i or %i)!", filename, size, (int)oldStyleHDRGridSize , (int)newStyleHDRGridSize, (int)newStyleHDRGridSizeV3, (int)newStyleHDRGridSizeV4);
 			}
 
 		}

@@ -247,7 +247,34 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 
 			factor = fraction[i];
 			totalFactor += factor;
-			if (world->hdrLightGridV3)
+			if (world->hdrLightGridV4)
+			{
+				bspGridPointHDRV4_t* hdrData = world->hdrLightGridV4 + gridPos;
+				latlongdir = qfalse;
+				VectorClear(normal);
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++)
+				{
+					if (hdrData->styles[j] != LS_LSNONE)
+					{
+						const byte	style = hdrData->styles[j];
+						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
+						VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else if (world->hdrLightGridV3)
 			{
 				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
 				latlongdir = qfalse;
@@ -436,7 +463,34 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 
 			totalFactor += factor;
 
-			if (world->hdrLightGridV3)
+			if (world->hdrLightGridV4)
+			{
+				bspGridPointHDRV4_t* hdrData = world->hdrLightGridV4 + gridPos;
+				latlongdir = qfalse;
+				VectorClear(normal);
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++)
+				{
+					if (hdrData->styles[j] != LS_LSNONE)
+					{
+						const byte	style = hdrData->styles[j];
+						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
+						VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else if (world->hdrLightGridV3)
 			{
 				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
 				latlongdir = qfalse;
