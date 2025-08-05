@@ -469,8 +469,8 @@ typedef struct {
 
 typedef struct shader_s {
 	char		name[MAX_QPATH];		// game path, including extension
-	int			lightmapIndex[MAXLIGHTMAPS];			// for a shader to match, both name and lightmapIndex must match
-	byte		styles[MAXLIGHTMAPS];
+	int			lightmapIndex[MAXLIGHTMAPS_REAL];			// for a shader to match, both name and lightmapIndex must match
+	byte		styles[MAXLIGHTMAPS_REAL];
 
 	int			index;					// this shader == tr.shaders[index]
 	int64_t		sortedIndex;			// this shader == tr.sortedShaders[sortedIndex]
@@ -878,27 +878,34 @@ typedef struct {
 
 typedef struct 
 {
-	byte		ambientLight[MAXLIGHTMAPS][3];
-	byte		directLight[MAXLIGHTMAPS][3];
-	byte		styles[MAXLIGHTMAPS];
+	byte		ambientLight[MAXLIGHTMAPS_BSP][3];
+	byte		directLight[MAXLIGHTMAPS_BSP][3];
+	byte		styles[MAXLIGHTMAPS_BSP];
 	byte		latLong[2];
 //	byte		pad[2];								// to align to a cache line
 } mgrid_t;
 
 typedef struct bspGridPointHDR_s
 {
-	vec3_t		ambient[MAXLIGHTMAPS];    /* RBSP - array */
-	vec3_t		directed[MAXLIGHTMAPS];   /* RBSP - array */
-	byte		styles[MAXLIGHTMAPS];         /* RBSP - whole */
+	vec3_t		ambient[MAXLIGHTMAPS_BSP];    /* RBSP - array */
+	vec3_t		directed[MAXLIGHTMAPS_BSP];   /* RBSP - array */
+	byte		styles[MAXLIGHTMAPS_BSP];         /* RBSP - whole */
 	vec3_t		direction;
 } bspGridPointHDR_t;
 typedef struct bspGridPointHDRV3_s
 {
-	vec3_t		ambient[MAXLIGHTMAPS];    /* RBSP - array */
-	vec3_t		directed[MAXLIGHTMAPS];   /* RBSP - array */
-	byte		styles[MAXLIGHTMAPS];         /* RBSP - whole */
-	vec3_t		directions[MAXLIGHTMAPS];
+	vec3_t		ambient[MAXLIGHTMAPS_BSP];    /* RBSP - array */
+	vec3_t		directed[MAXLIGHTMAPS_BSP];   /* RBSP - array */
+	byte		styles[MAXLIGHTMAPS_BSP];         /* RBSP - whole */
+	vec3_t		directions[MAXLIGHTMAPS_BSP];
 } bspGridPointHDRV3_t;
+typedef struct bspGridPointHDRV4_s
+{
+	vec3_t		ambient[MAXLIGHTMAPS_REAL];    /* RBSP - array */
+	vec3_t		directed[MAXLIGHTMAPS_REAL];   /* RBSP - array */
+	byte		styles[MAXLIGHTMAPS_REAL];         /* RBSP - whole */
+	vec3_t		directions[MAXLIGHTMAPS_REAL];
+} bspGridPointHDRV4_t;
 
 typedef struct {
 	char		name[MAX_QPATH];		// ie: maps/tim_dm2.bsp
@@ -1656,11 +1663,11 @@ skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 //
 // tr_shader.c
 //
-extern	const int	lightmapsNone[MAXLIGHTMAPS];
-extern	const int	lightmaps2d[MAXLIGHTMAPS];
-extern	const int	lightmapsVertex[MAXLIGHTMAPS];
-extern	const int	lightmapsFullBright[MAXLIGHTMAPS];
-extern	const byte	stylesDefault[MAXLIGHTMAPS];
+extern	const int	lightmapsNone[MAXLIGHTMAPS_REAL];
+extern	const int	lightmaps2d[MAXLIGHTMAPS_REAL];
+extern	const int	lightmapsVertex[MAXLIGHTMAPS_REAL];
+extern	const int	lightmapsFullBright[MAXLIGHTMAPS_REAL];
+extern	const byte	stylesDefault[MAXLIGHTMAPS_REAL];
 
 qhandle_t RE_RegisterShaderLightMap( const char *name, const int *lightmapIndex, const byte *styles ) ;
 qhandle_t		 RE_RegisterShader( const char *name );
@@ -1725,7 +1732,7 @@ typedef struct stageVars
 	vec2_t		texcoords[NUM_TEXTURE_BUNDLES][SHADER_MAX_VERTEXES];
 } stageVars_t;
 
-#define	NUM_TEX_COORDS		(MAXLIGHTMAPS+1)
+#define	NUM_TEX_COORDS		(MAXLIGHTMAPS_REAL+1)
 
 #define VERTEXCOLORRAWCHECK(vcr,index) (((vcr)[((index) >> 3)] & (1 << ((index) & 7))))
 #define VERTEXCOLORRAWSET(vcr,index) (vcr)[((index) >> 3)] |= (1 << ((index) & 7))

@@ -104,24 +104,54 @@ static	shader_t*		hashTable[FILE_HASH_SIZE];
 #define MAX_SHADERTEXT_HASH		2048
 static char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
 
-const int lightmapsNone[MAXLIGHTMAPS] = 
+const int lightmapsNone[MAXLIGHTMAPS_REAL] = 
 { 
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
+	LIGHTMAP_NONE,
 	LIGHTMAP_NONE,
 	LIGHTMAP_NONE,
 	LIGHTMAP_NONE,
 	LIGHTMAP_NONE 
 };
 
-const int lightmaps2d[MAXLIGHTMAPS] = 
+const int lightmaps2d[MAXLIGHTMAPS_REAL] =
 { 
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
+	LIGHTMAP_2D,
 	LIGHTMAP_2D,
 	LIGHTMAP_2D,
 	LIGHTMAP_2D,
 	LIGHTMAP_2D 
 };
 
-const int lightmapsVertex[MAXLIGHTMAPS] = 
+const int lightmapsVertex[MAXLIGHTMAPS_REAL] =
 { 
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
+	LIGHTMAP_BY_VERTEX,
 	LIGHTMAP_BY_VERTEX,
 	LIGHTMAP_BY_VERTEX,
 	LIGHTMAP_BY_VERTEX,
@@ -129,17 +159,37 @@ const int lightmapsVertex[MAXLIGHTMAPS] =
 };
 
 
-const int lightmapsFullBright[MAXLIGHTMAPS] = 
+const int lightmapsFullBright[MAXLIGHTMAPS_REAL] =
 {
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
+	LIGHTMAP_WHITEIMAGE,
 	LIGHTMAP_WHITEIMAGE,
 	LIGHTMAP_WHITEIMAGE,
 	LIGHTMAP_WHITEIMAGE,
 	LIGHTMAP_WHITEIMAGE
 };
 
-const byte stylesDefault[MAXLIGHTMAPS] = 
+const byte stylesDefault[MAXLIGHTMAPS_REAL] =
 {
 	LS_NORMAL,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
+	LS_LSNONE,
 	LS_LSNONE,
 	LS_LSNONE,
 	LS_LSNONE
@@ -3167,7 +3217,7 @@ static shader_t *FinishShader( void ) {
 		int	numStyles;
 		int	i;
 
-		for(numStyles = 0; numStyles < MAXLIGHTMAPS; numStyles++)
+		for(numStyles = 0; numStyles < MAXLIGHTMAPS_REAL; numStyles++)
 		{
 			if (shader.styles[numStyles] >= LS_UNUSED)
 			{
@@ -3546,7 +3596,7 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 
 	if (!sh->defaultShader)
 	{
-		for(i=0;i<MAXLIGHTMAPS;i++)
+		for(i=0;i<MAXLIGHTMAPS_REAL;i++)
 		{
 			if (sh->lightmapIndex[i] != lightmapIndex[i])
 			{
@@ -3661,7 +3711,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	}
 
 	// ydnar: validate lightmap index
-	for (i = 0; i < MAXLIGHTMAPS; i++) {
+	for (i = 0; i < MAXLIGHTMAPS_REAL; i++) {
 		int theindex = lightmapIndex[i];
 		R_FindLightmap((int*)lightmapIndex+i);
 		if (tr.deluxeMapping) {

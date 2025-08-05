@@ -258,8 +258,8 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 			maxLightmapNum = 0;
 			for (i = 0, surf = (dsurface_t*)(fileBase + surfs->fileofs);
 				i < surfs->filelen / sizeof(dsurface_t); i++, surf++) {
-				for (j = 0; j < MAXLIGHTMAPS; j++) {
-					int lightmapNum = LittleLong(surf->lightmapNum[j]);
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++) {
+					int lightmapNum = j >= MAXLIGHTMAPS_BSP ? LIGHTMAP_NONE : LittleLong(surf->lightmapNum[j]);
 
 					if (lightmapNum > maxLightmapNum) {
 						maxLightmapNum = lightmapNum;
@@ -449,13 +449,13 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	int					i, j, k;
 	srfSurfaceFace_t	*cv;
 	int					numPoints, numIndexes;
-	int					lightmapNum[MAXLIGHTMAPS];
+	int					lightmapNum[MAXLIGHTMAPS_REAL];
 	int					sfaceSize, ofsIndexes;
 	float				hdrMult = R_ColorShiftLightingMultiplier();
 
-	for(i = 0; i < MAXLIGHTMAPS; i++)
+	for(i = 0; i < MAXLIGHTMAPS_REAL; i++)
 	{
-		lightmapNum[i] = LittleLong( ds->lightmapNum[i] );
+		lightmapNum[i] = i >= MAXLIGHTMAPS_BSP ? LIGHTMAP_NONE : LittleLong( ds->lightmapNum[i] );
 	}
 
 	// get fog volume
@@ -500,19 +500,19 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 		}
 		for ( j = 0 ; j < 2 ; j++ ) {
 			cv->points[i].st[j] = LittleFloat( verts[i].st[j] );
-			for(k=0;k<MAXLIGHTMAPS;k++)
+			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				cv->points[i].lightmap[k][j] = LittleFloat( verts[i].lightmap[k][j] );
+				cv->points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? 0 : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxe) {
+			if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
 				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, cv->points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], cv->points[i].lightdir[k]);
 				cv->points[i].color[k][3] = 255.0f;
 			}
-			else if (hdrVertColors) {
+			else if (hdrVertColors && k < MAXLIGHTMAPS_BSP) {
 				if (k == 0) {
 					VectorScale((hdrVertColors + i * 3), 255.0f * hdrMult, cv->points[i].color[k]);
 				}
@@ -521,8 +521,10 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 				}
 				cv->points[i].color[k][3] = 255.0f;
 			}
-			else {
+			else if(k < MAXLIGHTMAPS_BSP) {
 				R_ColorShiftLightingToFloat(verts[i].color[k], cv->points[i].color[k]);
+			} else {
+				VectorClear(cv->points[i].color[k]);
 			}
 		}
 	}
@@ -554,15 +556,15 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 	int						i, j, k;
 	int						width, height, numPoints;
 	MAC_STATIC drawVert_t	points[MAX_PATCH_SIZE*MAX_PATCH_SIZE];
-	int						lightmapNum[MAXLIGHTMAPS];
+	int						lightmapNum[MAXLIGHTMAPS_REAL];
 	vec3_t					bounds[2];
 	vec3_t					tmpVec;
 	static surfaceType_t	skipData = SF_SKIP;
 	float					hdrMult = R_ColorShiftLightingMultiplier();
 
-	for(i=0;i<MAXLIGHTMAPS;i++)
+	for(i=0;i<MAXLIGHTMAPS_REAL;i++)
 	{
-		lightmapNum[i] = LittleLong( ds->lightmapNum[i] );
+		lightmapNum[i] = i >= MAXLIGHTMAPS_BSP ? LIGHTMAP_NONE : LittleLong( ds->lightmapNum[i] );
 	}
 
 	// get fog volume
@@ -599,19 +601,19 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 		}
 		for ( j = 0 ; j < 2 ; j++ ) {
 			points[i].st[j] = LittleFloat( verts[i].st[j] );
-			for(k=0;k<MAXLIGHTMAPS;k++)
+			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				points[i].lightmap[k][j] = LittleFloat( verts[i].lightmap[k][j] );
+				points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? 0 : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxe) {
+			if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
 				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], points[i].lightdir[k]);
 				points[i].color[k][3] = 255.0f;
 			}
-			else if (hdrVertColors) {
+			else if (hdrVertColors && k < MAXLIGHTMAPS_BSP) {
 				if (k == 0) {
 					VectorScale((hdrVertColors + i * 3), 255.0f * hdrMult, points[i].color[k]);
 				}
@@ -620,8 +622,11 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 				}
 				points[i].color[k][3] = 255.0f;
 			}
-			else {
+			else if(k < MAXLIGHTMAPS_BSP){
 				R_ColorShiftLightingToFloat(verts[i].color[k], points[i].color[k]);
+			}
+			else {
+				VectorClear(points[i].color[k]);
 			}
 		}
 	}
@@ -693,20 +698,20 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 		AddPointToBounds( tri->verts[i].xyz, tri->bounds[0], tri->bounds[1] );
 		for ( j = 0 ; j < 2 ; j++ ) {
 			tri->verts[i].st[j] = LittleFloat( verts[i].st[j] );
-			for(k=0;k<MAXLIGHTMAPS;k++)
+			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				tri->verts[i].lightmap[k][j] = LittleFloat( verts[i].lightmap[k][j] );
+				tri->verts[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? 0 : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
 
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxe) {
+			if (hdrVertColorsDeluxe && k < MAXLIGHTMAPS_BSP) {
 				VectorScale(hdrVertColorsDeluxe[i].color[k], 255.0f * hdrMult, tri->verts[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxe[i].direction[k], tri->verts[i].lightdir[k]);
 				tri->verts[i].color[k][3] = 255.0f;
 			}
-			else if (hdrVertColors) {
+			else if (hdrVertColors && k < MAXLIGHTMAPS_BSP) {
 				if (k == 0) {
 					VectorScale((hdrVertColors + i * 3), 255.0f * hdrMult, tri->verts[i].color[k]);
 				}
@@ -715,8 +720,11 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 				}
 				tri->verts[i].color[k][3] = 255.0f;
 			}
-			else {
+			else if(k < MAXLIGHTMAPS_BSP){
 				R_ColorShiftLightingToFloat(verts[i].color[k], tri->verts[i].color[k]);
+			}
+			else {
+				VectorClear(tri->verts[i].color[k]);
 			}
 		}
 	}
@@ -739,7 +747,7 @@ ParseFlare
 static void ParseFlare( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes ) {
 	srfFlare_t		*flare;
 	int				i;
-	int				lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_BY_VERTEX };
+	int				lightmaps[MAXLIGHTMAPS_REAL] = { LIGHTMAP_BY_VERTEX };
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
@@ -1850,7 +1858,7 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
 	shader_t	*shader;
 	float		d;
 	int			firstSide=0;
-	int			lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_NONE } ;
+	int			lightmaps[MAXLIGHTMAPS_REAL] = { LIGHTMAP_NONE } ;
 
 	fogs = (dfog_t *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*fogs)) {
@@ -1995,7 +2003,7 @@ void R_LoadLightGrid(lump_t *l ) {
 	// deal with overbright bits
 	for ( i = 0 ; i < numGridDataElements ; i++ ) 
 	{
-		for(j=0;j<MAXLIGHTMAPS;j++)
+		for(j=0;j<MAXLIGHTMAPS_BSP;j++)
 		{
 			R_ColorShiftLightingBytes(w->lightGridData[i].ambientLight[j]);
 			R_ColorShiftLightingBytes(w->lightGridData[i].directLight[j]);

@@ -429,7 +429,8 @@ typedef struct {
 } dfog_t;
 
 // Light Style Constants
-#define	MAXLIGHTMAPS	4
+#define	MAXLIGHTMAPS_BSP	4
+#define	MAXLIGHTMAPS_REAL	14
 #define LS_NORMAL		0x00
 #define LS_UNUSED		0xfe
 #define	LS_LSNONE		0xff //rww - changed name because it unhappily conflicts with a lightsaber state name and changing this is just easier
@@ -438,33 +439,40 @@ typedef struct {
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
-	float		lightmap[MAXLIGHTMAPS][2];
+	float		lightmap[MAXLIGHTMAPS_BSP][2];
 	vec3_t		normal;
-	byte		color[MAXLIGHTMAPS][4];
+	byte		color[MAXLIGHTMAPS_BSP][4];
 } mapVert_t;
 
 typedef struct bspVertHDR_s
 {
-	vec3_t color[MAXLIGHTMAPS];
-	byte styles[MAXLIGHTMAPS];
-	vec3_t direction[MAXLIGHTMAPS];
+	vec3_t color[MAXLIGHTMAPS_BSP];
+	byte styles[MAXLIGHTMAPS_BSP];
+	vec3_t direction[MAXLIGHTMAPS_BSP];
 } bspVertHDR_t;
+
+typedef struct bspVertHDRV2_s
+{
+	vec3_t color[MAXLIGHTMAPS_REAL];
+	byte styles[MAXLIGHTMAPS_REAL];
+	vec3_t direction[MAXLIGHTMAPS_REAL];
+} bspVertHDRV2_t;
 
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
-	float		lightmap[MAXLIGHTMAPS][2];
+	float		lightmap[MAXLIGHTMAPS_REAL][2];
 	vec3_t		normal;
 	//byte		color[MAXLIGHTMAPS][4];
-	vec4_t		color[MAXLIGHTMAPS];
-	vec3_t		lightdir[MAXLIGHTMAPS];
+	vec4_t		color[MAXLIGHTMAPS_REAL];
+	vec3_t		lightdir[MAXLIGHTMAPS_REAL];
 } drawVert_t;
 
 typedef struct
 {
-	byte		ambientLight[MAXLIGHTMAPS][3];
-	byte		directLight[MAXLIGHTMAPS][3];
-	byte		styles[MAXLIGHTMAPS];
+	byte		ambientLight[MAXLIGHTMAPS_REAL][3];
+	byte		directLight[MAXLIGHTMAPS_REAL][3];
+	byte		styles[MAXLIGHTMAPS_REAL];
 	byte		latLong[2];
 }  dgrid_t;
 
@@ -487,9 +495,9 @@ typedef struct {
 	int			firstIndex;
 	int			numIndexes;
 
-	byte		lightmapStyles[MAXLIGHTMAPS], vertexStyles[MAXLIGHTMAPS];
-	int			lightmapNum[MAXLIGHTMAPS];
-	int			lightmapX[MAXLIGHTMAPS], lightmapY[MAXLIGHTMAPS];
+	byte		lightmapStyles[MAXLIGHTMAPS_BSP], vertexStyles[MAXLIGHTMAPS_BSP];
+	int			lightmapNum[MAXLIGHTMAPS_BSP];
+	int			lightmapX[MAXLIGHTMAPS_BSP], lightmapY[MAXLIGHTMAPS_BSP];
 	int			lightmapWidth, lightmapHeight;
 
 	vec3_t		lightmapOrigin;

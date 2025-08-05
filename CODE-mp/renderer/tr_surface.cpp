@@ -273,7 +273,7 @@ inline void ComputeFinalVertexColor(const float* colors, float *result, float *r
 	//*(int *)result = *(int *)colors;
 	// an optimization could be added here to compute the style[0] (which is always the world normal light)
 	r = g = b = 0;
-	for(k = 0; k < MAXLIGHTMAPS; k++)
+	for(k = 0; k < MAXLIGHTMAPS_REAL; k++)
 	{
 		if (tess.shader->styles[k] < LS_UNUSED)
 		{
@@ -330,7 +330,7 @@ inline void ComputeFinalLightDirection(const float* lightdirs, float *result)
 	r = g = b = 0;
 
 	if (tr.haveVertLightDirs) {
-		for (k = 0; k < MAXLIGHTMAPS; k++)
+		for (k = 0; k < MAXLIGHTMAPS_REAL; k++)
 		{
 			if (tess.shader->styles[k] < LS_UNUSED)
 			{
@@ -411,7 +411,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 		texCoords[0] = dv->st[0];
 		texCoords[1] = dv->st[1];
 
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
 			if (tess.shader->lightmapIndex[k] >= 0)
 			{
@@ -1395,7 +1395,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 		VectorCopy( v->xyz, tess.xyz[ndx]);
 		tess.texCoords[ndx][0][0] = v->st[0];
 		tess.texCoords[ndx][0][1] = v->st[1]; // looks funny when we accidentally leave it as tess.texCoords[ndx][0][1] = v->st[0]. streaky.
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
 			if (tess.shader->lightmapIndex[k] >= 0)
 			{
@@ -1560,7 +1560,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 
 				texCoords[0] = dv->st[0];
 				texCoords[1] = dv->st[1];
-				for(k=0;k<MAXLIGHTMAPS;k++)
+				for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 				{
 					texCoords[2+(k*2)]= dv->lightmap[k][0];
 					texCoords[2+(k*2)+1]= dv->lightmap[k][1];

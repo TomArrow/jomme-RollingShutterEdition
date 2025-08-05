@@ -37,7 +37,7 @@ static void LerpDrawVert( drawVert_t *a, drawVert_t *b, drawVert_t *out )
 	out->normal[1] = 0.5 * (a->normal[1] + b->normal[1]);
 	out->normal[2] = 0.5 * (a->normal[2] + b->normal[2]);
 
-	for(k=0;k<MAXLIGHTMAPS;k++)
+	for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 	{
 		out->lightmap[k][0] = 0.5 * (a->lightmap[k][0] + b->lightmap[k][0]);
 		out->lightmap[k][1] = 0.5 * (a->lightmap[k][1] + b->lightmap[k][1]);

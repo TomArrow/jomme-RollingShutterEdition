@@ -252,7 +252,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
 				latlongdir = qfalse;
 				VectorClear(normal);
-				for (j = 0; j < MAXLIGHTMAPS; j++)
+				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
 					{
@@ -279,7 +279,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
 				latlongdir = qfalse;
 				VectorCopy(hdrData->direction, normal);
-				for (j = 0; j < MAXLIGHTMAPS; j++)
+				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
 					{
@@ -312,7 +312,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 			}
 			else
 			{
-				for (j = 0; j < MAXLIGHTMAPS; j++)
+				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (data->styles[j] != LS_LSNONE)
 					{
@@ -441,7 +441,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
 				latlongdir = qfalse;
 				VectorClear(normal);
-				for (j = 0; j < MAXLIGHTMAPS; j++)
+				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
 					{
@@ -468,7 +468,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
 				latlongdir = qfalse;
 				VectorCopy(hdrData->direction, normal);
-				for (j = 0; j < MAXLIGHTMAPS; j++)
+				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
 					{
@@ -501,7 +501,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 			}
 			else
 			{
-				for (j = 0; j < MAXLIGHTMAPS; j++)
+				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (data->styles[j] != LS_LSNONE)
 					{
