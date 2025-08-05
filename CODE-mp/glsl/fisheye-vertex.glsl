@@ -20,9 +20,9 @@ out texCoord_interface {
 //out vec4 texCoord[TEXTURE_COUNT];
 out vec4 colorVertex;
 
-layout(location = 10) in vec3 lightDirAttrib;
-layout(location = 11) in vec3 ambientLightAttrib;
-layout(location = 12) in vec3 normalAttrib;
+layout(location = 4) in vec3 lightDirAttrib;
+layout(location = 5) in vec3 ambientLightAttrib;
+layout(location = 6) in vec3 normalAttrib;
 
 out geomTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT];
