@@ -297,6 +297,9 @@ typedef struct {
 	int						maxActiveTextures;		// multitexture ability
 	int						maxActiveTextureUnits;	// multitexture ability - fragment shader units, more modern, higher value
 
+	int						maxVertexAttributes;
+
+
 	int						colorBits, depthBits, stencilBits;
 
 	qboolean				deviceSupportsGamma;

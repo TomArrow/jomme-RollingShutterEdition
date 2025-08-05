@@ -1531,6 +1531,8 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		ri.Printf( PRINT_ALL, "...WGL_EXT_swap_control not found\n" );
 	}
 
+	qglGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &glConfig.maxVertexAttributes);
+
 	// GL_ARB_multitexture
 	qglMultiTexCoord2fARB = NULL;
 	qglActiveTextureARB = NULL;

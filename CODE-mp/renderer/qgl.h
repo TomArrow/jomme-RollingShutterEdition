@@ -388,6 +388,8 @@ typedef void (APIENTRY * PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, 
 #define GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT 0x90DF
 #define GL_SHADER_STORAGE_BARRIER_BIT 0x00002000
 
+#define GL_MAX_VERTEX_ATTRIBS 0x8869
+
 /* Already in glext.h
 typedef void (APIENTRY *PFNGLCOMBINERPARAMETERFVNVPROC) (GLenum pname,const GLfloat *params);
 typedef void (APIENTRY *PFNGLCOMBINERPARAMETERIVNVPROC) (GLenum pname,const GLint *params);
