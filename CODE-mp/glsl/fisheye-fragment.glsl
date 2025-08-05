@@ -1041,6 +1041,10 @@ const mat3 HDRtoSRGB = mat3(1.660317619104158771,	-0.58757266606617910577,	-0.07
 
 void main(void)
 {
+	//gl_FragColor.xyz = vertexNormal;
+	//gl_FragColor.w = 1.0f;
+	//return;
+
 	if(zPrepassUniform != 0){
 		return;
 	}
@@ -1063,6 +1067,7 @@ void main(void)
 	vec4 color;
 	
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
+	
 
     if(fishEyeModeUniform == 0){
 	

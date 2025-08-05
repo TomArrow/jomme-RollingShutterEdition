@@ -445,24 +445,28 @@ static shader_t *ShaderForShaderNum( int shaderNum, const int *lightmapNum, cons
 ParseFace
 ===============
 */
-static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2) {
+static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2, dsurfaceManyStyles_t* manyStyleSurf) {
 	int					i, j, k;
 	srfSurfaceFace_t	*cv;
 	int					numPoints, numIndexes;
 	int					lightmapNum[MAXLIGHTMAPS_REAL];
+	byte				lightmapStyles[MAXLIGHTMAPS_REAL];
+	byte				vertexStyles[MAXLIGHTMAPS_REAL];
 	int					sfaceSize, ofsIndexes;
 	float				hdrMult = R_ColorShiftLightingMultiplier();
 
 	for(i = 0; i < MAXLIGHTMAPS_REAL; i++)
 	{
-		lightmapNum[i] = i >= MAXLIGHTMAPS_BSP ? LIGHTMAP_NONE : LittleLong( ds->lightmapNum[i] );
+		lightmapNum[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->lightmapNum[i] : LIGHTMAP_NONE) : LittleLong(ds->lightmapNum[i]);
+		lightmapStyles[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->lightmapStyles[i] : LS_LSNONE) : LittleLong(ds->lightmapStyles[i]);
+		vertexStyles[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->vertexStyles[i] : LS_LSNONE) : LittleLong(ds->vertexStyles[i]);
 	}
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
 
 	// get shader value
-	surf->shader = ShaderForShaderNum( ds->shaderNum, lightmapNum, ds->lightmapStyles, ds->vertexStyles );
+	surf->shader = ShaderForShaderNum( ds->shaderNum, lightmapNum, lightmapStyles, vertexStyles);
 	if ( r_singleShader->integer && !surf->shader->isSky ) {
 		surf->shader = tr.defaultShader;
 	}
@@ -559,12 +563,14 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 ParseMesh
 ===============
 */
-static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2) {
+static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2, dsurfaceManyStyles_t* manyStyleSurf) {
 	srfGridMesh_t			*grid;
 	int						i, j, k;
 	int						width, height, numPoints;
 	MAC_STATIC drawVert_t	points[MAX_PATCH_SIZE*MAX_PATCH_SIZE];
 	int						lightmapNum[MAXLIGHTMAPS_REAL];
+	byte					lightmapStyles[MAXLIGHTMAPS_REAL];
+	byte					vertexStyles[MAXLIGHTMAPS_REAL];
 	vec3_t					bounds[2];
 	vec3_t					tmpVec;
 	static surfaceType_t	skipData = SF_SKIP;
@@ -572,14 +578,16 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 
 	for(i=0;i<MAXLIGHTMAPS_REAL;i++)
 	{
-		lightmapNum[i] = i >= MAXLIGHTMAPS_BSP ? LIGHTMAP_NONE : LittleLong( ds->lightmapNum[i] );
+		lightmapNum[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->lightmapNum[i] :LIGHTMAP_NONE) : LittleLong( ds->lightmapNum[i] );
+		lightmapStyles[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->lightmapStyles[i] : LS_LSNONE) : LittleLong( ds->lightmapStyles[i] );
+		vertexStyles[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->vertexStyles[i] : LS_LSNONE) : LittleLong( ds->vertexStyles[i] );
 	}
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
 
 	// get shader value
-	surf->shader = ShaderForShaderNum( ds->shaderNum, lightmapNum, ds->lightmapStyles, ds->vertexStyles );
+	surf->shader = ShaderForShaderNum( ds->shaderNum, lightmapNum, lightmapStyles, vertexStyles);
 	if ( r_singleShader->integer && !surf->shader->isSky ) {
 		surf->shader = tr.defaultShader;
 	}
@@ -669,17 +677,25 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 ParseTriSurf
 ===============
 */
-static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2) {
+static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes, float* hdrVertColors, bspVertHDR_t* hdrVertColorsDeluxe, bspVertHDRV2_t* hdrVertColorsDeluxeV2, dsurfaceManyStyles_t* manyStyleSurf) {
 	srfTriangles_t	*tri;
 	int				i, j, k;
-	int				numVerts, numIndexes;
+	int				numVerts, numIndexes; 
+	byte			lightmapStyles[MAXLIGHTMAPS_REAL];
+	byte			vertexStyles[MAXLIGHTMAPS_REAL];
 	float			hdrMult = R_ColorShiftLightingMultiplier();
+
+	for (i = 0; i < MAXLIGHTMAPS_REAL; i++)
+	{
+		lightmapStyles[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->lightmapStyles[i] : LS_LSNONE) : LittleLong(ds->lightmapStyles[i]);
+		vertexStyles[i] = i >= MAXLIGHTMAPS_BSP ? (manyStyleSurf ? manyStyleSurf->vertexStyles[i] : LS_LSNONE) : LittleLong(ds->vertexStyles[i]);
+	}
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
 
 	// get shader
-	surf->shader = ShaderForShaderNum( ds->shaderNum, lightmapsVertex, ds->lightmapStyles, ds->vertexStyles );
+	surf->shader = ShaderForShaderNum( ds->shaderNum, lightmapsVertex, lightmapStyles, vertexStyles);
 	if ( r_singleShader->integer && !surf->shader->isSky ) {
 		surf->shader = tr.defaultShader;
 	}
@@ -1522,6 +1538,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	float* hdrVertColors = NULL;
 	bspVertHDR_t* hdrVertColorsDeluxe = NULL;
 	bspVertHDRV2_t* hdrVertColorsDeluxeV2 = NULL;
+	dsurfaceManyStyles_t* manyStyleSurf = NULL;
 
 	numFaces = 0;
 	numMeshes = 0;
@@ -1553,6 +1570,17 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	{
 		char filename[MAX_QPATH];
 		int size;
+
+		Com_sprintf(filename, sizeof(filename), "maps/%s/manyStyleSurfaces.raw", s_worldData.baseName);
+
+		size = ri.FS_ReadFile(filename, (void**)&manyStyleSurf);
+
+		if (manyStyleSurf)
+		{
+			//ri.Printf(PRINT_ALL, "Found!\n");
+			if (size != sizeof(dsurfaceManyStyles_t) * count)
+				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)(sizeof(dsurfaceManyStyles_t) * count));
+		}
 
 		Com_sprintf(filename, sizeof(filename), "maps/%s/vertlight.raw", s_worldData.baseName);
 
@@ -1606,15 +1634,15 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	for ( i = 0 ; i < count ; i++, in++, out++ ) {
 		switch ( LittleLong( in->surfaceType ) ) {
 		case MST_PATCH:
-			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2);
+			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, manyStyleSurf);
 			numMeshes++;
 			break;
 		case MST_TRIANGLE_SOUP:
-			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2);
+			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, manyStyleSurf);
 			numTriSurfs++;
 			break;
 		case MST_PLANAR:
-			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2);
+			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, manyStyleSurf);
 			numFaces++;
 			break;
 		case MST_FLARE:
@@ -1636,6 +1664,9 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	R_MovePatchSurfacesToHunk();
 #endif
 
+	if (manyStyleSurf) {
+		ri.FS_FreeFile(manyStyleSurf);
+	}
 	if (hdrVertColors) {
 		ri.FS_FreeFile(hdrVertColors);
 	}

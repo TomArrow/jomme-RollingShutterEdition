@@ -290,11 +290,11 @@ static void DrawTris (shaderCommands_t *input) {
 	}
 
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-	qglEnableVertexAttribArray(10);
+	qglEnableVertexAttribArray(4);
 	qglVertexAttribPointer(4, 3, GL_FLOAT, qfalse, 12, input->lightdir);
-	qglEnableVertexAttribArray(11);
+	qglEnableVertexAttribArray(5);
 	qglVertexAttribPointer(5, 3, GL_FLOAT, qfalse, 12, input->ambientLight);
-	qglEnableVertexAttribArray(12);
+	qglEnableVertexAttribArray(6);
 	qglVertexAttribPointer(6, 3, GL_FLOAT, qfalse, 16, input->normal);
 
 	if (qglLockArraysEXT) {
@@ -1075,11 +1075,11 @@ static void ProjectDlightTexture2( void ) {
 	if (needResetVerts)
 	{
 		qglVertexPointer (3, GL_FLOAT, 16, tess.xyz);	// padded for SIMD
-		qglEnableVertexAttribArray(10);
+		qglEnableVertexAttribArray(4);
 		qglVertexAttribPointer(4, 3, GL_FLOAT, qfalse, 12, tess.lightdir);
-		qglEnableVertexAttribArray(11);
+		qglEnableVertexAttribArray(5);
 		qglVertexAttribPointer(5, 3, GL_FLOAT, qfalse, 12, tess.ambientLight);
-		qglEnableVertexAttribArray(12);
+		qglEnableVertexAttribArray(6);
 		qglVertexAttribPointer(6, 3, GL_FLOAT, qfalse, 16, tess.normal);
 		if (qglLockArraysEXT)
 		{
@@ -1945,11 +1945,11 @@ void RB_StageIteratorGeneric( void )
 	// lock XYZ
 	//
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-	qglEnableVertexAttribArray(10);
+	qglEnableVertexAttribArray(4);
 	qglVertexAttribPointer(4, 3, GL_FLOAT, qfalse, 12, input->lightdir);
-	qglEnableVertexAttribArray(11);
+	qglEnableVertexAttribArray(5);
 	qglVertexAttribPointer(5, 3, GL_FLOAT, qfalse, 12, input->ambientLight);
-	qglEnableVertexAttribArray(12);
+	qglEnableVertexAttribArray(6);
 	qglVertexAttribPointer(6, 3, GL_FLOAT, qfalse, 16, input->normal);
 	if (qglLockArraysEXT)
 	{
@@ -2069,11 +2069,11 @@ void RB_StageIteratorVertexLitTexture( void )
 
 	qglTexCoordPointer( 2, GL_FLOAT, 16, tess.texCoords[0][0] );
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);
-	qglEnableVertexAttribArray(10);
+	qglEnableVertexAttribArray(4);
 	qglVertexAttribPointer(4, 3, GL_FLOAT, qfalse, 12, input->lightdir);
-	qglEnableVertexAttribArray(11);
+	qglEnableVertexAttribArray(5);
 	qglVertexAttribPointer(5, 3, GL_FLOAT, qfalse, 12, input->ambientLight);
-	qglEnableVertexAttribArray(12);
+	qglEnableVertexAttribArray(6);
 	qglVertexAttribPointer(6, 3, GL_FLOAT, qfalse, 16, input->normal);
 
 	if ( qglLockArraysEXT )
@@ -2161,9 +2161,9 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	//
 	GL_State( GLS_DEFAULT );
 	qglVertexPointer( 3, GL_FLOAT, 16, input->xyz );
-	qglEnableVertexAttribArray(10);
+	qglEnableVertexAttribArray(4);
 	qglVertexAttribPointer(4,3,GL_FLOAT,qfalse,12,input->lightdir);
-	qglEnableVertexAttribArray(12);
+	qglEnableVertexAttribArray(6);
 	qglVertexAttribPointer(6,3,GL_FLOAT,qfalse,16,input->normal);
 
 #ifdef REPLACE_MODE

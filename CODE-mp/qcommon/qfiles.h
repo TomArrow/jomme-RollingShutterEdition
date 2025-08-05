@@ -508,6 +508,29 @@ typedef struct {
 	int			patchHeight;
 } dsurface_t;
 
+typedef struct {
+	int			shaderNum;
+	int			fogNum;
+	int			surfaceType;
+
+	int			firstVert;
+	int			numVerts;
+
+	int			firstIndex;
+	int			numIndexes;
+
+	byte		lightmapStyles[MAXLIGHTMAPS_REAL], vertexStyles[MAXLIGHTMAPS_REAL];
+	int			lightmapNum[MAXLIGHTMAPS_REAL];
+	int			lightmapX[MAXLIGHTMAPS_REAL], lightmapY[MAXLIGHTMAPS_REAL];
+	int			lightmapWidth, lightmapHeight;
+
+	vec3_t		lightmapOrigin;
+	vec3_t		lightmapVecs[3];	// for patches, [0] and [1] are lodbounds
+
+	int			patchWidth;
+	int			patchHeight;
+} dsurfaceManyStyles_t;
+
 
 
 /////////////////////////////////////////////////////////////
