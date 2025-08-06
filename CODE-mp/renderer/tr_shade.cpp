@@ -387,14 +387,16 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			GL_SelectTexture(i);
 			qglEnable(GL_TEXTURE_2D);
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+			qglEnableVertexAttribArray(i+8);
+			qglVertexAttribPointer(i+8, 2, GL_FLOAT, qfalse, 0, input->svars.texcoords[i]);
+			//qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
 			R_BindAnimatedImage(&pStage->bundle[i]);
 
 			if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
 				GL_SelectTexture(i+1+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX); // was 5. but want maxlightmaps 4->12. so 4+1 -> 12+1
 				qglEnable(GL_TEXTURE_2D);
 				qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+				//qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
 				R_BindAnimatedImage(&pStage->bundle[i],qtrue);
 			}
 		}
@@ -416,6 +418,7 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 			GL_SelectTexture(i);
 			qglDisable(GL_TEXTURE_2D);
 			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			qglDisableVertexAttribArray(i + 8);
 			if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
 				GL_SelectTexture(i + 1 + NUM_GLSL_EXTRA_LIGHTMAPS_MAX);
 				qglDisable(GL_TEXTURE_2D);
