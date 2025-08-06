@@ -32,6 +32,13 @@ layout(location = 12) in vec2 texCoordAttrib4;
 layout(location = 13) in vec2 texCoordAttrib5;
 layout(location = 14) in vec2 texCoordAttrib6;
 layout(location = 15) in vec2 texCoordAttrib7;
+layout(location = 16) in vec2 texCoordAttrib8;
+layout(location = 17) in vec2 texCoordAttrib9;
+layout(location = 18) in vec2 texCoordAttrib10;
+layout(location = 19) in vec2 texCoordAttrib11;
+layout(location = 20) in vec2 texCoordAttrib12;
+layout(location = 21) in vec2 texCoordAttrib13;
+//layout(location = 22) in vec2 texCoordAttrib14;
 
 out geomTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT/2];
@@ -149,9 +156,12 @@ void equirectangular()
 	pureVertexCoords = gl_Vertex;
 
 	geomTexCoord.coord[0] = texCoord.coord[0] = vec4(gl_MultiTexCoord0.st,gl_MultiTexCoord1.st);
-	geomTexCoord.coord[1] = texCoord.coord[1] = vec4(texCoordAttrib2,texCoordAttrib3);//gl_MultiTexCoord2;
-	geomTexCoord.coord[2] = texCoord.coord[2] = vec4(texCoordAttrib4,texCoordAttrib5);//gl_MultiTexCoord2;
-	geomTexCoord.coord[3] = texCoord.coord[3] = vec4(texCoordAttrib6,texCoordAttrib7);//gl_MultiTexCoord2;
+	geomTexCoord.coord[1] = texCoord.coord[1] = vec4(texCoordAttrib2,texCoordAttrib3);
+	geomTexCoord.coord[2] = texCoord.coord[2] = vec4(texCoordAttrib4,texCoordAttrib5);
+	geomTexCoord.coord[3] = texCoord.coord[3] = vec4(texCoordAttrib6,texCoordAttrib7);
+	geomTexCoord.coord[4] = texCoord.coord[4] = vec4(texCoordAttrib8,texCoordAttrib9);
+	geomTexCoord.coord[5] = texCoord.coord[5] = vec4(texCoordAttrib10,texCoordAttrib11);
+	geomTexCoord.coord[6] = texCoord.coord[6] = vec4(texCoordAttrib12,texCoordAttrib13);
 	geomTexAttr.attribs[0] = texAttr.attribs[0] = lightDirAttrib;
 	geomTexAttr.attribs[1] = texAttr.attribs[1] = ambientLightAttrib;
 	geomTexAttr.attribs[2] = texAttr.attribs[2] = normalAttrib;

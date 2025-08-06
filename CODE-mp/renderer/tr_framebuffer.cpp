@@ -66,7 +66,7 @@
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
-#define NUM_TEXTURE_SAMPLERS 28
+#define NUM_TEXTURE_SAMPLERS 30
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
