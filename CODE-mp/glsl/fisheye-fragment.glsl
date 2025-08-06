@@ -847,13 +847,17 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			//return direction;
 			direction = (dirmat*direction);
 			vec3 maybeMirroredNormal = twoSided && dot(normal,direction.xyz) < 0 ? -normal : normal;
-			float divider = max(0.05f,dot((maybeMirroredNormal),(direction).xyz)); // 0.05f because that's about the limit before we start seeing ugly seams at lightmaps/deluxemaps wrapping around corners/light bleeding.
+			float dotbase = dot((maybeMirroredNormal),(direction).xyz);
+			float dotbaseHL  = 0.5f+0.5f*dotbase;
+			float divider = max(0.05f,dotbaseHL*dotbaseHL); // 0.05f because that's about the limit before we start seeing ugly seams at lightmaps/deluxemaps wrapping around corners/light bleeding.
+			//float divider = max(0.05f,dotbase); // 0.05f because that's about the limit before we start seeing ugly seams at lightmaps/deluxemaps wrapping around corners/light bleeding.
 			vec3 maybeMirroredLightNormal = twoSided && dot(normal,direction.xyz) < 0 ? -lightNormal : lightNormal;
 			float alignment = max(0.05f,dot((maybeMirroredLightNormal),(direction).xyz));
 			alignment /= divider;
 			//return vec4(vec3(alignment),1.0f);
 			//color /= max(0.00001,dot(normal,(direction).xyz));
 			alignment = max(0.0f,alignment);
+			//alignment = 1.0f;
 
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
