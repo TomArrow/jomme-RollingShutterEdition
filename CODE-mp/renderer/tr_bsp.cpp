@@ -509,7 +509,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 			cv->points[i].st[j] = LittleFloat( verts[i].st[j] );
 			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				cv->points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? 0 : LittleFloat( verts[i].lightmap[k][j] );
+				cv->points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? (hdrVertColorsDeluxeV2 ? hdrVertColorsDeluxeV2[i].lightmap[k][j]: 0) : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
@@ -622,7 +622,7 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, floa
 			points[i].st[j] = LittleFloat( verts[i].st[j] );
 			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? 0 : LittleFloat( verts[i].lightmap[k][j] );
+				points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? (hdrVertColorsDeluxeV2 ? hdrVertColorsDeluxeV2[i].lightmap[k][j] : 0) : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
@@ -735,7 +735,7 @@ static void ParseTriSurf( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, in
 			tri->verts[i].st[j] = LittleFloat( verts[i].st[j] );
 			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				tri->verts[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? 0 : LittleFloat( verts[i].lightmap[k][j] );
+				tri->verts[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? (hdrVertColorsDeluxeV2 ? hdrVertColorsDeluxeV2[i].lightmap[k][j] : 0) : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
 

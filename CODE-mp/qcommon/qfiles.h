@@ -456,6 +456,7 @@ typedef struct bspVertHDRV2_s
 	vec3_t color[MAXLIGHTMAPS_REAL];
 	byte styles[MAXLIGHTMAPS_REAL];
 	vec3_t direction[MAXLIGHTMAPS_REAL];
+	float	lightmap[MAXLIGHTMAPS_REAL][2];
 } bspVertHDRV2_t;
 
 

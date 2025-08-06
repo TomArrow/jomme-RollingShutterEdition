@@ -1,7 +1,7 @@
 #version 400 compatibility
 #extension GL_ARB_shader_storage_buffer_object : enable
 
-#define TEXTURE_COUNT 6
+#define TEXTURE_COUNT 7
 #define VEC3_ATTRIBUTE_COUNT 3
 
 // Geometry Shader

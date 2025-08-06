@@ -1,7 +1,7 @@
 #version 400 compatibility
 #extension GL_ARB_tessellation_shader : enable
 
-#define TEXTURE_COUNT 6
+#define TEXTURE_COUNT 7
 #define VEC3_ATTRIBUTE_COUNT 3
 
 layout(vertices = 3) out;

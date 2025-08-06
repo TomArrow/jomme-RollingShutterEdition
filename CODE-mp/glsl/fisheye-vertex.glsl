@@ -1,6 +1,6 @@
 #version 400 compatibility
 
-#define TEXTURE_COUNT 6
+#define TEXTURE_COUNT 7
 #define VEC3_ATTRIBUTE_COUNT 3
 
 uniform vec3 dofJitterUniform;
