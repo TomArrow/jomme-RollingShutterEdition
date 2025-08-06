@@ -34,7 +34,13 @@ out mat4x4 worldModelViewMatrixReverseGeom;
 out vec3 normal;
 out vec3 worldNormal;
 
+out varying vec4 my_TexCoord[TEXTURE_COUNT];
+
 #define SETATTRIBS lightDir = geomTexCoord[i].attribs[0];ambientLight = geomTexCoord[i].attribs[1];vertexNormal = geomTexCoord[i].attribs[2];
+
+//#define SETTEXCOORDS gl_TexCoord[0] = geomTexCoord[i].coord[0];gl_TexCoord[1] = geomTexCoord[i].coord[1];gl_TexCoord[2] = geomTexCoord[i].coord[2];gl_TexCoord[3] = geomTexCoord[i].coord[3];gl_TexCoord[4] = geomTexCoord[i].coord[4];gl_TexCoord[5] = geomTexCoord[i].coord[5];
+//#define SETTEXCOORDS my_TexCoord[0] = geomTexCoord[i].coord[0];my_TexCoord[1] = geomTexCoord[i].coord[1];my_TexCoord[2] = geomTexCoord[i].coord[2];my_TexCoord[3] = geomTexCoord[i].coord[3];my_TexCoord[4] = geomTexCoord[i].coord[4];my_TexCoord[5] = geomTexCoord[i].coord[5];
+#define SETTEXCOORDS for(int c=0;c<TEXTURE_COUNT;c++){my_TexCoord[c] = geomTexCoord[i].coord[c];}
 
 in vec4 eyeSpaceCoords[3];
 varying out vec4 eyeSpaceCoordsGeom;
@@ -207,12 +213,7 @@ void standard(vec3 myNormal){
 		//positionAdjustment.z = musicDeformSampleCount;
 		gl_Position = projectionMatrix[0]* (gl_PositionIn[i]+positionAdjustment);
 		//gl_TexCoord[0] = gl_TexCoordIn[i][0];
-		gl_TexCoord[0] = geomTexCoord[i].coord[0];
-		gl_TexCoord[1] = geomTexCoord[i].coord[1];
-		gl_TexCoord[2] = geomTexCoord[i].coord[2];
-		gl_TexCoord[3] = geomTexCoord[i].coord[3];
-		gl_TexCoord[4] = geomTexCoord[i].coord[4];
-		gl_TexCoord[5] = geomTexCoord[i].coord[5];
+		SETTEXCOORDS
 		//gl_TexCoord[0].s = dot(gl_PositionIn[i].xyz,uvtransform[0]);
 		//gl_TexCoord[0].t = dot(gl_PositionIn[i].xyz,uvtransform[1]);
 		eyeSpaceCoordsGeom = eyeSpaceCoords[i];
@@ -329,12 +330,7 @@ void equirect(){
 		{
 			gl_Position = positions[i];
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i].coord[0];
-			gl_TexCoord[1] = geomTexCoord[i].coord[1];
-			gl_TexCoord[2] = geomTexCoord[i].coord[2];
-			gl_TexCoord[3] = geomTexCoord[i].coord[3];
-			gl_TexCoord[4] = geomTexCoord[i].coord[4];
-			gl_TexCoord[5] = geomTexCoord[i].coord[5];
+			SETTEXCOORDS
 			vertColor = color[i];
 			SETATTRIBS
 			
@@ -356,12 +352,7 @@ void equirect(){
 			}
 			gl_Position = thisPosition;
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i].coord[0];
-			gl_TexCoord[1] = geomTexCoord[i].coord[1];
-			gl_TexCoord[2] = geomTexCoord[i].coord[2];
-			gl_TexCoord[3] = geomTexCoord[i].coord[3];
-			gl_TexCoord[4] = geomTexCoord[i].coord[4];
-			gl_TexCoord[5] = geomTexCoord[i].coord[5];
+			SETTEXCOORDS
 			vertColor = color[i];
 			SETATTRIBS
 			
@@ -379,12 +370,7 @@ void equirect(){
 			}
 			gl_Position = thisPosition;
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i].coord[0];
-			gl_TexCoord[1] = geomTexCoord[i].coord[1];
-			gl_TexCoord[2] = geomTexCoord[i].coord[2];
-			gl_TexCoord[3] = geomTexCoord[i].coord[3];
-			gl_TexCoord[4] = geomTexCoord[i].coord[4];
-			gl_TexCoord[5] = geomTexCoord[i].coord[5];
+			SETTEXCOORDS
 			vertColor = color[i];
 			SETATTRIBS
 			
@@ -509,12 +495,7 @@ void fisheye(){
 		{
 			gl_Position = positions[i];
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
-			gl_TexCoord[0] = geomTexCoord[i].coord[0];
-			gl_TexCoord[1] = geomTexCoord[i].coord[1];
-			gl_TexCoord[2] = geomTexCoord[i].coord[2];
-			gl_TexCoord[3] = geomTexCoord[i].coord[3];
-			gl_TexCoord[4] = geomTexCoord[i].coord[4];
-			gl_TexCoord[5] = geomTexCoord[i].coord[5];
+			SETTEXCOORDS
 			vertColor = color[i];
 			SETATTRIBS
 			

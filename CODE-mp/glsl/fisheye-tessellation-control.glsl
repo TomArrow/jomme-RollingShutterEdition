@@ -160,12 +160,15 @@ void main()
 
 
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-	vertexTexCoord[gl_InvocationID].coord[0] = texCoord[gl_InvocationID].coord[0];
-	vertexTexCoord[gl_InvocationID].coord[1] = texCoord[gl_InvocationID].coord[1];
-	vertexTexCoord[gl_InvocationID].coord[2] = texCoord[gl_InvocationID].coord[2];
-	vertexTexCoord[gl_InvocationID].coord[3] = texCoord[gl_InvocationID].coord[3];
-	vertexTexCoord[gl_InvocationID].coord[4] = texCoord[gl_InvocationID].coord[4];
-	vertexTexCoord[gl_InvocationID].coord[5] = texCoord[gl_InvocationID].coord[5];
+	for(int c=0;c<TEXTURE_COUNT;c++){
+		vertexTexCoord[gl_InvocationID].coord[c] = texCoord[gl_InvocationID].coord[c];
+	}
+	//vertexTexCoord[gl_InvocationID].coord[0] = texCoord[gl_InvocationID].coord[0];
+	//vertexTexCoord[gl_InvocationID].coord[1] = texCoord[gl_InvocationID].coord[1];
+	//vertexTexCoord[gl_InvocationID].coord[2] = texCoord[gl_InvocationID].coord[2];
+	//vertexTexCoord[gl_InvocationID].coord[3] = texCoord[gl_InvocationID].coord[3];
+	//vertexTexCoord[gl_InvocationID].coord[4] = texCoord[gl_InvocationID].coord[4];
+	//vertexTexCoord[gl_InvocationID].coord[5] = texCoord[gl_InvocationID].coord[5];
 	for(int i=0;i<VEC3_ATTRIBUTE_COUNT;i++){
 		vertexTexCoord[gl_InvocationID].attribs[i] = texCoord[gl_InvocationID].attribs[i];
 	}

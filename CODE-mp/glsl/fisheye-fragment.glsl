@@ -9,6 +9,8 @@
 	#endif
 #endif
 
+#define TEXTURE_COUNT 6
+
 #define PERLINFVCKERY 1
 
 #define	CGEN_BAD 0
@@ -84,6 +86,7 @@ varying vec3 ambientLight;
 varying vec3 vertexNormal;
 in vec3 texUVTransform[2];
 
+varying vec4 my_TexCoord[TEXTURE_COUNT];
 
 //flat in uint shadowLineLightBitmasks[1152];
 #define MULTDIVIDE255 0.0039215686274509803921568627451f
@@ -379,7 +382,7 @@ vec2 parallaxMap(){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		vec4 color = texture2D(text_in0, gl_TexCoord[0].st);
+		vec4 color = texture2D(text_in0, my_TexCoord[0].st);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -402,7 +405,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition){
 		vec3 currentPlace = eyeSpaceCoordsGeom.xyz;
 		float gamma = 1.0f/parallaxMapGammaUniform;
 
-		//vec4 color = texture2D(text_in, gl_TexCoord[0].st);
+		//vec4 color = texture2D(text_in, my_TexCoord[0].st);
 
 		vec3 viewVecNormalized = normalize(eyeSpaceCoordsGeom.xyz);
 		vec3 depthComponent = normal * dot(normal,viewVecNormalized); // Get the depth component that a unity view vector gives us 
@@ -1062,7 +1065,7 @@ void main(void)
 	bool standAloneLightmap = !multitex && (stageLightmapBitmaskUniform & 1) > 0;
 	bool haveLightmap = (stageLightmapBitmaskUniform & 1) > 0 || multitex && (stageLightmapBitmaskUniform & 3) > 0;
 
-	vec2 uvCoords = gl_TexCoord[0].st;
+	vec2 uvCoords = my_TexCoord[0].st;
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
 	vec4 color;
 	
@@ -1074,7 +1077,7 @@ void main(void)
 		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap():parallaxMapSteep(effectiveUVPixelPos);
 		} else {
-			uvCoords = gl_TexCoord[0].st; // Don't parallax lightmaps
+			uvCoords = my_TexCoord[0].st; // Don't parallax lightmaps
 		}
 		color = texture2D(text_in0, uvCoords);
 
@@ -1098,7 +1101,7 @@ void main(void)
 	
 	//if((stageLightmapBitmaskUniform & (1<<6))>0){
 		
-		//gl_FragColor = texture2D(text_in6, gl_TexCoord[1].st);
+		//gl_FragColor = texture2D(text_in6, my_TexCoord[1].st);
 		//return;
 	//}
 	//if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0){
@@ -1430,28 +1433,28 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in17,gl_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in17,my_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in18,gl_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in18,my_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in19,gl_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in19,my_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in20,gl_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in20,my_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += texture2D(text_in2, gl_TexCoord[2].st);				
+			lightmapStyleAdd += texture2D(text_in2, my_TexCoord[2].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += texture2D(text_in3, gl_TexCoord[3].st);				
+			lightmapStyleAdd += texture2D(text_in3, my_TexCoord[3].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += texture2D(text_in4, gl_TexCoord[4].st);				
+			lightmapStyleAdd += texture2D(text_in4, my_TexCoord[4].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += texture2D(text_in5, gl_TexCoord[5].st);				
+			lightmapStyleAdd += texture2D(text_in5, my_TexCoord[5].st);				
 		}*/
 
 		addValue *= baseColorForLightingReal; // because if we have a lightmap, we 100% used 1.0 as the baseColorForLighting, so we revert that here.
@@ -1488,9 +1491,9 @@ void main(void)
 	vec4 color2 = vec4(0);
 	if(multitex){
 		if((stageLightmapBitmaskUniform & 2) >0){
-			color2 = getLightmapIntensity(text_in1,text_in16,gl_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
+			color2 = getLightmapIntensity(text_in1,text_in16,my_TexCoord[1].st,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
 		} else{
-			color2 = texture2D(text_in16, gl_TexCoord[1].st);
+			color2 = texture2D(text_in16, my_TexCoord[1].st);
 		}
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;

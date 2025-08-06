@@ -57,12 +57,15 @@ void main()
   //gl_in[2].gl_Position, 
  // gl_in[3].gl_Position);
   gl_Position = (gl_TessCoord.x * gl_in[0].gl_Position + gl_TessCoord.y * gl_in[1].gl_Position + gl_TessCoord.z * gl_in[2].gl_Position);
-  geomTexCoord.coord[0] = (gl_TessCoord.x * vertexTexCoord[0].coord[0] + gl_TessCoord.y * vertexTexCoord[1].coord[0] + gl_TessCoord.z * vertexTexCoord[2].coord[0]);
-  geomTexCoord.coord[1] = (gl_TessCoord.x * vertexTexCoord[0].coord[1] + gl_TessCoord.y * vertexTexCoord[1].coord[1] + gl_TessCoord.z * vertexTexCoord[2].coord[1]);
-  geomTexCoord.coord[2] = (gl_TessCoord.x * vertexTexCoord[0].coord[2] + gl_TessCoord.y * vertexTexCoord[1].coord[2] + gl_TessCoord.z * vertexTexCoord[2].coord[2]);
-  geomTexCoord.coord[3] = (gl_TessCoord.x * vertexTexCoord[0].coord[3] + gl_TessCoord.y * vertexTexCoord[1].coord[3] + gl_TessCoord.z * vertexTexCoord[2].coord[3]);
-  geomTexCoord.coord[4] = (gl_TessCoord.x * vertexTexCoord[0].coord[4] + gl_TessCoord.y * vertexTexCoord[1].coord[4] + gl_TessCoord.z * vertexTexCoord[2].coord[4]);
-  geomTexCoord.coord[5] = (gl_TessCoord.x * vertexTexCoord[0].coord[5] + gl_TessCoord.y * vertexTexCoord[1].coord[5] + gl_TessCoord.z * vertexTexCoord[2].coord[5]);
+  for(int c=0;c<TEXTURE_COUNT;c++){
+	geomTexCoord.coord[c] = (gl_TessCoord.x * vertexTexCoord[0].coord[c] + gl_TessCoord.y * vertexTexCoord[1].coord[c] + gl_TessCoord.z * vertexTexCoord[2].coord[c]);
+  }
+  //geomTexCoord.coord[0] = (gl_TessCoord.x * vertexTexCoord[0].coord[0] + gl_TessCoord.y * vertexTexCoord[1].coord[0] + gl_TessCoord.z * vertexTexCoord[2].coord[0]);
+  //geomTexCoord.coord[1] = (gl_TessCoord.x * vertexTexCoord[0].coord[1] + gl_TessCoord.y * vertexTexCoord[1].coord[1] + gl_TessCoord.z * vertexTexCoord[2].coord[1]);
+  //geomTexCoord.coord[2] = (gl_TessCoord.x * vertexTexCoord[0].coord[2] + gl_TessCoord.y * vertexTexCoord[1].coord[2] + gl_TessCoord.z * vertexTexCoord[2].coord[2]);
+  //geomTexCoord.coord[3] = (gl_TessCoord.x * vertexTexCoord[0].coord[3] + gl_TessCoord.y * vertexTexCoord[1].coord[3] + gl_TessCoord.z * vertexTexCoord[2].coord[3]);
+  //geomTexCoord.coord[4] = (gl_TessCoord.x * vertexTexCoord[0].coord[4] + gl_TessCoord.y * vertexTexCoord[1].coord[4] + gl_TessCoord.z * vertexTexCoord[2].coord[4]);
+  //geomTexCoord.coord[5] = (gl_TessCoord.x * vertexTexCoord[0].coord[5] + gl_TessCoord.y * vertexTexCoord[1].coord[5] + gl_TessCoord.z * vertexTexCoord[2].coord[5]);
   color = (gl_TessCoord.x * colorTCS[0] + gl_TessCoord.y * colorTCS[1] + gl_TessCoord.z * colorTCS[2]);
   //color = vec4(1,1,1,1);
   //geomTexCoord = teUv;
