@@ -1664,6 +1664,66 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 				texcoords[1] = tess.texCoords[i][4][1];
 			}
 			break;
+		case TCGEN_LIGHTMAP4:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][5][0];
+				texcoords[1] = tess.texCoords[i][5][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP5:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][6][0];
+				texcoords[1] = tess.texCoords[i][6][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP6:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][7][0];
+				texcoords[1] = tess.texCoords[i][7][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP7:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][8][0];
+				texcoords[1] = tess.texCoords[i][8][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP8:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][9][0];
+				texcoords[1] = tess.texCoords[i][9][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP9:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][10][0];
+				texcoords[1] = tess.texCoords[i][10][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP10:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][11][0];
+				texcoords[1] = tess.texCoords[i][11][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP11:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][12][0];
+				texcoords[1] = tess.texCoords[i][12][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP12:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][13][0];
+				texcoords[1] = tess.texCoords[i][13][1];
+			}
+			break;
+		case TCGEN_LIGHTMAP13:
+			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+				texcoords[0] = tess.texCoords[i][14][0];
+				texcoords[1] = tess.texCoords[i][14][1];
+			}
+			break;
 		case TCGEN_VECTOR:
 			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
 				tess.svars.texcoords[b][i][0] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[0] );

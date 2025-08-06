@@ -1539,6 +1539,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 	bspVertHDR_t* hdrVertColorsDeluxe = NULL;
 	bspVertHDRV2_t* hdrVertColorsDeluxeV2 = NULL;
 	dsurfaceManyStyles_t* manyStyleSurf = NULL;
+	dsurfaceManyStyles_t* inManyStyle = NULL;
 
 	numFaces = 0;
 	numMeshes = 0;
@@ -1577,6 +1578,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 
 		if (manyStyleSurf)
 		{
+			inManyStyle = manyStyleSurf;
 			//ri.Printf(PRINT_ALL, "Found!\n");
 			if (size != sizeof(dsurfaceManyStyles_t) * count)
 				ri.Error(ERR_DROP, "Bad size for %s (%i, expected %i)!", filename, size, (int)(sizeof(dsurfaceManyStyles_t) * count));
@@ -1631,18 +1633,18 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 		
 	}
 
-	for ( i = 0 ; i < count ; i++, in++, out++ ) {
+	for ( i = 0 ; i < count ; i++, in++, out++, inManyStyle++) {
 		switch ( LittleLong( in->surfaceType ) ) {
 		case MST_PATCH:
-			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, manyStyleSurf);
+			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, inManyStyle);
 			numMeshes++;
 			break;
 		case MST_TRIANGLE_SOUP:
-			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, manyStyleSurf);
+			ParseTriSurf( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, inManyStyle);
 			numTriSurfs++;
 			break;
 		case MST_PLANAR:
-			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, manyStyleSurf);
+			ParseFace( in, dv, out, indexes, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, inManyStyle);
 			numFaces++;
 			break;
 		case MST_FLARE:
