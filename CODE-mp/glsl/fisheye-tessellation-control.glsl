@@ -1,24 +1,28 @@
 #version 400 compatibility
 #extension GL_ARB_tessellation_shader : enable
 
-#define TEXTURE_COUNT 7
+#define TEXTURE_COUNT 14
 #define VEC3_ATTRIBUTE_COUNT 3
 
 layout(vertices = 3) out;
 
 //in vec4 texCoord[];
 in texCoord_interface {
-	vec2 coord[TEXTURE_COUNT];
-	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+	vec4 coord[TEXTURE_COUNT/2];
 } texCoord[];
+in texAttr_interface {
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+} texAttr[];
 
 in vec4 colorVertex[];
 
 //out vec4 vertexTexCoord[];
 out vertexTexCoord_interface {
-	vec2 coord[TEXTURE_COUNT];
-	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+	vec4 coord[TEXTURE_COUNT/2];
 } vertexTexCoord[];
+out vertexTexAttr_interface {
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+} vertexTexAttr[];
 
 out vec4 colorTCS[];
 
@@ -170,7 +174,7 @@ void main()
 	//vertexTexCoord[gl_InvocationID].coord[4] = texCoord[gl_InvocationID].coord[4];
 	//vertexTexCoord[gl_InvocationID].coord[5] = texCoord[gl_InvocationID].coord[5];
 	for(int i=0;i<VEC3_ATTRIBUTE_COUNT;i++){
-		vertexTexCoord[gl_InvocationID].attribs[i] = texCoord[gl_InvocationID].attribs[i];
+		vertexTexAttr[gl_InvocationID].attribs[i] = texAttr[gl_InvocationID].attribs[i];
 	}
 	colorTCS[gl_InvocationID] = colorVertex[gl_InvocationID];
 

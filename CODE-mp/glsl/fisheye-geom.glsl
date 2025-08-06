@@ -1,7 +1,7 @@
 #version 400 compatibility
 #extension GL_ARB_shader_storage_buffer_object : enable
 
-#define TEXTURE_COUNT 7
+#define TEXTURE_COUNT 14
 #define VEC3_ATTRIBUTE_COUNT 3
 
 // Geometry Shader
@@ -18,9 +18,11 @@ out vec3 texUVTransform[2];
 
 //in vec4 geomTexCoord[3];
 in geomTexCoord_interface {
-	vec2 coord[TEXTURE_COUNT];
-	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+	vec4 coord[TEXTURE_COUNT/2];
 } geomTexCoord[];
+in geomTexAttr_interface {
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+} geomTexAttr[];
 
 in vec4 gl_TexCoordIn[3][1];
 
@@ -36,11 +38,11 @@ out vec3 worldNormal;
 
 out varying vec2 my_TexCoord[TEXTURE_COUNT];
 
-#define SETATTRIBS lightDir = geomTexCoord[i].attribs[0];ambientLight = geomTexCoord[i].attribs[1];vertexNormal = geomTexCoord[i].attribs[2];
+#define SETATTRIBS lightDir = geomTexAttr[i].attribs[0];ambientLight = geomTexAttr[i].attribs[1];vertexNormal = geomTexAttr[i].attribs[2];
 
 //#define SETTEXCOORDS gl_TexCoord[0] = geomTexCoord[i].coord[0];gl_TexCoord[1] = geomTexCoord[i].coord[1];gl_TexCoord[2] = geomTexCoord[i].coord[2];gl_TexCoord[3] = geomTexCoord[i].coord[3];gl_TexCoord[4] = geomTexCoord[i].coord[4];gl_TexCoord[5] = geomTexCoord[i].coord[5];
 //#define SETTEXCOORDS my_TexCoord[0] = geomTexCoord[i].coord[0];my_TexCoord[1] = geomTexCoord[i].coord[1];my_TexCoord[2] = geomTexCoord[i].coord[2];my_TexCoord[3] = geomTexCoord[i].coord[3];my_TexCoord[4] = geomTexCoord[i].coord[4];my_TexCoord[5] = geomTexCoord[i].coord[5];
-#define SETTEXCOORDS for(int c=0;c<TEXTURE_COUNT;c++){my_TexCoord[c] = geomTexCoord[i].coord[c];}
+#define SETTEXCOORDS for(int c=0;c<TEXTURE_COUNT;c+=2){my_TexCoord[c] = geomTexCoord[i].coord[c/2].st;my_TexCoord[c+1] = geomTexCoord[i].coord[c/2].zw;}
 
 in vec4 eyeSpaceCoords[3];
 varying out vec4 eyeSpaceCoordsGeom;

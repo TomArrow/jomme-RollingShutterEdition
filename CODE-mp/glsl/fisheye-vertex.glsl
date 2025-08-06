@@ -1,6 +1,6 @@
 #version 400 compatibility
 
-#define TEXTURE_COUNT 7
+#define TEXTURE_COUNT 14
 #define VEC3_ATTRIBUTE_COUNT 3
 
 uniform vec3 dofJitterUniform;
@@ -14,9 +14,11 @@ out mat4x4 worldModelViewMatrixReverse;
 out vec3 debugColor;
 out vec4 color;
 out texCoord_interface {
-	vec2 coord[TEXTURE_COUNT];
-	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+	vec4 coord[TEXTURE_COUNT/2];
 } texCoord;
+out texAttr_interface {
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+} texAttr;
 //out vec4 texCoord[TEXTURE_COUNT];
 out vec4 colorVertex;
 
@@ -29,11 +31,15 @@ layout(location = 11) in vec2 texCoordAttrib3;
 layout(location = 12) in vec2 texCoordAttrib4;
 layout(location = 13) in vec2 texCoordAttrib5;
 layout(location = 14) in vec2 texCoordAttrib6;
+layout(location = 15) in vec2 texCoordAttrib7;
 
 out geomTexCoord_interface {
-	vec2 coord[TEXTURE_COUNT];
-	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+	vec4 coord[TEXTURE_COUNT/2];
 } geomTexCoord;
+
+out geomTexAttr_interface {
+	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
+} geomTexAttr;
 
 out float realDepth;
 
@@ -142,16 +148,13 @@ void equirectangular()
 
 	pureVertexCoords = gl_Vertex;
 
-	geomTexCoord.coord[0] = texCoord.coord[0] = gl_MultiTexCoord0.st;
-	geomTexCoord.coord[1] = texCoord.coord[1] = gl_MultiTexCoord1.st;
-	geomTexCoord.coord[2] = texCoord.coord[2] = (texCoordAttrib2);//gl_MultiTexCoord2;
-	geomTexCoord.coord[3] = texCoord.coord[3] = (texCoordAttrib3);
-	geomTexCoord.coord[4] = texCoord.coord[4] = (texCoordAttrib4);
-	geomTexCoord.coord[5] = texCoord.coord[5] = (texCoordAttrib5);
-	geomTexCoord.coord[6] = texCoord.coord[6] = (texCoordAttrib6);
-	geomTexCoord.attribs[0] = texCoord.attribs[0] = lightDirAttrib;
-	geomTexCoord.attribs[1] = texCoord.attribs[1] = ambientLightAttrib;
-	geomTexCoord.attribs[2] = texCoord.attribs[2] = normalAttrib;
+	geomTexCoord.coord[0] = texCoord.coord[0] = vec4(gl_MultiTexCoord0.st,gl_MultiTexCoord1.st);
+	geomTexCoord.coord[1] = texCoord.coord[1] = vec4(texCoordAttrib2,texCoordAttrib3);//gl_MultiTexCoord2;
+	geomTexCoord.coord[2] = texCoord.coord[2] = vec4(texCoordAttrib4,texCoordAttrib5);//gl_MultiTexCoord2;
+	geomTexCoord.coord[3] = texCoord.coord[3] = vec4(texCoordAttrib6,texCoordAttrib7);//gl_MultiTexCoord2;
+	geomTexAttr.attribs[0] = texAttr.attribs[0] = lightDirAttrib;
+	geomTexAttr.attribs[1] = texAttr.attribs[1] = ambientLightAttrib;
+	geomTexAttr.attribs[2] = texAttr.attribs[2] = normalAttrib;
 
 	color = gl_Color;
 	colorVertex = gl_Color;

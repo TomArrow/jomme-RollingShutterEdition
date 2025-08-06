@@ -9,7 +9,7 @@
 	#endif
 #endif
 
-#define TEXTURE_COUNT 7
+#define TEXTURE_COUNT 14
 
 #define PERLINFVCKERY 1
 
