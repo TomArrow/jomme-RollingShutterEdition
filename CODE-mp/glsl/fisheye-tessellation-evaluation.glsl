@@ -12,13 +12,13 @@ out vec4 color;
 //out vec4 geomTexCoord;
 
 out geomTexCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } geomTexCoord;
 
 //in vec4 vertexTexCoord[];
 in vertexTexCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } vertexTexCoord[];
 

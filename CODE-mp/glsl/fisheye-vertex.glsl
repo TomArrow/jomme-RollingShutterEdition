@@ -14,7 +14,7 @@ out mat4x4 worldModelViewMatrixReverse;
 out vec3 debugColor;
 out vec4 color;
 out texCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } texCoord;
 //out vec4 texCoord[TEXTURE_COUNT];
@@ -28,9 +28,10 @@ layout(location = 10) in vec2 texCoordAttrib2;
 layout(location = 11) in vec2 texCoordAttrib3;
 layout(location = 12) in vec2 texCoordAttrib4;
 layout(location = 13) in vec2 texCoordAttrib5;
+layout(location = 14) in vec2 texCoordAttrib6;
 
 out geomTexCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } geomTexCoord;
 
@@ -141,12 +142,13 @@ void equirectangular()
 
 	pureVertexCoords = gl_Vertex;
 
-	geomTexCoord.coord[0] = texCoord.coord[0] = gl_TexCoord[0] = gl_MultiTexCoord0;
-	geomTexCoord.coord[1] = texCoord.coord[1] = gl_TexCoord[1] = gl_MultiTexCoord1;
-	geomTexCoord.coord[2] = texCoord.coord[2] = gl_TexCoord[2] = vec4(texCoordAttrib2,0.0f,0.0f);//gl_MultiTexCoord2;
-	geomTexCoord.coord[3] = texCoord.coord[3] = gl_TexCoord[3] = vec4(texCoordAttrib3,0.0f,0.0f);
-	geomTexCoord.coord[4] = texCoord.coord[4] = gl_TexCoord[4] = vec4(texCoordAttrib4,0.0f,0.0f);
-	geomTexCoord.coord[5] = texCoord.coord[5] = gl_TexCoord[5] = vec4(texCoordAttrib5,0.0f,0.0f);
+	geomTexCoord.coord[0] = texCoord.coord[0] = gl_MultiTexCoord0.st;
+	geomTexCoord.coord[1] = texCoord.coord[1] = gl_MultiTexCoord1.st;
+	geomTexCoord.coord[2] = texCoord.coord[2] = (texCoordAttrib2);//gl_MultiTexCoord2;
+	geomTexCoord.coord[3] = texCoord.coord[3] = (texCoordAttrib3);
+	geomTexCoord.coord[4] = texCoord.coord[4] = (texCoordAttrib4);
+	geomTexCoord.coord[5] = texCoord.coord[5] = (texCoordAttrib5);
+	geomTexCoord.coord[6] = texCoord.coord[6] = (texCoordAttrib6);
 	geomTexCoord.attribs[0] = texCoord.attribs[0] = lightDirAttrib;
 	geomTexCoord.attribs[1] = texCoord.attribs[1] = ambientLightAttrib;
 	geomTexCoord.attribs[2] = texCoord.attribs[2] = normalAttrib;

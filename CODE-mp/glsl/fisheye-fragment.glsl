@@ -86,7 +86,7 @@ varying vec3 ambientLight;
 varying vec3 vertexNormal;
 in vec3 texUVTransform[2];
 
-varying vec4 my_TexCoord[TEXTURE_COUNT];
+varying vec2 my_TexCoord[TEXTURE_COUNT];
 
 //flat in uint shadowLineLightBitmasks[1152];
 #define MULTDIVIDE255 0.0039215686274509803921568627451f
@@ -1443,6 +1443,9 @@ void main(void)
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
 			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in20,my_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+		}
+		if((stageLightmapBitmaskUniform & (1<<6))>0){
+			lightmapStyleAdd += getLightmapIntensity(text_in6,text_in21,my_TexCoord[6].st,(stageLightmapBitmaskUniform & (1<<21)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
 			lightmapStyleAdd += texture2D(text_in2, my_TexCoord[2].st);				

@@ -8,7 +8,7 @@ layout(vertices = 3) out;
 
 //in vec4 texCoord[];
 in texCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } texCoord[];
 
@@ -16,7 +16,7 @@ in vec4 colorVertex[];
 
 //out vec4 vertexTexCoord[];
 out vertexTexCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } vertexTexCoord[];
 

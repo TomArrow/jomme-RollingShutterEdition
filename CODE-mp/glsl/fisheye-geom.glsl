@@ -18,7 +18,7 @@ out vec3 texUVTransform[2];
 
 //in vec4 geomTexCoord[3];
 in geomTexCoord_interface {
-	vec4 coord[TEXTURE_COUNT];
+	vec2 coord[TEXTURE_COUNT];
 	vec3 attribs[VEC3_ATTRIBUTE_COUNT];
 } geomTexCoord[];
 
@@ -34,7 +34,7 @@ out mat4x4 worldModelViewMatrixReverseGeom;
 out vec3 normal;
 out vec3 worldNormal;
 
-out varying vec4 my_TexCoord[TEXTURE_COUNT];
+out varying vec2 my_TexCoord[TEXTURE_COUNT];
 
 #define SETATTRIBS lightDir = geomTexCoord[i].attribs[0];ambientLight = geomTexCoord[i].attribs[1];vertexNormal = geomTexCoord[i].attribs[2];
 
