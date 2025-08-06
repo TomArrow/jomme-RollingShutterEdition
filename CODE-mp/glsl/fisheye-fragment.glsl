@@ -193,6 +193,8 @@ struct dlight_t {
 uniform int dLightsCountUniform;
 uniform dlight_t dLightsUniform[32]; 
 
+uniform int shaderStylesUniform[14];
+
 struct shadowline_t {
 	vec4			point1;
 	vec4			point2;
@@ -1440,40 +1442,40 @@ void main(void)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += lightStyles[1]*MULTDIVIDE255*getLightmapIntensity(text_in2,text_in17,my_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[1]]*MULTDIVIDE255*getLightmapIntensity(text_in2,text_in17,my_TexCoord[2].st,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += lightStyles[2]*MULTDIVIDE255*getLightmapIntensity(text_in3,text_in18,my_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[2]]*MULTDIVIDE255*getLightmapIntensity(text_in3,text_in18,my_TexCoord[3].st,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += lightStyles[3]*MULTDIVIDE255*getLightmapIntensity(text_in4,text_in19,my_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[3]]*MULTDIVIDE255*getLightmapIntensity(text_in4,text_in19,my_TexCoord[4].st,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += lightStyles[4]*MULTDIVIDE255*getLightmapIntensity(text_in5,text_in20,my_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[4]]*MULTDIVIDE255*getLightmapIntensity(text_in5,text_in20,my_TexCoord[5].st,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<6))>0){
-			lightmapStyleAdd += lightStyles[5]*MULTDIVIDE255*getLightmapIntensity(text_in6,text_in21,my_TexCoord[6].st,(stageLightmapBitmaskUniform & (1<<21)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[5]]*MULTDIVIDE255*getLightmapIntensity(text_in6,text_in21,my_TexCoord[6].st,(stageLightmapBitmaskUniform & (1<<21)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<7))>0){
-			lightmapStyleAdd += lightStyles[6]*MULTDIVIDE255*getLightmapIntensity(text_in7,text_in22,my_TexCoord[7].st,(stageLightmapBitmaskUniform & (1<<22)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[6]]*MULTDIVIDE255*getLightmapIntensity(text_in7,text_in22,my_TexCoord[7].st,(stageLightmapBitmaskUniform & (1<<22)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<8))>0){
-			lightmapStyleAdd += lightStyles[7]*MULTDIVIDE255*getLightmapIntensity(text_in8,text_in23,my_TexCoord[8].st,(stageLightmapBitmaskUniform & (1<<23)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[7]]*MULTDIVIDE255*getLightmapIntensity(text_in8,text_in23,my_TexCoord[8].st,(stageLightmapBitmaskUniform & (1<<23)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<9))>0){
-			lightmapStyleAdd += lightStyles[8]*MULTDIVIDE255*getLightmapIntensity(text_in9,text_in24,my_TexCoord[9].st,(stageLightmapBitmaskUniform & (1<<24)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[8]]*MULTDIVIDE255*getLightmapIntensity(text_in9,text_in24,my_TexCoord[9].st,(stageLightmapBitmaskUniform & (1<<24)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<10))>0){
-			lightmapStyleAdd += lightStyles[9]*MULTDIVIDE255*getLightmapIntensity(text_in10,text_in25,my_TexCoord[10].st,(stageLightmapBitmaskUniform & (1<<25)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[9]]*MULTDIVIDE255*getLightmapIntensity(text_in10,text_in25,my_TexCoord[10].st,(stageLightmapBitmaskUniform & (1<<25)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<11))>0){
-			lightmapStyleAdd += lightStyles[10]*MULTDIVIDE255*getLightmapIntensity(text_in11,text_in26,my_TexCoord[11].st,(stageLightmapBitmaskUniform & (1<<26)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[10]]*MULTDIVIDE255*getLightmapIntensity(text_in11,text_in26,my_TexCoord[11].st,(stageLightmapBitmaskUniform & (1<<26)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<12))>0){
-			lightmapStyleAdd += lightStyles[11]*MULTDIVIDE255*getLightmapIntensity(text_in12,text_in27,my_TexCoord[12].st,(stageLightmapBitmaskUniform & (1<<27)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[11]]*MULTDIVIDE255*getLightmapIntensity(text_in12,text_in27,my_TexCoord[12].st,(stageLightmapBitmaskUniform & (1<<27)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<13))>0){
-			lightmapStyleAdd += lightStyles[12]*MULTDIVIDE255*getLightmapIntensity(text_in13,text_in28,my_TexCoord[13].st,(stageLightmapBitmaskUniform & (1<<28)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
+			lightmapStyleAdd += lightStyles[shaderStylesUniform[12]]*MULTDIVIDE255*getLightmapIntensity(text_in13,text_in28,my_TexCoord[13].st,(stageLightmapBitmaskUniform & (1<<28)) > 0,lightNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);			
 		}
 		
 		/*

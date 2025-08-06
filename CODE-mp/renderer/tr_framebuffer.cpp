@@ -140,6 +140,8 @@ typedef struct uniformLocations_t {
 	GLint shadowLinesWidth[MAX_SHADOWLINES];
 	GLint shadowLinesA[MAX_SHADOWLINES];
 	GLint shadowLinesB[MAX_SHADOWLINES];
+
+	GLint shaderStylesUniform[MAXLIGHTMAPS_REAL];
 };
 
 typedef enum {
@@ -376,6 +378,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocationsTess->text_in[i], i);
 		}
+		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
+			qglUniform1i(uniformLocationsTess->shaderStylesUniform[i], fbo.fishEyeData.shaderStyles[i]);
+		}
 
 		if (fbo.fishEyeData.tessellationActive) {
 
@@ -455,7 +460,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 				qglUniform1f(uniformLocations.dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
 			}*/
 		}
-
+		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
+			qglUniform1i(uniformLocations->shaderStylesUniform[i],fbo.fishEyeData.shaderStyles[i]);
+		}
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocations->text_in[i], i);
 		}
@@ -721,7 +728,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen, const bool* nocull) {
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen, const bool* nocull, const byte* shaderStyles) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -743,6 +750,11 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 		}
 		else {
 			fbo.fishEyeData.renderFlags &= ~4;
+		}
+	}
+	if (shaderStyles) {
+		for (int i = 0; i < MAXLIGHTMAPS_REAL;i++) {
+			fbo.fishEyeData.shaderStyles[i] = shaderStyles[i];
 		}
 	}
 
@@ -1343,6 +1355,9 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 			locs->dLightsUniformColor[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].color",j));
 			locs->dLightsUniformOrigin[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].origin",j));
 			locs->dLightsUniformRadius[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].radius",j));
+		}
+		for (int j = 0; j < MAXLIGHTMAPS_REAL; j++) {
+			locs->shaderStylesUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shaderStylesUniform[%d]",j));
 		}
 		locs->shadowLinesCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shadowLinesCountUniform");
 		for (int j = 0; j < MAX_SHADOWLINES; j++) {

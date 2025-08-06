@@ -367,7 +367,7 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 		tess.shaderTime = tess.shader->clampTime;
 	}
 
-
+	R_FrameBuffer_SetDynamicUniforms2(NULL,NULL,NULL,state->styles);
 }
 
 static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* input) {
