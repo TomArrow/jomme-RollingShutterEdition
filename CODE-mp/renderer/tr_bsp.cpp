@@ -1633,7 +1633,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 		
 	}
 
-	for ( i = 0 ; i < count ; i++, in++, out++, inManyStyle++) {
+	for ( i = 0 ; i < count ; i++, in++, out++) {
 		switch ( LittleLong( in->surfaceType ) ) {
 		case MST_PATCH:
 			ParseMesh ( in, dv, out, hdrVertColors, hdrVertColorsDeluxe, hdrVertColorsDeluxeV2, inManyStyle);
@@ -1654,6 +1654,7 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 		default:
 			ri.Error( ERR_DROP, "Bad surfaceType" );
 		}
+		if (inManyStyle) inManyStyle++;
 	}
 
 #ifdef PATCH_STITCHING
