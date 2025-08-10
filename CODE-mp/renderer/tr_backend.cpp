@@ -1353,6 +1353,9 @@ const void	*RB_DrawSurfs( const void *data ) {
 	cmd = (const drawSurfsCommand_t *)data;
 
 	backEnd.refdef = cmd->refdef;
+
+	R_FrameBuffer_SendDLightInfo();
+
 	backEnd.viewParms = cmd->viewParms;
 	//Jitter the camera origin
 	if ( !backEnd.viewParms.isPortal && !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL) ) {
