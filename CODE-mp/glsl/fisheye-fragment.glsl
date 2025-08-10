@@ -839,6 +839,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	vec4 color;
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
+		//return vec4(-vertexNormal,1.0f)*0.1f;
 		color = texture2D(sampler, lmtexcoord);		
 		//return color;
 		if(havedeluxe){
@@ -861,7 +862,8 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
-			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredLightNormal*dot(lightVector1Norm,maybeMirroredLightNormal);
+			vec3 maybeMirroredSpecLightNormal = maybeMirroredNormal;//twoSided && dot(vertexNormal,direction.xyz) < 0 ? -vertexNormal : vertexNormal;
+			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredSpecLightNormal*dot(lightVector1Norm,maybeMirroredSpecLightNormal);
 			vec3 mirroredVecNorm = normalize(mirroredVec);
 
 			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
@@ -1521,7 +1523,8 @@ void main(void)
 		gl_FragColor.xyz += addValue;
 		gl_FragColor.xyz *= vertexLitMult.xyz;
 	} else {
-
+	
+		gl_FragColor.xyz *= (stageLightmapBitmaskUniform & 1) > 0 ? lightStyles[0].xyz*MULTDIVIDE255 : vec3(1.0f);
 		gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		gl_FragColor.xyz -= boringShadowSubtractVal;
 		gl_FragColor.xyz += (stageLightmapBitmaskUniform & 1) > 0 ? addValueForLightmap+lightmapStyleAdd.xyz : addValue;
@@ -1534,6 +1537,7 @@ void main(void)
 		} else{
 			color2 = texture2D(text_in16, my_TexCoord[1].st);
 		}
+		color2.xyz *= (stageLightmapBitmaskUniform & 2) > 0 ? lightStyles[0].xyz*MULTDIVIDE255 : vec3(1.0f);
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;

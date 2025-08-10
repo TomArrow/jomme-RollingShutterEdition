@@ -161,6 +161,7 @@ cvar_t	*r_multiSampleNvidia;
 cvar_t	*r_drawBuffer;
 cvar_t	*r_lightmap;
 cvar_t	*r_vertexLight;
+cvar_t	*r_styleOnly;
 cvar_t	*r_uiFullScreen;
 cvar_t	*r_shadows;
 cvar_t	*r_flares;
@@ -937,6 +938,7 @@ void R_Register( void )
 	r_customaspect = ri.Cvar_Get( "r_customaspect", "1", CVAR_ARCHIVE | CVAR_LATCH );
 	r_simpleMipMaps = ri.Cvar_Get( "r_simpleMipMaps", "1", CVAR_ARCHIVE | CVAR_LATCH );
 	r_vertexLight = ri.Cvar_Get( "r_vertexLight", "0", CVAR_ARCHIVE | CVAR_LATCH );
+	r_styleOnly = ri.Cvar_Get( "r_styleOnly", "-1", CVAR_TEMP);
 	r_uiFullScreen = ri.Cvar_Get( "r_uifullscreen", "0", 0);
 	r_subdivisions = ri.Cvar_Get ("r_subdivisions", "4", CVAR_ARCHIVE | CVAR_LATCH);
 
@@ -1458,10 +1460,18 @@ void RE_SetLightStyle(int style, int color)
 	}
 
 	Vector4Copy(*(color4ub_t*)&color, styleColors[style]);
-	styleColors[style][0] = 255.0f * R_sRGBToLinear(styleColors[style][0] * onedividedby255);
-	styleColors[style][1] = 255.0f * R_sRGBToLinear(styleColors[style][1] * onedividedby255);
-	styleColors[style][2] = 255.0f * R_sRGBToLinear(styleColors[style][2] * onedividedby255);
-	styleColors[style][3] = 255.0f * R_sRGBToLinear(styleColors[style][3] * onedividedby255);
+	if (r_styleOnly->integer < 0 || r_styleOnly->integer == style) {
+		styleColors[style][0] = 255.0f * R_sRGBToLinear(styleColors[style][0] * onedividedby255);
+		styleColors[style][1] = 255.0f * R_sRGBToLinear(styleColors[style][1] * onedividedby255);
+		styleColors[style][2] = 255.0f * R_sRGBToLinear(styleColors[style][2] * onedividedby255);
+		styleColors[style][3] = 255.0f * R_sRGBToLinear(styleColors[style][3] * onedividedby255);
+	}
+	else {
+		styleColors[style][0] = 0.0f;
+		styleColors[style][1] = 0.0f;
+		styleColors[style][2] = 0.0f;
+		styleColors[style][3] = 1.0f;
+	}
 	/*if (*(int*)styleColors[style] != color)
 	{
 		*(int *)styleColors[style] = color;
