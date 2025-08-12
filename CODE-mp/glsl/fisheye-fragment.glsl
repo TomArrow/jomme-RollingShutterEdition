@@ -387,11 +387,12 @@ vec3 transformDLightForVoxelShadow(vec3 dlight, vec3 target){
 
 #endif
 
-vec2 parallaxMap(){
+vec2 parallaxMap(vec2 thelod){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		vec4 color = texture2D(text_in0, my_TexCoord[0].st);
+		//vec4 color = texture2D(text_in0, my_TexCoord[0].st);
+		vec4 color = textureLod(text_in0, my_TexCoord[0].st, thelod.y);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -406,7 +407,7 @@ vec2 parallaxMap(){
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		return uvCoords;
 }
-vec2 parallaxMapSteep(inout vec3 finalPosition){
+vec2 parallaxMapSteep(inout vec3 finalPosition, vec2 thelod){
 		int layers = parallaxMapLayersUniform;
 		vec2 uvCoords;
 
@@ -422,12 +423,18 @@ vec2 parallaxMapSteep(inout vec3 finalPosition){
 		float viewVecMultiplier = layerDepth/max(0.001f,length(depthComponent)); // Calculate how much we have to multiple the unity view vector with to go one layer deeper.
 		vec3 oneLayerProgressVec = viewVecFlat*viewVecMultiplier;
 
+		if(dot(oneLayerProgressVec,oneLayerProgressVec) > layerDepth*layerDepth){
+			// in a distance aat flat angles, the progress vec becomes too big and we get ugly artifacts. rather limit the depth a bit than to have huge jumps over texture coordinates
+			oneLayerProgressVec = normalize(oneLayerProgressVec)*layerDepth;
+		}
+
 		//uvCoords.s = mod(dot(currentPlace,texUVTransform[0]),1.0);
 		//uvCoords.t = mod(dot(currentPlace,texUVTransform[1]),1.0);
 		uvCoords.s = dot(currentPlace,texUVTransform[0]);
 		uvCoords.t = dot(currentPlace,texUVTransform[1]);
 
-		uvCoords = fract(uvCoords);
+
+		//uvCoords = fract(uvCoords);
 
 		float oldtexDepth = 0.0;
 		float texDepth = 0.0f;
@@ -435,7 +442,8 @@ vec2 parallaxMapSteep(inout vec3 finalPosition){
 			
 			//uvCoords = fract(uvCoords);
 			//uvCoords = fract(uvCoords);
-			vec4 color = texture2D(text_in0, uvCoords);
+			//vec4 color = texture2D(text_in0, uvCoords);
+			vec4 color = textureLod(text_in0, uvCoords,thelod.y);
 			oldtexDepth = texDepth;
 			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
 			
@@ -846,7 +854,9 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		//return vec4(-vertexNormal,1.0f)*0.1f;
-		color = texture2D(sampler, lmtexcoord);		
+		//vec2 thelod = textureQueryLod(sampler,lmtexcoord);
+		color = texture2D(sampler, lmtexcoord);
+		//return vec4(1.0f);
 		//return color;
 		if(havedeluxe){
 			vec4 direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
@@ -879,7 +889,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			
 			float totalDist = viewerDistance; // + dist // dont know distance to light
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
-			float specIntensityTotal = 900.0f*specIntensity*dLightSpecIntensityUniform/totalDist/divider;
+			float specIntensityTotal = 500.0f*specIntensity*dLightSpecIntensityUniform/totalDist/divider;
 
 			color *=alignment*alignment*alignment+specIntensityTotal;
 			color = max(vec4(0.0f),color);
@@ -889,34 +899,44 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	return color;
 }
 
-vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal){
+vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal, vec2 thelod){
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		vec4 color = texture2D(text_in0, uvCoords);
+		//vec4 color = texture2D(text_in0, uvCoords);
+		vec4 color = textureLod(text_in0, uvCoords, thelod.y);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
-		vec3 offset3d =  normalize(startPosition);
-		vec3 normalComponent = referenceNormal * dot(referenceNormal,offset3d);
-		offset3d -= normalComponent; // project onto surface aka get rid of any 3d component that aligns with the normal of the surface
-		offset3d = normalize(offset3d)*0.1;
+		//vec3 offset3d =  normalize(startPosition);
+		//vec3 normalComponent = referenceNormal * dot(referenceNormal,offset3d);
+		//offset3d -= normalComponent; // project onto surface aka get rid of any 3d component that aligns with the normal of the surface
+		//if(dot(offset3d,offset3d) == 0){
+		//	return referenceNormal;
+		//}
+		//offset3d = normalize(offset3d)*0.01f;
+		vec3 notparallelaxis = (abs(referenceNormal.x) > 0.99) ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+		vec3 offset3d = normalize(cross(notparallelaxis,referenceNormal))*0.01f;
 
 		vec3 transposedCoords = startPosition + offset3d;
 		uvCoords.s = dot(transposedCoords,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
-		vec4 color2 = texture2D(text_in0, uvCoords);
+		//vec4 color2 = texture2D(text_in0, uvCoords);
+		vec4 color2 = textureLod(text_in0, uvCoords, thelod.y);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
-		vec4 color3 = texture2D(text_in0, uvCoords);
+		//vec4 color3 = texture2D(text_in0, uvCoords);
+		vec4 color3 = textureLod(text_in0, uvCoords, thelod.y);
 		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
-		vec3 place1 = startPosition + normalComponent * offset;
-		vec3 place2 = transposedCoords + normalComponent * offset2;
-		vec3 place3 = transposedCoords2 + normalComponent * offset3;
+		vec3 place1 = startPosition - referenceNormal * offset;
+		vec3 place2 = transposedCoords - referenceNormal * offset2;
+		vec3 place3 = transposedCoords2 - referenceNormal * offset3;
 
+		//vec3 crossed = cross(place2-place1,place3-place1);
+		//return dot(crossed,crossed) > 0? -normalize(crossed) : vec3(0.0f);
 		return -normalize(cross(place2-place1,place3-place1));
 }
 
@@ -1093,23 +1113,26 @@ bool main_real(inout vec4 outFragColor)
 	
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 	
+	vec2 thelod = textureQueryLod(text_in0,uvCoords);
 
     if(fishEyeModeUniform == 0){
 	
 		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
-			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap():parallaxMapSteep(effectiveUVPixelPos);
+			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod):parallaxMapSteep(effectiveUVPixelPos,thelod);
 		} else {
 			uvCoords = my_TexCoord[0].st; // Don't parallax lightmaps
 		}
-		uvCoords = fract(uvCoords);
-		color = texture2D(text_in0, uvCoords);
+		//uvCoords = fract(uvCoords);
+		//color = texture2D(text_in0, uvCoords);
+		color = textureLod(text_in0, uvCoords, thelod.y);
 
 		outFragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
 		
 	} else {
 		
-		color = texture2D(text_in0, uvCoords);
+		//color = texture2D(text_in0, uvCoords);
+		color = textureLod(text_in0, uvCoords, thelod.y);
 		outFragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
 	}
@@ -1203,7 +1226,15 @@ bool main_real(inout vec4 outFragColor)
 	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 
 	//vec3 lightNormal = normal;
-	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightReferenceNormal);
+	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightReferenceNormal,thelod);
+
+	//outFragColor.xyz = lightNormal*0.5f+0.5f;
+	//float test = 0.72f* length(fract(my_TexCoord[0].st-uvCoords));
+	//outFragColor.xyz = vec3(test*test*test*test*test*test*test*test*test*test*test*test*test*test*test*test*test);
+	//outFragColor.xyz = vec3((clamp(dot(lightNormal,lightReferenceNormal)-0.9f,0.0f,1.0f))*10.0f);
+	//outFragColor.xyz = vec3(lightNormal.z);
+	//outFragColor.xyz = vec3(fract(uvCoords).s,fract(uvCoords).t,0.0f);
+	//return true;
 	
 	//mat3 rotatematrev = mat3(worldModelViewMatrixReverseGeom);
 	//vec3 worldlightnormal = (rotatematrev*lightNormal).xyz;
@@ -1571,9 +1602,9 @@ void main(void){
 	vec4 outColor =vec4(1.0f);
 	if(main_real(outColor)){
 		gl_FragColor = outColor;
-	} else{
-		gl_FragColor = vec4(0.0f);
-	}
+	}// else{
+	//	gl_FragColor = vec4(0.0f);
+	//}
 }
 
 
