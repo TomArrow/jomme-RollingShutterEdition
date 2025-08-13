@@ -30,6 +30,8 @@
 #define	CGEN_LIGHTMAP2 14
 #define	CGEN_LIGHTMAP3 15
 
+const float samplebias = 0.5f; // sample bias for parallax mapping and texture normal calc. TODO: Make it dynamic. if capturing, we can do more.
+
 //need 420 if we wanna try
 //layout(early_fragment_tests) in;
 
@@ -443,7 +445,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, vec2 thelod){
 			//uvCoords = fract(uvCoords);
 			//uvCoords = fract(uvCoords);
 			//vec4 color = texture2D(text_in0, uvCoords);
-			vec4 color = textureLod(text_in0, uvCoords,thelod.y);
+			vec4 color = textureLod(text_in0, uvCoords,thelod.y-samplebias);
 			oldtexDepth = texDepth;
 			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
 			
@@ -889,7 +891,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			
 			float totalDist = viewerDistance; // + dist // dont know distance to light
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
-			float specIntensityTotal = 500.0f*specIntensity*dLightSpecIntensityUniform/totalDist/divider;
+			float specIntensityTotal = 900.0f*specIntensity*dLightSpecIntensityUniform/totalDist/divider;
 
 			color *=alignment*alignment*alignment+specIntensityTotal;
 			color = max(vec4(0.0f),color);
@@ -900,10 +902,11 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 }
 
 vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal, vec2 thelod){
+		
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
 		//vec4 color = texture2D(text_in0, uvCoords);
-		vec4 color = textureLod(text_in0, uvCoords, thelod.y);
+		vec4 color = textureLod(text_in0, uvCoords, thelod.y-samplebias);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -921,14 +924,14 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		uvCoords.s = dot(transposedCoords,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		//vec4 color2 = texture2D(text_in0, uvCoords);
-		vec4 color2 = textureLod(text_in0, uvCoords, thelod.y);
+		vec4 color2 = textureLod(text_in0, uvCoords, thelod.y-samplebias);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
 		//vec4 color3 = texture2D(text_in0, uvCoords);
-		vec4 color3 = textureLod(text_in0, uvCoords, thelod.y);
+		vec4 color3 = textureLod(text_in0, uvCoords, thelod.y-samplebias);
 		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 place1 = startPosition - referenceNormal * offset;
