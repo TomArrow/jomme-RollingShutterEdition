@@ -486,29 +486,7 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 	fbo.screenWidth = glMMEConfig.glWidth;
 	fbo.screenHeight = glMMEConfig.glHeight;
 
-	int width = r_fboWidth->integer;
-	int height = r_fboHeight->integer;
-	//Illegal width/height use original opengl one
-	if (width <= 0 || height <= 0) {
-		width = fbo.screenWidth;
-		height = fbo.screenHeight;
-	}
-
 	R_FrameBuffer_FishEyeSetUniforms(tess);
-
-	if (g_SSBOsSupported) {
-		Com_Memcpy(shadowLineSSBO, backEnd.refdef.shadowlines, backEnd.refdef.num_shadowlines * sizeof(shadowline_t));
-		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, shadowLineSSBOReference);
-		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(shadowLineSSBO), shadowLineSSBO, GL_DYNAMIC_DRAW_ARB);
-		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, shadowLineSSBOReference);
-		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-
-		Com_Memcpy(lightStylesSSBO, styleColors, sizeof(styleColors));
-		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, lightStylesSSBOReference);
-		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(lightStylesSSBO), lightStylesSSBO, GL_DYNAMIC_DRAW_ARB);
-		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, lightStylesSSBOReference);
-		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-	}
 
 	int shaderbits = R_FrameBuffer_GetShaderbits();
 
@@ -540,6 +518,37 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 				qglUniform1f(uniformLocations->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
 			}
 		}
+	}
+
+	return qtrue;
+
+#endif
+}
+
+qboolean R_FrameBuffer_SendDLightSSBOInfo() {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	qboolean tess = fbo.fishEyeData.tessellationActive;
+	if (!fishEyeShader || !fishEyeShader->IsWorking())
+		return qfalse;
+
+	fbo.screenWidth = glMMEConfig.glWidth;
+	fbo.screenHeight = glMMEConfig.glHeight;
+
+	if (g_SSBOsSupported) {
+		Com_Memcpy(shadowLineSSBO, backEnd.refdef.shadowlines, backEnd.refdef.num_shadowlines * sizeof(shadowline_t));
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, shadowLineSSBOReference);
+		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(shadowLineSSBO), shadowLineSSBO, GL_DYNAMIC_DRAW_ARB);
+		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, shadowLineSSBOReference);
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
+
+		Com_Memcpy(lightStylesSSBO, styleColors, sizeof(styleColors));
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, lightStylesSSBOReference);
+		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(lightStylesSSBO), lightStylesSSBO, GL_DYNAMIC_DRAW_ARB);
+		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, lightStylesSSBOReference);
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 
 	return qtrue;

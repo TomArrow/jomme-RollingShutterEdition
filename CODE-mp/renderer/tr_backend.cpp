@@ -629,6 +629,8 @@ void RB_BeginDrawingView (void) {
 	//
 	SetViewportAndScissor();
 
+	R_FrameBuffer_SendDLightInfo();
+
 	// ensures that depth writes are enabled for the depth clear
 	GL_State( GLS_DEFAULT );
 	// clear relevant buffers
@@ -1354,7 +1356,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 	backEnd.refdef = cmd->refdef;
 
-	R_FrameBuffer_SendDLightInfo();
+	R_FrameBuffer_SendDLightSSBOInfo();
 
 	backEnd.viewParms = cmd->viewParms;
 	//Jitter the camera origin

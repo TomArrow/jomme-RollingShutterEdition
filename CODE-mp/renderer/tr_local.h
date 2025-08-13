@@ -2337,6 +2337,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, 
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
 qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
+qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
 qboolean R_FrameBuffer_StartHDRRead();
 qboolean R_FrameBuffer_EndHDRRead();
