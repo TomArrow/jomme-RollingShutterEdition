@@ -879,7 +879,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			//do some specular
 			vec3 lightVector1Norm = -normalize(direction.xyz);
 			//vec3 maybeMirroredSpecLightNormal = maybeMirroredNormal;//twoSided && dot(vertexNormal,direction.xyz) < 0 ? -vertexNormal : vertexNormal;
-			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredNormal*dot(lightVector1Norm,maybeMirroredNormal);
+			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredLightNormal*dot(lightVector1Norm,maybeMirroredLightNormal);
 			vec3 mirroredVecNorm = normalize(mirroredVec);
 
 			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
