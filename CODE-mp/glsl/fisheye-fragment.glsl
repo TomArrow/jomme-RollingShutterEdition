@@ -160,7 +160,9 @@ uniform int stageImageBitmaskUniform;
 uniform int stageLightmapBitmaskUniform;
 uniform int multiTexModeUniform;
 
-
+float angleAttenuate(float lightnormalDot){
+	return lightnormalDot;
+}
 
 
 float snoise(vec4 v);
@@ -389,12 +391,12 @@ vec3 transformDLightForVoxelShadow(vec3 dlight, vec3 target){
 
 #endif
 
-vec2 parallaxMap(vec2 thelod){
+vec2 parallaxMap(float thelod){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
 		//vec4 color = texture2D(text_in0, my_TexCoord[0].st);
-		vec4 color = textureLod(text_in0, my_TexCoord[0].st, thelod.y);
+		vec4 color = textureLod(text_in0, my_TexCoord[0].st, thelod);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -409,7 +411,7 @@ vec2 parallaxMap(vec2 thelod){
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		return uvCoords;
 }
-vec2 parallaxMapSteep(inout vec3 finalPosition, vec2 thelod){
+vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod){
 		int layers = parallaxMapLayersUniform;
 		vec2 uvCoords;
 
@@ -445,7 +447,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, vec2 thelod){
 			//uvCoords = fract(uvCoords);
 			//uvCoords = fract(uvCoords);
 			//vec4 color = texture2D(text_in0, uvCoords);
-			vec4 color = textureLod(text_in0, uvCoords,thelod.y-samplebias);
+			vec4 color = textureLod(text_in0, uvCoords,thelod-samplebias);
 			oldtexDepth = texDepth;
 			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
 			
@@ -901,12 +903,12 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	return color;
 }
 
-vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal, vec2 thelod){
+vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal, float thelod){
 		
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
 		//vec4 color = texture2D(text_in0, uvCoords);
-		vec4 color = textureLod(text_in0, uvCoords, thelod.y-samplebias);
+		vec4 color = textureLod(text_in0, uvCoords, thelod-samplebias);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -924,14 +926,14 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		uvCoords.s = dot(transposedCoords,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		//vec4 color2 = texture2D(text_in0, uvCoords);
-		vec4 color2 = textureLod(text_in0, uvCoords, thelod.y-samplebias);
+		vec4 color2 = textureLod(text_in0, uvCoords, thelod-samplebias);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
 		//vec4 color3 = texture2D(text_in0, uvCoords);
-		vec4 color3 = textureLod(text_in0, uvCoords, thelod.y-samplebias);
+		vec4 color3 = textureLod(text_in0, uvCoords, thelod-samplebias);
 		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 place1 = startPosition - referenceNormal * offset;
@@ -1094,7 +1096,7 @@ bool main_real(inout vec4 outFragColor)
 	//return;
 
 	if(zPrepassUniform != 0){
-		return false;
+		//return false;
 	}
 	//bool test[500];
     //const float depth = 5.0f;
@@ -1116,7 +1118,7 @@ bool main_real(inout vec4 outFragColor)
 	
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 	
-	vec2 thelod = textureQueryLod(text_in0,uvCoords);
+	float thelod = textureQueryLod(text_in0,uvCoords).x;
 
     if(fishEyeModeUniform == 0){
 	
@@ -1127,7 +1129,7 @@ bool main_real(inout vec4 outFragColor)
 		}
 		//uvCoords = fract(uvCoords);
 		//color = texture2D(text_in0, uvCoords);
-		color = textureLod(text_in0, uvCoords, thelod.y);
+		color = textureLod(text_in0, uvCoords, thelod);
 
 		outFragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
@@ -1135,7 +1137,7 @@ bool main_real(inout vec4 outFragColor)
 	} else {
 		
 		//color = texture2D(text_in0, uvCoords);
-		color = textureLod(text_in0, uvCoords, thelod.y);
+		color = textureLod(text_in0, uvCoords, thelod);
 		outFragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
 	}
@@ -1170,14 +1172,14 @@ bool main_real(inout vec4 outFragColor)
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
 		return true;
 	} else if(effectiveAlpha <= 0.0) {
-		return false; // this seem fair?
+		return true; // this seem fair?
 	} else if(alphaFuncUniform > 0){
 		if(
 		alphaFuncUniform == ALPHA_GREATER && effectiveAlpha <= alphaFuncValueUniform
 		|| alphaFuncUniform == ALPHA_LESS && effectiveAlpha >= alphaFuncValueUniform
 		|| alphaFuncUniform == ALPHA_GEQUAL && effectiveAlpha < alphaFuncValueUniform
 		){
-			return false; // ok? why do light calc for shit that isnt even visible
+			return true; // ok? why do light calc for shit that isnt even visible
 		}
 	}
 

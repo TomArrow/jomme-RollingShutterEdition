@@ -236,8 +236,8 @@ void GL_State( unsigned long stateBits )
 	unsigned long rawStateBits = stateBits;
 	unsigned long diff;
 
-	if ((g_bRenderedZPrepass || g_bRenderZPrepass) && (stateBits & GLS_DEPTHMASK_TRUE) && (stateBits & (GLS_DSTBLEND_BITS|GLS_SRCBLEND_BITS))) {
-		// depthwrite on trarnsparent surfaces is used by some shaders but with z prepass it causes issues
+	if ((g_bRenderedZPrepass || g_bRenderZPrepass) && (stateBits & GLS_DEPTHMASK_TRUE) && !(stateBits & GLS_ATEST_BITS) && (stateBits & (GLS_DSTBLEND_BITS|GLS_SRCBLEND_BITS))) {
+		// depthwrite on trarnsparent surfaces is used by some shaders that dont even do alpha test but with z prepass it causes issues
 		stateBits &= ~(GLS_DEPTHMASK_TRUE);
 	}
 
@@ -414,7 +414,7 @@ void GL_State( unsigned long stateBits )
 	//
 	// alpha test
 	//
-	if (diff & GLS_ATEST_BITS)
+	//if (diff & GLS_ATEST_BITS)
 	{
 		int alphaFunc;
 		float alphaValue;
@@ -422,9 +422,7 @@ void GL_State( unsigned long stateBits )
 		switch (stateBits & GLS_ATEST_BITS)
 		{
 		case 0:
-			qglDisable(GL_ALPHA_TEST);
 			alphaFunc = 0;
-			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
 			break;
 		case GLS_ATEST_GT_0:
 			alphaFunc = GL_GREATER;
@@ -451,16 +449,26 @@ void GL_State( unsigned long stateBits )
 			break;
 		}
 		if (activate) {
-			qglEnable(GL_ALPHA_TEST);
-			qglAlphaFunc(alphaFunc, alphaValue);
+			//if (diff & GLS_ATEST_BITS) 
+			{
+				qglEnable(GL_ALPHA_TEST);
+				qglAlphaFunc(alphaFunc, alphaValue);
+			}
 			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc, &alphaValue);
 		}
+		else {
+			//if (diff & GLS_ATEST_BITS) 
+			{
+				qglDisable(GL_ALPHA_TEST);
+			}
+			R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
+		}
 	}
-	else {
+	//else {
 		//qglDisable(GL_ALPHA_TEST);
 		//int alphaFunc = 0;
 		//R_FrameBuffer_SetDynamicUniforms(NULL, NULL, NULL, NULL, &alphaFunc);
-	}
+	//}
 
 	glState.glStateBits = stateBits;
 }
@@ -1379,9 +1387,13 @@ const void	*RB_DrawSurfs( const void *data ) {
 		g_bRenderZPrepass = true;
 		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
 
-		qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont draw anything to color buffer
+		if (r_zPrepass->integer != 2) {
+			qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont draw anything to color buffer
+		}
 		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
-		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		if (r_zPrepass->integer != 2) {
+			qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		}
 		g_bRenderZPrepass = false;
 
 		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
