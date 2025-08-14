@@ -33,7 +33,7 @@ extern camera_t cam;
 #define	LAND_DEFLECT_TIME	150
 #define	LAND_RETURN_TIME	300
 #define	STEP_TIME			200
-#define	DUCK_TIME			100
+#define	DUCK_TIME			500
 #define	PAIN_TWITCH_TIME	200
 #define	WEAPON_SELECT_TIME	1400
 #define	ITEM_SCALEUP_TIME	1000
@@ -217,6 +217,7 @@ typedef struct {
 	int				landTime;
 	float			landChange;
 	int				duckTime;
+	//float			duckTimeFraction;
 	float			duckChange;
 
 	// machinegun spinning

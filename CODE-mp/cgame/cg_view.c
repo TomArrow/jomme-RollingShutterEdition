@@ -259,6 +259,8 @@ CG_CalcTargetThirdPersonViewLocation
 */
 static void CG_CalcIdealThirdPersonViewTarget(void)
 {
+
+	float			timeDelta;
 	float thirdPersonVertOffset = cg_thirdPersonVertOffset.value;
 
 	if (cg.playerPredicted && cg.snap && cg.snap->ps.usingATST) {
@@ -278,7 +280,17 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 		cameraFocusLoc[2] += DEFAULT_VIEWHEIGHT;
 	}
 	else if (cg.playerPredicted) {
+
+		//mme
+		playerEntity_t* pe = &cg_entities[cg.snap->ps.clientNum].pe;
 		cameraFocusLoc[2] += cg.snap->ps.viewheight;
+		// smooth out duck height changes
+		//mme
+		timeDelta = (cg.time - pe->duckTime) + cg.timeFraction;
+		if (timeDelta >= 0 && timeDelta < DUCK_TIME) {
+			cameraFocusLoc[2] -= pe->duckChange
+				* (DUCK_TIME - timeDelta) / DUCK_TIME;
+		}
 	} else {
 		cameraFocusLoc[2] += cg.playerCent->pe.viewHeight;
 		if (mme_chaseViewHeightFix.integer) {
