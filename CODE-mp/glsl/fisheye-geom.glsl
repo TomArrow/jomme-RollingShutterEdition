@@ -78,6 +78,7 @@ vec2 getsideOutVec(vec2 pos0, vec2 pos1, vec2 pos2){
 	vec2 sideout = (pos1-pos0).yx;
 	sideout.y = -sideout.y;
 	sideout = normalize(sideout);
+	if(dot(sideout,sideout) == 0.0f) return vec2(0.0f);
 	sideout = dot(sideout,pos2-pos0) > 0 ? -sideout : sideout;
 	return sideout;
 }
@@ -96,9 +97,9 @@ void jitterPixelPos(inout mat4 pixelPos){
 	vec2 d2 = vec2(2.0f / pixelWidthUniform * pixelPos[2].w,2.0f / pixelHeightUniform * pixelPos[2].w);
 
 	// calculate vecs pointing outward of the triangle
-	vec2 side1out = getsideOutVec(pixelPos[0].xy/pixelPos[0].w,pixelPos[1].xy/pixelPos[0].w,pixelPos[2].xy/pixelPos[0].w);
-	vec2 side2out = getsideOutVec(pixelPos[1].xy/pixelPos[0].w,pixelPos[2].xy/pixelPos[0].w,pixelPos[0].xy/pixelPos[0].w);
-	vec2 side3out = getsideOutVec(pixelPos[2].xy/pixelPos[0].w,pixelPos[0].xy/pixelPos[0].w,pixelPos[1].xy/pixelPos[0].w);
+	vec2 side1out = getsideOutVec(pixelPos[0].xy/pixelPos[0].w,pixelPos[1].xy/pixelPos[1].w,pixelPos[2].xy/pixelPos[2].w);
+	vec2 side2out = getsideOutVec(pixelPos[1].xy/pixelPos[1].w,pixelPos[2].xy/pixelPos[2].w,pixelPos[0].xy/pixelPos[0].w);
+	vec2 side3out = getsideOutVec(pixelPos[2].xy/pixelPos[2].w,pixelPos[0].xy/pixelPos[0].w,pixelPos[1].xy/pixelPos[1].w);
 	//vec2 side1out = normalize((pixelPos[1].xy-pixelPos[0].xy).yx);
 	//side1out = dot(side1out,pixelPos[2].xy-pixelPos[0].xy) > 0 ? -side1out : side1out;
 	//vec2 side2out = normalize((pixelPos[2].xy-pixelPos[1].xy).yx);
@@ -106,7 +107,7 @@ void jitterPixelPos(inout mat4 pixelPos){
 	//vec2 side3out = normalize((pixelPos[0].xy-pixelPos[2].xy).yx);
 	//side3out = dot(side3out,pixelPos[1].xy-pixelPos[2].xy) > 0 ? -side3out : side3out;
 
-	float jittermult = 1.0f*simpleJitter();
+	float jittermult = 5.0f*simpleJitter();
 
 	pixelPos[0].xy += d0*jittermult*(side1out + side3out);
 	pixelPos[1].xy += d1*jittermult*(side1out + side2out);
