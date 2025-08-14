@@ -60,6 +60,62 @@ uniform float fovYUniform;
 uniform int pixelWidthUniform;
 uniform int pixelHeightUniform;
 uniform int isWorldBrushUniform; 
+uniform int jitterIndexUniform; 
+uniform int jitterTotalFramesUniform;
+
+float simpleJitter() {
+	if(jitterTotalFramesUniform == 0){
+		return 1.0f;
+	}
+	int segment = jitterIndexUniform % 3;
+	int progress = jitterIndexUniform / 3;
+	float progressMult = 1.0f / float(jitterTotalFramesUniform);
+	float progressHere = float(segment) / 3.0f + float(progress) * progressMult;
+	return progressHere;
+}
+
+vec2 getsideOutVec(vec2 pos0, vec2 pos1, vec2 pos2){
+	vec2 sideout = (pos1-pos0).yx;
+	sideout.y = -sideout.y;
+	sideout = normalize(sideout);
+	sideout = dot(sideout,pos2-pos0) > 0 ? -sideout : sideout;
+	return sideout;
+}
+
+void jitterPixelPos(inout mat4 pixelPos){
+	if(jitterTotalFramesUniform == 0){
+		return;
+	}
+	// first revert the general pixel jitter
+	//pixelPos[0].xy -= pixelJitterUniform.xy;
+	//pixelPos[1].xy -= pixelJitterUniform.xy;
+	//pixelPos[2].xy -= pixelJitterUniform.xy;
+
+	vec2 d0 = vec2(2.0f / pixelWidthUniform * pixelPos[0].w,2.0f / pixelHeightUniform * pixelPos[0].w);
+	vec2 d1 = vec2(2.0f / pixelWidthUniform * pixelPos[1].w,2.0f / pixelHeightUniform * pixelPos[1].w);
+	vec2 d2 = vec2(2.0f / pixelWidthUniform * pixelPos[2].w,2.0f / pixelHeightUniform * pixelPos[2].w);
+
+	// calculate vecs pointing outward of the triangle
+	vec2 side1out = getsideOutVec(pixelPos[0].xy/pixelPos[0].w,pixelPos[1].xy/pixelPos[0].w,pixelPos[2].xy/pixelPos[0].w);
+	vec2 side2out = getsideOutVec(pixelPos[1].xy/pixelPos[0].w,pixelPos[2].xy/pixelPos[0].w,pixelPos[0].xy/pixelPos[0].w);
+	vec2 side3out = getsideOutVec(pixelPos[2].xy/pixelPos[0].w,pixelPos[0].xy/pixelPos[0].w,pixelPos[1].xy/pixelPos[0].w);
+	//vec2 side1out = normalize((pixelPos[1].xy-pixelPos[0].xy).yx);
+	//side1out = dot(side1out,pixelPos[2].xy-pixelPos[0].xy) > 0 ? -side1out : side1out;
+	//vec2 side2out = normalize((pixelPos[2].xy-pixelPos[1].xy).yx);
+	//side2out = dot(side2out,pixelPos[0].xy-pixelPos[1].xy) > 0 ? -side2out : side2out;
+	//vec2 side3out = normalize((pixelPos[0].xy-pixelPos[2].xy).yx);
+	//side3out = dot(side3out,pixelPos[1].xy-pixelPos[2].xy) > 0 ? -side3out : side3out;
+
+	float jittermult = 1.0f*simpleJitter();
+
+	pixelPos[0].xy += d0*jittermult*(side1out + side3out);
+	pixelPos[1].xy += d1*jittermult*(side1out + side2out);
+	pixelPos[2].xy += d2*jittermult*(side2out + side3out);
+
+	//pixelPos[0].x += dx0*50.0f; 
+	//pixelPos[1].x += dx1*50.0f; 
+	//pixelPos[2].x += dx2*50.0f; 
+}
 
 uniform float serverTimeUniform;
 uniform float soundDeformTimeUniform;
@@ -143,7 +199,7 @@ void standard(vec3 myNormal){
 	
 	int musicDeformSampleCount = soundDeformSampleCountUniform;//soundDeformSamples.length()*2; 
 
-	vec4 outPos[3];
+	mat4 outPos;
 
 	//setDebugColor(1,0,0);
 	for (int i = 0; i < 3; i++)
@@ -216,6 +272,9 @@ void standard(vec3 myNormal){
 		}
 		outPos[i] = projectionMatrix[0]* (gl_PositionIn[i]+positionAdjustment);
 	}
+
+	jitterPixelPos(outPos); // "intelligent" antialias geometry jitter?
+
 	for (int i = 0; i < 3; i++)
 	{
 		gl_Position = outPos[i];

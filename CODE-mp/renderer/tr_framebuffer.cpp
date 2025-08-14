@@ -79,6 +79,8 @@ typedef struct uniformLocations_t {
 	GLint fovYUniform;
 	GLint pixelWidthUniform;
 	GLint pixelHeightUniform;
+	GLint jitterIndexUniform;
+	GLint jitterTotalFramesUniform;
 	GLint texAverageBrightnessUniform;
 	GLint isLightmapUniform;
 	GLint isWorldBrushUniform;
@@ -314,6 +316,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->fovYUniform, fbo.fishEyeData.fovY);
 		qglUniform1i(uniformLocationsTess->pixelWidthUniform, width*superSampleMultiplier);
 		qglUniform1i(uniformLocationsTess->pixelHeightUniform, height * superSampleMultiplier);
+		qglUniform1i(uniformLocationsTess->jitterIndexUniform, fbo.fishEyeData.jitterIndex);
+		qglUniform1i(uniformLocationsTess->jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
 		qglUniform1f(uniformLocationsTess->texAverageBrightnessUniform, fbo.fishEyeData.texAverageBrightness);
 		qglUniform1i(uniformLocationsTess->isLightmapUniform, fbo.fishEyeData.isLightmap ? 1 : 0);
 		qglUniform1i(uniformLocationsTess->isWorldBrushUniform, fbo.fishEyeData.isWorldBrush ? 1 : 0);
@@ -398,6 +402,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->fovYUniform, fbo.fishEyeData.fovY);
 		qglUniform1i(uniformLocations->pixelWidthUniform, width * superSampleMultiplier);
 		qglUniform1i(uniformLocations->pixelHeightUniform, height * superSampleMultiplier);
+		qglUniform1i(uniformLocations->jitterIndexUniform, fbo.fishEyeData.jitterIndex);
+		qglUniform1i(uniformLocations->jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
 		qglUniform1f(uniformLocations->texAverageBrightnessUniform, fbo.fishEyeData.texAverageBrightness);
 		qglUniform1i(uniformLocations->isLightmapUniform, fbo.fishEyeData.isLightmap ? 1 : 0);
 		qglUniform1i(uniformLocations->isWorldBrushUniform, fbo.fishEyeData.isWorldBrush ? 1 : 0);
@@ -617,7 +623,7 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 #endif
 }
 
-qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX, float fovY) {
+qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX, float fovY, int jitterIndex, int jitterTotalFrames) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -643,6 +649,8 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 	fbo.fishEyeData.dofRadius = dofRadius;
 	fbo.fishEyeData.fovX = fovX;
 	fbo.fishEyeData.fovY = fovY;
+	fbo.fishEyeData.jitterIndex = jitterIndex;
+	fbo.fishEyeData.jitterTotalFrames = jitterTotalFrames;
 
 	R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
 
@@ -1305,6 +1313,8 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->fovYUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "fovYUniform");
 		locs->pixelWidthUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "pixelWidthUniform");
 		locs->pixelHeightUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "pixelHeightUniform");
+		locs->jitterIndexUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "jitterIndexUniform");
+		locs->jitterTotalFramesUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "jitterTotalFramesUniform");
 		locs->texAverageBrightnessUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "texAverageBrightnessUniform");
 		locs->isLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isLightmapUniform");
 		locs->isWorldBrushUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isWorldBrushUniform");

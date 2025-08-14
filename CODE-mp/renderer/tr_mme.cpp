@@ -732,10 +732,12 @@ qboolean R_MME_JitterOrigin( float *x, float *y ) {
 	return qfalse;
 }
 
-void R_MME_JitterView( float *pixels, float *eyes, float * voxelshadowlights, float* dlights) {
+void R_MME_JitterView( float *pixels, float *eyes, float * voxelshadowlights, float* dlights, int* blurJitterIndex, int* jitterTotalFrames) {
 	mmeBlurControl_t* blurControl = &blurData.control;
 	mmeBlurControl_t* passControl = &passData.control;
 
+	*blurJitterIndex = 0;
+	*jitterTotalFrames = 0;
 
 	if (tr.captureIsActive &&  passData.quickJitter) {
 		int i = passData.quickJitterIndex;
@@ -777,6 +779,8 @@ void R_MME_JitterView( float *pixels, float *eyes, float * voxelshadowlights, fl
 		int i = blurControl->totalIndex;
 		pixels[0] = mme_blurJitter->value * blurData.jitter[i][0];
 		pixels[1] = mme_blurJitter->value * blurData.jitter[i][1];
+		*blurJitterIndex = i;
+		*jitterTotalFrames = blurControl->totalFrames;
 	}
 	if ( !shotData.take || tr.finishStereo ) {
 		shotData.take = qfalse;

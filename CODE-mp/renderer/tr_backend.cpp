@@ -502,6 +502,8 @@ static void SetFinalProjection( void ) {
 	float	width, height, depth;
 	float	zNear, zFar, zProj, stereoSep;
 	float	dx, dy;
+	int		jitterIndex = 0;
+	int		jitterTotalFrames = 0;
 	vec2_t	pixelJitter, eyeJitter;
 	vec3_t	lightsVoxelJitter = { 0 };
 	vec3_t	lightsJitter = { 0 };
@@ -532,7 +534,7 @@ static void SetFinalProjection( void ) {
 
 	/* Jitter the view */
 	if ( stereoSep <= 0.0f) {
-		R_MME_JitterView( pixelJitter, eyeJitter, lightsVoxelJitter, lightsJitter);
+		R_MME_JitterView( pixelJitter, eyeJitter, lightsVoxelJitter, lightsJitter, &jitterIndex, &jitterTotalFrames);
 	} else if ( stereoSep > 0.0f) {
 		R_MME_JitterViewStereo( pixelJitter, eyeJitter ); // didnt implement light jitter for stero :)
 	}
@@ -550,7 +552,7 @@ static void SetFinalProjection( void ) {
 		vec3_t dlightJitter3D = { lightsJitter[0],lightsJitter[1],lightsJitter[2] };
 		float dofRadius = shotData.dofRadius, dofFocus = shotData.dofFocus;
 		R_MME_ClampDof(&dofFocus, &dofRadius);
-		R_FrameBuffer_ActivateFisheye(pixelJitterOrigin,dofJitterOrigin, voxelShadowJitter3D, dlightJitter3D, dofFocus, dofRadius, backEnd.viewParms.fovX, backEnd.viewParms.fovY);//Doesn't work. Needs fixing.
+		R_FrameBuffer_ActivateFisheye(pixelJitterOrigin,dofJitterOrigin, voxelShadowJitter3D, dlightJitter3D, dofFocus, dofRadius, backEnd.viewParms.fovX, backEnd.viewParms.fovY, jitterIndex, jitterTotalFrames);//Doesn't work. Needs fixing.
 	}
 
 	xmin += dx; xmax += dx;
