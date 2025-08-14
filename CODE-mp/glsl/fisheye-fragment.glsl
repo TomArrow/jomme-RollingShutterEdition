@@ -1167,7 +1167,9 @@ bool main_real(inout vec4 outFragColor)
 
 	float effectiveAlpha = color.w*vertColor.w;
 
-	if(effectiveAlpha <= 0.0 || (renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0) {
+	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
+		return true;
+	} else if(effectiveAlpha <= 0.0) {
 		return false; // this seem fair?
 	} else if(alphaFuncUniform > 0){
 		if(
@@ -1604,6 +1606,7 @@ bool main_real(inout vec4 outFragColor)
 void main(void){
 	vec4 outColor =vec4(1.0f);
 	if(main_real(outColor)){
+		//gl_FragColor.xyz = outColor.xyz;
 		gl_FragColor = outColor;
 	}// else{
 	//	gl_FragColor = vec4(0.0f);
