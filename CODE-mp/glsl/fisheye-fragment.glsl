@@ -11,6 +11,8 @@
 
 #define TEXTURE_COUNT 14
 
+#define TEXTUREGRAD 1
+
 #define PERLINFVCKERY 1
 
 #define	CGEN_BAD 0
@@ -35,6 +37,8 @@ const float samplebias = 0.5f; // sample bias for parallax mapping and texture n
 float biaslod(float baselod){
 	return baselod-samplebias*baselod;
 }
+
+
 
 //need 420 if we wanna try
 //layout(early_fragment_tests) in;
@@ -86,6 +90,15 @@ uniform sampler2D text_in26;
 uniform sampler2D text_in27;
 uniform sampler2D text_in28;
 uniform sampler2D text_in29;
+
+
+vec4 sampleTextureSafe(sampler2D sampler,vec2 uvCoords,float thelod,vec4 thegrad){
+#if TEXTUREGRAD
+	return textureGrad(sampler,uvCoords,thegrad.xy,thegrad.zw);
+#else
+	return textureLod(sampler,uvCoords,thelod);
+#endif
+}
 
 in vec3 debugColor;
 varying vec4 vertColor;
@@ -398,12 +411,12 @@ vec3 transformDLightForVoxelShadow(vec3 dlight, vec3 target){
 
 #endif
 
-vec2 parallaxMap(float thelod){
+vec2 parallaxMap(float thelod,vec4 thegrad){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
 		//vec4 color = texture2D(text_in0, my_TexCoord[0].st);
-		vec4 color = textureLod(text_in0, my_TexCoord[0].st, thelod-biaslod(thelod));
+		vec4 color = sampleTextureSafe(text_in0, my_TexCoord[0].st, thelod,thegrad);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -418,7 +431,7 @@ vec2 parallaxMap(float thelod){
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		return uvCoords;
 }
-vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod){
+vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 		int layers = parallaxMapLayersUniform;
 		vec2 uvCoords;
 
@@ -454,7 +467,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod){
 			//uvCoords = fract(uvCoords);
 			//uvCoords = fract(uvCoords);
 			//vec4 color = texture2D(text_in0, uvCoords);
-			vec4 color = textureLod(text_in0, uvCoords,thelod-biaslod(thelod));
+			vec4 color = sampleTextureSafe(text_in0, uvCoords,thelod,thegrad);
 			oldtexDepth = texDepth;
 			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
 			
@@ -910,12 +923,12 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	return color;
 }
 
-vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal, float thelod){
+vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNormal, float thelod, vec4 thegrad){
 		
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
 		//vec4 color = texture2D(text_in0, uvCoords);
-		vec4 color = textureLod(text_in0, uvCoords, thelod-biaslod(thelod));
+		vec4 color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -933,14 +946,14 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		uvCoords.s = dot(transposedCoords,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		//vec4 color2 = texture2D(text_in0, uvCoords);
-		vec4 color2 = textureLod(text_in0, uvCoords, thelod-biaslod(thelod));
+		vec4 color2 = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
 		//vec4 color3 = texture2D(text_in0, uvCoords);
-		vec4 color3 = textureLod(text_in0, uvCoords, thelod-biaslod(thelod));
+		vec4 color3 = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
 		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 place1 = startPosition - referenceNormal * offset;
@@ -1126,17 +1139,20 @@ bool main_real(inout vec4 outFragColor)
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 	
 	float thelod = textureQueryLod(text_in0,uvCoords).x;
+	thelod = thelod - biaslod(thelod);
+	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * 0.25f;
+	textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
 
     if(fishEyeModeUniform == 0){
 	
 		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
-			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod):parallaxMapSteep(effectiveUVPixelPos,thelod);
+			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegrad):parallaxMapSteep(effectiveUVPixelPos,thelod,thegrad);
 		} else {
 			uvCoords = my_TexCoord[0].st; // Don't parallax lightmaps
 		}
 		//uvCoords = fract(uvCoords);
 		//color = texture2D(text_in0, uvCoords);
-		color = textureLod(text_in0, uvCoords, thelod-biaslod(thelod));
+		color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
 
 		outFragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
@@ -1144,7 +1160,7 @@ bool main_real(inout vec4 outFragColor)
 	} else {
 		
 		//color = texture2D(text_in0, uvCoords);
-		color = textureLod(text_in0, uvCoords, thelod-biaslod(thelod));
+		color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
 		outFragColor = color; 
 		//gl_FragColor.xyz+=debugColor;
 	}
@@ -1240,7 +1256,7 @@ bool main_real(inout vec4 outFragColor)
 	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 
 	//vec3 lightNormal = normal;
-	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightReferenceNormal,thelod);
+	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightReferenceNormal,thelod,thegrad);
 
 	//outFragColor.xyz = lightNormal*0.5f+0.5f;
 	//float test = 0.72f* length(fract(my_TexCoord[0].st-uvCoords));
