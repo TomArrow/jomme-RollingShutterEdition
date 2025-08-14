@@ -143,6 +143,8 @@ void standard(vec3 myNormal){
 	
 	int musicDeformSampleCount = soundDeformSampleCountUniform;//soundDeformSamples.length()*2; 
 
+	vec4 outPos[3];
+
 	//setDebugColor(1,0,0);
 	for (int i = 0; i < 3; i++)
 	{
@@ -212,12 +214,12 @@ void standard(vec3 myNormal){
 				break;
 			}
 		}
-		//positionAdjustment.z = musicDeformSampleCount;
-		gl_Position = projectionMatrix[0]* (gl_PositionIn[i]+positionAdjustment);
-		//gl_TexCoord[0] = gl_TexCoordIn[i][0];
+		outPos[i] = projectionMatrix[0]* (gl_PositionIn[i]+positionAdjustment);
+	}
+	for (int i = 0; i < 3; i++)
+	{
+		gl_Position = outPos[i];
 		SETTEXCOORDS
-		//gl_TexCoord[0].s = dot(gl_PositionIn[i].xyz,uvtransform[0]);
-		//gl_TexCoord[0].t = dot(gl_PositionIn[i].xyz,uvtransform[1]);
 		eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 		pureVertexCoordsGeom = pureVertexCoords[i];
 
