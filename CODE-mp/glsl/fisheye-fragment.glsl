@@ -1326,6 +1326,9 @@ bool main_real(inout vec4 outFragColor)
 			if(dot(lightVector1,lightReferenceNormal) <= 0.0 && !twoSided){
 				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
 			}
+
+			vec3 lightVectorWorld = dlightOrigin-worldPixel;
+			vec3 lightVectorWorldNorm = normalize(lightVectorWorld);
 			
 			vec3 lightVectorNorm = normalize( lightVector1);
 			vec3 maybeMirroredLightNormal  = twoSided && dot(lightReferenceNormal,lightVectorNorm) < 0 ? -lightNormal : lightNormal;
@@ -1368,15 +1371,25 @@ bool main_real(inout vec4 outFragColor)
 					//	continue;
 					//}
 
+					//lightVector1 : pointing to light 
+					//
+					vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
+					float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
+					if(distanceToSL < 0) {
+						continue;
+					}
+
+					float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+
 					float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
-					if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint*10){
+					if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint*10.0f){
 						continue;
 					}
 
 					int type= 0;
 					float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
 					float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-					shadowedIntensity *= clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
+					shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
 
 					if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
 						break;
@@ -1452,6 +1465,14 @@ bool main_real(inout vec4 outFragColor)
 							continue;
 						}
 						
+						vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
+						float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
+						if(distanceToSL < 0) {
+							continue;
+						}
+
+						float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+
 						float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
 						if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint){
 							continue;
@@ -1461,7 +1482,7 @@ bool main_real(inout vec4 outFragColor)
 						float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
 						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
 						float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-						shadowedIntensity *= clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
+						shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
 						if(allInvocationsARB(shadowedIntensity < fastSkipThresSpec)){
 							break;
 						}
