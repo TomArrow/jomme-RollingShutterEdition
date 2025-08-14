@@ -113,16 +113,20 @@ static void CG_DemosUpdatePlayer( void ) {
 }
 
 #define RADIUS_LIMIT 701.0f
-#define EFFECT_LENGTH 400 //msec
+#define EFFECT_LENGTH 450.0f //msec
+#define EFFECT_LENGTH_FADEIN 50.0f //msec
 
 static void VibrateView( const float range, const int eventTime, const float fxTime, const float wc, float scale, vec3_t origin, vec3_t angles) {
 	float shadingTime;
 	int sign;
+	float fadeInMult = 1.0f;
 
 	if (range > 1 || range < 0) {
 		return;
 	}
 	scale *= fx_Vibrate.value * 100 * wc * range;
+
+	fadeInMult = fxTime < EFFECT_LENGTH_FADEIN ? (fxTime/ EFFECT_LENGTH_FADEIN) : 1.0f; // make it fade in so motion blur looks clean
 
 	shadingTime = (fxTime - (float)EFFECT_LENGTH) / 1000.0f;
 
@@ -132,8 +136,8 @@ static void VibrateView( const float range, const int eventTime, const float fxT
 		shadingTime = 0;
 
 	sign = fxRandomSign(eventTime);
-	origin[2] += shadingTime * shadingTime * sinf(shadingTime * M_PI * 23.0f) * scale;
-	angles[ROLL] += shadingTime * shadingTime * sinf(shadingTime * M_PI * 1.642f) * scale * 0.7f * sign;
+	origin[2] += fadeInMult*shadingTime * shadingTime * sinf(shadingTime * M_PI * 23.0f) * scale;
+	angles[ROLL] += fadeInMult*shadingTime * shadingTime * sinf(shadingTime * M_PI * 1.642f) * scale * 0.7f * sign;
 }
 
 static void FX_VibrateView( const float scale, vec3_t origin, vec3_t angles ) {
