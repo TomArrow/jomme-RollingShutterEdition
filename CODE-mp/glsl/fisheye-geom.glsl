@@ -84,14 +84,70 @@ vec2 getsideOutVec(vec2 pos0, vec2 pos1, vec2 pos2){
 	return sideout;
 }
 
+void jitterPixelPosMissingCorner(inout mat4 pixelPos, float jitterMult){
+	
+	float smallestW = min(min(pixelPos[0].w,pixelPos[1].w),pixelPos[2].w);
+
+	mat4 outPos = pixelPos;
+
+	float width = float(pixelWidthUniform);
+	float height = float(pixelHeightUniform);
+
+	for(int i=0;i<3;i++){
+		if(pixelPos[i].w <= 0){
+			continue;
+		}
+		int lastIndex = i > 0 ? i-1 : 2;
+		int nextIndex = i == 2 ? 0 : i+1;
+
+		// scale down the triangle
+		float scaleFactor = 1.0f/(pixelPos[i].w-smallestW)*0.5f; // do 0.5f for safety that's all, so we're definitely in thhe safe zone and not approaching division by 0 etc
+		mat4 scaledPos = pixelPos;
+		scaledPos[lastIndex] = scaledPos[i] + (scaledPos[i] - scaledPos[lastIndex]) * scaleFactor;
+		scaledPos[nextIndex] = scaledPos[i] + (scaledPos[i] - scaledPos[nextIndex]) * scaleFactor;
+		
+		vec2 d[3];
+		d[0] = abs(vec2(2.0f / width * scaledPos[0].w,2.0f / height * scaledPos[0].w));
+		d[1] = abs(vec2(2.0f / width * scaledPos[1].w,2.0f / height * scaledPos[1].w));
+		d[2] = abs(vec2(2.0f / width * scaledPos[2].w,2.0f / height * scaledPos[2].w));
+		
+		vec2 side1out = getsideOutVec(scaledPos[lastIndex].xy/d[lastIndex],scaledPos[i].xy/d[i],scaledPos[nextIndex].xy/d[nextIndex]);
+		vec2 side2out = getsideOutVec(scaledPos[i].xy/d[i],scaledPos[nextIndex].xy/d[nextIndex],scaledPos[lastIndex].xy/d[lastIndex]);
+
+		outPos[i].xy -= d[i]*jitterMult*(side1out + side2out);
+	}
+
+	pixelPos = outPos;
+}
+
 void jitterPixelPos(inout mat4 pixelPos){
+	float jittermult = 5.0f;//*simpleJitter();
 	if(jitterTotalFramesUniform == 0){
 		//return;
+	} else{
+		jittermult = 1.0f*simpleJitter();
 	}
 	// first revert the general pixel jitter
 	//pixelPos[0].xy -= pixelJitterUniform.xy;
 	//pixelPos[1].xy -= pixelJitterUniform.xy;
 	//pixelPos[2].xy -= pixelJitterUniform.xy;
+	int missingCorners = int(pixelPos[0].w <= 0) + int(pixelPos[1].w <= 0) + int(pixelPos[2].w <= 0);
+	
+	
+
+	if( missingCorners == 3){
+		return;
+	} else if( missingCorners == 2){
+		// sad but idk its too hard to figure out for me.
+		jitterPixelPosMissingCorner(pixelPos,jittermult);
+		return;
+	} else if( missingCorners == 1){
+		// sad but idk its too hard to figure out for me.
+		jitterPixelPosMissingCorner(pixelPos,jittermult);
+		return;
+	}
+
+	//return;
 
 	float width = float(pixelWidthUniform);
 	float height = float(pixelHeightUniform);
@@ -114,7 +170,6 @@ void jitterPixelPos(inout mat4 pixelPos){
 	//vec2 side3out = normalize((pixelPos[0].xy-pixelPos[2].xy).yx);
 	//side3out = dot(side3out,pixelPos[1].xy-pixelPos[2].xy) > 0 ? -side3out : side3out;
 
-	float jittermult = 5.0f;//*simpleJitter();
 
 	pixelPos[0].xy += d0*jittermult*(side1out + side3out);
 	pixelPos[1].xy += d1*jittermult*(side1out + side2out);
