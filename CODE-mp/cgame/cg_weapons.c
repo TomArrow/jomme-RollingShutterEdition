@@ -758,7 +758,7 @@ getFlash:
 
 		if ( weapon->flashDlightColor[0] || weapon->flashDlightColor[1] || weapon->flashDlightColor[2] ) {
 			trap_R_AddLightToScene( flashorigin, 300 + (rand()&31), weapon->flashDlightColor[0],
-				weapon->flashDlightColor[1], weapon->flashDlightColor[2] );
+				weapon->flashDlightColor[1], weapon->flashDlightColor[2], 0.0f);
 		}
 		cent->muzzleFlash = qfalse;
 	}

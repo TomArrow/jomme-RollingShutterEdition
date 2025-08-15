@@ -136,6 +136,7 @@ typedef struct uniformLocations_t {
 	GLint dLightsUniformOrigin[MAX_DLIGHTS];
 	GLint dLightsUniformColor[MAX_DLIGHTS];
 	GLint dLightsUniformRadius[MAX_DLIGHTS];
+	GLint dLightsUniformMindist[MAX_DLIGHTS];
 	GLint shadowLinesCountUniform;
 	GLint shadowLinesPoint1[MAX_SHADOWLINES];
 	GLint shadowLinesPoint2[MAX_SHADOWLINES];
@@ -509,6 +510,7 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 				qglUniform3fv(uniformLocationsTess->dLightsUniformOrigin[i], 1, backEnd.refdef.dlights[i].origin);
 				qglUniform3fv(uniformLocationsTess->dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
 				qglUniform1f(uniformLocationsTess->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
+				qglUniform1f(uniformLocationsTess->dLightsUniformMindist[i], backEnd.refdef.dlights[i].mindist);
 			}
 		}
 
@@ -522,6 +524,7 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 				qglUniform3fv(uniformLocations->dLightsUniformOrigin[i], 1, backEnd.refdef.dlights[i].origin);
 				qglUniform3fv(uniformLocations->dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
 				qglUniform1f(uniformLocations->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
+				qglUniform1f(uniformLocations->dLightsUniformMindist[i], backEnd.refdef.dlights[i].mindist);
 			}
 		}
 	}
@@ -1374,6 +1377,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 			locs->dLightsUniformColor[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].color",j));
 			locs->dLightsUniformOrigin[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].origin",j));
 			locs->dLightsUniformRadius[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].radius",j));
+			locs->dLightsUniformMindist[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].mindist",j));
 		}
 		for (int j = 0; j < MAXLIGHTMAPS_REAL; j++) {
 			locs->shaderStylesUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shaderStylesUniform[%d]",j));

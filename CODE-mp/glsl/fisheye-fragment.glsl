@@ -150,6 +150,9 @@ uniform float noiseFuckeryHDRIntensityUniform;
 uniform float noiseFuckeryLightmapIntensityUniform; 
 uniform vec3 viewOriginUniform; 
 
+uniform int jitterIndexUniform; 
+uniform int jitterTotalFramesUniform;
+
 varying vec4 eyeSpaceCoordsGeom;
 varying vec4 pureVertexCoordsGeom;
 
@@ -212,6 +215,8 @@ struct dlight_t {
 	vec3			mTransBasis2;
 	vec3			mTransBasis3;
 	*/
+
+	float			mindist;
 };
 
 uniform int dLightsCountUniform;
@@ -1140,7 +1145,8 @@ bool main_real(inout vec4 outFragColor)
 	
 	float thelod = textureQueryLod(text_in0,uvCoords).x;
 	thelod = thelod - biaslod(thelod);
-	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * 0.25f;
+	float gradMultiplier = jitterTotalFramesUniform == 0 ? 0.5f : 1.0f / sqrt(float(jitterTotalFramesUniform)/3.0f);
+	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradMultiplier;
 	textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
 
     if(fishEyeModeUniform == 0){
@@ -1359,6 +1365,10 @@ bool main_real(inout vec4 outFragColor)
 			vec3 maybeMirroredLightNormal  = twoSided && dot(lightReferenceNormal,lightVectorNorm) < 0 ? -lightNormal : lightNormal;
 			float intensity = max(dot(maybeMirroredLightNormal,lightVectorNorm),0.0f);
 			float dist = length(lightVector1);
+			if(dist<dLightsUniform[i].mindist){
+				dist *= 0.5f;
+				dist += dLightsUniform[i].mindist*0.5f;
+			}
 
 			vec3 value = (baseColorForLighting*dLightsUniform[i].color*dLightsUniform[i].radius*50.0*dLightIntensityUniform)*intensity/(dist*dist);
 

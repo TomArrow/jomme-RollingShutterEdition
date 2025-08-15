@@ -85,6 +85,8 @@ typedef struct dlight_s {
 
 	qboolean		pvsVisible;
 
+	float			mindist;
+
 } dlight_t;
 
 typedef struct shadowline_s {
@@ -1925,9 +1927,9 @@ void RE_ClearScene( void );
 void RE_AddRefEntityToScene( const refEntity_t *ent );
 void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
-void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ); 
+void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist ); 
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
-void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
 
 /*

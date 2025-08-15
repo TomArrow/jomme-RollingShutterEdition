@@ -151,7 +151,7 @@ static void CG_EntityEffects( centity_t *cent ) {
 		g = ( cl >> 8 ) & 255;
 		b = ( cl >> 16 ) & 255;
 		i = ( ( cl >> 24 ) & 255 ) * 4;
-		trap_R_AddLightToScene( cent->lerpOrigin, i, r, g, b );
+		trap_R_AddLightToScene( cent->lerpOrigin, i, r, g, b, 0.0f );
 	}
 
 }
@@ -1860,7 +1860,7 @@ static void CG_Missile( centity_t *cent ) {
 		if ( weapon->altMissileDlight ) 
 		{
 			trap_R_AddLightToScene(cent->lerpOrigin, weapon->altMissileDlight, 
-				weapon->altMissileDlightColor[0], weapon->altMissileDlightColor[1], weapon->altMissileDlightColor[2] );
+				weapon->altMissileDlightColor[0], weapon->altMissileDlightColor[1], weapon->altMissileDlightColor[2], 0.0f);
 		}
 
 		// add missile sound
@@ -1886,7 +1886,7 @@ static void CG_Missile( centity_t *cent ) {
 		if ( weapon->missileDlight ) 
 		{
 			trap_R_AddLightToScene(cent->lerpOrigin, weapon->missileDlight, 
-				weapon->missileDlightColor[0], weapon->missileDlightColor[1], weapon->missileDlightColor[2] );
+				weapon->missileDlightColor[0], weapon->missileDlightColor[1], weapon->missileDlightColor[2], 0.0f);
 		}
 
 		// add missile sound

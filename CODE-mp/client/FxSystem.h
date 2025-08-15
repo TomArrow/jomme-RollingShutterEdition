@@ -145,7 +145,7 @@ public:
 	}
 	inline	void	AddLightToScene( vec3_t org, float radius, float red, float green, float blue )
 	{
-		re.AddLightToScene(	org, radius, red, green, blue );
+		re.AddLightToScene(	org, radius, red, green, blue, 0.0f );
 	}
 
 	inline	int		RegisterShader( const char *shader )

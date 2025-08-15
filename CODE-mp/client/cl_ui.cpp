@@ -906,7 +906,7 @@ int CL_UISystemCalls( int *args ) {
 		return 0;
 
 	case UI_R_ADDLIGHTTOSCENE:
-		re.AddLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5) );
+		re.AddLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5), 0.0f );
 		return 0;
 
 	case UI_R_RENDERSCENE:

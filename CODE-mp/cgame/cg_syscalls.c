@@ -312,12 +312,12 @@ void	trap_R_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width,
 	// 2 for : use for a bit of simplistic ambient occlusion on world. Player nearby: Make a lil shadowy thingie
 	syscall( CG_R_ADDSHADOWLINE, p1, p2, PASSFLOAT(width), PASSFLOAT(a), PASSFLOAT(b), flags);
 }
-void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
+void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
+	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist) );
 }
 
-void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	syscall( CG_R_ADDADDITIVELIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
+void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
+	syscall( CG_R_ADDADDITIVELIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist) );
 }
 
 void	trap_R_RenderScene( const refdef_t *fd ) {

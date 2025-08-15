@@ -715,13 +715,13 @@ int CL_CgameSystemCalls( int *args ) {
 	case CG_R_LIGHTFORPOINT:
 		return re.LightForPoint( (float *)VMA(1), (float *)VMA(2), (float *)VMA(3), (float *)VMA(4) );
 	case CG_R_ADDLIGHTTOSCENE:
-		re.AddLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5) );
+		re.AddLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6) );
 		return 0;
 	case CG_R_ADDSHADOWLINE:
 		re.AddShadowLineToScene( (const float *)VMA(1), (const float *)VMA(2), VMF(3), VMF(4), VMF(5), args[6] );
 		return 0;
 	case CG_R_ADDADDITIVELIGHTTOSCENE:
-		re.AddAdditiveLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5) );
+		re.AddAdditiveLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6) );
 		return 0;
 	case CG_R_RENDERSCENE:
 		re.RenderScene( (const refdef_t *)VMA(1) );

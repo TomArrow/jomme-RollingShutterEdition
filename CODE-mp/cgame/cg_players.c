@@ -14,6 +14,29 @@ extern void CheckCameraLocation( vec3_t OldeyeOrigin );
 extern stringID_table_t animTable [MAX_ANIMATIONS+1];
 extern stringID_table_t animTable15 [MAX_ANIMATIONS_15+1];
 
+
+static int jitterAdjustedRandom(int basevalue, int addrange) {
+	return basevalue + rand() % addrange;
+	jitterSegmentAdvanceInfo_t* jsaInfo = trap_CG_MME_GetJitterSegmentAdvanceInfo();
+	if (!jsaInfo->isRecording) {
+		return basevalue + rand() % addrange;
+	}
+
+	int adjustedrange = (int)((float)addrange * 0.5f * sqrtf(3.0f * (float)jsaInfo->totalFrames));
+	return max(0, basevalue + addrange / 2 + rand() % adjustedrange);
+}
+static float jitterAdjustedRandomFloat(float basevalue, float addrange) {
+
+	return basevalue + random() * addrange;
+	jitterSegmentAdvanceInfo_t* jsaInfo = trap_CG_MME_GetJitterSegmentAdvanceInfo();
+	if (!jsaInfo->isRecording) {
+		return basevalue + random()*addrange;
+	}
+
+	float adjustedrange = (addrange * 0.5f * sqrtf(3.0f * (float)jsaInfo->totalFrames));
+	return max(0.0f, basevalue + addrange*0.5f + random()* adjustedrange);
+}
+
 char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*death1.wav",
 	"*death2.wav",
@@ -3656,25 +3679,25 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 
 	// quad gives a dlight
 	if ( powerups & ( 1 << PW_QUAD ) ) {
-		trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&31), 0.2f, 0.2f, 1 );
+		trap_R_AddLightToScene( cent->lerpOrigin, jitterAdjustedRandomFloat(100,32), 0.2f, 0.2f, 1, 40.0f );
 	}
 
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 	// redflag
 	if ( powerups & ( 1 << PW_REDFLAG ) ) {
 		CG_PlayerFlag( cent, cgs.media.redFlagModel, flagTop);
-		trap_R_AddLightToScene(flagTop, 100 + (rand()&31), 1.0, 0.2f, 0.2f );
+		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 1.0, 0.2f, 0.2f, 40.0f);
 	}
 
 	// blueflag
 	if ( powerups & ( 1 << PW_BLUEFLAG ) ) {
 		CG_PlayerFlag( cent, cgs.media.blueFlagModel, flagTop);
-		trap_R_AddLightToScene(flagTop, 100 + (rand()&31), 0.2f, 0.2f, 1.0 );
+		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 0.2f, 0.2f, 1.0, 40.0f);
 	}
 
 	// neutralflag
 	if ( powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-		trap_R_AddLightToScene(powerupLightOrigin, 100 + (rand()&31), 1.0, 1.0, 1.0 );
+		trap_R_AddLightToScene(powerupLightOrigin, jitterAdjustedRandomFloat(100, 32), 1.0, 1.0, 1.0, 40.0f);
 	}
 
 	// haste leaves smoke trails
@@ -4416,7 +4439,7 @@ void CG_DoSaber(vec3_t origin, vec3_t dir, float length, float traceRatio, saber
 	if (doLight) {
 		// always add a light because sabers cast a nice glow before they slice you in half!!  or something...
 		CG_RGBForSaberColor(color, rgb, cnum);
-		trap_R_AddLightToScene(mid, (length*2.0f) + (random()*8.0f), rgb[0], rgb[1], rgb[2]);
+		trap_R_AddLightToScene(mid, jitterAdjustedRandomFloat(length * 2.0f, 8.0f), rgb[0], rgb[1], rgb[2],5.0f);
 	}
 	//[/RGBSabers]
 

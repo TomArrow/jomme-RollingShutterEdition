@@ -122,8 +122,8 @@ void jitterPixelPosMissingCorner(inout mat4 pixelPos, float jitterMult){
 
 void jitterPixelPos(inout mat4 pixelPos){
 	float jittermult = 5.0f;//*simpleJitter();
-	if(jitterTotalFramesUniform == 0){
-		//return;
+	if(jitterTotalFramesUniform == 0 || isWorldBrushUniform == 0){
+		return;
 	} else{
 		jittermult = 1.0f*simpleJitter();
 	}
@@ -336,7 +336,7 @@ void standard(vec3 myNormal){
 		outPos[i] = projectionMatrix[0]* (gl_PositionIn[i]+positionAdjustment);
 	}
 
-	jitterPixelPos(outPos); // "intelligent" antialias geometry jitter?
+	//jitterPixelPos(outPos); // "intelligent" antialias geometry jitter?
 
 	for (int i = 0; i < 3; i++)
 	{

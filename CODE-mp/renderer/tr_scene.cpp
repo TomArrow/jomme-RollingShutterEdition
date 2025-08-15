@@ -309,7 +309,7 @@ RE_AddDynamicLightToScene
 
 =====================
 */
-void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, float g, float b, int additive ) {
+void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, float g, float b, int additive, float mindist ) {
 	dlight_t	*dl;
 
 	if ( !tr.registered ) {
@@ -327,6 +327,7 @@ void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, floa
 	dl->color[0] = r;
 	dl->color[1] = g;
 	dl->color[2] = b;
+	dl->mindist = mindist;
 	dl->additive = additive;
 }
 
@@ -336,7 +337,7 @@ RE_AddLightToScene
 
 =====================
 */
-void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
+void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
 	dlight_t	*dl;
 
 	if (r_newDLights->integer)
@@ -355,6 +356,7 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 		dl->color[0] = r;
 		dl->color[1] = g;
 		dl->color[2] = b;
+		dl->mindist = mindist;
 		if ( intensity <= 0 ) 
 		{
 			// projected from viewer
@@ -373,7 +375,7 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 	}
 	else
 	{
-		RE_AddDynamicLightToScene( org, intensity, r, g, b, qfalse );
+		RE_AddDynamicLightToScene( org, intensity, r, g, b, qfalse, mindist );
 	}
 }
 
@@ -414,8 +416,8 @@ RE_AddAdditiveLightToScene
 
 =====================
 */
-void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	RE_AddDynamicLightToScene( org, intensity, r, g, b, qtrue );
+void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
+	RE_AddDynamicLightToScene( org, intensity, r, g, b, qtrue, mindist);
 }
 
 
