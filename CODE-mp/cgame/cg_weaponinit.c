@@ -349,7 +349,7 @@ void CG_RegisterWeapon( int weaponNum) {
 		//weaponInfo->missileDlight		= 0;
 //		weaponInfo->missileDlightColor	= {0,0,0};
 		weaponInfo->missileDlight = 70;
-		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
+		VectorSet(weaponInfo->missileDlightColor, 0.1, 0.1, 1.0);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= FX_DEMP2_ProjectileThink;
 
@@ -362,7 +362,7 @@ void CG_RegisterWeapon( int weaponNum) {
 		//weaponInfo->altMissileDlight	= 0;
 //		weaponInfo->altMissileDlightColor= {0,0,0};
 		weaponInfo->altMissileDlight = 70;
-		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
+		VectorSet(weaponInfo->altMissileDlightColor, 0.1, 0.1, 1.0);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = 0;
 
