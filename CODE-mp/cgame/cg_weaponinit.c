@@ -146,8 +146,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect( "bryar/muzzle_flash" );
 		weaponInfo->missileModel		= NULL_HANDLE;
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight		= 0;
+		//weaponInfo->missileDlight		= 0;
 		//weaponInfo->missileDlightColor= {0,0,0};
+		weaponInfo->missileDlight		= 60;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= FX_BryarProjectileThink;
 
@@ -157,8 +159,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect( "bryar/muzzle_flash" );
 		weaponInfo->altMissileModel		= NULL_HANDLE;
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight	= 0;
+		//weaponInfo->altMissileDlight	= 0;
 		//weaponInfo->altMissileDlightColor= {0,0,0};
+		weaponInfo->altMissileDlight = 60;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = FX_BryarAltProjectileThink;
 
@@ -188,8 +192,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect( "blaster/muzzle_flash" );
 		weaponInfo->missileModel		= NULL_HANDLE;
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight		= 0;
+		//weaponInfo->missileDlight		= 0;
 //		weaponInfo->missileDlightColor	= {0,0,0};
+		weaponInfo->missileDlight = 40;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.1, 0.1);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= FX_BlasterProjectileThink;
 
@@ -199,8 +205,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect( "blaster/muzzle_flash" );
 		weaponInfo->altMissileModel		= NULL_HANDLE;
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight	= 0;
+		//weaponInfo->altMissileDlight	= 0;
 //		weaponInfo->altMissileDlightColor= {0,0,0};
+		weaponInfo->altMissileDlight = 40;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.1, 0.1);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = FX_BlasterProjectileThink;
 
@@ -219,8 +227,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect( "disruptor/muzzle_flash" );
 		weaponInfo->missileModel		= NULL_HANDLE;
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight		= 0;
+		//weaponInfo->missileDlight		= 0;
 //		weaponInfo->missileDlightColor	= {0,0,0};
+		weaponInfo->missileDlight = 40;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= 0;
 
@@ -230,8 +240,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect( "disruptor/muzzle_flash" );
 		weaponInfo->altMissileModel		= NULL_HANDLE;
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight	= 0;
+		//weaponInfo->altMissileDlight	= 0;
 //		weaponInfo->altMissileDlightColor= {0,0,0};
+		weaponInfo->altMissileDlight = 40;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = 0;
 
@@ -266,8 +278,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect( "bowcaster/muzzle_flash" );
 		weaponInfo->altMissileModel		= NULL_HANDLE;
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight		= 0;
+		//weaponInfo->altMissileDlight		= 0;
 //		weaponInfo->altMissileDlightColor	= {0,0,0};
+		weaponInfo->altMissileDlight = 70;
+		VectorSet(weaponInfo->altMissileDlightColor, 0.2, 1.0, 0.2);
 		weaponInfo->altMissileHitSound		= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc	= FX_BowcasterProjectileThink;
 
@@ -277,8 +291,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect( "bowcaster/muzzle_flash" );
 		weaponInfo->missileModel		= NULL_HANDLE;
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight	= 0;
+		//weaponInfo->missileDlight	= 0;
 //		weaponInfo->missileDlightColor= {0,0,0};
+		weaponInfo->missileDlight = 70;
+		VectorSet(weaponInfo->missileDlightColor, 0.2, 1.0, 0.2);
 		weaponInfo->missileHitSound	= NULL_SOUND;
 		weaponInfo->missileTrailFunc = FX_BowcasterAltProjectileThink;
 
@@ -295,8 +311,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect( "repeater/muzzle_flash" );
 		weaponInfo->missileModel		= NULL_HANDLE;
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight		= 0;
+		//weaponInfo->missileDlight		= 0;
 //		weaponInfo->missileDlightColor	= {0,0,0};
+		weaponInfo->missileDlight = 70;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= FX_RepeaterProjectileThink;
 
@@ -306,8 +324,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect( "repeater/muzzle_flash" );
 		weaponInfo->altMissileModel		= NULL_HANDLE;
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight	= 0;
+		//weaponInfo->altMissileDlight	= 0;
 //		weaponInfo->altMissileDlightColor= {0,0,0};
+		weaponInfo->altMissileDlight = 70;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = FX_RepeaterAltProjectileThink;
 
@@ -326,8 +346,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect("demp2/muzzle_flash");
 		weaponInfo->missileModel		= NULL_HANDLE;
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight		= 0;
+		//weaponInfo->missileDlight		= 0;
 //		weaponInfo->missileDlightColor	= {0,0,0};
+		weaponInfo->missileDlight = 70;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= FX_DEMP2_ProjectileThink;
 
@@ -337,8 +359,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect("demp2/muzzle_flash");
 		weaponInfo->altMissileModel		= NULL_HANDLE;
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight	= 0;
+		//weaponInfo->altMissileDlight	= 0;
 //		weaponInfo->altMissileDlightColor= {0,0,0};
+		weaponInfo->altMissileDlight = 70;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = 0;
 
@@ -360,8 +384,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->muzzleEffect		= trap_FX_RegisterEffect( "flechette/muzzle_flash" );
 		weaponInfo->missileModel		= trap_R_RegisterModel("models/weapons2/golan_arms/projectileMain.md3");
 		weaponInfo->missileSound		= NULL_SOUND;
-		weaponInfo->missileDlight		= 0;
+		//weaponInfo->missileDlight		= 0;
 //		weaponInfo->missileDlightColor	= {0,0,0};
+		weaponInfo->missileDlight = 70;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->missileHitSound		= NULL_SOUND;
 		weaponInfo->missileTrailFunc	= FX_FlechetteProjectileThink;
 
@@ -371,8 +397,10 @@ void CG_RegisterWeapon( int weaponNum) {
 		weaponInfo->altMuzzleEffect		= trap_FX_RegisterEffect( "flechette/muzzle_flash" );
 		weaponInfo->altMissileModel		= trap_R_RegisterModel( "models/weapons2/golan_arms/projectile.md3" );
 		weaponInfo->altMissileSound		= NULL_SOUND;
-		weaponInfo->altMissileDlight	= 0;
+		//weaponInfo->altMissileDlight	= 0;
 //		weaponInfo->altMissileDlightColor= {0,0,0};
+		weaponInfo->altMissileDlight = 70;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
 		weaponInfo->altMissileHitSound	= NULL_SOUND;
 		weaponInfo->altMissileTrailFunc = FX_FlechetteAltProjectileThink;
 
