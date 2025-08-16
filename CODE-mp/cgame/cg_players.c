@@ -4740,7 +4740,7 @@ void CG_CreateSaberMarks( vec3_t start, vec3_t end, vec3_t normal )
 			// And now do a glow pass
 			// by moving the start time back, we can hack it to fade out way before the burn does
 			mark = CG_AllocMark(qtrue);
-			mark->time = cg.time - 8500;
+			mark->time = cg.time - 48500;
 			mark->alphaFade = qfalse;
 			mark->markShader = trap_R_RegisterShader("gfx/effects/saberDamageGlow");
 			mark->poly.numVerts = mf->numPoints;

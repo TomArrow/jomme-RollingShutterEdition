@@ -296,8 +296,8 @@ void CG_AddMarks( void ) {
 					float f = (float)t / MARK_FADE_TIME;
 					for ( j = 0 ; j < mp->poly.numVerts ; j++ ) {
 						mp->verts[j].modulate[0] = mp->color[0] * f;
-						mp->verts[j].modulate[1] = mp->color[1] * f;
-						mp->verts[j].modulate[2] = mp->color[2] * f;
+						mp->verts[j].modulate[1] = mp->color[1] * powf(f,1.2);
+						mp->verts[j].modulate[2] = mp->color[2] * powf(f,1.5);
 					}
 				}
 			}
