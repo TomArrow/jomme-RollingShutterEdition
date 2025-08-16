@@ -857,7 +857,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 
 	{ &cg_fpls, "cg_fpls", "0", NULL, 0 },
 
-	{ &cg_saberMarkCheapLights, "cg_saberMarkCheapLights", "1.0", NULL, 0 },
+	{ &cg_saberMarkCheapLights, "cg_saberMarkCheapLights", "5.0", NULL, 0 },
 	{ &cg_saberDynamicMarks, "cg_saberDynamicMarks", "0", NULL, 0 },
 	{ &cg_saberDynamicMarkTime, "cg_saberDynamicMarkTime", "60000", NULL, 0 },
 
