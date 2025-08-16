@@ -143,6 +143,7 @@ typedef struct uniformLocations_t {
 	GLint shadowLinesWidth[MAX_SHADOWLINES];
 	GLint shadowLinesA[MAX_SHADOWLINES];
 	GLint shadowLinesB[MAX_SHADOWLINES];
+	GLint cheapLightsCountUniform;
 
 	GLint shaderStylesUniform[MAXLIGHTMAPS_REAL];
 };
@@ -157,8 +158,10 @@ uniformLocations_t uniformLocationsTessArr[GLSLSHAD_MAX];
 uniformLocations_t uniformLocationsArr[GLSLSHAD_MAX];
 
 static GLuint shadowLineSSBOReference = 0;
+static GLuint cheapLightSSBOReference = 0;
 static GLuint musicDeformSSBOReference = 0;
 static shadowline_t shadowLineSSBO[MAX_SHADOWLINES];
+static dlightCheap_t cheapLightsSSBO[MAX_CHEAPLIGHTS];
 static float* musicDeformSSBOData = NULL;
 static GLuint lightStylesSSBOReference = 0;
 static vec4_t lightStylesSSBO[MAX_LIGHT_STYLES];
@@ -372,6 +375,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
 		//qglUniform3fv(uniformLocationsTess->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
 		qglUniform1i(uniformLocationsTess->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		qglUniform1i(uniformLocationsTess->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			/*for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
@@ -458,6 +462,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
 		//qglUniform3fv(uniformLocations->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
 		qglUniform1i(uniformLocations->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		qglUniform1i(uniformLocations->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			/*
 			for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
@@ -504,6 +509,7 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 
 		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
 		qglUniform1i(uniformLocationsTess->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		qglUniform1i(uniformLocationsTess->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
@@ -518,6 +524,7 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 	else {
 		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
 		qglUniform1i(uniformLocations->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		qglUniform1i(uniformLocations->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
@@ -551,6 +558,12 @@ qboolean R_FrameBuffer_SendDLightSSBOInfo() {
 		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, shadowLineSSBOReference);
 		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(shadowLineSSBO), shadowLineSSBO, GL_DYNAMIC_DRAW_ARB);
 		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, shadowLineSSBOReference);
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
+
+		Com_Memcpy(cheapLightsSSBO, backEnd.refdef.cheaplights, backEnd.refdef.num_cheaplights * sizeof(dlightCheap_t));
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, cheapLightSSBOReference);
+		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(cheapLightsSSBO), cheapLightsSSBO, GL_DYNAMIC_DRAW_ARB);
+		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, cheapLightSSBOReference);
 		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
 
 		Com_Memcpy(lightStylesSSBO, styleColors, sizeof(styleColors));
@@ -1383,6 +1396,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 			locs->shaderStylesUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shaderStylesUniform[%d]",j));
 		}
 		locs->shadowLinesCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shadowLinesCountUniform");
+		locs->cheapLightsCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cheapLightsCountUniform");
 		for (int j = 0; j < MAX_SHADOWLINES; j++) {
 			locs->shadowLinesPoint1[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].point1",j));
 			locs->shadowLinesPoint2[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].point2",j));
@@ -1613,6 +1627,7 @@ void R_FrameBuffer_Init( void ) {
 	if (r_fboGLSL->integer && ENABLEGLSL) {
 		if (g_SSBOsSupported) {
 			qglGenBuffersARB(1, &shadowLineSSBOReference);
+			qglGenBuffersARB(1, &cheapLightSSBOReference);
 			qglGenBuffersARB(1, &lightStylesSSBOReference);
 			qglGenBuffersARB(1, &musicDeformSSBOReference);
 			qglGenBuffersARB(1, &voxelSSBOReference);

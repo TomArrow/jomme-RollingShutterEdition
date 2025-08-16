@@ -18,6 +18,9 @@ static	int			r_firstSceneDlight;
 static	int			r_numshadowlines;
 static	int			r_firstSceneShadowLine;
 
+static	int			r_numcheaplights;
+static	int			r_firstSceneCheapLight;
+
 static	int64_t		r_numentities;
 static	int			r_firstSceneEntity;
 static	int			r_numminientities;
@@ -55,6 +58,9 @@ void R_ToggleSmpFrame( void ) {
 	r_numshadowlines = 0;
 	r_firstSceneShadowLine = 0;
 
+	r_numcheaplights = 0;
+	r_firstSceneCheapLight = 0;
+
 	r_numentities = 0;
 	r_firstSceneEntity = 0;
 	refEntParent = -1;
@@ -75,6 +81,7 @@ RE_ClearScene
 ====================
 */
 void RE_ClearScene( void ) {
+	r_firstSceneCheapLight = r_numcheaplights;
 	r_firstSceneShadowLine = r_numshadowlines;
 	r_firstSceneDlight = r_numdlights;
 	r_firstSceneEntity = r_numentities;
@@ -379,6 +386,42 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 	}
 }
 
+void RE_AddCheapLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
+
+	dlightCheap_t* dl;
+
+	if (!tr.registered) {
+		return;
+	}
+	if (r_numcheaplights >= MAX_CHEAPLIGHTS_TO_SORT) {
+		return;
+	}
+	if (intensity <= 0) {
+		return;
+	}
+	dl = &backEndData[tr.smpFrame]->cheaplights[r_numcheaplights++];
+	VectorCopy(org, dl->origin);
+	dl->radius = intensity;
+	dl->color[0] = r;
+	dl->color[1] = g;
+	dl->color[2] = b;
+	dl->mindist = mindist;
+}
+qboolean RE_GetShaderLightMultiplier( qhandle_t hshader, vec3_t color) {
+
+	VectorClear(color);
+	if (!tr.registered) {
+		return qfalse;
+	}
+	shader_t* shader = R_GetShaderByHandle(hshader);
+	if (shader->stages[0] && (shader->stages[0]->stateBits & GLS_SRCBLEND_ONE) && (shader->stages[0]->stateBits & GLS_DSTBLEND_ONE) && shader->stages[0]->bundle[0].image  ) {
+		// this shader is additive. bingo.
+		VectorCopy(shader->stages[0]->bundle[0].image[0]->averageColor,color);
+		return qtrue;
+	}
+	return qfalse;
+}
+
 /*
 =====================
 RE_AddShadowLineToScene
@@ -434,6 +477,23 @@ static int cmpDlightViewOrgDistance(const void* a, const void* b) {
 	}
 	
 
+	dist1 = DistanceSquared(aa->origin,tr.refdef.vieworg);
+	dist2 = DistanceSquared(bb->origin,tr.refdef.vieworg);
+
+	return dist1 - dist2;
+}
+static int cmpCheapLightViewOrgDistance(const void* a, const void* b) {
+	dlightCheap_t* aa = (dlightCheap_t*)a;
+	dlightCheap_t* bb = (dlightCheap_t*)b;
+	float dist1, dist2;
+
+	if (!(aa->flags & 4)) { // not visible
+		return 1;
+	}
+	if (!(bb->flags & 4)) { // not visible
+		return -1;
+	}
+	
 	dist1 = DistanceSquared(aa->origin,tr.refdef.vieworg);
 	dist2 = DistanceSquared(bb->origin,tr.refdef.vieworg);
 
@@ -590,6 +650,26 @@ void RE_RenderScene( const refdef_t *fd ) {
 		tr.refdef.num_shadowlines = MAX_SHADOWLINES;
 	}
 
+	tr.refdef.num_cheaplights = r_numcheaplights - r_firstSceneCheapLight;
+	tr.refdef.cheaplights = &backEndData[tr.smpFrame]->cheaplights[r_firstSceneCheapLight];
+
+	numVisible = 0;
+	for (int i = 0; i < tr.refdef.num_cheaplights; i++) {
+		if (R_inPVSAndVisible(tr.refdef.vieworg, tr.refdef.cheaplights[i].origin)) {
+			tr.refdef.cheaplights[i].flags |= 4;
+			numVisible++;
+		}
+		else {
+			tr.refdef.cheaplights[i].flags &= ~4;
+		}
+	}
+	qsort(tr.refdef.cheaplights, tr.refdef.num_cheaplights, sizeof(dlightCheap_t), cmpCheapLightViewOrgDistance);
+	tr.refdef.num_cheaplights = numVisible;
+	if (tr.refdef.num_cheaplights > MAX_CHEAPLIGHTS) {
+		// sort by distance.
+		tr.refdef.num_cheaplights = MAX_CHEAPLIGHTS;
+	}
+
 	tr.refdef.numPolys = r_numpolys - r_firstScenePoly;
 	tr.refdef.polys = &backEndData[tr.smpFrame]->polys[r_firstScenePoly];
 
@@ -639,6 +719,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
 	r_firstSceneEntity = r_numentities;
 	r_firstSceneMiniEntity = r_numminientities;
+	r_firstSceneCheapLight = r_numcheaplights;
 	r_firstSceneDlight = r_numdlights;
 	r_firstSceneShadowLine = r_numshadowlines;
 	r_firstScenePoly = r_numpolys;

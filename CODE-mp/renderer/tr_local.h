@@ -89,6 +89,16 @@ typedef struct dlight_s {
 
 } dlight_t;
 
+// these are purely non-shadow small lights communicated via SSBO
+typedef struct dlightCheap_s {
+	vec4_t			origin;
+	vec4_t			color;				// range from 0.0 to 1.0, should be color normalized
+	float			radius;
+	float			mindist;
+	int				flags; // 4 = not visible
+	int				filler2;
+} dlightCheap_t;
+
 typedef struct shadowline_s {
 	vec4_t			point1; // vec4 or alignment with opengl SSBO
 	vec4_t			point2; // vec4 or alignment with opengl SSBO
@@ -183,6 +193,7 @@ typedef struct image_s {
 	int			iLastLevelUsedOn;
 
 	float		averageBrightnessLevel;
+	vec3_t		averageColor;
 
 	TextureBitsPerChannel bpc;
 
@@ -634,6 +645,9 @@ typedef struct {
 
 	int			num_shadowlines;
 	struct shadowline_s	*shadowlines;
+
+	int			num_cheaplights;
+	struct dlightCheap_s	*cheaplights;
 
 	int			numPolys;
 	struct srfPoly_s	*polys;
@@ -1928,6 +1942,8 @@ void RE_AddRefEntityToScene( const refEntity_t *ent );
 void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist ); 
+void RE_AddCheapLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
+qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
@@ -2133,6 +2149,7 @@ typedef enum {
 typedef struct {
 	drawSurf_t	drawSurfs[MAX_DRAWSURFS];
 	shadowline_t	shadowLines[MAX_SHADOWLINES_TO_SORT];
+	dlightCheap_t	cheaplights[MAX_CHEAPLIGHTS_TO_SORT];
 	dlight_t	dlights[MAX_DLIGHTS_TO_SORT];
 	//trRefEntity_t	entities[MAX_ENTITIES];
 	trRefEntity_t	entities[MAX_REFENTITIES];

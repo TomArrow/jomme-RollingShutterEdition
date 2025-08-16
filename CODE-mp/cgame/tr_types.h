@@ -12,6 +12,9 @@
 #define	MAX_SHADOWLINES_TO_SORT		(10*MAX_SHADOWLINES)		// About 18 per player
 //#define	MAX_ENTITIES	1023		// can't be increased without changing drawsurf bit packing
 
+#define MAX_CHEAPLIGHTS				1024
+#define MAX_CHEAPLIGHTS_TO_SORT		10*1024
+
 #define	REFENTITYNUM_BITS	16		// can't be increased without changing drawsurf bit packing
 #define	REFENTITYNUM_MASK	((1<<REFENTITYNUM_BITS) - 1)
 // the last N-bit number (2^REFENTITYNUM_BITS - 1) is reserved for the special world refentity,
@@ -49,6 +52,8 @@
 
 #define RF_DISINTEGRATE1	0x20000	// does a procedural hole-ripping thing.
 #define RF_DISINTEGRATE2	0x40000	// does a procedural hole-ripping thing with scaling at the ripping point
+
+#define RF_MAYBECHEAPLIGHT	0x80000	// makes a light if this is an additive shaader, proportional to the size.
 
 
 

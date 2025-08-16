@@ -368,6 +368,8 @@ void CParticle::Draw()
 	VectorCopy( mOrigin1, mRefEnt.origin );
 
 	theFxHelper.AddFxToScene(&mRefEnt);
+
+	//theFxHelper.AddCheapLightToScene(mRefEnt.origin,20.0f,1,1,1);
 }
 
 //----------------------------
@@ -1026,7 +1028,6 @@ void CLine::Draw()
 	VectorCopy( mOrigin1, mRefEnt.origin );
 	VectorCopy( mOrigin2, mRefEnt.oldorigin );
 
-	theFxHelper.AddFxToScene(&mRefEnt);
 	if (tomFlags & TOMFX_LIT) {
 		vec3_t center;
 		jitterSegmentAdvanceInfo_t jitterInfo;
@@ -1052,6 +1053,24 @@ void CLine::Draw()
 		}
 
 	}
+	else {
+		vec3_t shadercolor;
+		if (theFxHelper.GetShaderLightMultiplier(mRefEnt.customShader, shadercolor)) {
+			vec3_t tmpvec;
+			VectorSubtract(mRefEnt.origin, mRefEnt.oldorigin, tmpvec);
+			float surfaceArea = mRefEnt.radius * VectorLength(tmpvec);
+			float alpha = 255.0f; // mRefEnt.shaderRGBA[3] 
+			shadercolor[0] *= mRefEnt.shaderRGBA[0] / 255.0f * alpha / 255.0f;
+			shadercolor[1] *= mRefEnt.shaderRGBA[1] / 255.0f * alpha / 255.0f;
+			shadercolor[2] *= mRefEnt.shaderRGBA[2] / 255.0f * alpha / 255.0f;
+			surfaceArea /= M_PI;
+			float radius = sqrt(surfaceArea);
+			VectorMA(mRefEnt.oldorigin, 0.5f, tmpvec, tmpvec);
+			theFxHelper.AddCheapLightToScene(tmpvec, radius, shadercolor[0], shadercolor[1], shadercolor[2]);
+		}
+	}
+
+	theFxHelper.AddFxToScene(&mRefEnt);
 }
 
 //----------------------------
@@ -1177,15 +1196,33 @@ bool CTail::Cull()
 //----------------------------
 void CTail::Draw()
 {
+	vec3_t shadercolor;
 	if ( mFlags & FX_DEPTH_HACK )
 	{
 		// Not sure if first person needs to be set
 		mRefEnt.renderfx |= RF_DEPTHHACK;
 	}
 
+	mRefEnt.renderfx |= RF_MAYBECHEAPLIGHT;
+
 	VectorCopy( mOrigin1, mRefEnt.origin );
 
-	theFxHelper.AddFxToScene(&mRefEnt);
+	theFxHelper.AddFxToScene(&mRefEnt); 
+
+	if (theFxHelper.GetShaderLightMultiplier(mRefEnt.customShader, shadercolor)) {
+		vec3_t tmpvec;
+		VectorSubtract(mRefEnt.origin, mRefEnt.oldorigin,tmpvec);
+		float surfaceArea = mRefEnt.radius * VectorLength(tmpvec);
+		float alpha = 255.0f; // mRefEnt.shaderRGBA[3] 
+		shadercolor[0] *= mRefEnt.shaderRGBA[0] / 255.0f * alpha / 255.0f;
+		shadercolor[1] *= mRefEnt.shaderRGBA[1] / 255.0f * alpha / 255.0f;
+		shadercolor[2] *= mRefEnt.shaderRGBA[2] / 255.0f * alpha / 255.0f;
+		surfaceArea /= M_PI;
+		float radius = sqrt(surfaceArea)*2.0f;
+		VectorMA(mRefEnt.oldorigin,0.5f, tmpvec, tmpvec);
+		theFxHelper.AddCheapLightToScene(tmpvec,radius,shadercolor[0],shadercolor[1],shadercolor[2]);
+	}
+	
 }
 
 //----------------------------

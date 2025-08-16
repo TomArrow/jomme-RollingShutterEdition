@@ -147,6 +147,14 @@ public:
 	{
 		re.AddLightToScene(	org, radius, red, green, blue, 0.0f );
 	}
+	inline	void	AddCheapLightToScene( vec3_t org, float radius, float red, float green, float blue )
+	{
+		re.AddCheapLightToScene(	org, radius, red, green, blue, 0.0f );
+	}
+	inline	qboolean	GetShaderLightMultiplier( qhandle_t shader, vec3_t colorOut )
+	{
+		return re.GetShaderLightMultiplier(shader, colorOut);
+	}
 
 	inline	int		RegisterShader( const char *shader )
 	{

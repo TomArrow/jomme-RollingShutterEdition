@@ -166,6 +166,8 @@ static void RB_SurfaceSprite( void ) {
 		VectorSubtract( vec3_origin, left, left );
 	}
 
+
+
 	RB_AddQuadStamp( backEnd.currentEntity->e.origin, left, up, backEnd.currentEntity->e.shaderRGBA );
 }
 

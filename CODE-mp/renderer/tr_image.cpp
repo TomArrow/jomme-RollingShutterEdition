@@ -1268,6 +1268,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 
 	GL_Bind(image);
 
+	double averageBrightnessTotalArr[3] = {0,0,0};
 	double averageBrightnessTotal = 0;
 	double averageBrightnessSamples = 0;
 
@@ -1279,7 +1280,10 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			for (int i = 0; i < (image->height*image->width); i++, data += 4) {
 				averageBrightnessTotal += data[0];
 				averageBrightnessTotal += data[1];
-				averageBrightnessTotal += data[2]; 
+				averageBrightnessTotal += data[2];
+				averageBrightnessTotalArr[0] += data[0];
+				averageBrightnessTotalArr[1] += data[1];
+				averageBrightnessTotalArr[2] += data[2];
 				averageBrightnessSamples += 3;
 			}
 		}
@@ -1299,6 +1303,9 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 				averageBrightnessTotal += (double)data[0]/(double)UINT_MAX;
 				averageBrightnessTotal += (double)data[1]/(double)UINT_MAX;
 				averageBrightnessTotal += (double)data[2]/(double)UINT_MAX;
+				averageBrightnessTotalArr[0] += (double)data[0]/(double)UINT_MAX;
+				averageBrightnessTotalArr[1] += (double)data[1]/(double)UINT_MAX;
+				averageBrightnessTotalArr[2] += (double)data[2]/(double)UINT_MAX;
 				averageBrightnessSamples += 3;
 			}
 		}
@@ -1318,6 +1325,9 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 				averageBrightnessTotal += (double)data[0] / (double)UINT16_MAX;
 				averageBrightnessTotal += (double)data[1] / (double)UINT16_MAX;
 				averageBrightnessTotal += (double)data[2] / (double)UINT16_MAX;
+				averageBrightnessTotalArr[0] += (double)data[0] / (double)UINT16_MAX;
+				averageBrightnessTotalArr[1] += (double)data[1] / (double)UINT16_MAX;
+				averageBrightnessTotalArr[2] += (double)data[2] / (double)UINT16_MAX;
 				averageBrightnessSamples += 3;
 			}
 		}
@@ -1338,6 +1348,9 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 				averageBrightnessTotal += (double)data[0] / (double)255;
 				averageBrightnessTotal += (double)data[1] / (double)255;
 				averageBrightnessTotal += (double)data[2] / (double)255;
+				averageBrightnessTotalArr[0] += (double)data[0] / (double)255;
+				averageBrightnessTotalArr[1] += (double)data[1] / (double)255;
+				averageBrightnessTotalArr[2] += (double)data[2] / (double)255;
 				averageBrightnessSamples += 3;
 			}
 		}
@@ -1354,6 +1367,8 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 	}
 
 	image->averageBrightnessLevel = (float)(averageBrightnessTotal / averageBrightnessSamples);
+	averageBrightnessSamples /= 3.0;
+	VectorScale(averageBrightnessTotalArr,1.0/ averageBrightnessSamples, image->averageColor);
 
 	qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapClampMode );
 	qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapClampMode );

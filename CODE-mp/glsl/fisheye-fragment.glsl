@@ -192,31 +192,19 @@ float snoise(vec4 v);
 
 
 struct dlight_t {
-	//int				mType;
-
 	vec3			origin;
-	//vec3			mProjOrigin;		// projected light's origin
-
 	vec3			color;				// range from 0.0 to 1.0, should be color normalized
-
 	float			radius;
-	/*float			mProjRadius;		// desired radius of light 
-
-	int				additive;			// texture detail is lost tho when the lightmap is dark
-
-	vec3			transformed;		// origin in local coordinate system
-	vec3			mProjTransformed;	// projected light's origin in local coordinate system
-
-	vec3			mDirection;
-	vec3			mBasis2;
-	vec3			mBasis3;
-
-	vec3			mTransDirection;
-	vec3			mTransBasis2;
-	vec3			mTransBasis3;
-	*/
-
 	float			mindist;
+};
+
+struct dlightCheap_t {
+	vec4			origin;
+	vec4			color;
+	float			radius;
+	float			mindist;
+	int				flags;
+	int				filler2;
 };
 
 uniform int dLightsCountUniform;
@@ -240,6 +228,7 @@ struct shadowline_t {
 };
 
 uniform int shadowLinesCountUniform;
+uniform int cheapLightsCountUniform;
 //uniform shadowline_t shadowLinesUniform[64*18]; 
 
 layout(std430, binding = 6) buffer lightStyleIntensitiesLayout
@@ -250,6 +239,11 @@ layout(std430, binding = 6) buffer lightStyleIntensitiesLayout
 layout(std430, binding = 3) buffer shadowLinesLayout
 {
     shadowline_t shadowLines[64*18];
+};
+
+layout(std430, binding = 7) buffer cheaplightsLayout
+{
+    dlightCheap_t cheaplights[1024];
 };
 
 #if VOXELSTUFF
@@ -1347,6 +1341,47 @@ bool main_real(inout vec4 outFragColor)
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		
+		// cheap lights. no shadows.
+		for(int i=1;i<cheapLightsCountUniform;i++){
+			vec3 dlightOrigin = cheaplights[i].origin.xyz;
+			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dlightOrigin,1.0);
+			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;
+			if(dot(lightVector1,lightReferenceNormal) <= 0.0 && !twoSided){
+				continue; // this is the normal of the surface itself, not just of the current pixel. if the light is behind the surface... dont bother.
+			}
+
+			vec3 lightVectorNorm = normalize( lightVector1);
+			vec3 maybeMirroredLightNormal  = twoSided && dot(lightReferenceNormal,lightVectorNorm) < 0 ? -lightNormal : lightNormal;
+			float intensity = max(dot(maybeMirroredLightNormal,lightVectorNorm),0.0f);
+			float dist = length(lightVector1);
+			if(dist<dLightsUniform[i].mindist){
+				dist *= 0.5f;
+				dist += dLightsUniform[i].mindist*0.5f;
+			}
+
+			vec3 value = (baseColorForLighting*cheaplights[i].color.xyz*cheaplights[i].radius*50.0*dLightIntensityUniform)*intensity/(dist*dist);
+			
+			addValue += value;
+
+			
+			vec3 lightVector1Norm = -lightVectorNorm;
+
+			// now mirror the lightVector around the normal
+			vec3 mirroredVec = lightVector1Norm - 2.0*maybeMirroredLightNormal*dot(lightVector1Norm,maybeMirroredLightNormal);
+			vec3 mirroredVecNorm = normalize(mirroredVec);
+
+			float specIntensity = pow(max(0.0,dot(mirroredVecNorm,viewerVectorNorm)),dLightSpecGammaUniform);
+
+				
+			// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
+			specIntensity *= specIntensitySchlickMult;
+
+			float totalDist = dist + viewerDistance;
+
+			vec3 addVal = (baseColorForLighting*cheaplights[i].color.xyz*cheaplights[i].radius)*specIntensity*dLightSpecIntensityUniform/totalDist;
+			addValue += addVal;
+		}
+
 		for(int i=0;i<dLightsCountUniform;i++){
 		
 			vec3 dlightRawOrigin = dLightsUniform[i].origin;
