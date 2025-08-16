@@ -132,6 +132,8 @@ typedef struct uniformLocations_t {
 	GLint dLightSpecIntensityUniform;
 	GLint dLightSpecGammaUniform;
 	GLint dLightSpecBaseReflectivityUniform;
+	GLint dLightAddPowUniform;
+	GLint dLightAddPostPowMultUniform;
 	GLint dLightsCountUniform; 
 	GLint dLightsUniformOrigin[MAX_DLIGHTS];
 	GLint dLightsUniformColor[MAX_DLIGHTS];
@@ -185,6 +187,8 @@ cvar_t *r_fboGLSLDLightsFast;
 cvar_t *r_fboGLSLDLightsVoxelShadows;
 cvar_t *r_fboGLSLDLightsSpecGamma;
 cvar_t *r_fboGLSLDLightsIntensity;
+cvar_t *r_fboGLSLDLightsAddPow;
+cvar_t *r_fboGLSLDLightsAddPostPowMult;
 cvar_t *r_fboGLSLDLightsSpecIntensity;
 cvar_t *r_fboGLSLDLightsSpecBaseReflectivity;
 cvar_t *r_fboGLSLDLightsFastSkipThreshold;
@@ -373,6 +377,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
 		qglUniform1f(uniformLocationsTess->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
 		qglUniform1f(uniformLocationsTess->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
+		qglUniform1f(uniformLocationsTess->dLightAddPowUniform, r_fboGLSLDLightsAddPow->value);
+		qglUniform1f(uniformLocationsTess->dLightAddPostPowMultUniform, r_fboGLSLDLightsAddPostPowMult->value);
 		//qglUniform3fv(uniformLocationsTess->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
 		qglUniform1i(uniformLocationsTess->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
 		qglUniform1i(uniformLocationsTess->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
@@ -460,6 +466,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
 		qglUniform1f(uniformLocations->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
 		qglUniform1f(uniformLocations->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
+		qglUniform1f(uniformLocations->dLightAddPowUniform, r_fboGLSLDLightsAddPow->value);
+		qglUniform1f(uniformLocations->dLightAddPostPowMultUniform, r_fboGLSLDLightsAddPostPowMult->value);
 		//qglUniform3fv(uniformLocations->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
 		qglUniform1i(uniformLocations->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
 		qglUniform1i(uniformLocations->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
@@ -1386,6 +1394,8 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->dLightIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightIntensityUniform");
 		locs->dLightsCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightsCountUniform");
 		locs->dLightFastSkipThresholdUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastSkipThresholdUniform");
+		locs->dLightAddPowUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightAddPowUniform");
+		locs->dLightAddPostPowMultUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightAddPostPowMultUniform");
 		for (int j = 0; j < MAX_DLIGHTS; j++) {
 			locs->dLightsUniformColor[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].color",j));
 			locs->dLightsUniformOrigin[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].origin",j));
@@ -1493,6 +1503,8 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLDLightsSpecBaseReflectivity = ri.Cvar_Get( "r_fboGLSLDLightsSpecBaseReflectivity", "0.1", CVAR_ARCHIVE);
 	r_fboGLSLDLightsIntensity = ri.Cvar_Get( "r_fboGLSLDLightsIntensity", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsSpecGamma = ri.Cvar_Get( "r_fboGLSLDLightsSpecGamma", "5.0", CVAR_ARCHIVE);
+	r_fboGLSLDLightsAddPow = ri.Cvar_Get( "r_fboGLSLDLightsAddPow", "0.7", CVAR_ARCHIVE);
+	r_fboGLSLDLightsAddPostPowMult = ri.Cvar_Get( "r_fboGLSLDLightsAddPostPowMult", "0.8", CVAR_ARCHIVE);
 	r_fboGLSLDLightsFastSkipThreshold = ri.Cvar_Get( "r_fboGLSLDLightsFastSkipThreshold", "0.00001", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboFishEye = ri.Cvar_Get( "r_fboFishEye", "0", CVAR_ARCHIVE);

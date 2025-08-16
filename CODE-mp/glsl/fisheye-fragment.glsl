@@ -133,6 +133,8 @@ uniform float dLightIntensityUniform;
 uniform float dLightSpecIntensityUniform;
 uniform float dLightSpecGammaUniform;
 uniform float dLightSpecBaseReflectivityUniform; // for schlick
+uniform float dLightAddPowUniform;
+uniform float dLightAddPostPowMultUniform;
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
 uniform float serverTimeUniform;
@@ -1574,7 +1576,13 @@ bool main_real(inout vec4 outFragColor)
 	
 	}
 
-	
+	//addValue = pow(addValue,0.5f);
+	//addValue = sqrt(addValue);
+	addValue.x = pow(addValue.x,dLightAddPowUniform);
+	addValue.y = pow(addValue.y,dLightAddPowUniform);
+	addValue.z = pow(addValue.z,dLightAddPowUniform);
+	addValue *= dLightAddPostPowMultUniform;
+
 	vec4 lightmapStyleAdd = vec4(0);
 
 	vec3 addValueForLightmap = addValue;
