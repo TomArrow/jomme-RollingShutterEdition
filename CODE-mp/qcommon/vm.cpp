@@ -345,6 +345,29 @@ intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
 #else
 int QDECL VM_DllSyscall( int arg, ... ) {
 #endif
+#ifdef _WIN64
+
+#if !id386 || defined __clang__
+	// rcg010206 - see commentary above
+	intptr_t args[MAX_VMSYSCALL_ARGS];
+	size_t i;
+	va_list ap;
+
+	args[0] = arg;
+
+	va_start(ap, arg);
+	for (i = 1; i < ARRAY_LEN(args); i++)
+		args[i] = va_arg(ap, intptr_t);
+	va_end(ap);
+
+	return currentVM->systemCall(args);
+#else // original id code
+	return currentVM->systemCall(&arg);
+#endif
+
+#else
+
+
 #if ((defined __linux__) && (defined __powerpc__))
   // rcg010206 - see commentary above
   int args[16];
@@ -361,6 +384,9 @@ int QDECL VM_DllSyscall( int arg, ... ) {
   return currentVM->systemCall( args );
 #else // original id code
 	return currentVM->systemCall( &arg );
+#endif
+
+
 #endif
 }
 

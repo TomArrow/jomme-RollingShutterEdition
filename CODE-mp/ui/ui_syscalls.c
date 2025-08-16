@@ -166,8 +166,8 @@ void trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *
 	syscall( UI_R_ADDPOLYTOSCENE, hShader, numVerts, verts );
 }
 
-void trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	syscall( UI_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
+void trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap) {
+	syscall( UI_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b), PASSFLOAT(mindist), cheap);
 }
 
 void trap_R_RenderScene( const refdef_t *fd ) {

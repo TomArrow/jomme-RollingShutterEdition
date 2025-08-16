@@ -477,6 +477,11 @@ typedef struct markPoly_s {
 	poly_t		poly;
 	polyVert_t	verts[MAX_VERTS_ON_POLY];
 	qboolean	isSaberMark;
+	vec3_t		cheapLightPosStart;
+	vec3_t		cheapLightPosEnd;
+	vec3_t		cheapLightColor;
+	float		cheapLightRadius;
+	int			cheapLightTime;
 } markPoly_t;
 
 
@@ -2645,7 +2650,7 @@ void		trap_R_AddRefEntityToScene( const refEntity_t *re );
 // significant construction
 void		trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts );
 void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int numPolys );
-void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
+void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap);
 void		trap_R_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
 
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );

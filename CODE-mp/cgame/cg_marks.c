@@ -223,6 +223,8 @@ void CG_AddMarks( void ) {
 	markPoly_t	*mp, *next;
 	float		t;
 	float		fade;
+	jitterSegmentAdvanceInfo_t* jsaInfo = trap_CG_MME_GetJitterSegmentAdvanceInfo();
+	float		jitter = jsaInfo->isRecording ?  simpleJitter(jsaInfo) : 0.5f;
 
 	if ( !cg_addMarks.integer ) {
 		return;
@@ -257,6 +259,25 @@ void CG_AddMarks( void ) {
 							mp->verts[j].modulate[2] = mp->color[2] * fade;
 						}
 					}
+				}
+			}
+
+			if (mp->cheapLightRadius > 0.0f) {
+
+				t = cg.time - mp->cheapLightTime + cg.timeFraction;
+				if (t >= 0 && t < 15000) {
+					vec3_t lightpos;
+					vec3_t lightcolor;
+					fade = (t / 1000.0f);
+					fade = 1.0f/(1.0f + fade* fade);
+					lightcolor[0] = fade * mp->cheapLightColor[0];
+					lightcolor[1] = powf(fade,1.2f) * mp->cheapLightColor[1]; // green fades faster than red
+					lightcolor[2] = powf(fade, 1.5f) * mp->cheapLightColor[2]; // blue fades faster than green even
+					//VectorScale(mp->cheapLightColor, fade, lightcolor);
+					VectorSubtract(mp->cheapLightPosEnd, mp->cheapLightPosStart, lightpos);
+					VectorMA(mp->cheapLightPosStart, jitter,lightpos,lightpos);
+					trap_R_AddLightToScene(lightpos, mp->cheapLightRadius, lightcolor[0], lightcolor[1], lightcolor[2], 1.0f,qtrue);
+
 				}
 			}
 

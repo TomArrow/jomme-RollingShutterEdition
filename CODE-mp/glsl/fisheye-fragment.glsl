@@ -1342,7 +1342,7 @@ bool main_real(inout vec4 outFragColor)
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
 		
 		// cheap lights. no shadows.
-		for(int i=1;i<cheapLightsCountUniform;i++){
+		for(int i=0;i<cheapLightsCountUniform;i++){
 			vec3 dlightOrigin = cheaplights[i].origin.xyz;
 			vec4 eyeCoordLight = worldModelViewMatrixUniform*vec4(dlightOrigin,1.0);
 			vec3 lightVector1 = eyeCoordLight.xyz-eyeSpaceCoordsGeom.xyz;

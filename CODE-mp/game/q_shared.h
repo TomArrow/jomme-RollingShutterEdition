@@ -49,6 +49,12 @@
 
 #endif
 
+typedef union {
+	float f;
+	int i;
+	unsigned int ui;
+} floatint_t;
+
 
 extern const float floatColorsScaleFactor;
 

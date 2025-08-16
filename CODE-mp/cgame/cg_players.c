@@ -3679,25 +3679,25 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 
 	// quad gives a dlight
 	if ( powerups & ( 1 << PW_QUAD ) ) {
-		trap_R_AddLightToScene( cent->lerpOrigin, jitterAdjustedRandomFloat(100,32), 0.2f, 0.2f, 1, 40.0f );
+		trap_R_AddLightToScene( cent->lerpOrigin, jitterAdjustedRandomFloat(100,32), 0.2f, 0.2f, 1, 40.0f, qfalse);
 	}
 
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 	// redflag
 	if ( powerups & ( 1 << PW_REDFLAG ) ) {
 		CG_PlayerFlag( cent, cgs.media.redFlagModel, flagTop);
-		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 1.0, 0.2f, 0.2f, 40.0f);
+		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 1.0, 0.2f, 0.2f, 40.0f, qfalse);
 	}
 
 	// blueflag
 	if ( powerups & ( 1 << PW_BLUEFLAG ) ) {
 		CG_PlayerFlag( cent, cgs.media.blueFlagModel, flagTop);
-		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 0.2f, 0.2f, 1.0, 40.0f);
+		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 0.2f, 0.2f, 1.0, 40.0f, qfalse);
 	}
 
 	// neutralflag
 	if ( powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-		trap_R_AddLightToScene(powerupLightOrigin, jitterAdjustedRandomFloat(100, 32), 1.0, 1.0, 1.0, 40.0f);
+		trap_R_AddLightToScene(powerupLightOrigin, jitterAdjustedRandomFloat(100, 32), 1.0, 1.0, 1.0, 40.0f, qfalse);
 	}
 
 	// haste leaves smoke trails
@@ -4439,7 +4439,7 @@ void CG_DoSaber(vec3_t origin, vec3_t dir, float length, float traceRatio, saber
 	if (doLight) {
 		// always add a light because sabers cast a nice glow before they slice you in half!!  or something...
 		CG_RGBForSaberColor(color, rgb, cnum);
-		trap_R_AddLightToScene(mid, jitterAdjustedRandomFloat(length * 2.0f, 8.0f), rgb[0], rgb[1], rgb[2],5.0f);
+		trap_R_AddLightToScene(mid, jitterAdjustedRandomFloat(length * 2.0f, 8.0f), rgb[0], rgb[1], rgb[2],5.0f, qfalse);
 	}
 	//[/RGBSabers]
 
@@ -4747,6 +4747,12 @@ void CG_CreateSaberMarks( vec3_t start, vec3_t end, vec3_t normal )
 			mark->color[0] = 215 + random() * 40.0f;
 			mark->color[1] = 96 + random() * 32.0f;
 			mark->color[2] = mark->color[3] = random()*15.0f;
+			VectorMA(start, 5.0f,normal, mark->cheapLightPosStart);
+			VectorMA(end, 5.0f,normal, mark->cheapLightPosEnd);
+			//VectorMA(mid, 5.0f,normal, mark->cheapLightPos);
+			VectorScale(mark->color, 1.0f/255.0f, mark->cheapLightColor);
+			mark->cheapLightRadius = 5.0f;
+			mark->cheapLightTime = cg.time;
 			memcpy( mark->verts, verts, mf->numPoints * sizeof( verts[0] ) );
 		}
 	}

@@ -4,18 +4,30 @@
 // cg_syscalls.asm is included instead when building a qvm
 #include "cg_local.h"
 
-static int (QDECL *syscall)( int arg, ... ) = (int (QDECL *)( int, ...))-1;
+#if _WIN64
+static intptr_t (QDECL* syscall)(intptr_t arg, ...) = (intptr_t(QDECL*)(intptr_t, ...)) - 1;
 
 
-void dllEntry( int (QDECL  *syscallptr)( int arg,... ) ) {
+void dllEntry(intptr_t(QDECL* syscallptr)(intptr_t arg, ...)) {
 	syscall = syscallptr;
 }
+#else
+static int (QDECL* syscall)(int arg, ...) = (int(QDECL*)(int, ...)) - 1;
+
+
+void dllEntry(int(QDECL* syscallptr)(int arg, ...)) {
+	syscall = syscallptr;
+}
+#endif
 
 
 int PASSFLOAT( float x ) {
-	float	floatTemp;
-	floatTemp = x;
-	return *(int *)&floatTemp;
+	//float	floatTemp;
+	//floatTemp = x;
+	//return *(int *)&floatTemp;
+	floatint_t fi;
+	fi.f = x;
+	return fi.i;
 }
 
 void	trap_Print( const char *fmt ) {
@@ -312,8 +324,8 @@ void	trap_R_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width,
 	// 2 for : use for a bit of simplistic ambient occlusion on world. Player nearby: Make a lil shadowy thingie
 	syscall( CG_R_ADDSHADOWLINE, p1, p2, PASSFLOAT(width), PASSFLOAT(a), PASSFLOAT(b), flags);
 }
-void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
-	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist) );
+void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap) {
+	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist), (intptr_t)cheap);
 }
 
 void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
