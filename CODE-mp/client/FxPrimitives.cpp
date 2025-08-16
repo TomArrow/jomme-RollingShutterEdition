@@ -376,7 +376,7 @@ void CParticle::Draw()
 		shadercolor[0] *= mRefEnt.shaderRGBA[0] / 255.0f * alpha / 255.0f;
 		shadercolor[1] *= mRefEnt.shaderRGBA[1] / 255.0f * alpha / 255.0f;
 		shadercolor[2] *= mRefEnt.shaderRGBA[2] / 255.0f * alpha / 255.0f;
-		float radius = mRefEnt.radius*2.0f;
+		float radius = mRefEnt.radius;// *2.0f;
 		theFxHelper.AddCheapLightToScene(mRefEnt.origin, radius, shadercolor[0], shadercolor[1], shadercolor[2]);
 	}
 
@@ -1075,7 +1075,7 @@ void CLine::Draw()
 			shadercolor[1] *= mRefEnt.shaderRGBA[1] / 255.0f * alpha / 255.0f;
 			shadercolor[2] *= mRefEnt.shaderRGBA[2] / 255.0f * alpha / 255.0f;
 			surfaceArea /= M_PI;
-			float radius = sqrt(surfaceArea) * 2.0f;
+			float radius = sqrt(surfaceArea);// *2.0f;
 			VectorMA(mRefEnt.oldorigin, 0.5f, tmpvec, tmpvec);
 			theFxHelper.AddCheapLightToScene(tmpvec, radius, shadercolor[0], shadercolor[1], shadercolor[2]);
 		}
@@ -1229,7 +1229,7 @@ void CTail::Draw()
 		shadercolor[1] *= mRefEnt.shaderRGBA[1] / 255.0f * alpha / 255.0f;
 		shadercolor[2] *= mRefEnt.shaderRGBA[2] / 255.0f * alpha / 255.0f;
 		surfaceArea /= M_PI;
-		float radius = sqrt(surfaceArea)*2.0f;
+		float radius = sqrt(surfaceArea);// *2.0f;
 		VectorMA(mRefEnt.oldorigin,0.5f, tmpvec, tmpvec);
 		theFxHelper.AddCheapLightToScene(tmpvec,radius,shadercolor[0],shadercolor[1],shadercolor[2]);
 	}

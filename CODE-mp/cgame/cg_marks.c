@@ -268,6 +268,7 @@ void CG_AddMarks( void ) {
 				if (t >= 0 && t < 15000) {
 					vec3_t lightpos;
 					vec3_t lightcolor;
+					float placeIntensityScale = jitter == 0.5f ? 1.0f : sqrtf(fabsf((jitter-0.5f)*2.0f));
 					fade = (t / 1000.0f);
 					fade = 1.0f/(1.0f + fade* fade);
 					lightcolor[0] = fade * mp->cheapLightColor[0];
@@ -276,7 +277,7 @@ void CG_AddMarks( void ) {
 					//VectorScale(mp->cheapLightColor, fade, lightcolor);
 					VectorSubtract(mp->cheapLightPosEnd, mp->cheapLightPosStart, lightpos);
 					VectorMA(mp->cheapLightPosStart, jitter,lightpos,lightpos);
-					trap_R_AddLightToScene(lightpos, mp->cheapLightRadius, lightcolor[0], lightcolor[1], lightcolor[2], 1.0f,qtrue);
+					trap_R_AddLightToScene(lightpos, placeIntensityScale*mp->cheapLightRadius, lightcolor[0], lightcolor[1], lightcolor[2], 1.0f,qtrue);
 
 				}
 			}

@@ -442,8 +442,29 @@ static qhandle_t aviPipeOpen(const char *name, int width, int height, float fps)
                     outIndex += strlen( outBuf + outIndex );
                     break;
                 case 'o':		//output
-                    Com_sprintf( outBuf + outIndex, outLeft, "%s/%s", mod, name);
-                    outIndex += strlen( outBuf + outIndex );
+					{
+						char fileName[MAX_OSPATH];
+						char fileNameEnd[MAX_OSPATH];
+						char* fe = fileNameEnd;
+						int i;
+						while (*format && *format != '"') {
+							*fe = *format;
+							fe++;
+							format++;
+						}
+						*fe = '\0';
+						for (i = 0; i < AVI_MAX_FILES; i++) {
+							Com_sprintf(fileName, sizeof(fileName), "%s.%03d%s", name, i, fileNameEnd);
+							if (!FS_FileExists(fileName))
+								break;
+						}
+						if (i == AVI_MAX_FILES) {
+							Com_Printf("Max avi segments reached\n");
+							return qfalse;
+						}
+						Com_sprintf(outBuf + outIndex, outLeft, "%s/%s", mod, fileName);
+						outIndex += strlen(outBuf + outIndex);
+					}
                     break;
                 case '%':
                     outBuf[outIndex++] = '%';

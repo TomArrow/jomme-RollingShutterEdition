@@ -1955,6 +1955,7 @@ extern	vmCvar_t		cg_saberModelTraceEffect;
 
 extern	vmCvar_t		cg_fpls;
 
+extern	vmCvar_t		cg_saberMarkCheapLights;
 extern	vmCvar_t		cg_saberDynamicMarks;
 extern	vmCvar_t		cg_saberDynamicMarkTime;
 
