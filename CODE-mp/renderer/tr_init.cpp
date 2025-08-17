@@ -82,6 +82,8 @@ cvar_t	*r_autolodscalevalue;
 
 cvar_t	*r_newDLights;
 
+cvar_t	*r_smoothenPlanarNormals;
+
 cvar_t	*r_norefresh;
 cvar_t	*r_drawentities;
 cvar_t	*r_drawworld;
@@ -1052,6 +1054,8 @@ void R_Register( void )
 	r_skipBackEnd = ri.Cvar_Get ("r_skipBackEnd", "0", CVAR_CHEAT);
 
 	r_newDLights = ri.Cvar_Get ("r_newDLights", "0", 0);
+
+	r_smoothenPlanarNormals = ri.Cvar_Get( "r_smoothenPlanarNormals", "20", CVAR_LATCH|CVAR_ARCHIVE );
 
 	r_measureOverdraw = ri.Cvar_Get( "r_measureOverdraw", "0", CVAR_CHEAT );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5", 0 );

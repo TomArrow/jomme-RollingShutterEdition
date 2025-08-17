@@ -978,6 +978,7 @@ typedef enum shaderFlags_t {
 #define VectorAdd(a,b,c)		((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2])
 #define VectorCopy(a,b)			((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2])
 #define	VectorScale(v, s, o)	((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
+#define	VectorDivide(v, s, o)	((o)[0]=(v)[0]/(s),(o)[1]=(v)[1]/(s),(o)[2]=(v)[2]/(s))
 #define	VectorMA(v, s, b, o)	((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s))
 #define VectorInvert(a,b)		((b)[0]=1.0f/(a)[0],(b)[1]=1.0f/(a)[1],(b)[2]=1.0f/(a)[2])
 #define VectorMultiply(a,b,o)	((o)[0]=(a)[0]*(b)[0],(o)[1]=(a)[1]*(b)[1],(o)[2]=(a)[2]*(b)[2])

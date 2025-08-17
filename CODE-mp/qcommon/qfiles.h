@@ -468,6 +468,7 @@ typedef struct {
 	//byte		color[MAXLIGHTMAPS][4];
 	vec4_t		color[MAXLIGHTMAPS_REAL];
 	vec3_t		lightdir[MAXLIGHTMAPS_REAL];
+	qboolean	normalBlended;
 } drawVert_t;
 
 typedef struct

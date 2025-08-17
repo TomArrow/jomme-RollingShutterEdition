@@ -811,6 +811,7 @@ typedef struct srfGridMesh_s {
 
 typedef struct {
 	surfaceType_t	surfaceType;
+	int			shaderNum;
 	cplane_t	plane;
 
 	// dynamic lighting information
@@ -1352,6 +1353,8 @@ extern cvar_t	*r_dlightBacks;			// dlight non-facing surfaces for continuity
 extern cvar_t* r_skyboxRotate;			// Degrees on height axis to rotate skybox (to align landscapes etc)
 
 extern	cvar_t	*r_newDLights;
+
+extern	cvar_t	*r_smoothenPlanarNormals; // angle value for smoothing planar normals for glsl to make maps smooother without needing to compile them differently
 
 extern	cvar_t	*r_norefresh;			// bypasses the ref rendering
 extern	cvar_t	*r_drawentities;		// disable/enable entity rendering

@@ -487,6 +487,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 
 	cv = (srfSurfaceFace_t *)ri.Hunk_Alloc( sfaceSize, h_low );
 	cv->surfaceType = SF_FACE;
+	cv->shaderNum = ds->shaderNum;
 	cv->numPoints = numPoints;
 	cv->numIndices = numIndexes;
 	cv->ofsIndices = ofsIndexes;
@@ -1491,6 +1492,93 @@ void R_StitchAllPatches( void ) {
 	ri.Printf( PRINT_ALL, "stitched %d LoD cracks\n", numstitches );
 }
 
+
+void R_SmoothPlanarNormals( void ) {
+
+	int i,j;
+	int numblended = 0;
+	srfSurfaceFace_t* face;
+	drawVert_t* dv;
+	float minAngleDot;
+
+	int i2, j2;
+	srfSurfaceFace_t* face2;
+	drawVert_t* dv2;
+	int pass;
+
+	vec3_t normalAvg;
+	float divisor;
+
+	if (r_smoothenPlanarNormals->value <= 0.0f) {
+		return;
+	}
+
+	minAngleDot = cosf(DEG2RAD(r_smoothenPlanarNormals->value));
+
+	for ( i = 0; i < s_worldData.numsurfaces; i++ ) {
+		//
+		face = (srfSurfaceFace_t *) s_worldData.surfaces[i].data;
+		// if this surface is not a face
+		if ( face->surfaceType != SF_FACE )
+			continue;
+		
+		for (j = 0; j < face->numPoints; j++) {
+			dv = face->points + j;
+
+			if (dv->normalBlended) {
+				continue;
+			}
+
+			VectorClear(normalAvg);
+			divisor = 0;
+
+			// ok now find all points with a normal that's no more than r_smoothenPlanarNormals degrees different.
+			for (pass = 0; pass < 2; pass++) {
+				if (pass == 1) {
+					VectorDivide(normalAvg,divisor,normalAvg);
+				}
+				for (i2 = 0; i2 < s_worldData.numsurfaces; i2++) {
+					//
+					face2 = (srfSurfaceFace_t*)s_worldData.surfaces[i2].data;
+					// if this surface is not a face
+					if (face2->surfaceType != SF_FACE)
+						continue;
+
+					if (face2->shaderNum != face->shaderNum)
+						continue;
+
+					for (j2 = 0; j2 < face2->numPoints; j2++) {
+						dv2 = face2->points + j2;
+
+						if (dv2->normalBlended) {
+							continue;
+						}
+						if (DotProduct(dv2->normal,dv->normal) < minAngleDot) {
+							continue;
+						}
+						if (Distance(dv->xyz,dv2->xyz) > 0.0001f) {
+							continue;
+						}
+
+						// ok now find all points with a normal that's no more than r_smoothenPlanarNormals degrees different.
+						if (pass == 0) {
+							VectorAdd(dv2->normal,normalAvg,normalAvg);
+							divisor += 1.0f;
+							continue;
+						}
+
+						VectorCopy(normalAvg, dv2->normal);
+
+						dv2->normalBlended = qtrue;
+						numblended++;
+					}
+				}
+			}
+		}
+	}
+	ri.Printf( PRINT_ALL, "merged %d vertex normals\n", numblended);
+}
+
 /*
 ===============
 R_MovePatchSurfacesToHunk
@@ -1661,6 +1749,8 @@ static	void R_LoadSurfaces( lump_t *surfs, lump_t *verts, lump_t *indexLump ) {
 #ifdef PATCH_STITCHING
 	R_StitchAllPatches();
 #endif
+
+	R_SmoothPlanarNormals();
 
 	R_FixSharedVertexLodError();
 
