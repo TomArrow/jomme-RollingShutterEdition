@@ -393,7 +393,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	lightdir = tess.lightdir[ tess.numVertexes ];
 	colorRaw = tess.vertexColorsRaw[ tess.numVertexes ];
 	colorRawIndex = tess.numVertexes;
-	needsNormal = tess.shader->needsNormal;
+	needsNormal = (qboolean)((r_fboGLSL->integer && ENABLEGLSL) || tess.shader->needsNormal);
 
 	for ( i = 0 ; i < srf->numVerts ; i++, dv++) 
 	{
@@ -1385,7 +1385,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 
 	numPoints = surf->numPoints;
 
-	if ( tess.shader->needsNormal ) {
+	if ( tess.shader->needsNormal ) { // huh?
 		normal = surf->plane.normal;
 		for ( i = 0, ndx = tess.numVertexes; i < numPoints; i++, ndx++ ) {
 			VectorCopy( normal, tess.normal[ndx] );
@@ -1397,6 +1397,9 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 		VectorCopy( v->xyz, tess.xyz[ndx]);
 		tess.texCoords[ndx][0][0] = v->st[0];
 		tess.texCoords[ndx][0][1] = v->st[1]; // looks funny when we accidentally leave it as tess.texCoords[ndx][0][1] = v->st[0]. streaky.
+		tess.normal[ndx][0] = v->normal[0];
+		tess.normal[ndx][1] = v->normal[1];
+		tess.normal[ndx][2] = v->normal[2];
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
 			if (tess.shader->lightmapIndex[k] >= 0)

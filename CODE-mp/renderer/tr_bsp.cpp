@@ -504,17 +504,18 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	for ( i = 0 ; i < numPoints ; i++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			cv->points[i].xyz[j] = LittleFloat( verts[i].xyz[j] );
+			cv->points[i].normal[j] = LittleFloat( verts[i].normal[j] );
 		}
 		for ( j = 0 ; j < 2 ; j++ ) {
 			cv->points[i].st[j] = LittleFloat( verts[i].st[j] );
 			for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 			{
-				cv->points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? (hdrVertColorsDeluxeV2 ? hdrVertColorsDeluxeV2[i].lightmap[k][j]: 0) : LittleFloat( verts[i].lightmap[k][j] );
+				cv->points[i].lightmap[k][j] = k >= MAXLIGHTMAPS_BSP ? (hdrVertColorsDeluxeV2 ? LittleFloat(hdrVertColorsDeluxeV2[i].lightmap[k][j]) : 0) : LittleFloat( verts[i].lightmap[k][j] );
 			}
 		}
 		for(k=0;k<MAXLIGHTMAPS_REAL;k++)
 		{
-			if (hdrVertColorsDeluxeV2) {
+			if (hdrVertColorsDeluxeV2) { // TODO Littlefloat
 				VectorScale(hdrVertColorsDeluxeV2[i].color[k], 255.0f * hdrMult, cv->points[i].color[k]);
 				VectorCopy(hdrVertColorsDeluxeV2[i].direction[k], cv->points[i].lightdir[k]);
 				cv->points[i].color[k][3] = 255.0f;
