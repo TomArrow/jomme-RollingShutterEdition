@@ -4747,8 +4747,8 @@ void CG_CreateSaberMarks( vec3_t start, vec3_t end, vec3_t normal )
 			mark->color[0] = 215 + random() * 40.0f;
 			mark->color[1] = 96 + random() * 32.0f;
 			mark->color[2] = mark->color[3] = random()*15.0f;
-			VectorMA(start, 5.0f,normal, mark->cheapLightPosStart);
-			VectorMA(end, 5.0f,normal, mark->cheapLightPosEnd);
+			VectorMA(start, 2.0f,normal, mark->cheapLightPosStart);
+			VectorMA(end, 2.0f,normal, mark->cheapLightPosEnd);
 			//VectorMA(mid, 5.0f,normal, mark->cheapLightPos);
 			VectorScale(mark->color, 0.1f/255.0f, mark->cheapLightColor);
 			mark->cheapLightRadius = 8.0f*Distance(start,end)*0.1f* cg_saberMarkCheapLights.value;

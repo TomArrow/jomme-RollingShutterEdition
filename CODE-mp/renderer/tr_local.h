@@ -911,6 +911,14 @@ typedef struct
 	byte		latLong[2];
 //	byte		pad[2];								// to align to a cache line
 } mgrid_t;
+typedef struct 
+{
+	float		ambientLight[MAXLIGHTMAPS_BSP][3];
+	float		directLight[MAXLIGHTMAPS_BSP][3];
+	byte		styles[MAXLIGHTMAPS_BSP];
+	byte		latLong[2];
+//	byte		pad[2];								// to align to a cache line
+} mgridFloat_t;
 
 typedef struct bspGridPointHDR_s
 {
@@ -975,7 +983,7 @@ typedef struct {
 
 	vec3_t		lightGridStep;
 
-	mgrid_t			*lightGridData;
+	mgridFloat_t			*lightGridData;
 	word		*lightGridArray;
 	int			numGridArrayElements;
 
@@ -1867,6 +1875,8 @@ void R_DlightBmodel( bmodel_t *bmodel );
 void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent );
 void R_TransformDlights( int count, dlight_t *dl, orientationr_t *ori );
 int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
+int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, world_t* world); // from quake3e
+void RE_SetLightStyle(int style, int color);
 
 
 /*

@@ -223,7 +223,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 		for (i = 0; i < 8; i++)
 		{
 			float			factor;
-			mgrid_t* data;
+			mgridFloat_t* data;
 			//unsigned short* gridPos;
 			int				gridPos;
 			double			lat, lng;
@@ -432,7 +432,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 		totalFactor = 0;
 		for ( i = 0 ; i < 8 ; i++ ) {
 			float			factor;
-			mgrid_t			*data;
+			mgridFloat_t*data;
 			//unsigned short	*gridPos;
 			int				gridPos;
 			double			lat, lng;
@@ -786,6 +786,25 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 	ent->lightDir[0] = DotProduct( lightDir, ent->e.axis[0] );
 	ent->lightDir[1] = DotProduct( lightDir, ent->e.axis[1] );
 	ent->lightDir[2] = DotProduct( lightDir, ent->e.axis[2] );
+}
+
+int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, world_t* world)
+{
+	trRefEntity_t ent;
+
+	if (world->lightGridData == NULL)
+		return qfalse;
+
+	Com_Memset(&ent, 0, sizeof(ent));
+	VectorCopy(point, ent.e.origin);
+	R_SetupEntityLightingGrid(&ent, world);
+
+	if (DotProduct(ent.lightDir, normal) > 0.2f)
+		VectorCopy(ent.lightDir, lightDir);
+	else
+		VectorCopy(normal, lightDir);
+
+	return qtrue;
 }
 
 /*

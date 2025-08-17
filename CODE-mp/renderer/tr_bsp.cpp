@@ -152,9 +152,48 @@ static	void R_ColorShiftLightingToFloat( byte in[4], float out[4] ) {
 	//}
 
 	out[0] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
-	out[1] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
-	out[2] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
+	out[1] = R_sRGBToLinear(g * onedividedby255) * 255.0f;
+	out[2] = R_sRGBToLinear(b * onedividedby255) * 255.0f;
 	out[3] = in[3];
+}
+static	void R_ColorShiftLightingToFloat3( byte in[3], float out[3] ) {
+	int		shift = 0;
+	float r, g, b;
+	float	mult;
+
+	// should NOT do it if overbrightBits is 0
+	if (tr.overbrightBits)
+		shift = 1 - tr.overbrightBits;
+
+	if (!shift)
+	{
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		return;
+	}
+
+	mult = (float)(1<<shift);
+
+	// shift the data based on overbright range
+	r = (float)in[0] * mult;
+	g = (float)in[1] * mult;
+	b = (float)in[2] * mult;
+	
+	//// normalize by color instead of saturating to white
+	//if ( ( r | g | b ) > 255 ) {
+	//	int		max;
+
+	//	max = r > g ? r : g;
+	//	max = max > b ? max : b;
+	//	r = r * 255 / max;
+	//	g = g * 255 / max;
+	//	b = b * 255 / max;
+	//}
+
+	out[0] = R_sRGBToLinear(r * onedividedby255) * 255.0f;
+	out[1] = R_sRGBToLinear(g * onedividedby255) * 255.0f;
+	out[2] = R_sRGBToLinear(b * onedividedby255) * 255.0f;
 }
 static	float R_ColorShiftLightingMultiplier( ) {
 	int		shift = 0;
@@ -2148,6 +2187,7 @@ void R_LoadLightGrid(lump_t *l ) {
 	vec3_t	maxs;
 	world_t	*w;
 	float	*wMins, *wMaxs;
+	mgrid_t* srcGrid;
 
 	w = &s_worldData;
 
@@ -2164,18 +2204,25 @@ void R_LoadLightGrid(lump_t *l ) {
 		w->lightGridBounds[i] = (maxs[i] - w->lightGridOrigin[i])/w->lightGridSize[i] + 1;
 	}
 
-	int numGridDataElements = l->filelen / sizeof(*w->lightGridData);
+	int numGridDataElements = l->filelen / sizeof(mgrid_t);
 
-	w->lightGridData = (mgrid_t *)ri.Hunk_Alloc( l->filelen, h_low );
-	memcpy( w->lightGridData, (void *)(fileBase + l->fileofs), l->filelen );
+	srcGrid = (mgrid_t*)(fileBase + l->fileofs);
 
-	// deal with overbright bits
+	w->lightGridData = (mgridFloat_t *)ri.Hunk_Alloc(numGridDataElements * sizeof(mgridFloat_t), h_low );
+	//memcpy( w->lightGridData, (void *)(fileBase + l->fileofs), l->filelen );
+
 	for ( i = 0 ; i < numGridDataElements ; i++ ) 
 	{
+
+		w->lightGridData[i].latLong[0] = srcGrid[i].latLong[0];
+		w->lightGridData[i].latLong[1] = srcGrid[i].latLong[1];
+
+		// deal with overbright bits
 		for(j=0;j<MAXLIGHTMAPS_BSP;j++)
 		{
-			R_ColorShiftLightingBytes(w->lightGridData[i].ambientLight[j]);
-			R_ColorShiftLightingBytes(w->lightGridData[i].directLight[j]);
+			w->lightGridData[i].styles[j] = srcGrid[i].styles[j];
+			R_ColorShiftLightingToFloat3(srcGrid[i].ambientLight[j],w->lightGridData[i].ambientLight[j]);
+			R_ColorShiftLightingToFloat3(srcGrid[i].directLight[j],w->lightGridData[i].directLight[j]);
 		}
 	}
 
@@ -2425,6 +2472,101 @@ qboolean R_GetEntityToken( char *buffer, int size ) {
 	}
 }
 
+static void R_CalcVertexLightDirs(void)
+{
+	int i, k, j;
+	msurface_t* surface;
+	surfaceType_t surfaceType;
+	srfGridMesh_t* grid;
+	srfSurfaceFace_t* face;
+	srfTriangles_t* tris;
+	int gridPoints;
+	int style;
+	int lightdirsCalced = 0;
+
+	if (tr.haveVertLightDirs) {
+		return;
+	}
+
+	memset(styleColors, 0, sizeof(styleColors));
+
+	for (k = 0, surface = &s_worldData.surfaces[0]; k < s_worldData.numsurfaces /* s_worldData.numWorldSurfaces */; k++, surface++)
+	{
+		surfaceType = *(surfaceType_t*)surface->data;
+
+		switch (surfaceType)
+		{
+		case SF_FACE:
+			face = (srfSurfaceFace_t*)surface->data;
+			for (i = 0; i < face->numPoints; i++)
+			{
+				vec3_t lightDir;
+				vec3_t normal;
+
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++) {
+					style = surface->shader ? surface->shader->styles[j] : 0;
+					if (style == LS_LSNONE) break;
+					VectorSet(styleColors[style], 255, 255, 255, 255);
+					R_LightDirForPoint(face->points[i].xyz, face->points[i].lightdir[j], face->points[i].normal, &s_worldData);
+					lightdirsCalced++;
+					VectorSet(styleColors[style], 0, 0, 0, 0);
+					if (!surface->shader) break;
+				}
+			}
+			break;
+		case SF_GRID:
+			grid = (srfGridMesh_t*)surface->data;
+			gridPoints = grid->width * grid->height;
+			for (i = 0; i < gridPoints; i++)
+			{
+				vec3_t lightDir;
+				vec3_t normal;
+
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++) {
+					style = surface->shader ? surface->shader->styles[j] : 0;
+					if (style == LS_LSNONE) break;
+					VectorSet(styleColors[style], 255, 255, 255, 255);
+					R_LightDirForPoint(grid->verts[i].xyz, grid->verts[i].lightdir[j], grid->verts[i].normal, &s_worldData);
+					lightdirsCalced++;
+					VectorSet(styleColors[style], 0, 0, 0, 0);
+					if (!surface->shader) break;
+				}
+			}
+			break;
+		case SF_TRIANGLES:
+			tris = (srfTriangles_t*)surface->data;
+			for (i = 0; i < tris->numVerts; i++)
+			{
+				vec3_t lightDir;
+				vec3_t normal;
+
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++) {
+					style = surface->shader ? surface->shader->styles[j] : 0;
+					if (style == LS_LSNONE) break;
+					VectorSet(styleColors[style], 255, 255, 255, 255);
+					R_LightDirForPoint(tris->verts[i].xyz, tris->verts[i].lightdir[j], tris->verts[i].normal, &s_worldData);
+					lightdirsCalced++;
+					VectorSet(styleColors[style], 0, 0, 0, 0);
+					if (!surface->shader) break;
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	for (i = 0; i < MAX_LIGHT_STYLES; i++)
+	{
+		RE_SetLightStyle(i, -1);
+	}
+
+	ri.Printf(PRINT_ALL,"Calced %d vertex lightdirs\n", lightdirsCalced);
+
+	tr.haveVertLightDirs = qtrue;
+}
+
 /*
 =================
 RE_LoadWorldMap
@@ -2519,6 +2661,9 @@ static void RE_LoadWorldMap_Actual( const char *name ) {
 
 	// only set tr.world now that we know the entire level has loaded properly
 	tr.world = &s_worldData;
+
+	// determine vertex light directions if we didn't get anay
+	R_CalcVertexLightDirs();
 
 	if (gpvCachedMapDiskImage)
 	{

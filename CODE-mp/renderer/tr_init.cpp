@@ -306,7 +306,7 @@ PFNWGLRELEASETEXIMAGEARBPROC			qwglReleaseTexImageARB = NULL;
 PFNWGLSETPBUFFERATTRIBARBPROC			qwglSetPbufferAttribARB = NULL;
 #endif
 
-void RE_SetLightStyle(int style, int color);
+
 
 void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal );
 
