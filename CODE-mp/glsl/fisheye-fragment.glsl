@@ -227,6 +227,7 @@ struct shadowline_t {
 	// automatically calculated:
 	float			halfLineLength;
 	vec4			middle;
+	vec4			lightdir; // for foot shadows
 };
 
 uniform int shadowLinesCountUniform;
@@ -1117,6 +1118,8 @@ float shortestDistanceLinesSquaredOld(vec3 a0,vec3 a1, vec3 b0, vec3 b1,inout in
 //	-0.018111363657382022825	-0.10059653109674500886	1.1187664817637203281
 const mat3 HDRtoSRGB = mat3(1.660317619104158771,	-0.58757266606617910577,	-0.072916573137668344234, -0.12440670211719027597,	1.1328007408693037184,	-0.0083489374502384976625, -0.018111363657382022825,	-0.10059653109674500886	,1.1187664817637203281);
 
+const vec3 footadjust = vec3(0.0f,0.0f,-4.0f);
+
 bool main_real(inout vec4 outFragColor)
 {
 	//gl_FragColor.xyz = vertexNormal;
@@ -1298,9 +1301,13 @@ bool main_real(inout vec4 outFragColor)
 			//	continue;
 			//}
 			if(0 < (shadowLines[s].flags & 1)){ // Flag 1 means foot shadow
-				vec3 delta = shadowLines[s].point1.xyz-worldPixel;
 
-				if(delta.z < -0.1) continue; // foots must be above us.
+				vec3 point1 = shadowLines[s].point1.xyz + footadjust;
+				vec3 delta = point1-worldPixel;
+				
+				//if(delta.z < -0.1) continue; // foots must be above us.
+				if(dot(delta.xy,delta.xy) >6400.0f) continue; // foots must be above us.
+				
 
 				if(shadowLines[s].a > shadowLines[s].width){
 					// with flag 1, parameter a tells us how great the Z-distance from the foot can be.
@@ -1308,14 +1315,68 @@ bool main_real(inout vec4 outFragColor)
 					delta.z *=  shadowLines[s].width/shadowLines[s].a;
 				}
 
-				float widenRatio = max(0.0,min(1.0,delta.z/shadowLines[s].width));
+				vec2 lineToPixel = normalize(worldPixel.xy - shadowLines[s].point1.xy);
+				vec3 lightdirHere = shadowLines[s].lightdir.xyz;
+				//vec3 lightdirHere = vec3(1.0f,0.0f,1.0f); // shadowLines[s].lightdir
+				lightdirHere.z = max(0.5f,lightdirHere.z);
+				lightdirHere = normalize(lightdirHere);
+				//float directionoverlap = clamp(10.0f*(dot(lineToPixel.xy,normalize(test).xy)-0.9f),0.0f,1.0f);
+				//float directionoverlap = clamp(10.0f*(dot(lineToPixel.xy,normalize(test).xy)-0.9f),0.0f,1.0f);
 
-				float maxDistance = length(delta);
-				float lightIntensityHere = min(1.0,max(0.0f,maxDistance / (shadowLines[s].width+widenRatio*shadowLines[s].b)));
-				float maxWidenFade = shadowLines[s].b / (shadowLines[s].width+shadowLines[s].b);
-				//lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,4.0)*(1.0-(4.0*widenRatio)*maxWidenFade-0.3)));
-				//lightIntensityHere = max(0.0f,1.0-pow(1.0-lightIntensityHere,1.0)*(1.0-(widenRatio)*maxWidenFade-0.4));
-				lightIntensityHere = max(0.0f,1.0-(1.0-lightIntensityHere)*(1.0-(widenRatio)*maxWidenFade-0.4));
+				//delta.xy /= max(1.0f,directionoverlap*directionoverlap*10.0f);
+
+				//float maxDistance = max(0.0f,length(delta)-5.0f);
+				//float maxDistanceSquared = maxDistance*maxDistance;
+				
+
+				// make a light vector on the normal surface. per normal unit.
+				float tmp = dot(lightdirHere,worldNormal);
+				vec3 ln = lightdirHere - worldNormal*tmp;
+				ln /= tmp;
+
+				// project shadowline onto surface
+				vec3 p1 = point1-worldPixel;
+				tmp = dot(worldNormal,p1);
+				p1 -= worldNormal*tmp;
+				p1 -= ln*tmp;
+				p1 += worldPixel;
+				vec3 p2 = shadowLines[s].point2.xyz+ footadjust-worldPixel;
+				tmp = dot(worldNormal,p2);
+				p2 -= worldNormal*tmp;
+				p2 -= ln*tmp;
+				p2 += worldPixel;
+
+				vec3 linedir = normalize(p2-p1);
+				float progressMult = clamp(dot(worldPixel-p1,linedir)/dot(linedir,p2-p1),0.0f,1.0f);
+				float progressMultRaw = progressMult;
+				progressMult = 1.0f-progressMult*progressMult;
+
+				float maxDistanceSquared = distanceToLineProperMaybefast(worldPixel,p1,p2); // distanceToLineProperMaybefast
+				//float blah = maxDistanceSquared;
+				//int type = 0;
+				//float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,worldPixel+lightdirHere*100.0f,point1,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+				//maxDistanceSquared = sqrt(maxDistanceSquared);
+				maxDistanceSquared = max(maxDistanceSquared-2.0f,0.0f);
+				maxDistanceSquared += length(delta.xy)*0.1f;
+				maxDistanceSquared *= clamp(delta.z,1.0f,10.0f);
+				//maxDistanceSquared /= clamp(length(delta)*progressMult,1.0f,10.0f); // funny artifacts
+				maxDistanceSquared /= clamp(sqrt(length(delta))*progressMultRaw,1.0f,10.0f);
+				maxDistanceSquared *= maxDistanceSquared;
+				float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
+				//progressMult = min(0.75f,progressMult);
+				float lightIntensityHere =clamp((1.0f-progressMult)+ progressMult*maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
+				lightIntensityHere = sqrt(lightIntensityHere);
+				
+				//lightIntensityHere = blah*0.1f;
+
+				//float widenRatio = max(0.0,min(1.0,delta.z/shadowLines[s].width));
+
+				//float maxDistance = length(delta);
+				//float lightIntensityHere = min(1.0,max(0.0f,maxDistance / (shadowLines[s].width+widenRatio*shadowLines[s].b)));
+				//float maxWidenFade = shadowLines[s].b / (shadowLines[s].width+shadowLines[s].b);
+				//lightIntensityHere = max(0.0f,1.0-(1.0-lightIntensityHere)*(1.0-(widenRatio)*maxWidenFade-0.4));
+
+				//lightIntensityHere = max(delta.z*10000.0f,0.0f);
 				boringShadowingIntensity = min(lightIntensityHere,boringShadowingIntensity);
 
 			}

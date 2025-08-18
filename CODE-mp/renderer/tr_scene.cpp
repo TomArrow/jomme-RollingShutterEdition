@@ -649,6 +649,12 @@ void RE_RenderScene( const refdef_t *fd ) {
 		// sort by distance.
 		tr.refdef.num_shadowlines = MAX_SHADOWLINES;
 	}
+	for (int i = 0; i < tr.refdef.num_shadowlines; i++) {
+		if (tr.refdef.shadowlines[i].flags & 1) {
+			// foot shadow
+			R_LightDirForPoint(tr.refdef.shadowlines[i].middle, tr.refdef.shadowlines[i].lightdir,vec3_origin,tr.world);
+		}
+	}
 
 	tr.refdef.num_cheaplights = r_numcheaplights - r_firstSceneCheapLight;
 	tr.refdef.cheaplights = &backEndData[tr.smpFrame]->cheaplights[r_firstSceneCheapLight];

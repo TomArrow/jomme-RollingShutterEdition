@@ -799,7 +799,7 @@ int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, world_t* wo
 	VectorCopy(point, ent.e.origin);
 	R_SetupEntityLightingGrid(&ent, world);
 
-	if (DotProduct(ent.lightDir, normal) > 0.2f)
+	if (VectorLengthSquared(normal) == 0.0f || DotProduct(ent.lightDir, normal) > 0.2f)
 		VectorCopy(ent.lightDir, lightDir);
 	else
 		VectorCopy(normal, lightDir);

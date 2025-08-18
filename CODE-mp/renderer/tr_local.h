@@ -112,6 +112,7 @@ typedef struct shadowline_s {
 	// automatically calculated:
 	float			halfLineLength;
 	vec4_t			middle;
+	vec4_t			lightdir;
 } shadowline_t;
 
 
