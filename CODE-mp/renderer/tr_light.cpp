@@ -148,7 +148,10 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 	int				i, j;
 	float			frac[3];
 	int				gridStep[3];
+	int				pass;
+	vec3_t			avgDirection,tmpDir;
 	vec3_t			direction;
+	float			directionality;
 	float			totalFactor;
 	//unsigned short	*startGridPos;
 	int				startGridPos;
@@ -160,6 +163,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 		ent->ambientLight[0] = ent->ambientLight[1] = ent->ambientLight[2] = 255.0;
 		ent->directedLight[0] = ent->directedLight[1] = ent->directedLight[2] = 255.0;
 		VectorCopy( tr.sunDirection, ent->lightDir );
+		ent->directionality = 1.0f;
 		return;
 	}
 
@@ -250,67 +254,131 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 			if (world->hdrLightGridV4)
 			{
 				bspGridPointHDRV4_t* hdrData = world->hdrLightGridV4 + gridPos;
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				latlongdir = qfalse;
 				VectorClear(normal);
-				for (j = 0; j < MAXLIGHTMAPS_REAL; j++)
-				{
-					if (hdrData->styles[j] != LS_LSNONE)
-					{
-						const byte	style = hdrData->styles[j];
-						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
-						VectorMA(normal, styleScale, hdrData->directions[j], normal);
-
-						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
-
-						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+				VectorClear(avgDirection);
+				for (pass = 0; pass < 2; pass++) {
+					if (pass == 1) {
+						VectorNormalize(avgDirection);
 					}
-					else
+					for (j = 0; j < MAXLIGHTMAPS_REAL; j++)
 					{
-						break;
+						if (hdrData->styles[j] != LS_LSNONE)
+						{
+							const byte	style = hdrData->styles[j];
+							vec3_t directIntensity;
+							vec3_t ambientIntensity;
+							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
+							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
+							if (pass == 0) {
+								VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+								ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value;
+								ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value;
+								ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value;
+
+								ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value;
+								ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value;
+								ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value;
+
+								VectorMA(avgDirection, styleScale, hdrData->directions[j], avgDirection);
+							}
+							else {
+								VectorCopy(hdrData->directions[j], tmpDir);
+								VectorNormalize(tmpDir);
+								if (styleScale + styleAmbientScale > 0.0f) {
+									styleDirectionality += styleScale * max(0.0f, DotProduct(tmpDir, avgDirection)) * (styleScale / (styleScale + styleAmbientScale));
+									styleDirectionalityDivider += styleScale;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
 					}
+				}
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 			else if (world->hdrLightGridV3)
 			{
 				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				latlongdir = qfalse;
 				VectorClear(normal);
-				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
-				{
-					if (hdrData->styles[j] != LS_LSNONE)
-					{
-						const byte	style = hdrData->styles[j];
-						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
-						VectorMA(normal, styleScale, hdrData->directions[j], normal);
-
-						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
-
-						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+				VectorClear(avgDirection);
+				for (pass = 0; pass < 2; pass++) {
+					if (pass == 1) {
+						VectorNormalize(avgDirection);
 					}
-					else
+					for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 					{
-						break;
+						if (hdrData->styles[j] != LS_LSNONE)
+						{
+							const byte	style = hdrData->styles[j];
+							vec3_t directIntensity;
+							vec3_t ambientIntensity;
+							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
+							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
+							if (pass == 0) {
+								VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+								ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value;
+								ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value;
+								ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value;
+
+								ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value;
+								ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value;
+								ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value;
+
+								VectorMA(avgDirection, styleScale, hdrData->directions[j], avgDirection);
+							}
+							else {
+								VectorCopy(hdrData->directions[j], tmpDir);
+								VectorNormalize(tmpDir);
+								if (styleScale + styleAmbientScale > 0.0f) {
+									styleDirectionality += styleScale * max(0.0f, DotProduct(tmpDir, avgDirection)) * (styleScale / (styleScale + styleAmbientScale));
+									styleDirectionalityDivider += styleScale;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
 					}
+				}
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 			else if (world->hdrLightGridV2)
 			{
 				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
 				latlongdir = qfalse;
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				VectorCopy(hdrData->direction, normal);
 				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
 					{
 						const byte	style = hdrData->styles[j];
+						vec3_t directIntensity;
+						vec3_t ambientIntensity;
+						VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
+						VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
 						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
 						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
@@ -319,11 +387,19 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
 						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
 						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						if (styleScale + styleAmbientScale > 0.0f) {
+							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
+							styleDirectionalityDivider += styleScale;
+						}
 					}
 					else
 					{
 						break;
 					}
+				}
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 			else if (world->hdrLightGrid)
@@ -336,14 +412,28 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				ent->directedLight[0] += factor * hdrData[3] * r_LightBrightness->value * 255.0f;
 				ent->directedLight[1] += factor * hdrData[4] * r_LightBrightness->value * 255.0f;
 				ent->directedLight[2] += factor * hdrData[5] * r_LightBrightness->value * 255.0f;
+				float directIntensity = RGBTOGRAY(hdrData);
+				float ambientIntensity = RGBTOGRAY(hdrData+3);
+				if (directIntensity + ambientIntensity > 0.0f) {
+					directionality += factor * directIntensity / (directIntensity + ambientIntensity);
+				}
 			}
 			else
 			{
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (data->styles[j] != LS_LSNONE)
 					{
 						const byte	style = data->styles[j];
+
+						vec3_t directIntensity;
+						vec3_t ambientIntensity;
+						VectorMultiply(data->directLight[j], styleColors[style], directIntensity);
+						VectorMultiply(data->ambientLight[j], styleColors[style], ambientIntensity);
+						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
 						ent->ambientLight[0] += factor * data->ambientLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
 						ent->ambientLight[1] += factor * data->ambientLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
@@ -352,11 +442,20 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						ent->directedLight[0] += factor * data->directLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
 						ent->directedLight[1] += factor * data->directLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
 						ent->directedLight[2] += factor * data->directLight[j][2] * styleColors[style][2] * r_LightBrightness->value / 255.0f;
+
+						if (styleScale + styleAmbientScale > 0.0f) {
+							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
+							styleDirectionalityDivider += styleScale;
+						}
 					}
 					else
 					{
 						break;
 					}
+				}
+
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 
@@ -387,11 +486,13 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 			totalFactor = 1.0 / totalFactor;
 			VectorScale( ent->ambientLight, totalFactor, ent->ambientLight );
 			VectorScale( ent->directedLight, totalFactor, ent->directedLight );
+			directionality = directionality * totalFactor;
 		}
 
 		VectorScale( ent->ambientLight, r_ambientScale->value, ent->ambientLight );
 		VectorScale( ent->directedLight, r_directedScale->value, ent->directedLight );
 		VectorNormalize2( direction, ent->lightDir );
+		ent->directionality = directionality;
 	}
 	else
 	{
@@ -421,6 +522,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 		VectorClear( ent->ambientLight );
 		VectorClear( ent->directedLight );
 		VectorClear( direction );
+		directionality = 0.0f;
 
 		// trilerp the light value
 		gridStep[0] = 1;
@@ -466,67 +568,131 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 			if (world->hdrLightGridV4)
 			{
 				bspGridPointHDRV4_t* hdrData = world->hdrLightGridV4 + gridPos;
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				latlongdir = qfalse;
 				VectorClear(normal);
-				for (j = 0; j < MAXLIGHTMAPS_REAL; j++)
-				{
-					if (hdrData->styles[j] != LS_LSNONE)
-					{
-						const byte	style = hdrData->styles[j];
-						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
-						VectorMA(normal, styleScale, hdrData->directions[j], normal);
-
-						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
-
-						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+				VectorClear(avgDirection);
+				for (pass = 0; pass < 2; pass++) {
+					if (pass == 1) {
+						VectorNormalize(avgDirection);
 					}
-					else
+					for (j = 0; j < MAXLIGHTMAPS_REAL; j++)
 					{
-						break;
+						if (hdrData->styles[j] != LS_LSNONE)
+						{
+							const byte	style = hdrData->styles[j];
+							vec3_t directIntensity;
+							vec3_t ambientIntensity;
+							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
+							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
+							if (pass == 0) {
+								VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+								ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value;
+								ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value;
+								ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value;
+
+								ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value;
+								ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value;
+								ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value;
+
+								VectorMA(avgDirection, styleScale, hdrData->directions[j], avgDirection);
+							}
+							else {
+								VectorCopy(hdrData->directions[j],tmpDir);
+								VectorNormalize(tmpDir);
+								if (styleScale + styleAmbientScale > 0.0f) {
+									styleDirectionality += styleScale * max(0.0f,DotProduct(tmpDir, avgDirection)) * (styleScale / (styleScale + styleAmbientScale));
+									styleDirectionalityDivider += styleScale;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
 					}
+				}
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 			else if (world->hdrLightGridV3)
 			{
 				bspGridPointHDRV3_t* hdrData = world->hdrLightGridV3 + gridPos;
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				latlongdir = qfalse;
 				VectorClear(normal);
-				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
-				{
-					if (hdrData->styles[j] != LS_LSNONE)
-					{
-						const byte	style = hdrData->styles[j];
-						const float styleScale = RGBTOGRAY(styleColors[style]) * onedividedby255;
-						VectorMA(normal, styleScale, hdrData->directions[j], normal);
-
-						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
-
-						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+				VectorClear(avgDirection);
+				for (pass = 0; pass < 2; pass++) {
+					if (pass == 1) {
+						VectorNormalize(avgDirection);
 					}
-					else
+					for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 					{
-						break;
+						if (hdrData->styles[j] != LS_LSNONE)
+						{
+							const byte	style = hdrData->styles[j];
+							vec3_t directIntensity;
+							vec3_t ambientIntensity;
+							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
+							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
+							if (pass == 0) {
+								VectorMA(normal, styleScale, hdrData->directions[j], normal);
+
+								ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value;
+								ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value;
+								ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value;
+
+								ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value;
+								ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value;
+								ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value;
+
+								VectorMA(avgDirection, styleScale, hdrData->directions[j], avgDirection);
+							}
+							else {
+								VectorCopy(hdrData->directions[j], tmpDir);
+								VectorNormalize(tmpDir);
+								if (styleScale + styleAmbientScale > 0.0f) {
+									styleDirectionality += styleScale * max(0.0f, DotProduct(tmpDir, avgDirection)) * (styleScale / (styleScale + styleAmbientScale));
+									styleDirectionalityDivider += styleScale;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
 					}
+				}
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 			else if (world->hdrLightGridV2)
 			{
 				bspGridPointHDR_t* hdrData = world->hdrLightGridV2 + gridPos;
 				latlongdir = qfalse;
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				VectorCopy(hdrData->direction, normal);
 				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (hdrData->styles[j] != LS_LSNONE)
 					{
 						const byte	style = hdrData->styles[j];
+						vec3_t directIntensity;
+						vec3_t ambientIntensity;
+						VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
+						VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
 						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
 						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
@@ -535,11 +701,19 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
 						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
 						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+
+						if (styleScale + styleAmbientScale > 0.0f) {
+							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
+							styleDirectionalityDivider += styleScale;
+						}
 					}
 					else
 					{
 						break;
 					}
+				}
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 			else if (world->hdrLightGrid)
@@ -552,14 +726,28 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 				ent->directedLight[0] += factor * hdrData[3] * r_LightBrightness->value * 255.0f;
 				ent->directedLight[1] += factor * hdrData[4] * r_LightBrightness->value * 255.0f;
 				ent->directedLight[2] += factor * hdrData[5] * r_LightBrightness->value * 255.0f;
+				float directIntensity = RGBTOGRAY(hdrData);
+				float ambientIntensity = RGBTOGRAY(hdrData + 3);
+				if (directIntensity + ambientIntensity > 0.0f) {
+					directionality += factor * directIntensity / (directIntensity + ambientIntensity);
+				}
 			}
 			else
 			{
+				float styleDirectionality = 0;
+				float styleDirectionalityDivider = 0;
 				for (j = 0; j < MAXLIGHTMAPS_BSP; j++)
 				{
 					if (data->styles[j] != LS_LSNONE)
 					{
 						const byte	style = data->styles[j];
+
+						vec3_t directIntensity;
+						vec3_t ambientIntensity;
+						VectorMultiply(data->directLight[j], styleColors[style], directIntensity);
+						VectorMultiply(data->ambientLight[j], styleColors[style], ambientIntensity);
+						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
+						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
 						ent->ambientLight[0] += factor * data->ambientLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
 						ent->ambientLight[1] += factor * data->ambientLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
@@ -568,11 +756,20 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						ent->directedLight[0] += factor * data->directLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
 						ent->directedLight[1] += factor * data->directLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
 						ent->directedLight[2] += factor * data->directLight[j][2] * styleColors[style][2] * r_LightBrightness->value / 255.0f;
+
+						if (styleScale + styleAmbientScale > 0.0f) {
+							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
+							styleDirectionalityDivider += styleScale;
+						}
 					}
 					else
 					{
 						break;
 					}
+				}
+
+				if (styleDirectionalityDivider > 0.0f) {
+					directionality += factor * styleDirectionality / styleDirectionalityDivider;
 				}
 			}
 
@@ -605,12 +802,15 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 			totalFactor = 1.0 / totalFactor;
 			VectorScale( ent->ambientLight, totalFactor, ent->ambientLight );
 			VectorScale( ent->directedLight, totalFactor, ent->directedLight );
+			directionality = directionality * totalFactor;
 		}
 
 		VectorScale( ent->ambientLight, r_ambientScale->value, ent->ambientLight );
 		VectorScale( ent->directedLight, r_directedScale->value, ent->directedLight );
 
 		VectorNormalize2( direction, ent->lightDir );
+
+		ent->directionality = directionality;
 	}
 }
 
@@ -788,7 +988,7 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 	ent->lightDir[2] = DotProduct( lightDir, ent->e.axis[2] );
 }
 
-int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, world_t* world)
+int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world)
 {
 	trRefEntity_t ent;
 
@@ -799,10 +999,18 @@ int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, world_t* wo
 	VectorCopy(point, ent.e.origin);
 	R_SetupEntityLightingGrid(&ent, world);
 
-	if (VectorLengthSquared(normal) == 0.0f || DotProduct(ent.lightDir, normal) > 0.2f)
+	if (VectorLengthSquared(normal) == 0.0f || DotProduct(ent.lightDir, normal) > 0.2f) {
 		VectorCopy(ent.lightDir, lightDir);
-	else
+		if (directionality) {
+			*directionality = ent.directionality;
+		}
+	}
+	else {
 		VectorCopy(normal, lightDir);
+		if (directionality) {
+			*directionality = 0;
+		}
+	}
 
 	return qtrue;
 }
