@@ -1303,7 +1303,8 @@ bool main_real(inout vec4 outFragColor)
 			if(0 < (shadowLines[s].flags & 1)){ // Flag 1 means foot shadow
 
 				vec3 point1 = shadowLines[s].point1.xyz + footadjust;
-				vec3 delta = point1-worldPixel;
+				vec3 rawdelta = point1-worldPixel;
+				vec3 delta = rawdelta;
 				
 				//if(delta.z < -0.1) continue; // foots must be above us.
 				if(dot(delta.xy,delta.xy) >6400.0f) continue; // foots must be above us.
@@ -1327,6 +1328,7 @@ bool main_real(inout vec4 outFragColor)
 
 				//float maxDistance = max(0.0f,length(delta)-5.0f);
 				//float maxDistanceSquared = maxDistance*maxDistance;
+
 				
 
 				// make a light vector on the normal surface. per normal unit.
@@ -1346,8 +1348,12 @@ bool main_real(inout vec4 outFragColor)
 				p2 -= ln*tmp;
 				p2 += worldPixel;
 
+				//float softenFactor = length(p1-worldPixel)/10.0f;//length(rawdelta)/10.0f;
+
 				vec3 linedir = normalize(p2-p1);
-				float progressMult = clamp(dot(worldPixel-p1,linedir)/dot(linedir,p2-p1),0.0f,1.0f);
+				rawdelta.z /= 2.0f;
+				//float progressMult = clamp(dot(worldPixel-p1,linedir)/dot(linedir,p2-p1),0.0f,1.0f);
+				float progressMult = clamp(length(rawdelta)/dot(linedir,p2-p1),0.0f,1.0f);
 				float progressMultRaw = progressMult;
 				progressMult = 1.0f-progressMult*progressMult;
 
@@ -1361,6 +1367,7 @@ bool main_real(inout vec4 outFragColor)
 				maxDistanceSquared *= clamp(delta.z,1.0f,10.0f);
 				//maxDistanceSquared /= clamp(length(delta)*progressMult,1.0f,10.0f); // funny artifacts
 				maxDistanceSquared /= clamp(sqrt(length(delta))*progressMultRaw,1.0f,10.0f);
+				//maxDistanceSquared /= 1.0f+softenFactor*10.0f;
 				maxDistanceSquared *= maxDistanceSquared;
 				float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
 				//progressMult = min(0.75f,progressMult);
