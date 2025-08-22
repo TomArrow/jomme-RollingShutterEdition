@@ -599,10 +599,12 @@ qboolean G2_Set_Bone_Anim_Index(
 		// figure out where we are now
 		if (G2_Get_Bone_Anim_Index(blist, index, currentTime, &currentFrame, &startFrame, &endFrame, &flags, &animSpeed, NULL, 0))
 		{
-			if (blist[index].blendStart == currentTime)	//we're replacing a blend in progress which hasn't started
+			float currentBlendingTime = currentTime - blist[index].blendStart;
+			float currentBlendProgress = currentBlendingTime / blist[index].blendTime;
+			if (blist[index].blendStart == currentTime || currentBlendProgress < 0.5f)	//we're replacing a blend in progress which hasn't started or has progressed less than 50% (the old animation thus is now still stronger than the new one, so blend from that one)
 			{
 				// set the amount of time it's going to take to blend this anim with the last frame of the last one
-				blist[index].blendTime = blendTime;
+				blist[index].blendTime = currentBlendingTime+blendTime;
 			}
 			else
 			{
