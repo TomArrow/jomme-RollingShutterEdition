@@ -228,10 +228,24 @@ const vec3 heatLUT[21] = {
 	vec3(54.0f,73.0f,66.0f),
 };
 vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
-	float intensity = dot(rgbToGray,colorIn)*4.0f;
+	float powfactor = 0.2f;
 	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
-		intensity *= 15.0f;
+		powfactor = 0.45f;
+		colorIn /= texAverageBrightnessUniform;
 	}
+	if(isSaberUniform > 0){
+		powfactor = 0.45f;
+		colorIn*= 42.0f;
+	}
+	colorIn.x = pow(colorIn.x,powfactor);
+	colorIn.y = pow(colorIn.y,powfactor);
+	colorIn.z = pow(colorIn.z,powfactor);
+	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
+		colorIn *= 0.5f;
+		colorIn += vec3(0.5f);
+		colorIn *= 9.0f;
+	}
+	float intensity = dot(rgbToGray,colorIn+lightmapIn*0.3f)*0.1f;
 	float multiplier = 1.0f;
 	if(intensity > 1.0f){
 		multiplier = intensity;
@@ -248,7 +262,7 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
 	result.x = max(0.0f,result.x);
 	result.y = max(0.0f,result.y);
 	result.z = max(0.0f,result.z);
-	return result;
+	return result*0.25f;
 	//return (result*0.5f+100.0f)*0.01f;
 }
 
@@ -1232,6 +1246,9 @@ bool main_real(inout vec4 outFragColor)
 	float thelod = textureQueryLod(text_in0,uvCoords).x;
 	thelod = thelod - biaslod(thelod);
 	float gradMultiplier = jitterTotalFramesUniform == 0 ? 0.5f : 1.0f / sqrt(float(jitterTotalFramesUniform)/3.0f);
+	if(thermalVisionUniform > 0){
+		gradMultiplier*=4.0f;
+	}
 	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradMultiplier;
 	textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
 
@@ -1285,6 +1302,9 @@ bool main_real(inout vec4 outFragColor)
 	float effectiveAlpha = color.w*vertColor.w;
 
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
+		if(thermalVisionUniform > 0){
+			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f));
+		}
 		return true;
 	} else if(effectiveAlpha <= 0.0) {
 		return true; // this seem fair?
@@ -1819,9 +1839,15 @@ bool main_real(inout vec4 outFragColor)
 		outFragColor.xyz -= boringShadowSubtractVal;
 		vertexLitMult.xyz += addValue;
 		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
-		addValue *= baseColorForLightingReal;
-		outFragColor.xyz += addValue;
-		outFragColor.xyz *= vertexLitMult.xyz;
+		if(thermalVisionUniform > 0){
+			
+			outFragColor.xyz = heatVision(outFragColor.xyz,vertexLitMult.xyz);
+		} else {
+			
+			addValue *= baseColorForLightingReal;
+			outFragColor.xyz += addValue;
+			outFragColor.xyz *= vertexLitMult.xyz;
+		}
 	} else {
 	
 		outFragColor.xyz *= (stageLightmapBitmaskUniform & 1) > 0 ? lightStyles[0].xyz*MULTDIVIDE255 : vec3(1.0f);
@@ -1841,22 +1867,39 @@ bool main_real(inout vec4 outFragColor)
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
 		color2.xyz -= boringShadowSubtractValBase*color2.xyz;
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? addValueForLightmap : addValue;
-		switch(multiTexModeUniform){
-			case MYGL_ADD:
-				outFragColor += color2;
-			break;
-			case MYGL_MODULATE:
-				outFragColor *= color2;
-			break;
-			case MYGL_REPLACE:
-				outFragColor = color2;
-			break;
+		
+		bool doFinalThermal = false;
+		bool doNormal = true;
+		if(thermalVisionUniform > 0){
+			if((stageLightmapBitmaskUniform & 2) > 0){
+				outFragColor.xyz = heatVision(outFragColor.xyz,color2.xyz);
+				doNormal = false;
+			} else if((stageLightmapBitmaskUniform & 1) > 0){
+				outFragColor.xyz = heatVision(color2.xyz,outFragColor.xyz);
+				doNormal = false;
+			} else {
+				doFinalThermal = true;
+			}
+		}
+		if(doNormal){
+
+			switch(multiTexModeUniform){
+				case MYGL_ADD:
+					outFragColor += color2;
+				break;
+				case MYGL_MODULATE:
+					outFragColor *= color2;
+				break;
+				case MYGL_REPLACE:
+					outFragColor = color2;
+				break;
+			}
+		}
+		if(doFinalThermal){
+			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f));
 		}
 	}
 	
-	if(thermalVisionUniform > 0){
-		outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f));
-	}
 
 	return true;
 
