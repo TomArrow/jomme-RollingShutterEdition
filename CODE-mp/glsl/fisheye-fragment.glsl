@@ -227,8 +227,13 @@ const vec3 heatLUT[21] = {
 	// 1.0,54,73,66
 	vec3(54.0f,73.0f,66.0f),
 };
+
+const vec3 veryFarColor = vec3(76,-12,-32);
+const vec3 farColor = vec3(65,-11,-47);
 vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
 	float powfactor = 0.2f;
+	float distanceFactor = length(eyeSpaceCoordsGeom);
+	distanceFactor = 1.0f/(distanceFactor*0.001f+1.0f);
 	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
 		powfactor = 0.45f;
 		colorIn /= texAverageBrightnessUniform;
@@ -257,6 +262,8 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
 	int index = clamp(int(intensity),0,19);
 	float lerp = intensity - float(index);
 	vec3 result = mix(heatLUT[index],heatLUT[index+1],lerp);
+	vec3 distcolor = mix(veryFarColor,farColor,clamp(distanceFactor*14.28f,0.0f,1.0f));
+	result = mix(distcolor,result,distanceFactor);
 	result = lab2rgb(result);
 	//result *= multiplier;
 	result.x = max(0.0f,result.x);
