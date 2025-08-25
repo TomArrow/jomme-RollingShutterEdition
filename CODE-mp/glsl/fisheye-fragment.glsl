@@ -172,6 +172,86 @@ uniform int deluxeMappingUniform;
 uniform int haveVertexLightDirectionUniform;
 uniform int stageColorGenUniform;
 
+uniform int thermalVisionUniform;
+
+const vec3 rgbToGray = vec3( 0.2989f,0.5870f, 0.1140f);
+
+// thermal vision
+//
+// intensity table:
+// where,L,a,b
+// 0,6,24,-30
+// 0.15,30,63,-108
+// 0.4,63,-10,-49
+// 0.65,41,-42,41
+// 0.85,93,-20,89
+// 1.0,54,73,66
+//
+// distance table:
+// 0,76,-12,-32
+// 0.07,65,-11,-47
+// fade alpha to 0 towards 1.0
+//
+const float Epsilon = 0.008856f; // Intent is 216/24389
+const float Kappa = 903.3f; // Intent is 24389/27
+const float KappaInv = 1.0f/Kappa; // Intent is 24389/27
+const vec3 white = vec3(0.95047f,1.000f,1.08883f);
+const float something = 16.0f / 116.0f;
+const float something2 = 1.0f / 7.787f;
+//const mat3 xyztorgb = mat3(3.2406f, -0.9689f, 0.0557f,-1.5372f, 1.8758f, -0.2040f, -0.4986f, 0.0415f, 1.0570f);
+const mat3 xyztorgb = mat3(3.2406f,-1.5372f,-0.4986f,-0.9689f,1.8758f,0.0415f,0.0557f,-0.2040f,1.0570f);
+vec3 lab2rgb( vec3 c ) {
+    float y = ( c.x + 16.0f ) / 116.0f;
+    float x = c.y / 500.0f + y;
+    float z = y - c.z / 200.0f;
+	float x3 = x * x * x;
+	float z3 = z * z * z;
+    vec3 outVal = vec3(
+        //white.x * (x3 > Epsilon ? x3 : (116.0f*x-16.0f)/Kappa),
+        white.x * (x3 > Epsilon ? x3 : (x - something)*something2),
+        white.y * (c.x > (Kappa * Epsilon) ? y*y*y : c.x *KappaInv),
+        white.z * (z3 > Epsilon ? z3 : (z - something) *something2));
+	return outVal*xyztorgb ;
+};
+const vec3 heatLUT[21] = {
+	// 0,6,24,-30
+	vec3(6.0f,24.0f,-30.0f),vec3(13.92f,36.87f,-55.74),vec3(21.84f,49.74f,-81.48f),
+	// 0.15,30,63,-108
+	vec3(30.0f,63.0f,-108.0f),vec3(36.6f,48.4f,-96.2f),vec3(43.2f,33.8f,-84.4f),vec3(49.8f,19.2f,-72.6f),vec3(56.4f,4.6f,-60.8f),
+	// 0.4,63,-10,-49
+	vec3(63.0f,-10.0f,-49.0f),	vec3(58.6f,-16.4f,-31.0f),	vec3(54.2f,-22.8f,-13.0f),	vec3(49.8f,-29.2f,5.0f),vec3(45.4f,-35.6f,23.0f),
+	// 0.65,41,-42,41
+	vec3(41.0f,-42.0f,41.0f),	vec3(54.0f,-36.5f,53.0f),vec3(67.0f,-31.0f,65.0f),vec3(80.0f,-25.5f,77.0f),
+	// 0.85,93,-20,89
+	vec3(93.0f,-20.0f,89.0f),	vec3(80.13f,10.69f,81.41f),vec3(67.26f,41.38f,73.82f),
+	// 1.0,54,73,66
+	vec3(54.0f,73.0f,66.0f),
+};
+vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
+	float intensity = dot(rgbToGray,colorIn)*4.0f;
+	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
+		intensity *= 15.0f;
+	}
+	float multiplier = 1.0f;
+	if(intensity > 1.0f){
+		multiplier = intensity;
+		intensity=1.0f;
+	} else if(intensity < 0.0f){
+		intensity = 0.0f;
+	}
+	intensity *= 20.0f;
+	int index = clamp(int(intensity),0,19);
+	float lerp = intensity - float(index);
+	vec3 result = mix(heatLUT[index],heatLUT[index+1],lerp);
+	result = lab2rgb(result);
+	//result *= multiplier;
+	result.x = max(0.0f,result.x);
+	result.y = max(0.0f,result.y);
+	result.z = max(0.0f,result.z);
+	return result;
+	//return (result*0.5f+100.0f)*0.01f;
+}
+
 
 // multipass stuff
 #define MYGL_MODULATE                       0x2100
@@ -1774,6 +1854,10 @@ bool main_real(inout vec4 outFragColor)
 		}
 	}
 	
+	if(thermalVisionUniform > 0){
+		outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f));
+	}
+
 	return true;
 
 }

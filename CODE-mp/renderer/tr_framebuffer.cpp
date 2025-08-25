@@ -88,6 +88,7 @@ typedef struct uniformLocations_t {
 	GLint parallaxMapLayersUniform;
 	GLint parallaxMapDepthUniform;
 	GLint parallaxMapGammaUniform;
+	GLint thermalVisionUniform;
 	GLint serverTimeUniform;
 	GLint noiseFuckeryUniform;
 	GLint noiseFuckeryLightmapUniform;
@@ -197,6 +198,7 @@ cvar_t *r_fboGLSLParallaxMappingIntensity;
 cvar_t *r_fboGLSLParallaxMappingDepth;
 cvar_t *r_fboGLSLParallaxMappingGamma;
 cvar_t *r_fboGLSLParallaxMappingLayers;
+cvar_t *r_fboGLSLThermalVision;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeTessellate;
 cvar_t *r_fboExposure;
@@ -333,6 +335,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->parallaxMapLayersUniform, r_fboGLSLParallaxMappingLayers->integer);
 		qglUniform1f(uniformLocationsTess->parallaxMapDepthUniform, r_fboGLSLParallaxMappingDepth->value);
 		qglUniform1f(uniformLocationsTess->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
+		qglUniform1i(uniformLocationsTess->thermalVisionUniform, r_fboGLSLThermalVision->integer);
 		qglUniform1f(uniformLocationsTess->serverTimeUniform, (backEnd.refdef.time + backEnd.refdef.timeFraction) * 0.001f);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
@@ -422,6 +425,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->parallaxMapLayersUniform, r_fboGLSLParallaxMappingLayers->integer);
 		qglUniform1f(uniformLocations->parallaxMapDepthUniform, r_fboGLSLParallaxMappingDepth->value);
 		qglUniform1f(uniformLocations->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
+		qglUniform1i(uniformLocations->thermalVisionUniform, r_fboGLSLThermalVision->integer);
 		qglUniform1f(uniformLocations->serverTimeUniform, (backEnd.refdef.time+ backEnd.refdef.timeFraction)*0.001f);
 		qglUniform1i(uniformLocations->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocations->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
@@ -1346,6 +1350,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->parallaxMapLayersUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapLayersUniform");
 		locs->parallaxMapDepthUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapDepthUniform");
 		locs->parallaxMapGammaUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapGammaUniform");
+		locs->thermalVisionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "thermalVisionUniform");
 		locs->serverTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeUniform");
 		locs->noiseFuckeryUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryUniform");
 		locs->noiseFuckeryLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapUniform");
@@ -1496,6 +1501,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingDepth = ri.Cvar_Get( "r_fboGLSLParallaxMappingDepth", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingGamma = ri.Cvar_Get( "r_fboGLSLParallaxMappingGamma", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
+	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );
