@@ -544,6 +544,13 @@ const void *RB_ScreenShotCmd( const void *data ) {
 	ri.Hunk_FreeTempMemory( inBuf );
 	return (const void *)(cmd + 1);	
 }
+const void * RB_PostProcessCmd( const void *data ) {
+	const postProcessCommand_t*cmd = (const postProcessCommand_t*)data;
+
+	R_FrameBuffer_ApplyPostProcessing();
+
+	return (const void *)(cmd + 1);	
+}
 
 
 /*
@@ -1544,6 +1551,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.GetShaderLightMultiplier = RE_GetShaderLightMultiplier;
 	re.AddAdditiveLightToScene = RE_AddAdditiveLightToScene;
 	re.RenderScene = RE_RenderScene;
+	re.ApplyPostProcessing = RE_ApplyPostProcessing;
 
 	re.SetColor = RE_SetColor;
 	re.DrawStretchPic = RE_StretchPic;

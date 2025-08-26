@@ -1689,6 +1689,7 @@ void		R_GammaCorrect( byte *buffer, int bufSize );
 void	R_ImageList_f( void );
 void	R_SkinList_f( void );
 const void *RB_ScreenShotCmd( const void *data );
+const void* RB_PostProcessCmd(const void* data);
 
 
 void	R_InitFogTable( void );
@@ -1962,6 +1963,7 @@ qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
+void RE_ApplyPostProcessing( );
 
 /*
 =============================================================
@@ -2129,6 +2131,10 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
+} postProcessCommand_t;
+
+typedef struct {
+	int		commandId;
 	char	name[MAX_OSPATH];
 	float	fps;
 	float	focus;
@@ -2147,6 +2153,7 @@ typedef enum {
 	RC_SCREENSHOT,
 	RC_CAPTURE,
 	RC_CAPTURE_STEREO,
+	RC_POST_PROCESS,
 } renderCommand_t;
 
 
@@ -2273,6 +2280,8 @@ extern bool g_bTextureRectangleHack;
 #define FB_DEPTH		 		0x08		//Have a depth buffer
 #define FB_PACKED				0x10		//Have a packed depth/zbuffer texture
 #define FB_MULTISAMPLE	 		0x20		//Make a multisampled buffer
+#define FB_MIPMAP		 		0x40		//Force mipmaps
+#define FB_MAGLINEAR	 		0x80		//Force linear upscaling
 
 typedef struct {
 	GLuint 	fbo;
@@ -2337,6 +2346,7 @@ typedef struct {
 	frameBufferData_t* multiSample;
 	frameBufferData_t* main;
 	frameBufferData_t* exposure;
+	frameBufferData_t* postprocessing;
 	frameBufferData_t* blur;
 	frameBufferData_t* dof;
 	frameBufferData_t* colorSpaceConv;
@@ -2375,6 +2385,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
+qboolean R_FrameBuffer_ApplyPostProcessing();
 qboolean R_FrameBuffer_StartHDRRead();
 qboolean R_FrameBuffer_EndHDRRead();
 

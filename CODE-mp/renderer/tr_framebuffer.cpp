@@ -267,10 +267,13 @@ extern float drift;
 fbo_t fbo;
 
 
+R_GLSL* thermalPostProcessingShader = NULL;
 R_GLSL* hdrPqShader = NULL;
 R_GLSL* fishEyeShader = NULL;
 R_GLSL* fishEyeShaderTess = NULL;
 //GLuint tmpPBOtexture;
+
+qboolean R_FrameBuffer_ApplyPostProcessing();
 
 
 void R_FrameBuffer_ReloadGLSL() {
@@ -843,6 +846,7 @@ qboolean R_FrameBuffer_DeactivateFisheye() {
 	if (!fishEyeShader || !fishEyeShader->IsWorking())
 		return qfalse;
 
+
 	qglUseProgram(0);
 	fbo.fishEyeActive = qfalse;
 	//fbo.fishEyeTempDisabled = 0;
@@ -949,7 +953,7 @@ void R_SetGL2DSize (int width, int height) {
 	//R_FrameBuffer_DeactivateFisheye();
 }
 
-void R_DrawQuad( GLuint tex, int width, int height) {
+void R_DrawQuad( GLuint tex, int width, int height, bool forceMakeMipmaps = false) {
 #ifdef HAVE_GLES
 	//TODO
 #else
@@ -958,6 +962,10 @@ void R_DrawQuad( GLuint tex, int width, int height) {
 		GL_SelectTexture( 0 );
 		qglBindTexture(GL_TEXTURE_2D, tex);
 		glState.currenttextures[0] = tex; 
+
+		if (forceMakeMipmaps) {
+			qglGenerateMipmap(GL_TEXTURE_2D);
+		}
 	};
 
 	qglBegin(GL_QUADS);
@@ -1114,19 +1122,21 @@ static void GetDesiredDepthType(GLenum& requestedType, GLenum& requestedFormat,i
 	return isDepth;
 }*/
 
-static int CreateTextureBuffer( int width, int height, GLenum internalFormat, GLenum format, GLenum type, int superSample ) {
+static int CreateTextureBuffer( int width, int height, GLenum internalFormat, GLenum format, GLenum type, int superSample, int flags ) {
 	int ret = 0;
 	int error = qglGetError();
+	bool mipmaps = r_fboSuperSampleMipMap->integer && superSample != 1 || (flags & FB_MIPMAP);
+	bool filtering = superSample != 1 || (flags & FB_MIPMAP);
 
 	qglGenTextures( 1, (GLuint *)&ret );
 	qglBindTexture(	GL_TEXTURE_2D, ret );
-	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, superSample == 1 ?  GL_NEAREST : (r_fboSuperSampleMipMap->integer && superSample != 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
-	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, !filtering ?  GL_NEAREST : (mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
+	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (flags & FB_MAGLINEAR) ? GL_LINEAR : GL_NEAREST);
 
 	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	qglTexImage2D(	GL_TEXTURE_2D, 0, internalFormat, width* superSample, height* superSample, 0, format, type, 0 );
-	if (superSample != 1 && r_fboSuperSampleMipMap->integer) {
+	if (mipmaps) {
 		qglGenerateMipmap(GL_TEXTURE_2D); 
 	}
 	error = qglGetError();
@@ -1224,7 +1234,7 @@ frameBufferData_t* R_FrameBufferCreate( int width, int height, int flags, int su
 			qglFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, buffer->packed );
 		} else {
 			// Setup depth_stencil texture (not mipmap)
-			buffer->packed = CreateTextureBuffer( width, height, desiredDepthType, GL_DEPTH_STENCIL_EXT, desiredDepthFormat,superSample );
+			buffer->packed = CreateTextureBuffer( width, height, desiredDepthType, GL_DEPTH_STENCIL_EXT, desiredDepthFormat,superSample, flags);
 			qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, buffer->packed, 0);
 			qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, buffer->packed, 0);
 		}
@@ -1260,13 +1270,13 @@ frameBufferData_t* R_FrameBufferCreate( int width, int height, int flags, int su
 		buffer->color = CreateRenderBuffer( samples, width, height, GL_RGBA, superSample);
 		qglFramebufferRenderbuffer(	GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, buffer->color );
 	} else if ( flags & FB_FLOAT16 ) {
-		buffer->color = CreateTextureBuffer( width, height, RGBA16F_ARB, GL_RGBA, GL_FLOAT, superSample);
+		buffer->color = CreateTextureBuffer( width, height, RGBA16F_ARB, GL_RGBA, GL_FLOAT, superSample, flags);
 		qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer->color, 0);
 	} else if ( flags & FB_FLOAT32 ) {
-		buffer->color = CreateTextureBuffer( width, height, RGBA32F_ARB, GL_RGBA, GL_FLOAT, superSample);
+		buffer->color = CreateTextureBuffer( width, height, RGBA32F_ARB, GL_RGBA, GL_FLOAT, superSample, flags);
 		qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer->color, 0);
 	} else {
-		buffer->color = CreateTextureBuffer( width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, superSample);
+		buffer->color = CreateTextureBuffer( width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, superSample,flags);
 		qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer->color, 0);
 	}
 		
@@ -1441,6 +1451,16 @@ static void ReLoadGLSL() {
 			delete fishEyeShaderTess;
 			fishEyeShaderTess = NULL;
 		}
+		if (thermalPostProcessingShader) {
+			delete thermalPostProcessingShader;
+			thermalPostProcessingShader = NULL;
+		}
+
+
+		thermalPostProcessingShader = new R_GLSL("glsl/thermal-vertex.glsl", "", "", "", "glsl/thermal-fragment.glsl", qfalse);
+		if (!thermalPostProcessingShader->IsWorking()) {
+			ri.Printf(PRINT_WARNING, "WARNING: Thermal post processing Shader could not be compiled. Thermal vision post pro disabled.\n");
+		}
 
 		qglBegin = dllBegin = dllBeginReal;
 		qglDrawArrays = dllDrawArrays = dllDrawArraysReal;
@@ -1594,6 +1614,7 @@ void R_FrameBuffer_Init( void ) {
 	//create our main frame buffer
 	fbo.main = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
 	fbo.exposure = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
+	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
 	if (!fbo.main) {
 		// if the main fbuffer failed then we should disable framebuffer 
@@ -2131,6 +2152,49 @@ qboolean R_FrameBuffer_ApplyExposure( ) { // really kinda useless unless you wan
 #endif
 
 
+qboolean R_FrameBuffer_ApplyPostProcessing( ) {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	if ( !fbo.postprocessing || r_fboGLSLThermalVision->integer != 2 || !thermalPostProcessingShader->IsWorking())
+		return qfalse;
+
+
+	//R_FrameBuffer_GenerateMainMipMaps();
+	R_FrameBuffer_TempDeactivateFisheye();
+	
+	// First copy image into exposure FBO and apply exposure
+	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.postprocessing->fbo);
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+
+	qglColor4f(1.0f,1.0f,1.0f, 1.0f);
+
+	GL_State( GLS_DEPTHTEST_DISABLE);
+	R_SetGL2DSize(glConfig.vidWidth*superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
+	R_DrawQuad(fbo.main->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
+	
+	// Now copy it back
+	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
+	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+	qglColor4f(1, 1, 1, 1);
+	GL_State(GLS_DEPTHTEST_DISABLE );
+	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
+	qglUseProgram(thermalPostProcessingShader->ShaderId(false, false));
+	R_DrawQuad(	fbo.postprocessing->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier,true);
+	qglUseProgram(0);
+	mipMapsAlreadyGeneratedThisFrame = qfalse;
+	
+	R_FrameBuffer_ReactivateFisheye();
+
+	return qtrue;
+#endif
+}
+#ifdef RELDEBUG
+//#pragma optimize("", on)
+#endif
+
+
 
 void R_FrameBuffer_EndFrame( void ) {
 #ifdef HAVE_GLES
@@ -2153,6 +2217,8 @@ void R_FrameBuffer_EndFrame( void ) {
 		qglBlitFramebufferEXT(0, 0, src->width, src->height, 0, 0, dst->width, dst->height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
 	}
 
+	frameBufferData_t* sourceBuffer = usedFloat ? fbo.blur : fbo.main;
+
 	GL_State( GLS_DEPTHTEST_DISABLE );
 	if (r_fbo->integer && r_fboOverbright->integer) {
 		qglColor4f(tr.overbrightBitsMultiplier, tr.overbrightBitsMultiplier, tr.overbrightBitsMultiplier, 1);
@@ -2163,11 +2229,9 @@ void R_FrameBuffer_EndFrame( void ) {
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 	qglEnable(GL_FRAMEBUFFER_SRGB);
 	R_SetGL2DSize( fbo.screenWidth, fbo.screenHeight );
-	if ( usedFloat ) {
-		R_DrawQuad(	fbo.blur->color, fbo.screenWidth, fbo.screenHeight );
-	} else {
-		R_DrawQuad(	fbo.main->color, fbo.screenWidth, fbo.screenHeight );
-	}
+
+	R_DrawQuad(sourceBuffer->color, fbo.screenWidth, fbo.screenHeight);
+
 	usedFloat = qfalse;
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 
@@ -2179,6 +2243,7 @@ void R_FrameBuffer_Shutdown( void ) {
 //	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 	R_FrameBufferDelete( fbo.main );
 	R_FrameBufferDelete( fbo.exposure );
+	R_FrameBufferDelete( fbo.postprocessing);
 	R_FrameBufferDelete( fbo.blur );
 	R_FrameBufferDelete( fbo.multiSample );
 	R_FrameBufferDelete( fbo.colorSpaceConv );

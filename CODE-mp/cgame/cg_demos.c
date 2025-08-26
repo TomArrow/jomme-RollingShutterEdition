@@ -919,6 +919,7 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 		}
 	}
 	trap_R_RenderScene( &cg.refdef );
+	trap_R_ApplyPostProcessing( );
 
 	CG_FillRect(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor);
 	if (demo.viewType == viewChase && cg.playerCent && (cg.playerCent->currentState.number < MAX_CLIENTS))

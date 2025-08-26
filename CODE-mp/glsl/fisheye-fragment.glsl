@@ -264,6 +264,10 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
 	} else if(intensity < 0.0f){
 		intensity = 0.0f;
 	}
+	if(thermalVisionUniform == 2){
+		return vec3(0.0f,intensity,distanceFactor);
+	}
+
 	intensity *= 20.0f;
 	int index = clamp(int(intensity),0,19);
 	float lerp = intensity - float(index);

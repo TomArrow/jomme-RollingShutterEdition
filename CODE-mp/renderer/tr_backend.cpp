@@ -1729,6 +1729,9 @@ again:
 		case RC_CAPTURE_STEREO:
 			data = R_MME_CaptureShotCmdStereo( data );
 			break;
+		case RC_POST_PROCESS:
+			data = RB_PostProcessCmd( data );
+			break;
 		case RC_END_OF_LIST:
 		default:
 			// stop rendering on this thread

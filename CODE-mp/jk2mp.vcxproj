@@ -914,6 +914,26 @@
       <FileType>Document</FileType>
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/glsl</DestinationFolders>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="glsl\thermal-fragment.glsl">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|x64'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/glsl</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="glsl\thermal-vertex.glsl">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|x64'">$(OutDir)/glsl</DestinationFolders>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/glsl</DestinationFolders>
+    </CopyFileToFolders>
     <None Include="win32\qe3.ico" />
   </ItemGroup>
   <ItemGroup>

@@ -518,6 +518,19 @@ static int cmpShadowLineViewOrgDistance(const void* a, const void* b) {
 	return dist1 - dist2;
 }
 
+void RE_ApplyPostProcessing() {
+	postProcessCommand_t* cmd;
+
+	if (!tr.registered) {
+		return;
+	}
+	cmd = (postProcessCommand_t*)R_GetCommandBuffer(sizeof(*cmd));
+	if (!cmd) {
+		return;
+	}
+	cmd->commandId = RC_POST_PROCESS;
+}
+
 /*
 @@@@@@@@@@@@@@@@@@@@@
 RE_RenderScene
