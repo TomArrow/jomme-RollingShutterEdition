@@ -254,7 +254,7 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
 	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
 		colorIn *= 0.5f;
 		colorIn += vec3(0.5f);
-		colorIn *= 29.0f;
+		colorIn *= 40.0f;
 	}
 	float intensity = dot(rgbToGray,colorIn+lightmapIn*1.0f)*0.03f*normalmult;
 	float multiplier = 1.0f;
@@ -1259,9 +1259,9 @@ bool main_real(inout vec4 outFragColor)
 	float thelod = textureQueryLod(text_in0,uvCoords).x;
 	thelod = thelod - biaslod(thelod);
 	float gradMultiplier = jitterTotalFramesUniform == 0 ? 0.5f : 1.0f / sqrt(float(jitterTotalFramesUniform)/3.0f);
-	if(thermalVisionUniform > 0){
-		gradMultiplier*=4.0f;
-	}
+	//if(thermalVisionUniform > 0){
+	//	gradMultiplier*=4.0f;
+	//}
 	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradMultiplier;
 	textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
 
