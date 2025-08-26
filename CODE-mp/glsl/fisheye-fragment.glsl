@@ -230,17 +230,23 @@ const vec3 heatLUT[21] = {
 
 const vec3 veryFarColor = vec3(76,-12,-32);
 const vec3 farColor = vec3(65,-11,-47);
-vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
+vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
 	float powfactor = 0.2f;
-	float distanceFactor = length(eyeSpaceCoordsGeom);
-	distanceFactor = 1.0f/(distanceFactor*0.001f+1.0f);
+	float normalmult = 1.0f;
+	float distanceFactor =  0.25f;
+	if((renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
+		// dont do for sky cuz it spazzes out
+		distanceFactor =  length(eyeSpaceCoordsGeom);
+		distanceFactor = 1.0f/(distanceFactor*0.001f+1.0f);
+	}
 	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
 		powfactor = 0.45f;
 		colorIn /= texAverageBrightnessUniform;
+		normalmult = clamp(dot(mynormal,normalize(-eyeSpaceCoordsGeom.xyz)),0.0f,1.0f);
 	}
 	if(isSaberUniform > 0){
-		powfactor = 0.45f;
-		colorIn*= 42.0f;
+		powfactor = 1.0f;
+		colorIn*= 400.0f;
 	}
 	colorIn.x = pow(colorIn.x,powfactor);
 	colorIn.y = pow(colorIn.y,powfactor);
@@ -248,9 +254,9 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
 	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
 		colorIn *= 0.5f;
 		colorIn += vec3(0.5f);
-		colorIn *= 9.0f;
+		colorIn *= 29.0f;
 	}
-	float intensity = dot(rgbToGray,colorIn+lightmapIn*0.3f)*0.1f;
+	float intensity = dot(rgbToGray,colorIn+lightmapIn*1.0f)*0.03f*normalmult;
 	float multiplier = 1.0f;
 	if(intensity > 1.0f){
 		multiplier = intensity;
@@ -263,7 +269,7 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn){
 	float lerp = intensity - float(index);
 	vec3 result = mix(heatLUT[index],heatLUT[index+1],lerp);
 	vec3 distcolor = mix(veryFarColor,farColor,clamp(distanceFactor*14.28f,0.0f,1.0f));
-	result = mix(distcolor,result,distanceFactor);
+	result = mix(distcolor,result,min(1.0f,distanceFactor*1.1f));
 	result = lab2rgb(result);
 	//result *= multiplier;
 	result.x = max(0.0f,result.x);
@@ -1308,9 +1314,11 @@ bool main_real(inout vec4 outFragColor)
 
 	float effectiveAlpha = color.w*vertColor.w;
 
+	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
+	
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
 		if(thermalVisionUniform > 0){
-			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f));
+			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f),lightReferenceNormal);
 		}
 		return true;
 	} else if(effectiveAlpha <= 0.0) {
@@ -1372,7 +1380,6 @@ bool main_real(inout vec4 outFragColor)
 #endif
 	mat3 rotatemat = mat3(worldModelViewMatrixUniform);
 	
-	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	vec3 lightmapReferenceNormal = normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)); // can be normal instead. trying vertexnormal so things are smoother
 
 	//vec3 lightNormal = normal;
@@ -1759,6 +1766,10 @@ bool main_real(inout vec4 outFragColor)
 	
 	}
 
+	if(thermalVisionUniform > 0){
+		addValue *= 10.0f;
+	}
+
 	//addValue = pow(addValue,0.5f);
 	//addValue = sqrt(addValue);
 	addValue.x = pow(addValue.x,dLightAddPowUniform);
@@ -1833,6 +1844,8 @@ bool main_real(inout vec4 outFragColor)
 		addValueForLightmap *= baseColorForLighting;
 	}
 	
+	bool didThermal = false;
+
 	if(vertexLit){
 		//gl_FragColor.xyz *= vertexLitMult.xyz;
 		//if(twoSided){
@@ -1848,7 +1861,8 @@ bool main_real(inout vec4 outFragColor)
 		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
 		if(thermalVisionUniform > 0){
 			
-			outFragColor.xyz = heatVision(outFragColor.xyz,vertexLitMult.xyz);
+			outFragColor.xyz = heatVision(outFragColor.xyz,vertexLitMult.xyz,lightReferenceNormal);
+			didThermal= true;
 		} else {
 			
 			addValue *= baseColorForLightingReal;
@@ -1879,11 +1893,13 @@ bool main_real(inout vec4 outFragColor)
 		bool doNormal = true;
 		if(thermalVisionUniform > 0){
 			if((stageLightmapBitmaskUniform & 2) > 0){
-				outFragColor.xyz = heatVision(outFragColor.xyz,color2.xyz);
+				outFragColor.xyz = heatVision(outFragColor.xyz,color2.xyz,lightReferenceNormal);
 				doNormal = false;
+			didThermal= true;
 			} else if((stageLightmapBitmaskUniform & 1) > 0){
-				outFragColor.xyz = heatVision(color2.xyz,outFragColor.xyz);
+				outFragColor.xyz = heatVision(color2.xyz,outFragColor.xyz,lightReferenceNormal);
 				doNormal = false;
+			didThermal= true;
 			} else {
 				doFinalThermal = true;
 			}
@@ -1903,10 +1919,14 @@ bool main_real(inout vec4 outFragColor)
 			}
 		}
 		if(doFinalThermal){
-			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f));
+			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f),lightReferenceNormal);
+			didThermal= true;
 		}
 	}
 	
+	if(thermalVisionUniform > 0 && !didThermal){
+		outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f),lightReferenceNormal);
+	}
 
 	return true;
 
