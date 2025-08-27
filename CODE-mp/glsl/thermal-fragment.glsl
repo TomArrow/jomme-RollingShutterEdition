@@ -151,14 +151,21 @@ void main(void)
 	vec3 inputColorTmp = textureBicubic(text_in, gl_TexCoord[0].st,0).xyz;
 	vec3 inputColorTmpBlurred = inputColorTmp;
     for(int i=1;i<5;i++){
-        inputColorTmpBlurred = mix(inputColorTmp,textureBicubic(text_in, gl_TexCoord[0].st,i).xyz,fracs[i]);
+        vec3 newval = textureBicubic(text_in, gl_TexCoord[0].st,i).xyz;
+        if(thermalVisionUniform ==4){
+            inputColorTmpBlurred += newval;
+        } else{
+            inputColorTmpBlurred = mix(inputColorTmpBlurred,newval,fracs[i]);
+        }
     }
     if(thermalVisionUniform ==2||thermalVisionUniform ==3){
         inputColorTmp = inputColorTmpBlurred;
         applyThermal(inputColorTmp);
     } else if(thermalVisionUniform ==4){
         //applyThermal(inputColorTmp);
-        inputColorTmp.xyz = vec3(inputColorTmp.y+inputColorTmpBlurred.z);
+        //inputColorTmp.xyz = vec3(inputColorTmp.z);
+        inputColorTmp.xyz = vec3(inputColorTmp.y*2.0f+inputColorTmpBlurred.z);
+        inputColorTmp.xz *= 0.7f;
     }
 
 	gl_FragColor = vec4(inputColorTmp,1.0f);

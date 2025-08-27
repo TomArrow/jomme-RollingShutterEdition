@@ -281,10 +281,6 @@ void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 	float powfactor = 0.2f;
 	float normalmult = 1.0f;
 	float distanceFactor =  0.25f;
-	if(thermalVisionUniform == 4){
-		colorInOut.xyz = vec3(0.0f,dot(rgbToGray,colorInOut.xyz),max(0.0f,dot(rgbToGray,lightmapIn)-0.5f));
-		return;
-	}
 	if((renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 		// dont do for sky cuz it spazzes out
 		distanceFactor =  length(eyeSpaceCoordsGeom);
@@ -1390,13 +1386,14 @@ bool main_real(inout vec4 outFragColor)
 		//return;
 	//}
 
+	bool thermalVision = thermalVisionUniform > 0 && thermalVisionUniform <= 3;
 
 	float effectiveAlpha = color.w*vertColor.w;
 
 	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
-		if(thermalVisionUniform > 0){
+		if(thermalVision){
 			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 		}
 		return true;
@@ -1845,7 +1842,7 @@ bool main_real(inout vec4 outFragColor)
 	
 	}
 
-	if(thermalVisionUniform > 0){
+	if(thermalVision){
 		addValue *= 10.0f;
 	}
 
@@ -1938,7 +1935,7 @@ bool main_real(inout vec4 outFragColor)
 		outFragColor.xyz -= boringShadowSubtractVal;
 		vertexLitMult.xyz += addValue;
 		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
-		if(thermalVisionUniform > 0){
+		if(thermalVision){
 			
 			heatVision(outFragColor,vertexLitMult.xyz,lightReferenceNormal);
 			didThermal= true;
@@ -1970,7 +1967,7 @@ bool main_real(inout vec4 outFragColor)
 		
 		bool doFinalThermal = false;
 		bool doNormal = true;
-		if(thermalVisionUniform > 0){
+		if(thermalVision){
 			if((stageLightmapBitmaskUniform & 2) > 0){
 				heatVision(outFragColor,color2.xyz,lightReferenceNormal);
 				doNormal = false;
@@ -2005,7 +2002,7 @@ bool main_real(inout vec4 outFragColor)
 		}
 	}
 	
-	if(thermalVisionUniform > 0 && !didThermal){
+	if(thermalVision && !didThermal){
 		heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 	}
 
@@ -2018,6 +2015,13 @@ void main(void){
 	vec4 outColor =vec4(1.0f);
 	if(main_real(outColor)){
 		//gl_FragColor.xyz = outColor.xyz;
+		
+		if(thermalVisionUniform == 4){
+			float intensity = dot(rgbToGray*0.66f,outColor.xyz);
+			float threshvalue = intensity > 0.19f ? 0.3f : 0.0f; //  0.877f srgb
+			outColor.xyz = vec3(0.0f,intensity,threshvalue);
+		} 
+
 		gl_FragColor = outColor;
 	}// else{
 	//	gl_FragColor = vec4(0.0f);
