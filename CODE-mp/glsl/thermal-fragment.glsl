@@ -3,6 +3,46 @@
 uniform sampler2D text_in;
 
 uniform int thermalVisionUniform;
+uniform float serverTimeUniform;
+uniform int jitterIndexUniform; 
+uniform int jitterTotalFramesUniform;
+
+
+
+// based on https://www.shadertoy.com/view/MlVSzw
+const float PI = 3.1415926535;
+
+const float ALPHA = 0.14;
+const float INV_ALPHA = 1.0 / ALPHA;
+const float K = 2.0 / (PI * ALPHA);
+float nrand( vec2 n )
+{
+	return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
+float inv_error_function(float x)
+{
+	float y = log(1.0 - x*x);
+	float z = K + 0.5 * y;
+	return sqrt(sqrt(max(0.0001f,z*z - y * INV_ALPHA)) - z) * sign(x);
+}
+
+float gaussian_rand( vec2 n )
+{
+	float t = fract( serverTimeUniform*13.4326426f );
+	float x = nrand( n + 0.07*t );
+    
+	float tmp = inv_error_function(x*2.0-1.0)*0.15;
+    if(isinf(tmp) || isnan(tmp)){
+        return 0.5;
+    }
+    if(jitterTotalFramesUniform > 1){
+       tmp *= max(1.0f,0.33f*sqrt(float(jitterTotalFramesUniform)));
+    }
+    return tmp + 0.5;
+}
+
+
+
 
 // thermal vision
 //
@@ -161,11 +201,14 @@ void main(void)
     if(thermalVisionUniform ==2||thermalVisionUniform ==3){
         inputColorTmp = inputColorTmpBlurred;
         applyThermal(inputColorTmp);
+        inputColorTmp.xyz *= 2.0f*gaussian_rand(gl_TexCoord[0].st);
     } else if(thermalVisionUniform ==4){
         //applyThermal(inputColorTmp);
         //inputColorTmp.xyz = vec3(inputColorTmp.z);
         inputColorTmp.xyz = vec3(inputColorTmp.y*2.0f+inputColorTmpBlurred.z);
         inputColorTmp.xz *= 0.7f;
+        //inputColorTmp.xyz *= noise1(gl_FragCoord.x*10000.0f);
+        inputColorTmp.xyz *= 2.0f*clamp(gaussian_rand(gl_TexCoord[0].st),0.1f,2.0f);
     }
 
 	gl_FragColor = vec4(inputColorTmp,1.0f);

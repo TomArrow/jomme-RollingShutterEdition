@@ -2204,6 +2204,9 @@ qboolean R_FrameBuffer_ApplyPostProcessing( ) {
 	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	qglUseProgram(thermalPostProcessingShader->ShaderId(false, false));
 	qglUniform1i(uniformLocationsPostProcessing[0].thermalVisionUniform, r_fboGLSLThermalVision->integer);
+	qglUniform1f(uniformLocationsPostProcessing[0].serverTimeUniform, (backEnd.refdef.time + backEnd.refdef.timeFraction) * 0.001f);
+	qglUniform1i(uniformLocationsPostProcessing[0].jitterIndexUniform, fbo.fishEyeData.jitterIndex);
+	qglUniform1i(uniformLocationsPostProcessing[0].jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
 	R_DrawQuad(	fbo.postprocessing->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier,true);
 	qglUseProgram(0);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
