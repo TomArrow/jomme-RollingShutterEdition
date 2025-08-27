@@ -281,6 +281,10 @@ void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 	float powfactor = 0.2f;
 	float normalmult = 1.0f;
 	float distanceFactor =  0.25f;
+	if(thermalVisionUniform == 4){
+		colorInOut.xyz = vec3(0.0f,dot(rgbToGray,colorInOut.xyz),max(0.0f,dot(rgbToGray,lightmapIn)-0.5f));
+		return;
+	}
 	if((renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 		// dont do for sky cuz it spazzes out
 		distanceFactor =  length(eyeSpaceCoordsGeom);

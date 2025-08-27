@@ -149,10 +149,18 @@ void main(void)
 	// Let's assume 400 nits for a typical gaming monitor (so the target for 1.0f from source buffer)
 	// 400/10000 = 0.04f				
 	vec3 inputColorTmp = textureBicubic(text_in, gl_TexCoord[0].st,0).xyz;
+	vec3 inputColorTmpBlurred = inputColorTmp;
     for(int i=1;i<5;i++){
-        inputColorTmp = mix(inputColorTmp,textureBicubic(text_in, gl_TexCoord[0].st,i).xyz,fracs[i]);
+        inputColorTmpBlurred = mix(inputColorTmp,textureBicubic(text_in, gl_TexCoord[0].st,i).xyz,fracs[i]);
     }
-    applyThermal(inputColorTmp);
+    if(thermalVisionUniform ==2||thermalVisionUniform ==3){
+        inputColorTmp = inputColorTmpBlurred;
+        applyThermal(inputColorTmp);
+    } else if(thermalVisionUniform ==4){
+        //applyThermal(inputColorTmp);
+        inputColorTmp.xyz = vec3(inputColorTmp.y+inputColorTmpBlurred.z);
+    }
 
-	gl_FragColor = vec4(inputColorTmp,1.0f); 
+	gl_FragColor = vec4(inputColorTmp,1.0f);
+    
 }
