@@ -36,7 +36,7 @@ float gaussian_rand( vec2 n )
         return 0.5;
     }
     if(jitterTotalFramesUniform > 1){
-       tmp *= max(1.0f,0.33f*sqrt(float(jitterTotalFramesUniform)));
+       //tmp *= max(1.0f,0.33f*sqrt(float(jitterTotalFramesUniform)));
     }
     return tmp + 0.5;
 }

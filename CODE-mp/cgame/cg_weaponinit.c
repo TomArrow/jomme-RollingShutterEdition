@@ -544,6 +544,10 @@ void CG_RegisterWeapon( int weaponNum) {
 	 default:
 		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 1 );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/rocket/rocklf1a.wav" );
+		weaponInfo->altMissileDlight = 60;
+		VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
+		weaponInfo->missileDlight = 60;
+		VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
 		break;
 	}
 }
