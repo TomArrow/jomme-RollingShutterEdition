@@ -32,6 +32,47 @@
 #define	CGEN_LIGHTMAP2 14
 #define	CGEN_LIGHTMAP3 15
 
+
+#define GLS_SRCBLEND_ZERO						0x00000001
+#define GLS_SRCBLEND_ONE						0x00000002
+#define GLS_SRCBLEND_DST_COLOR					0x00000003
+#define GLS_SRCBLEND_ONE_MINUS_DST_COLOR		0x00000004
+#define GLS_SRCBLEND_SRC_ALPHA					0x00000005
+#define GLS_SRCBLEND_ONE_MINUS_SRC_ALPHA		0x00000006
+#define GLS_SRCBLEND_DST_ALPHA					0x00000007
+#define GLS_SRCBLEND_ONE_MINUS_DST_ALPHA		0x00000008
+#define GLS_SRCBLEND_ALPHA_SATURATE				0x00000009
+#define		GLS_SRCBLEND_BITS					0x0000000f
+
+#define GLS_DSTBLEND_ZERO						0x00000010
+#define GLS_DSTBLEND_ONE						0x00000020
+#define GLS_DSTBLEND_SRC_COLOR					0x00000030
+#define GLS_DSTBLEND_ONE_MINUS_SRC_COLOR		0x00000040
+#define GLS_DSTBLEND_SRC_ALPHA					0x00000050
+#define GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA		0x00000060
+#define GLS_DSTBLEND_DST_ALPHA					0x00000070
+#define GLS_DSTBLEND_ONE_MINUS_DST_ALPHA		0x00000080
+#define		GLS_DSTBLEND_BITS					0x000000f0
+
+#define GLS_DEPTHMASK_TRUE						0x00000100
+
+#define GLS_POLYMODE_LINE						0x00001000
+
+#define GLS_DEPTHTEST_DISABLE					0x00010000
+#define GLS_DEPTHFUNC_EQUAL						0x00020000
+
+#define GLS_ATEST_GT_0							0x10000000
+#define GLS_ATEST_LT_80							0x20000000
+#define GLS_ATEST_GE_80							0x40000000
+#define GLS_ATEST_GE_C0							0x80000000
+#define		GLS_ATEST_BITS						0xF0000000
+
+#define GLS_DEFAULT			GLS_DEPTHMASK_TRUE
+#define GLS_ALPHA			(GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA)
+
+
+
+
 const float samplebias = 0.5f; // sample bias for parallax mapping and texture normal calc. TODO: Make it dynamic. if capturing, we can do more.
 
 float biaslod(float baselod){
@@ -171,6 +212,8 @@ uniform int deluxeMappingUniform;
 
 uniform int haveVertexLightDirectionUniform;
 uniform int stageColorGenUniform;
+uniform uint rawStateBitsUniform;
+uniform uint appliedStateBitsUniform;
 
 uniform int thermalVisionUniform;
 
@@ -230,7 +273,11 @@ const vec3 heatLUT[21] = {
 
 const vec3 veryFarColor = vec3(76,-12,-32);
 const vec3 farColor = vec3(65,-11,-47);
-vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
+void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
+	bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+    bool additiveToAlpha = thermalVisionUniform == 3 && additive;
+	bool legacy = thermalVisionUniform == 2;
+	vec3 colorIn = colorInOut.xyz;
 	float powfactor = 0.2f;
 	float normalmult = 1.0f;
 	float distanceFactor =  0.25f;
@@ -246,7 +293,12 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
 	}
 	if(isSaberUniform > 0){
 		powfactor = 1.0f;
-		colorIn*= 400.0f;
+		//colorIn -= 1.0f/2550.0f;
+		if(legacy){
+			colorIn*= 400.0f;
+		} else{
+			colorIn*= 200.0f;
+		}
 	}
 	colorIn.x = pow(colorIn.x,powfactor);
 	colorIn.y = pow(colorIn.y,powfactor);
@@ -258,14 +310,32 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
 	}
 	float intensity = dot(rgbToGray,colorIn+lightmapIn*1.0f)*0.03f*normalmult;
 	float multiplier = 1.0f;
+	if(intensity < 0.0f){
+		intensity = 0.0f;
+	}  
+	if(thermalVisionUniform == 2 || thermalVisionUniform == 3){
+		if(additiveToAlpha){
+			float alpha = clamp(intensity,0.0f,1.0f);
+			//alpha *= alpha;
+			if(intensity > 1.0f){
+				intensity=1.0f + (1.0f-1.0f/intensity);
+			}
+			if(alpha > 0.0f){
+				//intensity /= alpha; // premultiply it so we keep the correct amount
+			}
+			colorInOut = vec4(0.0f,intensity,distanceFactor,alpha);
+		} else {
+			if(intensity > 1.0f){
+				intensity=1.0f;
+			}
+			float alpha = !additive ? 1.0f : clamp(intensity,0.0f,1.0f);
+			colorInOut.xyz = vec3(0.0f,intensity,distanceFactor*alpha);
+		}
+		return;
+	}
 	if(intensity > 1.0f){
 		multiplier = intensity;
 		intensity=1.0f;
-	} else if(intensity < 0.0f){
-		intensity = 0.0f;
-	}
-	if(thermalVisionUniform == 2){
-		return vec3(0.0f,intensity,distanceFactor);
 	}
 
 	intensity *= 20.0f;
@@ -275,11 +345,12 @@ vec3 heatVision(vec3 colorIn, vec3 lightmapIn, vec3 mynormal){
 	vec3 distcolor = mix(veryFarColor,farColor,clamp(distanceFactor*14.28f,0.0f,1.0f));
 	result = mix(distcolor,result,min(1.0f,distanceFactor*1.1f));
 	result = lab2rgb(result);
-	//result *= multiplier;
+	result *= multiplier;
 	result.x = max(0.0f,result.x);
 	result.y = max(0.0f,result.y);
 	result.z = max(0.0f,result.z);
-	return result*0.25f;
+	//return result*0.25f;
+	colorInOut.xyz = result*0.25f;
 	//return (result*0.5f+100.0f)*0.01f;
 }
 
@@ -1322,7 +1393,7 @@ bool main_real(inout vec4 outFragColor)
 	
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
 		if(thermalVisionUniform > 0){
-			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f),lightReferenceNormal);
+			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 		}
 		return true;
 	} else if(effectiveAlpha <= 0.0) {
@@ -1865,7 +1936,7 @@ bool main_real(inout vec4 outFragColor)
 		vertexLitMult.xyz -= boringShadowSubtractValBase*vertexLitMult.xyz;
 		if(thermalVisionUniform > 0){
 			
-			outFragColor.xyz = heatVision(outFragColor.xyz,vertexLitMult.xyz,lightReferenceNormal);
+			heatVision(outFragColor,vertexLitMult.xyz,lightReferenceNormal);
 			didThermal= true;
 		} else {
 			
@@ -1897,11 +1968,13 @@ bool main_real(inout vec4 outFragColor)
 		bool doNormal = true;
 		if(thermalVisionUniform > 0){
 			if((stageLightmapBitmaskUniform & 2) > 0){
-				outFragColor.xyz = heatVision(outFragColor.xyz,color2.xyz,lightReferenceNormal);
+				heatVision(outFragColor,color2.xyz,lightReferenceNormal);
 				doNormal = false;
 			didThermal= true;
 			} else if((stageLightmapBitmaskUniform & 1) > 0){
-				outFragColor.xyz = heatVision(color2.xyz,outFragColor.xyz,lightReferenceNormal);
+				vec3 tmpLight = outFragColor.xyz;
+				outFragColor.xyz = color2.xyz;
+				heatVision(outFragColor,tmpLight,lightReferenceNormal);
 				doNormal = false;
 			didThermal= true;
 			} else {
@@ -1923,13 +1996,13 @@ bool main_real(inout vec4 outFragColor)
 			}
 		}
 		if(doFinalThermal){
-			outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f),lightReferenceNormal);
+			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 			didThermal= true;
 		}
 	}
 	
 	if(thermalVisionUniform > 0 && !didThermal){
-		outFragColor.xyz = heatVision(outFragColor.xyz,vec3(0.0f),lightReferenceNormal);
+		heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 	}
 
 	return true;

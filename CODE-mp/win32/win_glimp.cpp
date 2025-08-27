@@ -2016,6 +2016,7 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		qglUniform3fv = (void (APIENTRY*) (GLint, GLsizei, const GLfloat*)) qwglGetProcAddress("glUniform3fv");
 		qglUniformMatrix4fv = (void (APIENTRY*) (GLint, GLsizei,GLboolean, const GLfloat*)) qwglGetProcAddress("glUniformMatrix4fv");
 		qglUniform1i = (void (APIENTRY*) (GLint, GLint)) qwglGetProcAddress("glUniform1i");
+		qglUniform1ui = (void (APIENTRY*) (GLint, GLuint)) qwglGetProcAddress("glUniform1ui");
 		qglGetProgramiv = (void (APIENTRY*) (GLuint, GLenum, GLint*)) qwglGetProcAddress("glGetProgramiv");
 		qglGetProgramInfoLog = (void (APIENTRY*) (GLuint, GLsizei, GLsizei*, GLchar*)) qwglGetProcAddress("glGetProgramInfoLog");
 		qglGetShaderiv = (void (APIENTRY*) (GLuint, GLenum, GLint*)) qwglGetProcAddress("glGetShaderiv");

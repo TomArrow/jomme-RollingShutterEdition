@@ -2,6 +2,7 @@
 
 uniform sampler2D text_in;
 
+uniform int thermalVisionUniform;
 
 // thermal vision
 //
@@ -119,12 +120,20 @@ const vec3 farColor = vec3(65,-11,-47);
 void applyThermal(inout vec3 color){
     float intensity = color.y;
     float distanceFactor = color.z;
+    float multiplier = 1.0f;
+    
+	//if(intensity > 1.0f){
+	//	multiplier = intensity;
+	//	intensity=1.0f;
+	//}
     intensity *= 20.0f;
 	int index = clamp(int(intensity),0,19);
 	float lerp = intensity - float(index);
 	vec3 result = mix(heatLUT[index],heatLUT[index+1],lerp);
 	vec3 distcolor = mix(veryFarColor,farColor,clamp(distanceFactor*14.28f,0.0f,1.0f));
-	result = mix(distcolor,result,min(1.0f,distanceFactor*1.1f));
+    //distanceFactor = 100.0f;
+	result = mix(distcolor,result,min(1.0f,distanceFactor*1.3f));
+    //result.x *= multiplier;
 	result = lab2rgb(result);
 	//result *= multiplier;
 	result.x = max(0.0f,result.x);

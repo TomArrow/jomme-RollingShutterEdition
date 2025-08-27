@@ -925,6 +925,7 @@ extern void (APIENTRYP qglUniform2f) (GLint, GLfloat, GLfloat);
 extern void (APIENTRYP qglUniform3fv) (GLint, GLsizei, const GLfloat*);
 extern void (APIENTRYP qglUniformMatrix4fv) (GLint, GLsizei, GLboolean, const GLfloat*);
 extern void (APIENTRYP qglUniform1i) (GLint, GLint);
+extern void (APIENTRYP qglUniform1ui) (GLint, GLuint);
 extern void (APIENTRYP qglGetProgramiv) (GLuint, GLenum, GLint*);
 extern void (APIENTRYP qglGetProgramInfoLog) (GLuint, GLsizei, GLsizei*, GLchar*);
 extern void (APIENTRYP qglGetShaderiv) (GLuint, GLenum, GLint*);

@@ -231,10 +231,20 @@ void GL_TexEnv( int env )
 ** This routine is responsible for setting the most commonly changed state
 ** in Q3.
 */
-void GL_State( unsigned long stateBits )
+void GL_State( unsigned int stateBits )
 {
-	unsigned long rawStateBits = stateBits;
-	unsigned long diff;
+	unsigned int rawStateBits = stateBits;
+	unsigned int diff;
+
+	if (r_fboGLSL->integer && ENABLEGLSL && r_fboGLSLThermalVision->integer == 3 && !backEnd.projection2D) {
+		if ((stateBits & GLS_DSTBLEND_ONE) && (stateBits & GLS_SRCBLEND_ONE)) {
+			// one of the image properties in thermal vision is intensity, the other is distance. using additive blending makes little sense.
+			// instead, we use glsl to set an appropriate alpha value for blending.
+			stateBits &= ~(GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS);
+			stateBits |= GLS_SRCBLEND_SRC_ALPHA;
+			stateBits |= GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		}
+	}
 
 	if ((g_bRenderedZPrepass || g_bRenderZPrepass) && (stateBits & GLS_DEPTHMASK_TRUE) && !(stateBits & GLS_ATEST_BITS) && (stateBits & (GLS_DSTBLEND_BITS|GLS_SRCBLEND_BITS))) {
 		// depthwrite on trarnsparent surfaces is used by some shaders that dont even do alpha test but with z prepass it causes issues
@@ -258,6 +268,8 @@ void GL_State( unsigned long stateBits )
 			stateBits &= ~GLS_DEPTHMASK_TRUE;
 		}
 	}
+
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, &rawStateBits, &stateBits);
 
 	diff = stateBits ^ glState.glStateBits;
 

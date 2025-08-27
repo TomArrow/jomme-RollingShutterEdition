@@ -1406,6 +1406,7 @@ extern cvar_t	*r_ext_multitexture;
 extern cvar_t	*r_fboGLSL;
 extern cvar_t	*r_fboGLSLDLights;
 extern cvar_t	*r_fboGLSLParallaxMapping;
+extern cvar_t	*r_fboGLSLThermalVision;
 extern cvar_t	*r_fboFishEye;
 extern cvar_t	*r_ext_compiled_vertex_array;
 extern cvar_t	*r_ext_texture_env_add;
@@ -1596,7 +1597,7 @@ void	GL_SetDefaultState (void);
 void	GL_SelectTexture( int unit );
 void	GL_TextureMode( const char *string );
 void	GL_CheckErrors( void );
-void	GL_State( unsigned long stateVector );
+void	GL_State( unsigned int stateVector );
 void	GL_TexEnv( int env );
 void	GL_Cull( int cullType );
 
@@ -2313,6 +2314,8 @@ typedef struct {
 	int alphaFunc;
 	float alphaFuncValue;
 	bool doingZPrepass;
+	unsigned int stateBitsRaw;
+	unsigned int stateBitsApplied;
 
 	// for multitexturing
 	int stageImageBitmask;
@@ -2381,7 +2384,7 @@ qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL );
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();

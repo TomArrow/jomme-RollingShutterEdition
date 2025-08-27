@@ -123,6 +123,9 @@ typedef struct uniformLocations_t {
 	GLint haveVertexLightDirectionUniform;
 	GLint stageColorGenUniform;
 
+	GLint rawStateBitsUniform;
+	GLint appliedStateBitsUniform;
+
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
@@ -159,6 +162,7 @@ typedef enum {
 
 uniformLocations_t uniformLocationsTessArr[GLSLSHAD_MAX];
 uniformLocations_t uniformLocationsArr[GLSLSHAD_MAX];
+uniformLocations_t uniformLocationsPostProcessing[GLSLSHAD_MAX];
 
 static GLuint shadowLineSSBOReference = 0;
 static GLuint cheapLightSSBOReference = 0;
@@ -368,6 +372,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
 		qglUniform1i(uniformLocationsTess->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
 
+		qglUniform1ui(uniformLocationsTess->rawStateBitsUniform, fbo.fishEyeData.stateBitsRaw);
+		qglUniform1ui(uniformLocationsTess->appliedStateBitsUniform, fbo.fishEyeData.stateBitsApplied);
+
 		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
 		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
@@ -457,6 +464,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocations->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
 		qglUniform1i(uniformLocations->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
+
+		qglUniform1ui(uniformLocations->rawStateBitsUniform, fbo.fishEyeData.stateBitsRaw);
+		qglUniform1ui(uniformLocations->appliedStateBitsUniform, fbo.fishEyeData.stateBitsApplied);
 
 		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
@@ -776,7 +786,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen, const bool* nocull, const byte* shaderStyles) {
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen, const bool* nocull, const byte* shaderStyles, unsigned int* stateBitsRaw, unsigned int* stateBitsApplied ) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -791,6 +801,12 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	}
 	if (stageColorGen) {
 		fbo.fishEyeData.stageColorGen = *stageColorGen;
+	}
+	if (stateBitsRaw) {
+		fbo.fishEyeData.stateBitsRaw = *stateBitsRaw;
+	}
+	if (stateBitsApplied) {
+		fbo.fishEyeData.stateBitsApplied = *stateBitsApplied;
 	}
 	if (nocull) {
 		if (*nocull) {
@@ -1390,6 +1406,9 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->haveVertexLightDirectionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
 		locs->stageColorGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageColorGenUniform");
 
+		locs->rawStateBitsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "rawStateBitsUniform");
+		locs->appliedStateBitsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "appliedStateBitsUniform");
+
 		locs->stageImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
 		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
 		locs->multiTexModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
@@ -1460,6 +1479,9 @@ static void ReLoadGLSL() {
 		thermalPostProcessingShader = new R_GLSL("glsl/thermal-vertex.glsl", "", "", "", "glsl/thermal-fragment.glsl", qfalse);
 		if (!thermalPostProcessingShader->IsWorking()) {
 			ri.Printf(PRINT_WARNING, "WARNING: Thermal post processing Shader could not be compiled. Thermal vision post pro disabled.\n");
+		}
+		else {
+			R_FrameBufferInitUniformLocs(thermalPostProcessingShader, uniformLocationsPostProcessing);
 		}
 
 		qglBegin = dllBegin = dllBeginReal;
@@ -2157,7 +2179,7 @@ qboolean R_FrameBuffer_ApplyPostProcessing( ) {
 	//TODO
 	return qfalse;
 #else
-	if ( !fbo.postprocessing || r_fboGLSLThermalVision->integer != 2 || !thermalPostProcessingShader->IsWorking())
+	if ( !fbo.postprocessing || r_fboGLSLThermalVision->integer != 2 && r_fboGLSLThermalVision->integer != 3 && r_fboGLSLThermalVision->integer != 4 || !thermalPostProcessingShader->IsWorking())
 		return qfalse;
 
 
@@ -2181,6 +2203,7 @@ qboolean R_FrameBuffer_ApplyPostProcessing( ) {
 	GL_State(GLS_DEPTHTEST_DISABLE );
 	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	qglUseProgram(thermalPostProcessingShader->ShaderId(false, false));
+	qglUniform1i(uniformLocationsPostProcessing[0].thermalVisionUniform, r_fboGLSLThermalVision->integer);
 	R_DrawQuad(	fbo.postprocessing->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier,true);
 	qglUseProgram(0);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
