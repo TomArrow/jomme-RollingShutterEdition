@@ -3,6 +3,7 @@
 uniform sampler2D text_in;
 
 uniform int thermalVisionUniform;
+uniform int shaderDebugUniform;
 uniform float serverTimeUniform;
 uniform int jitterIndexUniform; 
 uniform int jitterTotalFramesUniform;
@@ -30,13 +31,19 @@ float gaussian_rand( vec2 n )
 {
 	float t = fract( serverTimeUniform*13.4326426f );
 	float x = nrand( n + 0.07*t );
+
+    float mult= 0.25f;
     
-	float tmp = inv_error_function(x*2.0-1.0)*0.15;
+	float tmp = inv_error_function(x*2.0-1.0)*mult;
     if(isinf(tmp) || isnan(tmp)){
         return 0.5;
     }
     if(jitterTotalFramesUniform > 1){
        //tmp *= max(1.0f,0.33f*sqrt(float(jitterTotalFramesUniform)));
+       tmp *= pow(float(jitterTotalFramesUniform),0.125f);
+    }
+    if(isinf(tmp) || isnan(tmp)){
+        return 0.5;
     }
     return tmp + 0.5;
 }
@@ -201,14 +208,16 @@ void main(void)
     if(thermalVisionUniform ==2||thermalVisionUniform ==3){
         inputColorTmp = inputColorTmpBlurred;
         applyThermal(inputColorTmp);
-        inputColorTmp.xyz *= 2.0f*gaussian_rand(gl_TexCoord[0].st);
+        //inputColorTmp.xyz *= 2.0f*gaussian_rand(gl_TexCoord[0].st);
+        inputColorTmp.xyz *= 2.0f*clamp(gaussian_rand(gl_TexCoord[0].st),0.01f,10.0f);
     } else if(thermalVisionUniform ==4){
         //applyThermal(inputColorTmp);
         //inputColorTmp.xyz = vec3(inputColorTmp.z);
         inputColorTmp.xyz = vec3(inputColorTmp.y*2.0f+inputColorTmpBlurred.z);
         inputColorTmp.xz *= 0.7f;
         //inputColorTmp.xyz *= noise1(gl_FragCoord.x*10000.0f);
-        inputColorTmp.xyz *= 2.0f*clamp(gaussian_rand(gl_TexCoord[0].st),0.1f,2.0f);
+        inputColorTmp.xyz *= 2.0f*clamp(gaussian_rand(gl_TexCoord[0].st),0.01f,10.0f);
+        //inputColorTmp.xyz *= 2.0f*gaussian_rand(gl_TexCoord[0].st);
     }
 
 	gl_FragColor = vec4(inputColorTmp,1.0f);

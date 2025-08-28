@@ -89,6 +89,7 @@ typedef struct uniformLocations_t {
 	GLint parallaxMapDepthUniform;
 	GLint parallaxMapGammaUniform;
 	GLint thermalVisionUniform;
+	GLint shaderDebugUniform;
 	GLint serverTimeUniform;
 	GLint noiseFuckeryUniform;
 	GLint noiseFuckeryLightmapUniform;
@@ -203,6 +204,7 @@ cvar_t *r_fboGLSLParallaxMappingDepth;
 cvar_t *r_fboGLSLParallaxMappingGamma;
 cvar_t *r_fboGLSLParallaxMappingLayers;
 cvar_t *r_fboGLSLThermalVision;
+cvar_t *r_fboGLSLShaderDebug;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeTessellate;
 cvar_t *r_fboExposure;
@@ -343,6 +345,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->parallaxMapDepthUniform, r_fboGLSLParallaxMappingDepth->value);
 		qglUniform1f(uniformLocationsTess->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
 		qglUniform1i(uniformLocationsTess->thermalVisionUniform, r_fboGLSLThermalVision->integer);
+		qglUniform1i(uniformLocationsTess->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
 		qglUniform1f(uniformLocationsTess->serverTimeUniform, (backEnd.refdef.time + backEnd.refdef.timeFraction) * 0.001f);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
@@ -436,6 +439,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->parallaxMapDepthUniform, r_fboGLSLParallaxMappingDepth->value);
 		qglUniform1f(uniformLocations->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
 		qglUniform1i(uniformLocations->thermalVisionUniform, r_fboGLSLThermalVision->integer);
+		qglUniform1i(uniformLocations->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
 		qglUniform1f(uniformLocations->serverTimeUniform, (backEnd.refdef.time+ backEnd.refdef.timeFraction)*0.001f);
 		qglUniform1i(uniformLocations->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocations->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
@@ -1377,6 +1381,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->parallaxMapDepthUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapDepthUniform");
 		locs->parallaxMapGammaUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapGammaUniform");
 		locs->thermalVisionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "thermalVisionUniform");
+		locs->shaderDebugUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shaderDebugUniform");
 		locs->serverTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeUniform");
 		locs->noiseFuckeryUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryUniform");
 		locs->noiseFuckeryLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapUniform");
@@ -1543,6 +1548,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingDepth = ri.Cvar_Get( "r_fboGLSLParallaxMappingDepth", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingGamma = ri.Cvar_Get( "r_fboGLSLParallaxMappingGamma", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
+	r_fboGLSLShaderDebug = ri.Cvar_Get( "r_fboGLSLShaderDebug", "0", CVAR_TEMP);
 	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
@@ -2204,6 +2210,7 @@ qboolean R_FrameBuffer_ApplyPostProcessing( ) {
 	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	qglUseProgram(thermalPostProcessingShader->ShaderId(false, false));
 	qglUniform1i(uniformLocationsPostProcessing[0].thermalVisionUniform, r_fboGLSLThermalVision->integer);
+	qglUniform1i(uniformLocationsPostProcessing[0].shaderDebugUniform, r_fboGLSLShaderDebug->integer);
 	qglUniform1f(uniformLocationsPostProcessing[0].serverTimeUniform, (backEnd.refdef.time + backEnd.refdef.timeFraction) * 0.001f);
 	qglUniform1i(uniformLocationsPostProcessing[0].jitterIndexUniform, fbo.fishEyeData.jitterIndex);
 	qglUniform1i(uniformLocationsPostProcessing[0].jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);

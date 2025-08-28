@@ -1407,6 +1407,7 @@ extern cvar_t	*r_fboGLSL;
 extern cvar_t	*r_fboGLSLDLights;
 extern cvar_t	*r_fboGLSLParallaxMapping;
 extern cvar_t	*r_fboGLSLThermalVision;
+extern cvar_t	*r_fboGLSLShaderDebug;
 extern cvar_t	*r_fboFishEye;
 extern cvar_t	*r_ext_compiled_vertex_array;
 extern cvar_t	*r_ext_texture_env_add;

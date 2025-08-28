@@ -216,6 +216,7 @@ uniform uint rawStateBitsUniform;
 uniform uint appliedStateBitsUniform;
 
 uniform int thermalVisionUniform;
+uniform int shaderDebugUniform;
 
 const vec3 rgbToGray = vec3( 0.2989f,0.5870f, 0.1140f);
 
@@ -2016,6 +2017,10 @@ void main(void){
 	if(main_real(outColor)){
 		//gl_FragColor.xyz = outColor.xyz;
 		
+		if(shaderDebugUniform == 1){
+			outColor.xyz = vec3(0.05f);
+		}
+
 		if(thermalVisionUniform == 4){
 			float intensity = dot(rgbToGray*0.66f,outColor.xyz);
 			float threshvalue = intensity > 0.19f ? 0.3f : 0.0f; //  0.877f srgb
