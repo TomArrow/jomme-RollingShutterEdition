@@ -123,6 +123,11 @@ void TurretClientRun(centity_t *ent) {
 			trap_FX_RegisterEffect("effects/blaster/wall_impact.efx");
 			trap_FX_RegisterEffect("effects/blaster/flesh_impact.efx");
 
+			weaponInfo->altMissileDlight = 60;
+			VectorSet(weaponInfo->altMissileDlightColor, 1.0, 0.7, 0.2);
+			weaponInfo->missileDlight = 60;
+			VectorSet(weaponInfo->missileDlightColor, 1.0, 0.7, 0.2);
+
 			weaponInfo->registered = qtrue;
 		}
 	}
