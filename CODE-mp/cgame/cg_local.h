@@ -2656,7 +2656,7 @@ void		trap_R_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width,
 
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void		trap_R_RenderScene( const refdef_t *fd );
-void		trap_R_ApplyPostProcessing();
+void		trap_R_ApplyPostProcessing(qboolean captureFrame);
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1
 void		trap_R_DrawStretchPic( float x, float y, float w, float h, 
 			float s1, float t1, float s2, float t2, qhandle_t hShader );

@@ -178,7 +178,10 @@ uniform float dLightAddPowUniform;
 uniform float dLightAddPostPowMultUniform;
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
-uniform float serverTimeUniform;
+uniform int serverTimeUniform;
+uniform float serverTimeFractionUniform;
+#define FLOATSERVERTIME ((float(serverTimeUniform)+serverTimeFractionUniform)*1000.0f)
+
 uniform int isLightmapUniform; 
 uniform int isWorldBrushUniform; 
 uniform int isSaberUniform; 
@@ -707,7 +710,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 vec3 perlinNoiseVariation1(){ // Looks a bit like marble?
 	vec3 res;
 	vec4 coords = pureVertexCoordsGeom/2.0;
-	float timeVal =  serverTimeUniform*2.5;
+	float timeVal =  FLOATSERVERTIME*2.5;
     coords.w = timeVal;
 	res.xyz = vec3( snoise(coords/10.0f));
 	res.xyz += vec3( snoise(coords/20.0f));
@@ -743,7 +746,7 @@ vec3 perlinNoiseVariation2(){
 
 float perlinNoiseHelper(vec4 coords){
     float val;
-    coords.w = serverTimeUniform*10.0;
+    coords.w = FLOATSERVERTIME*10.0;
 	//val = ( snoise(pureVertexCoordsGeom/10.0))/128.0;
 	//val += ( snoise(pureVertexCoordsGeom/20.0))/64.0;
 	//val += ( snoise(pureVertexCoordsGeom/40.0))/32.0;
@@ -767,7 +770,7 @@ float perlinNoiseHelper(vec4 coords){
 }
 float perlinNoiseHelper2(vec4 coords){
     float val;
-	float timeVal =  serverTimeUniform*100.0;
+	float timeVal =  FLOATSERVERTIME*100.0;
     coords.w = timeVal/128.0;
 	val = ( snoise(coords/10.0))/128.0;
     coords.w = timeVal/64.0;
@@ -876,7 +879,7 @@ vec3 perlinNoiseVariation4(){
 vec3 perlinNoiseVariation5(vec4 coords){ 
 	vec3 res;
 	float val,val2;
-	float timeVal =  serverTimeUniform*2.5;
+	float timeVal =  FLOATSERVERTIME*2.5;
     coords.w = timeVal;
 	val = ( snoise(coords/0.078125))/16384.0;
 	val += ( snoise(coords/0.15625))/8192.0;
@@ -917,7 +920,7 @@ vec3 perlinNoiseVariation5(vec4 coords){
 vec3 perlinNoiseVariation6(vec4 coords){ 
 	vec3 res;
 	float val,val2;
-	float timeVal =  serverTimeUniform*2.5;
+	float timeVal =  FLOATSERVERTIME*2.5;
     coords.w = timeVal/16384.0;
 	val = abs( snoise(coords/0.078125))/16384.0;
     coords.w = timeVal/8192.0;
@@ -962,7 +965,7 @@ vec3 perlinNoiseVariation6(vec4 coords){
 vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){ 
 	vec3 res;
 	float val,val2;
-	float timeVal =  serverTimeUniform*200.0;
+	float timeVal =  FLOATSERVERTIME*200.0;
 	const int layers = 10;
 
 	float viewdist = distance(coords.xyz,vieworg);

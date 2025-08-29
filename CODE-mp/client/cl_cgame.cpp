@@ -732,7 +732,7 @@ int CL_CgameSystemCalls( int *args ) {
 		re.RenderScene( (const refdef_t *)VMA(1) );
 		return 0;
 	case CG_R_APPLYPOSTPROCESSING:
-		re.ApplyPostProcessing( );
+		re.ApplyPostProcessing((qboolean)args[1]);
 		return 0;
 	case CG_R_SETCOLOR:
 		re.SetColor( (const float *)VMA(1) );

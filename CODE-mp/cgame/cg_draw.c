@@ -5393,7 +5393,7 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 
 	// draw 3D view
 	trap_R_RenderScene( &cg.refdef );
-	trap_R_ApplyPostProcessing( );
+	trap_R_ApplyPostProcessing( qfalse );
 
 	// restore original viewpoint if running stereo
 	if ( separation != 0 ) {

@@ -180,7 +180,8 @@ void jitterPixelPos(inout mat4 pixelPos){
 	//pixelPos[2].x += dx2*50.0f; 
 }
 
-uniform float serverTimeUniform;
+uniform int serverTimeUniform;
+uniform float serverTimeFractionUniform;
 uniform float soundDeformTimeUniform;
 uniform float soundDeformIntensityUniform;
 uniform float soundDeformDistanceScaleUniform;

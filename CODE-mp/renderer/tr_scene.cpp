@@ -518,7 +518,7 @@ static int cmpShadowLineViewOrgDistance(const void* a, const void* b) {
 	return dist1 - dist2;
 }
 
-void RE_ApplyPostProcessing() {
+void RE_ApplyPostProcessing(qboolean captureShot) {
 	postProcessCommand_t* cmd;
 
 	if (!tr.registered) {
@@ -528,6 +528,7 @@ void RE_ApplyPostProcessing() {
 	if (!cmd) {
 		return;
 	}
+	cmd->capturing = captureShot;
 	cmd->commandId = RC_POST_PROCESS;
 }
 

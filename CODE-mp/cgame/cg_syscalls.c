@@ -335,8 +335,8 @@ void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r,
 void	trap_R_RenderScene( const refdef_t *fd ) {
 	syscall( CG_R_RENDERSCENE, fd );
 }
-void	trap_R_ApplyPostProcessing( ) {
-	syscall(CG_R_APPLYPOSTPROCESSING );
+void	trap_R_ApplyPostProcessing(qboolean captureFrame ) {
+	syscall(CG_R_APPLYPOSTPROCESSING, captureFrame);
 }
 
 void	trap_R_SetColor( const float *rgba ) {

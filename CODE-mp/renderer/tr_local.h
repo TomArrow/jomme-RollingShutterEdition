@@ -1529,6 +1529,7 @@ extern cvar_t	*mme_pip;
 extern cvar_t	*mme_renderWidth;
 extern cvar_t	*mme_renderHeight;
 extern cvar_t	*mme_blurFrames;
+extern cvar_t	*mme_blurEarly;
 extern cvar_t	*mme_blurType;
 extern cvar_t	*mme_blurOverlap;
 extern cvar_t	*mme_blurGamma;
@@ -1965,7 +1966,7 @@ qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
-void RE_ApplyPostProcessing( );
+void RE_ApplyPostProcessing(qboolean captureShot);
 
 /*
 =============================================================
@@ -2133,6 +2134,7 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
+	qboolean	capturing;
 } postProcessCommand_t;
 
 typedef struct {
@@ -2380,7 +2382,7 @@ void R_FrameBuffer_EndFrame(void);
 qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int height,bool additive,bool toNextFrame=false,float weight=1.0f);
 void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex);
 //Try to do an fbo blur
-qboolean R_FrameBuffer_Blur(float scale, int frame, int total);
+qboolean R_FrameBuffer_Blur(float scale, int frame, int total, qboolean forceWriteback);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);
@@ -2389,7 +2391,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();
-qboolean R_FrameBuffer_ApplyPostProcessing();
+qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur);
 qboolean R_FrameBuffer_StartHDRRead();
 qboolean R_FrameBuffer_EndHDRRead();
 

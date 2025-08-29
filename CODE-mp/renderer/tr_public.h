@@ -71,7 +71,7 @@ typedef struct {
 	qboolean	(*GetShaderLightMultiplier)( qhandle_t hShader, vec3_t colorOut);
 	void	(*AddAdditiveLightToScene)( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 	void	(*RenderScene)( const refdef_t *fd );
-	void	(*ApplyPostProcessing)(  );
+	void	(*ApplyPostProcessing)( qboolean captureShot );
 
 	void	(*SetColor)( const float *rgba );	// NULL = 1,1,1,1
 	void	(*DrawStretchPic) ( float x, float y, float w, float h, 

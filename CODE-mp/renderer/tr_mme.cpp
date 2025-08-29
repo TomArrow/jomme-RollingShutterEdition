@@ -102,6 +102,7 @@ cvar_t	*mme_fboImageTint;
 cvar_t	* mme_cinNoClamp;
 cvar_t	*mme_pip;
 cvar_t	*mme_blurFrames;
+cvar_t	*mme_blurEarly;
 cvar_t	*mme_blurType;
 cvar_t	*mme_blurOverlap;
 cvar_t	*mme_blurGamma;
@@ -402,6 +403,18 @@ static qboolean R_MME_LoadDOFMask(float* jitterTable, int countNeeded, char* mas
 	}
 }
 
+qboolean R_MME_EarlyBlur() {
+	// obviously this will be prolly fucked for stereo but so are 100000 other things :P
+
+	mmeBlurControl_t* blurControl = &blurData.control;
+	mmeBlurControl_t* passControl = &passData.control;
+	if (mme_saveShot->integer && blurControl->totalFrames > 0 && mme_blurEarly->integer) {
+		// early blur. before 2d GUI. this way we only blur 3d :)
+		R_FrameBuffer_Blur(blurControl->Float[blurControl->totalIndex], blurControl->totalIndex, blurControl->totalFrames,qtrue);
+		return qtrue;
+	}
+	return qfalse;
+}
 
 static void R_MME_CheckCvars( void ) {
 	int pixelCount, blurTotal, passTotal, quickDOF, quickVoxelLightJitter, quickDLightJitter;
@@ -985,7 +998,7 @@ qboolean R_MME_TakeShot( void ) {
 
 	//Special early version using the framebuffer
 	if ( mme_saveShot->integer && blurControl->totalFrames > 0 &&
-		R_FrameBuffer_Blur( blurControl->Float[ blurControl->totalIndex ], blurControl->totalIndex, blurControl->totalFrames ) ) {
+		(mme_blurEarly->integer || R_FrameBuffer_Blur( blurControl->Float[ blurControl->totalIndex ], blurControl->totalIndex, blurControl->totalFrames, qfalse )) ) {
 		float fps;
 		byte *shotBuf;
 		if ( ++(blurControl->totalIndex) < blurControl->totalFrames ) 
@@ -1802,6 +1815,7 @@ void R_MME_Init(void) {
 	mme_renderHeight = ri.Cvar_Get( "mme_renderHeight", "0", CVAR_LATCH | CVAR_ARCHIVE );
 
 	mme_blurFrames = ri.Cvar_Get ( "mme_blurFrames", "0", CVAR_ARCHIVE );
+	mme_blurEarly = ri.Cvar_Get ( "mme_blurEarly", "1", CVAR_ARCHIVE );
 	mme_blurOverlap = ri.Cvar_Get ("mme_blurOverlap", "0", CVAR_ARCHIVE );
 	mme_blurType = ri.Cvar_Get ( "mme_blurType", "nothing_nada", CVAR_ARCHIVE );
 	mme_blurGamma = ri.Cvar_Get ( "mme_blurGamma", "0", CVAR_ARCHIVE );

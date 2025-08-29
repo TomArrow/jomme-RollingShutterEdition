@@ -544,10 +544,15 @@ const void *RB_ScreenShotCmd( const void *data ) {
 	ri.Hunk_FreeTempMemory( inBuf );
 	return (const void *)(cmd + 1);	
 }
+qboolean R_MME_EarlyBlur();
 const void * RB_PostProcessCmd( const void *data ) {
 	const postProcessCommand_t*cmd = (const postProcessCommand_t*)data;
+	qboolean didEarlyBlur = qfalse;
 
-	R_FrameBuffer_ApplyPostProcessing();
+	if (cmd->capturing) {
+		didEarlyBlur = R_MME_EarlyBlur();
+	}
+	R_FrameBuffer_ApplyPostProcessing(didEarlyBlur);
 
 	return (const void *)(cmd + 1);	
 }

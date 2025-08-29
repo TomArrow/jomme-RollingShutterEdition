@@ -90,7 +90,9 @@ typedef struct uniformLocations_t {
 	GLint parallaxMapGammaUniform;
 	GLint thermalVisionUniform;
 	GLint shaderDebugUniform;
+	GLint blurEarlyStageUniform;
 	GLint serverTimeUniform;
+	GLint serverTimeFractionUniform;
 	GLint noiseFuckeryUniform;
 	GLint noiseFuckeryLightmapUniform;
 	GLint noiseFuckeryHDRIntensityUniform;
@@ -279,7 +281,6 @@ R_GLSL* fishEyeShader = NULL;
 R_GLSL* fishEyeShaderTess = NULL;
 //GLuint tmpPBOtexture;
 
-qboolean R_FrameBuffer_ApplyPostProcessing();
 
 
 void R_FrameBuffer_ReloadGLSL() {
@@ -346,7 +347,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
 		qglUniform1i(uniformLocationsTess->thermalVisionUniform, r_fboGLSLThermalVision->integer);
 		qglUniform1i(uniformLocationsTess->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
-		qglUniform1f(uniformLocationsTess->serverTimeUniform, (backEnd.refdef.time + backEnd.refdef.timeFraction) * 0.001f);
+		qglUniform1i(uniformLocationsTess->serverTimeUniform, backEnd.refdef.time);
+		qglUniform1f(uniformLocationsTess->serverTimeFractionUniform, backEnd.refdef.timeFraction);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
 		qglUniform1f(uniformLocationsTess->noiseFuckeryLightmapIntensityUniform, r_fboGLSLNoiseFuckeryLightmapIntensity->value);
@@ -440,7 +442,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
 		qglUniform1i(uniformLocations->thermalVisionUniform, r_fboGLSLThermalVision->integer);
 		qglUniform1i(uniformLocations->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
-		qglUniform1f(uniformLocations->serverTimeUniform, (backEnd.refdef.time+ backEnd.refdef.timeFraction)*0.001f);
+		qglUniform1i(uniformLocations->serverTimeUniform, backEnd.refdef.time);
+		qglUniform1f(uniformLocations->serverTimeFractionUniform, backEnd.refdef.timeFraction);
 		qglUniform1i(uniformLocations->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocations->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
 		qglUniform1f(uniformLocations->noiseFuckeryLightmapIntensityUniform, r_fboGLSLNoiseFuckeryLightmapIntensity->value);
@@ -1382,7 +1385,9 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->parallaxMapGammaUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapGammaUniform");
 		locs->thermalVisionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "thermalVisionUniform");
 		locs->shaderDebugUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shaderDebugUniform");
+		locs->blurEarlyStageUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "blurEarlyStageUniform");
 		locs->serverTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeUniform");
+		locs->serverTimeFractionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeFractionUniform");
 		locs->noiseFuckeryUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryUniform");
 		locs->noiseFuckeryLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapUniform");
 		locs->noiseFuckeryLightmapIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapIntensityUniform");
@@ -2063,7 +2068,7 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 #endif
 }
 
-qboolean R_FrameBuffer_Blur( float scale, int frame, int total ) {
+qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWriteback) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -2092,7 +2097,7 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total ) {
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
 	usedFloat = qtrue;
-	if ( frame == total - 1 ) {
+	if ( frame == total - 1  || forceWriteback) {
 		qglColor4f( 1, 1, 1, 1 );
 		GL_State( GLS_DEPTHTEST_DISABLE );
 		R_DrawQuad(	fbo.blur->color, glConfig.vidWidth, glConfig.vidHeight );
@@ -2179,8 +2184,7 @@ qboolean R_FrameBuffer_ApplyExposure( ) { // really kinda useless unless you wan
 //#pragma optimize("", on)
 #endif
 
-
-qboolean R_FrameBuffer_ApplyPostProcessing( ) {
+qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -2211,9 +2215,11 @@ qboolean R_FrameBuffer_ApplyPostProcessing( ) {
 	qglUseProgram(thermalPostProcessingShader->ShaderId(false, false));
 	qglUniform1i(uniformLocationsPostProcessing[0].thermalVisionUniform, r_fboGLSLThermalVision->integer);
 	qglUniform1i(uniformLocationsPostProcessing[0].shaderDebugUniform, r_fboGLSLShaderDebug->integer);
-	qglUniform1f(uniformLocationsPostProcessing[0].serverTimeUniform, (backEnd.refdef.time + backEnd.refdef.timeFraction) * 0.001f);
+	qglUniform1i(uniformLocationsPostProcessing[0].serverTimeUniform, backEnd.refdef.time);
+	qglUniform1f(uniformLocationsPostProcessing[0].serverTimeFractionUniform, backEnd.refdef.timeFraction);
 	qglUniform1i(uniformLocationsPostProcessing[0].jitterIndexUniform, fbo.fishEyeData.jitterIndex);
 	qglUniform1i(uniformLocationsPostProcessing[0].jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
+	qglUniform1i(uniformLocationsPostProcessing[0].blurEarlyStageUniform, didEarlyBlur ? 2 : 0);
 	R_DrawQuad(	fbo.postprocessing->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier,true);
 	qglUseProgram(0);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
@@ -2250,7 +2256,7 @@ void R_FrameBuffer_EndFrame( void ) {
 		qglBlitFramebufferEXT(0, 0, src->width, src->height, 0, 0, dst->width, dst->height, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
 	}
 
-	frameBufferData_t* sourceBuffer = usedFloat ? fbo.blur : fbo.main;
+	frameBufferData_t* sourceBuffer = usedFloat && !mme_blurEarly->integer ? fbo.blur : fbo.main;
 
 	GL_State( GLS_DEPTHTEST_DISABLE );
 	if (r_fbo->integer && r_fboOverbright->integer) {

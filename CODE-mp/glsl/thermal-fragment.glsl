@@ -2,12 +2,18 @@
 
 uniform sampler2D text_in;
 
+
 uniform int thermalVisionUniform;
 uniform int shaderDebugUniform;
-uniform float serverTimeUniform;
+uniform int blurEarlyStageUniform; // 0 = blurearly disabled. 1 = prepostprocessing (before early blur, not supported atm). 2 = postprocessing, 3 = postprocessing, final frame ( not supported atm)
+uniform int serverTimeUniform;
+uniform float serverTimeFractionUniform;
 uniform int jitterIndexUniform; 
 uniform int jitterTotalFramesUniform;
 
+#define FLOATSERVERTIME ((float(serverTimeUniform)+serverTimeFractionUniform)*1000.0f)
+
+precision highp float;
 
 
 // based on https://www.shadertoy.com/view/MlVSzw
@@ -29,7 +35,8 @@ float inv_error_function(float x)
 
 float gaussian_rand( vec2 n )
 {
-	float t = fract( serverTimeUniform*13.4326426f );
+    int a = serverTimeUniform & 65535;
+	float t = fract(fract(float(a) *13.4326426f) + fract( serverTimeFractionUniform*13.4326426f )); // MEH
 	float x = nrand( n + 0.07*t );
 
     float mult= 0.20f;
@@ -38,9 +45,10 @@ float gaussian_rand( vec2 n )
     if(isinf(tmp) || isnan(tmp)){
         return 0.5;
     }
-    if(jitterTotalFramesUniform > 1){
+    if(jitterTotalFramesUniform > 1 && blurEarlyStageUniform == 0){
        //tmp *= max(1.0f,0.33f*sqrt(float(jitterTotalFramesUniform)));
-       tmp *= pow(float(jitterTotalFramesUniform),0.125f);
+       //tmp *= pow(float(jitterTotalFramesUniform),0.125f);
+       tmp *= pow(float(jitterTotalFramesUniform),0.5f);
     }
     if(isinf(tmp) || isnan(tmp)){
         return 0.5;
