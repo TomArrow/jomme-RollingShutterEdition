@@ -115,6 +115,10 @@ typedef struct shadowline_s {
 	vec4_t			lightdir;
 } shadowline_t;
 
+typedef struct variousSSBOData_s { // various static ssbo stuff.
+	vec4_t	styleSundirections[MAX_LIGHT_STYLES];
+}variousSSBOData_t;
+
 
 typedef struct ssboSupport_s
 {
@@ -1248,6 +1252,7 @@ typedef struct {
 
 	vec3_t					sunLight;			// from the sky shader for this level
 	vec3_t					sunDirection;
+	vec4_t					sunDirections[MAX_LIGHT_STYLES]; // for glsl clouds
 	int						sunSurfaceLight;	// from the sky shader for this level
 	vec3_t					sunAmbient;			// from the sky shader	(only used for John's terrain system)
 

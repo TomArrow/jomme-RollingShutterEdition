@@ -420,6 +420,14 @@ uniform int shadowLinesCountUniform;
 uniform int cheapLightsCountUniform;
 //uniform shadowline_t shadowLinesUniform[64*18]; 
 
+struct variousSSBOData_t { // various static ssbo stuff.
+	vec4	styleSundirections[64];
+};
+
+layout(std430, binding = 8) buffer variousDataLayout
+{
+    variousSSBOData_t variousData;
+};
 layout(std430, binding = 6) buffer lightStyleIntensitiesLayout
 {
     vec4 lightStyles[64];

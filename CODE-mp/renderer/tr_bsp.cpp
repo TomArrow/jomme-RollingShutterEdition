@@ -2188,6 +2188,9 @@ void R_LoadLightGrid(lump_t *l ) {
 	world_t	*w;
 	float	*wMins, *wMaxs;
 	mgrid_t* srcGrid;
+	qboolean	haveStyledSunDirections = qfalse;
+
+	Com_Memset(tr.sunDirections,0,sizeof(tr.sunDirections));
 
 	w = &s_worldData;
 
@@ -2267,10 +2270,11 @@ void R_LoadLightGrid(lump_t *l ) {
 
 		if (hdrLightGrid)
 		{
-			size_t oldStyleHDRGridSize = sizeof(float) * 6 * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
-			size_t newStyleHDRGridSize = sizeof(bspGridPointHDR_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
-			size_t newStyleHDRGridSizeV3 = sizeof(bspGridPointHDRV3_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
-			size_t newStyleHDRGridSizeV4 = sizeof(bspGridPointHDRV4_t) * w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
+			size_t gridPointCount = w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
+			size_t oldStyleHDRGridSize = sizeof(float) * 6 * gridPointCount;
+			size_t newStyleHDRGridSize = sizeof(bspGridPointHDR_t) * gridPointCount;
+			size_t newStyleHDRGridSizeV3 = sizeof(bspGridPointHDRV3_t) * gridPointCount;
+			size_t newStyleHDRGridSizeV4 = sizeof(bspGridPointHDRV4_t) * gridPointCount;
 
 			if (size == oldStyleHDRGridSize) {
 				w->hdrLightGrid = (float*)ri.Hunk_Alloc(size, h_low);
@@ -2299,6 +2303,42 @@ void R_LoadLightGrid(lump_t *l ) {
 
 				Com_Memcpy(w->hdrLightGridV3,hdrLightGrid,size);
 
+				for(int s = 0;s<MAX_LIGHT_STYLES;s++){
+					// calculate sun directions per style
+					float strongestLight = 0.0f;
+					vec3_t averageDir = { 0,0,0 };
+					float tmpIntensity;
+					haveStyledSunDirections = qtrue;
+					// first find strongest light intensity. to then only respect strong ones later and ignore weaker directions like bounced light
+					
+					for (i = 0; i < gridPointCount; i++) {
+						for (int k = 0; k < MAXLIGHTMAPS_BSP; k++) {
+							if (w->hdrLightGridV3[i].styles[k] != s) continue;
+
+							tmpIntensity = RGBTOGRAY(w->hdrLightGridV3[i].directed[k]);
+							if (tmpIntensity > strongestLight) {
+								strongestLight = tmpIntensity;
+							}
+						}
+					}
+					strongestLight *= 0.8f; // take the strongest 20% to aaverage
+					for (i = 0; i < gridPointCount; i++) {
+						for (int k = 0; k < MAXLIGHTMAPS_BSP; k++) {
+							if (w->hdrLightGridV3[i].styles[k] != s) continue;
+
+							tmpIntensity = RGBTOGRAY(w->hdrLightGridV3[i].directed[k]);
+							if (tmpIntensity < strongestLight) {
+								continue;
+							}
+
+							VectorMA(averageDir, tmpIntensity, w->hdrLightGridV3[i].directions[k], averageDir);
+						}
+					}
+
+					VectorNormalize(averageDir);
+					VectorCopy(averageDir,tr.sunDirections[s]);
+				}
+
 				if (w->hdrLightGrid) {
 					w->hdrLightGrid = NULL; // do i need to free this? idk
 				}
@@ -2313,6 +2353,43 @@ void R_LoadLightGrid(lump_t *l ) {
 				w->hdrLightGridV4 = (bspGridPointHDRV4_t*)ri.Hunk_Alloc(size, h_low);
 
 				Com_Memcpy(w->hdrLightGridV4,hdrLightGrid,size);
+
+
+				for (int s = 0; s < MAX_LIGHT_STYLES; s++) {
+					// calculate sun directions per style
+					float strongestLight = 0.0f;
+					vec3_t averageDir = { 0,0,0 };
+					float tmpIntensity;
+					haveStyledSunDirections = qtrue;
+					// first find strongest light intensity. to then only respect strong ones later and ignore weaker directions like bounced light
+
+					for (i = 0; i < gridPointCount; i++) {
+						for (int k = 0; k < MAXLIGHTMAPS_REAL; k++) {
+							if (w->hdrLightGridV4[i].styles[k] != s) continue;
+
+							tmpIntensity = RGBTOGRAY(w->hdrLightGridV4[i].directed[k]);
+							if (tmpIntensity > strongestLight) {
+								strongestLight = tmpIntensity;
+							}
+						}
+					}
+					strongestLight *= 0.8f; // take the strongest 20% to aaverage
+					for (i = 0; i < gridPointCount; i++) {
+						for (int k = 0; k < MAXLIGHTMAPS_REAL; k++) {
+							if (w->hdrLightGridV4[i].styles[k] != s) continue;
+
+							tmpIntensity = RGBTOGRAY(w->hdrLightGridV4[i].directed[k]);
+							if (tmpIntensity < strongestLight) {
+								continue;
+							}
+
+							VectorMA(averageDir, tmpIntensity, w->hdrLightGridV4[i].directions[k], averageDir);
+						}
+					}
+
+					VectorNormalize(averageDir);
+					VectorCopy(averageDir, tr.sunDirections[s]);
+				}
 
 				if (w->hdrLightGrid) {
 					w->hdrLightGrid = NULL; // do i need to free this? idk
@@ -2347,6 +2424,12 @@ void R_LoadLightGrid(lump_t *l ) {
 
 		if (hdrLightGrid)
 			ri.FS_FreeFile(hdrLightGrid);
+	}
+
+	if (!haveStyledSunDirections) {
+		for (i = 0; i < MAX_LIGHT_STYLES; i++) {
+			VectorCopy(tr.sunDirection,tr.sunDirections[i]); // meh. could maybe do a bit better but screw it for now. maybe otherwise take the strongest directional lights from normal grid and take the dir from those. but wont even be per style
+		}
 	}
 }
 

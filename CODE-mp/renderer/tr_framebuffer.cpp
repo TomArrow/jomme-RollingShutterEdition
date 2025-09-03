@@ -175,6 +175,8 @@ static dlightCheap_t cheapLightsSSBO[MAX_CHEAPLIGHTS];
 static float* musicDeformSSBOData = NULL;
 static GLuint lightStylesSSBOReference = 0;
 static vec4_t lightStylesSSBO[MAX_LIGHT_STYLES];
+static GLuint variousSSBODataReference = 0;
+static variousSSBOData_t variousSSBOData;
 
 static GLuint voxelSSBOReference = 0;
 static uint32_t* voxelSSBOData = NULL;
@@ -602,6 +604,12 @@ qboolean R_FrameBuffer_SendDLightSSBOInfo() {
 		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, lightStylesSSBOReference);
 		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(lightStylesSSBO), lightStylesSSBO, GL_DYNAMIC_DRAW_ARB);
 		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, lightStylesSSBOReference);
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
+
+		Com_Memcpy(variousSSBOData.styleSundirections, tr.sunDirections, sizeof(variousSSBOData.styleSundirections));
+		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, variousSSBODataReference);
+		qglBufferDataARB(GL_SHADER_STORAGE_BUFFER, sizeof(variousSSBOData), &variousSSBOData, GL_DYNAMIC_DRAW_ARB);
+		qglBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, variousSSBODataReference);
 		qglBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 
@@ -1703,6 +1711,7 @@ void R_FrameBuffer_Init( void ) {
 			qglGenBuffersARB(1, &lightStylesSSBOReference);
 			qglGenBuffersARB(1, &musicDeformSSBOReference);
 			qglGenBuffersARB(1, &voxelSSBOReference);
+			qglGenBuffersARB(1, &variousSSBODataReference);
 		}
 	}
 	ReLoadGLSL();
