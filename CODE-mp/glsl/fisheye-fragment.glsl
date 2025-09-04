@@ -1127,11 +1127,17 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	}
 	color*=lightStyles[style]*MULTDIVIDE255;
 	if(style > 55 && dot(color.xyz,color.xyz) > dLightFastSkipThresholdUniform*dLightFastSkipThresholdUniform){ // TODO make style number dynamic (55). anything above that is considered a sun
-		vec3 mult = texture2D(text_in29,worldPixel.xy*0.00005f+(serverTimeUniform*0.00001f + serverTimeFractionUniform*0.01f)*vec2(1.0f,1.0f)).xyz;
 		
+		vec3 sundir = variousData.styleSundirections[style].xyz;
+		vec3 projectedWorldPixel = worldPixel - worldPixel.z*(sundir / max(sundir.z,0.001f));
+		vec3 mult = texture2D(text_in29,projectedWorldPixel.xy*0.00005f+(serverTimeUniform*0.00001f + serverTimeFractionUniform*0.01f)*vec2(1.0f,1.0f)).xyz;
+		vec3 multBlur = textureLod(text_in29,projectedWorldPixel.xy*0.00005f+(serverTimeUniform*0.00001f + serverTimeFractionUniform*0.01f)*vec2(1.0f,1.0f),4.0f).xyz;
+
+
 		vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
-		float weight =  clamp(dot(variousData.styleSundirections[style].xyz,worldDirection.xyz)*1.0f,0.0f,1.0f);
-		color.xyz *= (vec3(1.0f-weight)) + weight*mult;
+		float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
+		//color.xyz *= (vec3(1.0f-weight)) + weight*mult;
+		color.xyz *= ((1.0f-weight)*multBlur) + weight*mult;
 		//color.xyz = worldDirection.xyz;
 		//color.x = weight;
 		//color.yz = vec2(0.0f);
