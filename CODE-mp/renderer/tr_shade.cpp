@@ -401,6 +401,11 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			}
 		}
 	}
+	if (tr.cloudsImageInited) {
+		GL_SelectTexture(29);
+		qglEnable(GL_TEXTURE_2D);
+		GL_Bind(tr.cloudsImage);
+	}
 }
 static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* input) {
 
@@ -425,6 +430,10 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 				qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 			}
 		}
+	}
+	if (tr.cloudsImageInited) {
+		GL_SelectTexture(29);
+		qglDisable(GL_TEXTURE_2D);
 	}
 }
 

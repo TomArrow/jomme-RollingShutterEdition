@@ -117,6 +117,7 @@ cvar_t	*mme_dofQuick;
 cvar_t	*mme_quickDlightJitter;
 cvar_t	* mme_dofQuickRandom;
 cvar_t	* mme_dofQuickRandomMod;
+cvar_t	* mme_cloudsImage;
 cvar_t	* mme_dofMask;
 cvar_t	* mme_dofMaskInvert;
 
@@ -284,6 +285,7 @@ static void R_MME_ClearSuperRandomJitter(superRandomDofJitterControl_t* srJContr
 	srJControl->superRandomPotentialJitterPositionsCount = 0;
 	Com_Memset(srJControl, 0, sizeof(superRandomDofJitterControl_t));
 }
+
 
 static qboolean R_MME_LoadDOFMask(float* jitterTable, int countNeeded, char* maskPath, superRandomDofJitterControl_t* superRandomDofJitterControl) {
 	int dofMaskWidth, dofMaskHeight;
@@ -1832,6 +1834,7 @@ void R_MME_Init(void) {
 	mme_dofQuickRandomMod = ri.Cvar_Get ( "mme_dofQuickRandomMod", "0.2", CVAR_ARCHIVE );
 	mme_dofMaskInvert = ri.Cvar_Get ( "mme_dofMaskInvert", "0", CVAR_ARCHIVE );
 	mme_dofMask = ri.Cvar_Get ( "mme_dofMask", "gfx/bokeh/pentagon_s", CVAR_ARCHIVE );
+	mme_cloudsImage = ri.Cvar_Get ( "mme_cloudsImage", "gfx/clouds/cloud", CVAR_ARCHIVE );
 
 	mme_cpuSSE2 = ri.Cvar_Get ( "mme_cpuSSE2", "0", CVAR_ARCHIVE );
 	mme_pbo = ri.Cvar_Get ( "mme_pbo", "1", CVAR_ARCHIVE );

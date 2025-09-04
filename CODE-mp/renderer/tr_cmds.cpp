@@ -329,6 +329,60 @@ void RE_RotatePic2 ( float x, float y, float w, float h,
 	cmd->a = a;
 }
 
+
+static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
+
+	int width, height, pixelCount;
+	textureImage_t picWrap;
+	tr.cloudsImageExists = qfalse;
+	R_LoadImage(cloudsImagePatah, &picWrap, &width, &height);
+	if (!picWrap.ptr) {
+		return qfalse;
+	}
+	if (width <= 0 || height <= 0) {
+		ri.Free(picWrap.ptr);
+		return qfalse;
+	}
+	tr.cloudsImageExists = qtrue;
+
+	tr.cloudsImageData.height = height;
+	tr.cloudsImageData.width = width;
+
+	tr.cloudsImageData.ptr = (float*)ri.Malloc(width * height * 3 * sizeof(float), TAG_GENERAL, qfalse); // hm. what's the correct tag to use? this might go crashy crashy on vid_restart dunno
+	pixelCount = width * height;
+
+	for (int i = 0; i < pixelCount; i++) {
+		switch (picWrap.bpc) {
+		case BPC_8BIT:
+			tr.cloudsImageData.ptr[i * 3] = (float)((byte*)picWrap.ptr)[i * 4] / 255.0f;
+			tr.cloudsImageData.ptr[i * 3 + 1] = (float)((byte*)picWrap.ptr)[i * 4 + 1] / 255.0f;
+			tr.cloudsImageData.ptr[i * 3 + 2] = (float)((byte*)picWrap.ptr)[i * 4 + 3] / 255.0f;
+			break;
+		case BPC_16BIT:
+			tr.cloudsImageData.ptr[i * 3] = (float)((unsigned short*)picWrap.ptr)[i * 4] / (float)UINT16_MAX;
+			tr.cloudsImageData.ptr[i * 3 + 1] = (float)((unsigned short*)picWrap.ptr)[i * 4 + 1] / (float)UINT16_MAX;
+			tr.cloudsImageData.ptr[i * 3 + 2] = (float)((unsigned short*)picWrap.ptr)[i * 4 + 2] / (float)UINT16_MAX;
+			break;
+		case BPC_32BIT:
+			tr.cloudsImageData.ptr[i * 3] = (float)((unsigned int*)picWrap.ptr)[i * 4] / (float)UINT_MAX;
+			tr.cloudsImageData.ptr[i * 3 + 1] = (float)((unsigned int*)picWrap.ptr)[i * 4 + 1] / (float)UINT_MAX;
+			tr.cloudsImageData.ptr[i * 3 + 2] = (float)((unsigned int*)picWrap.ptr)[i * 4 + 2] / (float)UINT_MAX;
+			break;
+		case BPC_32FLOAT:
+			tr.cloudsImageData.ptr[i * 3] = ((float*)picWrap.ptr)[i * 4];
+			tr.cloudsImageData.ptr[i * 3 + 1] = ((float*)picWrap.ptr)[i * 4 + 1];
+			tr.cloudsImageData.ptr[i * 3 + 2] = ((float*)picWrap.ptr)[i * 4 + 2];
+			break;
+		}
+	}
+
+
+	ri.Free(picWrap.ptr);
+
+	tr.cloudsImage = R_FindImageFile(cloudsImagePatah, qtrue, qtrue, qfalse, GL_REPEAT);
+
+}
+
 /*
 ====================
 RE_BeginFrame
@@ -448,6 +502,12 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			tr.mmeSkyShader = 0;
 		}
 		mme_skyShader->modified = qfalse;
+	}
+
+	if (mme_cloudsImage->modified || !tr.cloudsImageInited) {
+		R_MME_LoadCloudsImage(mme_cloudsImage->string);
+		tr.cloudsImageInited = qtrue;
+		mme_cloudsImage->modified = qfalse;
 	}
 	
 	if (mme_musicdeform->modified) {

@@ -1166,6 +1166,13 @@ typedef struct {
 	float			sceneZfar;
 } backEndState_t;
 
+
+typedef struct floatTextureImage_s {
+	float* ptr;
+	int width, height;
+} floatTextureImage_t;
+
+
 /*
 ** trGlobals_t 
 **
@@ -1200,6 +1207,10 @@ typedef struct {
 	image_t					*flareImage;
 	image_t					*whiteImage;			// full of 0xff
 	image_t					*identityLightImage;	// full of tr.identityLightByte
+	image_t					*cloudsImage;
+	floatTextureImage_t		cloudsImageData;
+	qboolean				cloudsImageExists;
+	qboolean				cloudsImageInited;
 
 #ifdef JEDIACADEMY_GLOW
 	// Handle to the Glow Effect Vertex Shader. - AReis
@@ -1523,6 +1534,7 @@ extern cvar_t	*mme_skykey;
 extern cvar_t	*mme_worldShader;
 extern cvar_t	*mme_skyShader;
 extern cvar_t	*mme_musicdeform;
+extern cvar_t	*mme_cloudsImage;;
 extern cvar_t*	mme_worldDeform;
 extern cvar_t*	mme_worldBlend;
 extern cvar_t* mme_worldNoCull;
