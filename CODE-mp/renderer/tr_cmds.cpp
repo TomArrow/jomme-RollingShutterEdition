@@ -345,39 +345,63 @@ static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
 	}
 	tr.cloudsImageExists = qtrue;
 
-	tr.cloudsImageData.height = height;
-	tr.cloudsImageData.width = width;
+	for (int i = 0; i < MAX_CLOUDSIMAGE_MIPMAPS; i++) {
+		if (tr.cloudsImageData[i].ptr) {
+			ri.Free(tr.cloudsImageData[i].ptr);
+		}
+	}
 
-	tr.cloudsImageData.ptr = (float*)ri.Malloc(width * height * 3 * sizeof(float), TAG_GENERAL, qfalse); // hm. what's the correct tag to use? this might go crashy crashy on vid_restart dunno
+	tr.cloudsImageData[0].height = height;
+	tr.cloudsImageData[0].width = width;
+
+	tr.cloudsImageData[0].ptr = (float*)ri.Malloc(width * height * 4 * sizeof(float), TAG_GENERAL, qfalse); // hm. what's the correct tag to use? this might go crashy crashy on vid_restart dunno
+	float* tmpBuf = (float*)ri.Malloc(width * height * 4 * sizeof(float), TAG_GENERAL, qfalse);
 	pixelCount = width * height;
 
 	for (int i = 0; i < pixelCount; i++) {
 		switch (picWrap.bpc) {
 		case BPC_8BIT:
-			tr.cloudsImageData.ptr[i * 3] = (float)((byte*)picWrap.ptr)[i * 4] / 255.0f;
-			tr.cloudsImageData.ptr[i * 3 + 1] = (float)((byte*)picWrap.ptr)[i * 4 + 1] / 255.0f;
-			tr.cloudsImageData.ptr[i * 3 + 2] = (float)((byte*)picWrap.ptr)[i * 4 + 3] / 255.0f;
+			tr.cloudsImageData[0].ptr[i * 4] = R_sRGBToLinear((float)((byte*)picWrap.ptr)[i * 4] / 255.0f);
+			tr.cloudsImageData[0].ptr[i * 4 + 1] = R_sRGBToLinear((float)((byte*)picWrap.ptr)[i * 4 + 1] / 255.0f);
+			tr.cloudsImageData[0].ptr[i * 4 + 2] = R_sRGBToLinear((float)((byte*)picWrap.ptr)[i * 4 + 2] / 255.0f);
 			break;
 		case BPC_16BIT:
-			tr.cloudsImageData.ptr[i * 3] = (float)((unsigned short*)picWrap.ptr)[i * 4] / (float)UINT16_MAX;
-			tr.cloudsImageData.ptr[i * 3 + 1] = (float)((unsigned short*)picWrap.ptr)[i * 4 + 1] / (float)UINT16_MAX;
-			tr.cloudsImageData.ptr[i * 3 + 2] = (float)((unsigned short*)picWrap.ptr)[i * 4 + 2] / (float)UINT16_MAX;
+			tr.cloudsImageData[0].ptr[i * 4] = R_sRGBToLinear( (float)((unsigned short*)picWrap.ptr)[i * 4] / (float)UINT16_MAX);
+			tr.cloudsImageData[0].ptr[i * 4 + 1] = R_sRGBToLinear((float)((unsigned short*)picWrap.ptr)[i * 4 + 1] / (float)UINT16_MAX);
+			tr.cloudsImageData[0].ptr[i * 4 + 2] = R_sRGBToLinear((float)((unsigned short*)picWrap.ptr)[i * 4 + 2] / (float)UINT16_MAX);
 			break;
 		case BPC_32BIT:
-			tr.cloudsImageData.ptr[i * 3] = (float)((unsigned int*)picWrap.ptr)[i * 4] / (float)UINT_MAX;
-			tr.cloudsImageData.ptr[i * 3 + 1] = (float)((unsigned int*)picWrap.ptr)[i * 4 + 1] / (float)UINT_MAX;
-			tr.cloudsImageData.ptr[i * 3 + 2] = (float)((unsigned int*)picWrap.ptr)[i * 4 + 2] / (float)UINT_MAX;
+			tr.cloudsImageData[0].ptr[i * 4] = R_sRGBToLinear((float)((unsigned int*)picWrap.ptr)[i * 4] / (float)UINT_MAX);
+			tr.cloudsImageData[0].ptr[i * 4 + 1] = R_sRGBToLinear((float)((unsigned int*)picWrap.ptr)[i * 4 + 1] / (float)UINT_MAX);
+			tr.cloudsImageData[0].ptr[i * 4 + 2] = R_sRGBToLinear((float)((unsigned int*)picWrap.ptr)[i * 4 + 2] / (float)UINT_MAX);
 			break;
 		case BPC_32FLOAT:
-			tr.cloudsImageData.ptr[i * 3] = ((float*)picWrap.ptr)[i * 4];
-			tr.cloudsImageData.ptr[i * 3 + 1] = ((float*)picWrap.ptr)[i * 4 + 1];
-			tr.cloudsImageData.ptr[i * 3 + 2] = ((float*)picWrap.ptr)[i * 4 + 2];
+			tr.cloudsImageData[0].ptr[i * 4] = ((float*)picWrap.ptr)[i * 4];
+			tr.cloudsImageData[0].ptr[i * 4 + 1] = ((float*)picWrap.ptr)[i * 4 + 1];
+			tr.cloudsImageData[0].ptr[i * 4 + 2] = ((float*)picWrap.ptr)[i * 4 + 2];
 			break;
 		}
+		tr.cloudsImageData[0].ptr[i * 4 + 3] = 1.0f;
+	}
+
+	Com_Memcpy(tmpBuf, tr.cloudsImageData[0].ptr, width * height * 4 * sizeof(float));
+
+
+	for (int i = 1; i < MAX_CLOUDSIMAGE_MIPMAPS; i++) {
+		if (width > 1 && height > 1) {
+			R_MipMap(tmpBuf,width,height);
+			width >>= 1;
+			height >>= 1;
+		}
+		tr.cloudsImageData[i].ptr = (float*)ri.Malloc(width * height * 4 * sizeof(float), TAG_GENERAL, qfalse); // hm. what's the correct tag to use? this might go crashy crashy on vid_restart dunno
+		Com_Memcpy(tr.cloudsImageData[i].ptr, tmpBuf,  width * height * 4 * sizeof(float));
+		tr.cloudsImageData[i].width = width;
+		tr.cloudsImageData[i].height = height;
 	}
 
 
 	ri.Free(picWrap.ptr);
+	ri.Free(tmpBuf);
 
 	tr.cloudsImage = R_FindImageFile(cloudsImagePatah, qtrue, qtrue, qfalse, GL_REPEAT);
 

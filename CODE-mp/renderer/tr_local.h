@@ -1172,6 +1172,7 @@ typedef struct floatTextureImage_s {
 	int width, height;
 } floatTextureImage_t;
 
+#define MAX_CLOUDSIMAGE_MIPMAPS 5
 
 /*
 ** trGlobals_t 
@@ -1208,7 +1209,8 @@ typedef struct {
 	image_t					*whiteImage;			// full of 0xff
 	image_t					*identityLightImage;	// full of tr.identityLightByte
 	image_t					*cloudsImage;
-	floatTextureImage_t		cloudsImageData;
+	//floatTextureImage_t		cloudsImageData;
+	floatTextureImage_t		cloudsImageData[MAX_CLOUDSIMAGE_MIPMAPS];
 	qboolean				cloudsImageExists;
 	qboolean				cloudsImageInited;
 
@@ -1323,6 +1325,9 @@ void	 R_Images_Clear(void);
 void	 R_Images_DeleteLightMaps(void);
 void	 R_Images_DeleteImage(image_t *pImage);
 
+
+template<class T>
+void R_MipMap(T* in, int width, int height);
 
 extern backEndState_t	backEnd;
 extern trGlobals_t	tr;

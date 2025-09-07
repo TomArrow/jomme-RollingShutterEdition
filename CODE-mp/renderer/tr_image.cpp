@@ -524,7 +524,7 @@ Makes a slight distinction between floating point and integer. (can't bitshift f
 ================
 */
 template<class T>
-static void R_MipMap (T *in, int width, int height) {
+void R_MipMap (T *in, int width, int height) {
 	int		i, j;
 	T	*out;
 	int		row;
