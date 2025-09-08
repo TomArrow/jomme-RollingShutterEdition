@@ -136,6 +136,39 @@ inline void VectorScaleVector(const vec3_t a, const vec3_t b, vec3_t out)
 
 static const float onedividedby255 = 1.0f / 255.0f;
 
+static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t intensity) {
+	/*vec3 sundir = variousData.styleSundirections[style].xyz;
+	vec3 projectedWorldPixel = worldPixel - worldPixel.z * (sundir / max(sundir.z, 0.001f));
+	vec2 uv = projectedWorldPixel.xy * 0.00005f + (float(serverTimeUniform) * 0.00001f + serverTimeFractionUniform * 0.00001f) * vec2(1.0f, 1.0f);
+	vec3 mult = texture2D(text_in29, uv).xyz;
+	vec3 multBlur = textureLod(text_in29, uv, 4.0f).xyz;
+
+	vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom * vec4((haveDir ? direction.xyz : lightReferenceNormal.xyz), 0.0f));
+	float weight = clamp(dot(sundir, worldDirection.xyz) * 1.0f, 0.0f, 1.0f);
+	color.xyz *= ((1.0f - weight) * multBlur) + weight * mult;*/
+	if (!tr.cloudsImageExists || !(r_fboGLSL->integer && ENABLEGLSL)) {
+		VectorSet(intensity, 1.0f, 1.0f, 1.0f);
+		return;
+	}
+	vec3_t projectedWorldPixel;
+	float sundirScale = position[2] / max(sundirection[2],0.001f);
+	VectorScale(sundirection, sundirScale, projectedWorldPixel);
+	VectorSubtract(position, projectedWorldPixel, projectedWorldPixel);
+	vec2_t uv;
+	float timeFactor = (float)tr.refdef.time * 0.00001f + tr.refdef.timeFraction * 0.00001f;
+	uv[0] = projectedWorldPixel[0] * 0.00005f + timeFactor;
+	uv[1] = projectedWorldPixel[1] * 0.00005f + timeFactor;
+	if (r_fboGLSLShaderDebug->integer == 2) {
+		intensity[0] = uv[0] - floor(uv[0]);
+		intensity[1] = uv[1] - floor(uv[1]);
+		intensity[2] = 0;
+	}
+	else {
+		R_SampleFloatImage(&tr.cloudsImageData[0], uv, intensity);
+	}
+	// TODO blending with the mip level 4 like in glsl but then we have to consider lightdirection which ... gonna make the code a bit cancer.
+}
+
 /*
 =================
 R_SetupEntityLightingGrid
@@ -156,7 +189,8 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 	//unsigned short	*startGridPos;
 	int				startGridPos;
 	qboolean		latlongdir = qtrue;
-
+	static vec3_t	styleCloudScale[MAX_LIGHT_STYLES] = { 0 };
+	static bool		styleCloudScaleInited = false;
 
 	if (r_fullbright->integer)
 	{
@@ -165,6 +199,19 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 		VectorCopy( tr.sunDirection, ent->lightDir );
 		ent->directionality = 1.0f;
 		return;
+	}
+
+	if (!styleCloudScaleInited) {
+		for (i = 0; i < MAX_LIGHT_STYLES; i++) {
+			VectorSet(styleCloudScale[i], 1.0f, 1.0f, 1.0f);
+		}
+		styleCloudScaleInited = true;
+	}
+	for (i = 55 + 1; i < MAX_LIGHT_STYLES; i++) {
+		R_GetCloudIntensity(ent->e.origin,tr.sunDirections[i],styleCloudScale[i]);
+		//styleCloudScale[i][0] *= styleCloudScale[i][0]* styleCloudScale[i][0];
+		//styleCloudScale[i][1] *= styleCloudScale[i][1]* styleCloudScale[i][1];
+		//styleCloudScale[i][2] *= styleCloudScale[i][2]* styleCloudScale[i][2];
 	}
 
 	if (r_newDLights->integer)
@@ -272,6 +319,8 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 							vec3_t ambientIntensity;
 							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
 							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+							VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 							if (pass == 0) {
@@ -327,6 +376,8 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 							vec3_t ambientIntensity;
 							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
 							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+							VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 							if (pass == 0) {
@@ -377,16 +428,18 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						vec3_t ambientIntensity;
 						VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
 						VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+						VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+						VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
-						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+						ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value;
 
-						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+						ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value;
 
 						if (styleScale + styleAmbientScale > 0.0f) {
 							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
@@ -432,16 +485,18 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						vec3_t ambientIntensity;
 						VectorMultiply(data->directLight[j], styleColors[style], directIntensity);
 						VectorMultiply(data->ambientLight[j], styleColors[style], ambientIntensity);
+						VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+						VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
-						ent->ambientLight[0] += factor * data->ambientLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
-						ent->ambientLight[1] += factor * data->ambientLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
-						ent->ambientLight[2] += factor * data->ambientLight[j][2] * styleColors[style][2] * r_LightBrightness->value / 255.0f;
+						ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value / 255.0f;
+						ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value / 255.0f;
+						ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value / 255.0f;
 
-						ent->directedLight[0] += factor * data->directLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
-						ent->directedLight[1] += factor * data->directLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
-						ent->directedLight[2] += factor * data->directLight[j][2] * styleColors[style][2] * r_LightBrightness->value / 255.0f;
+						ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value / 255.0f;
+						ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value / 255.0f;
+						ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value / 255.0f;
 
 						if (styleScale + styleAmbientScale > 0.0f) {
 							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
@@ -586,6 +641,8 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 							vec3_t ambientIntensity;
 							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
 							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+							VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 							if (pass == 0) {
@@ -641,6 +698,8 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 							vec3_t ambientIntensity;
 							VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
 							VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+							VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+							VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 							const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 							const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 							if (pass == 0) {
@@ -691,16 +750,18 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						vec3_t ambientIntensity;
 						VectorMultiply(hdrData->directed[j], styleColors[style], directIntensity);
 						VectorMultiply(hdrData->ambient[j], styleColors[style], ambientIntensity);
+						VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+						VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
-						ent->ambientLight[0] += factor * hdrData->ambient[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->ambientLight[1] += factor * hdrData->ambient[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->ambientLight[2] += factor * hdrData->ambient[j][2] * styleColors[style][2] * r_LightBrightness->value;
+						ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value;
+						ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value;
+						ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value;
 
-						ent->directedLight[0] += factor * hdrData->directed[j][0] * styleColors[style][0] * r_LightBrightness->value;
-						ent->directedLight[1] += factor * hdrData->directed[j][1] * styleColors[style][1] * r_LightBrightness->value;
-						ent->directedLight[2] += factor * hdrData->directed[j][2] * styleColors[style][2] * r_LightBrightness->value;
+						ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value;
+						ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value;
+						ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value;
 
 						if (styleScale + styleAmbientScale > 0.0f) {
 							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));
@@ -746,16 +807,18 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, world_t* world) {
 						vec3_t ambientIntensity;
 						VectorMultiply(data->directLight[j], styleColors[style], directIntensity);
 						VectorMultiply(data->ambientLight[j], styleColors[style], ambientIntensity);
+						VectorMultiply(directIntensity, styleCloudScale[style], directIntensity);
+						VectorMultiply(ambientIntensity, styleCloudScale[style], ambientIntensity);
 						const float styleScale = RGBTOGRAY(directIntensity) * onedividedby255;
 						const float styleAmbientScale = RGBTOGRAY(ambientIntensity) * onedividedby255;
 
-						ent->ambientLight[0] += factor * data->ambientLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
-						ent->ambientLight[1] += factor * data->ambientLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
-						ent->ambientLight[2] += factor * data->ambientLight[j][2] * styleColors[style][2] * r_LightBrightness->value / 255.0f;
+						ent->ambientLight[0] += factor * ambientIntensity[0] * r_LightBrightness->value / 255.0f;
+						ent->ambientLight[1] += factor * ambientIntensity[1] * r_LightBrightness->value / 255.0f;
+						ent->ambientLight[2] += factor * ambientIntensity[2] * r_LightBrightness->value / 255.0f;
 
-						ent->directedLight[0] += factor * data->directLight[j][0] * styleColors[style][0] * r_LightBrightness->value / 255.0f;
-						ent->directedLight[1] += factor * data->directLight[j][1] * styleColors[style][1] * r_LightBrightness->value / 255.0f;
-						ent->directedLight[2] += factor * data->directLight[j][2] * styleColors[style][2] * r_LightBrightness->value / 255.0f;
+						ent->directedLight[0] += factor * directIntensity[0] * r_LightBrightness->value / 255.0f;
+						ent->directedLight[1] += factor * directIntensity[1] * r_LightBrightness->value / 255.0f;
+						ent->directedLight[2] += factor * directIntensity[2] * r_LightBrightness->value / 255.0f;
 
 						if (styleScale + styleAmbientScale > 0.0f) {
 							styleDirectionality += styleScale * (styleScale / (styleScale + styleAmbientScale));

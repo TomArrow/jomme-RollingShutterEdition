@@ -1169,8 +1169,10 @@ typedef struct {
 
 typedef struct floatTextureImage_s {
 	float* ptr;
-	int width, height;
+	int size[2];
 } floatTextureImage_t;
+
+void R_SampleFloatImage(floatTextureImage_t* image, vec2_t coords, vec3_t outColor);
 
 #define MAX_CLOUDSIMAGE_MIPMAPS 5
 

@@ -329,6 +329,45 @@ void RE_RotatePic2 ( float x, float y, float w, float h,
 	cmd->a = a;
 }
 
+//#define GETTEXELPTR(x,y) (image->ptr + (image->size[0]-y-1)*image->size[0]*4 + x*4)
+#define GETTEXELPTR(x,y) (image->ptr + (y)*image->size[0]*4 + x*4)
+#define WRAPSAFEMODULO(value,size) (((value) % (size) + (size)) % (size))
+void R_SampleFloatImage(floatTextureImage_t* image, vec2_t coords, vec3_t outColor) {
+	float p[2];
+	int pi[2][2];
+	float r[2];
+
+	for (int i = 0; i < 2; i++) {
+		p[i] = coords[i] * (float)image->size[i] - 0.5f;
+		pi[0][i] = floor(p[i]);
+		pi[1][i] = pi[0][i] + 1.0f;
+		//printf("ratio %f minus %f\n", p[i], (float)pi[0][i]);
+		r[i] = p[i] - (float)pi[0][i];
+		pi[0][i] = WRAPSAFEMODULO(pi[0][i], image->size[i]);
+		pi[1][i] = WRAPSAFEMODULO(pi[1][i], image->size[i]);
+	}
+
+	vec3_t colors[2][2];
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++) {
+			float* ptr = GETTEXELPTR(pi[i][0], pi[j][1]);
+			VectorCopy(ptr, colors[i][j]);
+		}
+	}
+
+	//printf("ratios %f %f\n", r[0], r[1]);
+
+	//printf("c00 %f %f %f\n", colors[0][0][0], colors[0][0][1], colors[0][0][2]);
+	//printf("c01 %f %f %f\n", colors[0][1][0], colors[0][1][1], colors[0][1][2]);
+	//printf("c10 %f %f %f\n", colors[1][0][0], colors[1][0][1], colors[1][0][2]);
+	//printf("c11 %f %f %f\n", colors[1][1][0], colors[1][1][1], colors[1][1][2]);
+
+	vec3_t blends[2];
+	VectorLerp(r[0], colors[0][0], colors[1][0], blends[0]);
+	VectorLerp(r[0], colors[0][1], colors[1][1], blends[1]);
+	VectorLerp(r[1], blends[0], blends[1], outColor);
+
+}
 
 static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
 
@@ -351,8 +390,8 @@ static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
 		}
 	}
 
-	tr.cloudsImageData[0].height = height;
-	tr.cloudsImageData[0].width = width;
+	tr.cloudsImageData[0].size[0] = height;
+	tr.cloudsImageData[0].size[1] = width;
 
 	tr.cloudsImageData[0].ptr = (float*)ri.Malloc(width * height * 4 * sizeof(float), TAG_GENERAL, qfalse); // hm. what's the correct tag to use? this might go crashy crashy on vid_restart dunno
 	float* tmpBuf = (float*)ri.Malloc(width * height * 4 * sizeof(float), TAG_GENERAL, qfalse);
@@ -395,8 +434,8 @@ static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
 		}
 		tr.cloudsImageData[i].ptr = (float*)ri.Malloc(width * height * 4 * sizeof(float), TAG_GENERAL, qfalse); // hm. what's the correct tag to use? this might go crashy crashy on vid_restart dunno
 		Com_Memcpy(tr.cloudsImageData[i].ptr, tmpBuf,  width * height * 4 * sizeof(float));
-		tr.cloudsImageData[i].width = width;
-		tr.cloudsImageData[i].height = height;
+		tr.cloudsImageData[i].size[0] = width;
+		tr.cloudsImageData[i].size[1] = height;
 	}
 
 

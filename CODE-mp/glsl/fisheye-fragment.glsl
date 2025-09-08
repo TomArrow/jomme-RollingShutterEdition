@@ -1130,13 +1130,21 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 		
 		vec3 sundir = variousData.styleSundirections[style].xyz;
 		vec3 projectedWorldPixel = worldPixel - worldPixel.z*(sundir / max(sundir.z,0.001f));
-		vec2 uv = projectedWorldPixel.xy*0.00005f+(serverTimeUniform*0.00001f + serverTimeFractionUniform*0.01f)*vec2(1.0f,1.0f);
-		vec3 mult = texture2D(text_in29,uv).xyz;
-		vec3 multBlur = textureLod(text_in29,uv,4.0f).xyz;
+		vec2 uv = projectedWorldPixel.xy*0.00005f+(float(serverTimeUniform)*0.00001f + serverTimeFractionUniform* 0.00001f)*vec2(1.0f,1.0f);
+		
+		if(shaderDebugUniform == 2){
+			color.x *= fract(uv.s);
+			color.y *= fract(uv.t);
+			color.z = 0;
+		} else{
+			vec3 mult = texture2D(text_in29,uv).xyz;
+			vec3 multBlur = textureLod(text_in29,uv,4.0f).xyz;
 
-		vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
-		float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
-		color.xyz *= ((1.0f-weight)*multBlur) + weight*mult;
+			vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
+			float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
+			color.xyz *= ((1.0f-weight)*multBlur) + weight*mult;
+		}
+		
 	}
 	return color;
 }
