@@ -755,6 +755,8 @@ void CL_MapLoading( void ) {
 	}
 }
 
+int firstServerTime = -1;
+
 /*
 =====================
 CL_ClearState
@@ -763,7 +765,7 @@ Called before parsing a gamestate
 =====================
 */
 void CL_ClearState (void) {
-
+	firstServerTime = -1;
 //	S_StopAllSounds();
 	Com_Memset( &cl, 0, sizeof( cl ) );
 }

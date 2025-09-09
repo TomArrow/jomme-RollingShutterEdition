@@ -178,6 +178,7 @@ uniform float dLightAddPowUniform;
 uniform float dLightAddPostPowMultUniform;
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
+uniform int serverTimeStartUniform;
 uniform int serverTimeUniform;
 uniform float serverTimeFractionUniform;
 #define FLOATSERVERTIME ((float(serverTimeUniform)+serverTimeFractionUniform)*1000.0f)
@@ -220,6 +221,11 @@ uniform uint appliedStateBitsUniform;
 
 uniform int thermalVisionUniform;
 uniform int shaderDebugUniform;
+
+
+uniform float	cloudScaleUniform;
+uniform float	cloudTimeScaleUniform;
+uniform float	cloudPowerUniform;
 
 const vec3 rgbToGray = vec3( 0.2989f,0.5870f, 0.1140f);
 
@@ -1069,6 +1075,14 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 	return color;
 }
 
+vec3 powVec(vec3 invec, float power){
+	return vec3(
+		pow(invec.x,power),
+		pow(invec.y,power),
+		pow(invec.z,power)
+	);
+}
+
 vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, vec3 eyespacelightdir, bool havedeluxe, vec3 lightNormal, vec3 lightReferenceNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, int style, vec3 worldPixel){
 	vec4 color;
 	vec4 direction = vec4(1.0f);
@@ -1130,7 +1144,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 		
 		vec3 sundir = variousData.styleSundirections[style].xyz;
 		vec3 projectedWorldPixel = worldPixel - worldPixel.z*(sundir / max(sundir.z,0.001f));
-		vec2 uv = projectedWorldPixel.xy*0.00005f+(float(serverTimeUniform)*0.00001f + serverTimeFractionUniform* 0.00001f)*vec2(1.0f,1.0f);
+		vec2 uv = projectedWorldPixel.xy*0.00005f*cloudScaleUniform+(float((serverTimeUniform-serverTimeStartUniform))*0.000005f*cloudTimeScaleUniform + serverTimeFractionUniform* 0.000005f*cloudTimeScaleUniform)*vec2(1.0f,1.0f);
 		
 		if(shaderDebugUniform == 2){
 			color.x *= fract(uv.s);
@@ -1142,7 +1156,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 
 			vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
 			float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
-			color.xyz *= ((1.0f-weight)*multBlur) + weight*mult;
+			color.xyz *= powVec(((1.0f-weight)*multBlur) + weight*mult,cloudPowerUniform);
 		}
 		
 	}

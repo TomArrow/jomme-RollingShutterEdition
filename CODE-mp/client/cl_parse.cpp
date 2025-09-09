@@ -177,6 +177,8 @@ void CL_ParsePacketEntities( msg_t *msg, clSnapshot_t *oldframe, clSnapshot_t *n
 }
 
 
+extern int firstServerTime;
+
 /*
 ================
 CL_ParseSnapshot
@@ -296,6 +298,10 @@ void CL_ParseSnapshot( msg_t *msg ) {
 		cl.snap.deltaNum, cl.snap.ping );
 	}
 
+	if (firstServerTime == -1) {
+		firstServerTime = cl.snap.serverTime;
+	}
+
 	cl.newSnapshots = qtrue;
 }
 
@@ -364,6 +370,7 @@ void CL_SystemInfoChanged( void ) {
 	}
 	cl_connectedToPureServer = Cvar_VariableValue( "sv_pure" );
 }
+
 
 /*
 ==================

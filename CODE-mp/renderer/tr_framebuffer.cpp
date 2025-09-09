@@ -92,6 +92,7 @@ typedef struct uniformLocations_t {
 	GLint shaderDebugUniform;
 	GLint blurEarlyStageUniform;
 	GLint serverTimeUniform;
+	GLint serverTimeStartUniform;
 	GLint serverTimeFractionUniform;
 	GLint noiseFuckeryUniform;
 	GLint noiseFuckeryLightmapUniform;
@@ -128,6 +129,10 @@ typedef struct uniformLocations_t {
 
 	GLint rawStateBitsUniform;
 	GLint appliedStateBitsUniform;
+
+	GLint cloudScaleUniform;
+	GLint cloudTimeScaleUniform;
+	GLint cloudPowerUniform;
 
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
@@ -209,6 +214,9 @@ cvar_t *r_fboGLSLParallaxMappingGamma;
 cvar_t *r_fboGLSLParallaxMappingLayers;
 cvar_t *r_fboGLSLThermalVision;
 cvar_t *r_fboGLSLShaderDebug;
+cvar_t *r_fboGLSLCloudShadowScale;
+cvar_t *r_fboGLSLCloudShadowTimeScale;
+cvar_t *r_fboGLSLCloudShadowPower;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeTessellate;
 cvar_t *r_fboExposure;
@@ -293,6 +301,8 @@ static int R_FrameBuffer_GetShaderbits() {
 	return (r_fboGLSLNoiseFuckery->integer ? GLSLSHAD_PERLIN : 0) | (fbo.fishEyeData.doingZPrepass ? GLSLSHAD_ZPREPASS : 0);
 }
 
+extern int firstServerTime;
+
 qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 #ifdef HAVE_GLES
 	//TODO
@@ -350,6 +360,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->thermalVisionUniform, r_fboGLSLThermalVision->integer);
 		qglUniform1i(uniformLocationsTess->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
 		qglUniform1i(uniformLocationsTess->serverTimeUniform, backEnd.refdef.time);
+		qglUniform1i(uniformLocationsTess->serverTimeStartUniform, firstServerTime);
 		qglUniform1f(uniformLocationsTess->serverTimeFractionUniform, backEnd.refdef.timeFraction);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocationsTess->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
@@ -385,6 +396,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
 		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
+
+		qglUniform1f(uniformLocationsTess->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
+		qglUniform1f(uniformLocationsTess->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
+		qglUniform1f(uniformLocationsTess->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
 
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -445,6 +460,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->thermalVisionUniform, r_fboGLSLThermalVision->integer);
 		qglUniform1i(uniformLocations->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
 		qglUniform1i(uniformLocations->serverTimeUniform, backEnd.refdef.time);
+		qglUniform1i(uniformLocations->serverTimeStartUniform, firstServerTime);
 		qglUniform1f(uniformLocations->serverTimeFractionUniform, backEnd.refdef.timeFraction);
 		qglUniform1i(uniformLocations->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
 		qglUniform1i(uniformLocations->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
@@ -480,6 +496,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
 		qglUniform1i(uniformLocations->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
+
+		qglUniform1f(uniformLocations->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
+		qglUniform1f(uniformLocations->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
+		qglUniform1f(uniformLocations->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -1395,6 +1415,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->shaderDebugUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shaderDebugUniform");
 		locs->blurEarlyStageUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "blurEarlyStageUniform");
 		locs->serverTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeUniform");
+		locs->serverTimeStartUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeStartUniform");
 		locs->serverTimeFractionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeFractionUniform");
 		locs->noiseFuckeryUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryUniform");
 		locs->noiseFuckeryLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapUniform");
@@ -1434,6 +1455,10 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		for (int j = 0; j < NUM_TEXTURE_SAMPLERS; j++) {
 			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in%d",j));
 		}
+
+		locs->cloudScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudScaleUniform");
+		locs->cloudTimeScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudTimeScaleUniform");
+		locs->cloudPowerUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudPowerUniform");
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastUniform");
 		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightJitterUniform");
@@ -1563,6 +1588,9 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
 	r_fboGLSLShaderDebug = ri.Cvar_Get( "r_fboGLSLShaderDebug", "0", CVAR_TEMP);
 	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
+	r_fboGLSLCloudShadowScale = ri.Cvar_Get( "r_fboGLSLCloudShadowScale", "1.0", CVAR_TEMP);
+	r_fboGLSLCloudShadowTimeScale = ri.Cvar_Get( "r_fboGLSLCloudShadowTimeScale", "1.0", CVAR_TEMP);
+	r_fboGLSLCloudShadowPower = ri.Cvar_Get( "r_fboGLSLCloudShadowPower", "0.7", CVAR_TEMP);
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );

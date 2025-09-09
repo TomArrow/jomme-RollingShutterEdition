@@ -135,7 +135,7 @@ inline void VectorScaleVector(const vec3_t a, const vec3_t b, vec3_t out)
 }
 
 static const float onedividedby255 = 1.0f / 255.0f;
-
+extern int firstServerTime;
 static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t intensity) {
 	/*vec3 sundir = variousData.styleSundirections[style].xyz;
 	vec3 projectedWorldPixel = worldPixel - worldPixel.z * (sundir / max(sundir.z, 0.001f));
@@ -146,7 +146,7 @@ static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t int
 	vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom * vec4((haveDir ? direction.xyz : lightReferenceNormal.xyz), 0.0f));
 	float weight = clamp(dot(sundir, worldDirection.xyz) * 1.0f, 0.0f, 1.0f);
 	color.xyz *= ((1.0f - weight) * multBlur) + weight * mult;*/
-	if (!tr.cloudsImageExists || !(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!tr.cloudsImageExists || !(r_fboGLSL->integer && ENABLEGLSL) || !r_fboGLSLCloudShadowScale) {
 		VectorSet(intensity, 1.0f, 1.0f, 1.0f);
 		return;
 	}
@@ -155,9 +155,9 @@ static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t int
 	VectorScale(sundirection, sundirScale, projectedWorldPixel);
 	VectorSubtract(position, projectedWorldPixel, projectedWorldPixel);
 	vec2_t uv;
-	float timeFactor = (float)tr.refdef.time * 0.00001f + tr.refdef.timeFraction * 0.00001f;
-	uv[0] = projectedWorldPixel[0] * 0.00005f + timeFactor;
-	uv[1] = projectedWorldPixel[1] * 0.00005f + timeFactor;
+	float timeFactor = (float)(tr.refdef.time- firstServerTime) * 0.000005f * r_fboGLSLCloudShadowTimeScale->value + tr.refdef.timeFraction * 0.000005f * r_fboGLSLCloudShadowTimeScale->value;
+	uv[0] = projectedWorldPixel[0] * 0.00005f * r_fboGLSLCloudShadowScale->value + timeFactor;
+	uv[1] = projectedWorldPixel[1] * 0.00005f * r_fboGLSLCloudShadowScale->value + timeFactor;
 	if (r_fboGLSLShaderDebug->integer == 2) {
 		intensity[0] = uv[0] - floor(uv[0]);
 		intensity[1] = uv[1] - floor(uv[1]);
@@ -165,6 +165,11 @@ static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t int
 	}
 	else {
 		R_SampleFloatImage(&tr.cloudsImageData[0], uv, intensity);
+		if (r_fboGLSLCloudShadowPower->value != 1.0f) {
+			intensity[0] = powf(intensity[0], r_fboGLSLCloudShadowPower->value);
+			intensity[1] = powf(intensity[1], r_fboGLSLCloudShadowPower->value);
+			intensity[2] = powf(intensity[2], r_fboGLSLCloudShadowPower->value);
+		}
 	}
 	// TODO blending with the mip level 4 like in glsl but then we have to consider lightdirection which ... gonna make the code a bit cancer.
 }

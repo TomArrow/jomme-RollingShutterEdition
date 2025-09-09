@@ -128,6 +128,7 @@ typedef struct {
 	char			*mSharedMemory;
 
 	qboolean		submodelBypass;
+
 } clientActive_t;
 
 extern	clientActive_t		cl;

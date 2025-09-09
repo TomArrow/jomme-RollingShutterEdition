@@ -803,7 +803,7 @@ tryAgain:
 	}
 	return 0;
 }
-
+extern int firstServerTime;
 static demoPlay_t *demoPlayOpen( const char* fileName ) {
 	demoPlay_t	*play;
 	fileHandle_t fileHandle;
@@ -851,8 +851,10 @@ static demoPlay_t *demoPlayOpen( const char* fileName ) {
 		msg.cursize = blockSize;	
 		isFull = MSG_ReadBits( &msg, 1 );
 		serverTime = MSG_ReadLong( &msg );
-		if (!play->startTime)
+		if (!play->startTime) {
 			play->startTime = serverTime;
+			firstServerTime = serverTime;
+		}
 		if (isFull) {
 			if (play->fileIndexCount < DEMO_MAX_INDEX) {
 				play->fileIndex[play->fileIndexCount].pos = filePos;
