@@ -1441,12 +1441,14 @@ bool main_real(inout vec4 outFragColor)
 
 	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	
+	bool usesBlending = (appliedStateBitsUniform & GLS_SRCBLEND_BITS) > 0 && (appliedStateBitsUniform & GLS_DSTBLEND_BITS) > 0;
+
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
 		if(thermalVision){
 			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 		}
 		return true;
-	} else if(effectiveAlpha <= 0.0) {
+	} else if(effectiveAlpha <= 0.0 && usesBlending) {
 		return true; // this seem fair?
 	} else if(alphaFuncUniform > 0){
 		if(
@@ -2050,6 +2052,14 @@ bool main_real(inout vec4 outFragColor)
 			didThermal= true;
 		}
 	}
+
+	//if(stageLightmapBitmaskUniform > 0){
+	//	outFragColor.x = stageLightmapBitmaskUniform;
+	//	outFragColor.y = stageLightmapBitmaskUniform-1;
+	//}
+	//if(vertexLit){
+	//	outFragColor.x = 1;
+	//}
 	
 	if(thermalVision && !didThermal){
 		heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
@@ -2074,7 +2084,7 @@ void main(void){
 			float threshvalue = intensity > 0.19f ? 0.3f : 0.0f; //  0.877f srgb
 			outColor.xyz = vec3(0.0f,intensity,threshvalue);
 		} 
-
+		
 		gl_FragColor = outColor;
 	}// else{
 	//	gl_FragColor = vec4(0.0f);

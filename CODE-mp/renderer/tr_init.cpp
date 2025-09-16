@@ -170,6 +170,7 @@ cvar_t	*r_flares;
 cvar_t	*r_mode;
 cvar_t	*r_nobind;
 cvar_t	*r_singleShader;
+cvar_t	*r_onlyShader;
 cvar_t	*r_colorMipLevels;
 cvar_t	*r_picmip;
 cvar_t	*r_showtris;
@@ -982,6 +983,7 @@ void R_Register( void )
 	r_fullbright = ri.Cvar_Get ("r_fullbright", "0", CVAR_CHEAT );
 	r_intensity = ri.Cvar_Get ("r_intensity", "1", CVAR_LATCH );
 	r_singleShader = ri.Cvar_Get ("r_singleShader", "0", CVAR_CHEAT | CVAR_LATCH );
+	r_onlyShader = ri.Cvar_Get ("r_onlyShader", "", CVAR_TEMP );
 
 	//
 	// archived variables that can change at any time
