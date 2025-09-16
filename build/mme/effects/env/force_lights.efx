@@ -1,0 +1,14 @@
+Light
+{
+	life				40
+
+	rgb
+	{
+		start			1 0 0
+	}
+
+	size
+	{
+		start			300
+	}
+}

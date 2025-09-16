@@ -1,0 +1,64 @@
+Line
+{
+	spawnFlags			org2fromTrace
+	
+	life				200
+
+	
+	size
+	{
+		start			12
+		end				20
+		parm			8
+		flags			random wave
+	}
+
+	shaders
+	[
+		gfx/misc/whiteLine2
+	]
+}
+
+Line
+{
+	spawnFlags			org2fromTrace
+	
+	life				200
+
+	tomFlags			lit litunique lightjitterrandom
+	
+	uniqueLightId		1
+	
+	light
+	{
+		start			800
+		end				600
+		parm			8
+		flags			random
+	}
+	
+	origin				-20 0 0
+
+	rgb
+	{
+		start			1 0 0
+	}
+
+	alpha
+	{
+		start			0.4 0.6
+	}
+
+	size
+	{
+		start			40
+		end				36
+		parm			8
+		flags			wave
+	}
+
+	shaders
+	[
+		gfx/misc/whiteLine2
+	]
+}
