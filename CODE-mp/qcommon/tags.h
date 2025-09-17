@@ -16,6 +16,7 @@
 	TAGDEF(FILESYS),					// general filesystem usage
 	TAGDEF(GENERAL),
 	TAGDEF(GHOUL2),						// Ghoul2 stuff
+	TAGDEF(GHOUL2_GORE),						// Ghoul2 stuff
 	TAGDEF(CLIPBOARD),					
 	TAGDEF(LISTFILES),					// for "*.blah" lists
 	TAGDEF(STRING),

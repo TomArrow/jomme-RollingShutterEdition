@@ -104,7 +104,7 @@ serverStatus_t cl_serverStatusList[MAX_SERVERSTATUSREQUESTS];
 int serverStatusCount;
 
 #ifdef G2_COLLISION_ENABLED
-CMiniHeap *G2VertSpaceClient = 0;
+IHeapAllocator*G2VertSpaceClient = 0;
 #endif
 
 #if defined __USEA3D && defined __A3D_GEOM
@@ -688,7 +688,7 @@ ways a client gets into a game
 Also called by Com_Error
 =================
 */
-extern void FixGhoul2InfoLeaks(bool,bool);
+//extern void FixGhoul2InfoLeaks(bool,bool);
 
 void CL_FlushMemory( void ) {
 
@@ -698,7 +698,7 @@ void CL_FlushMemory( void ) {
 	// if not running a server clear the whole hunk
 	if ( !com_sv_running->integer ) {
 		// clear collision map data
-		FixGhoul2InfoLeaks(true,false);
+		//FixGhoul2InfoLeaks(true,false);
 		CM_ClearMap();
 		// clear the whole hunk
 		Hunk_Clear();
@@ -2148,7 +2148,7 @@ void CL_CheckUserinfo( void ) {
 }
 
 #ifdef G2_COLLISION_ENABLED
-extern CMiniHeap *G2VertSpaceServer;
+extern IHeapAllocator*G2VertSpaceServer;
 #endif
 
 /*
@@ -2450,6 +2450,7 @@ void CL_InitRef( void ) {
 
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
+	ri.Cvar_VariableIntegerValue = Cvar_VariableIntegerValue;
 
 	// cinematic stuff
 

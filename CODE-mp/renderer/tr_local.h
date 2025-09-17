@@ -8,7 +8,7 @@
 #include "../qcommon/qcommon.h"
 #include "tr_public.h"
 #include "qgl.h"
-#include "ghoul2/ghoul2_shared.h"
+#include "../ghoul2/ghoul2_shared.h"
 
 #define ENABLEGLSL 1
 
@@ -1583,6 +1583,19 @@ extern cvar_t	*mme_voxelShadowLightQuickJitterMethod;
 extern cvar_t	*mme_quickDlightJitter;
 
 
+/*
+Ghoul2 Insert Start
+*/
+#ifdef _DEBUG
+extern	cvar_t* r_noPrecacheGLA;
+#endif
+
+extern	cvar_t* r_noServerGhoul2;
+/*
+Ghoul2 Insert End
+*/
+
+
 float R_NoiseGet4f( float x, float y, float z, double t );
 void  R_NoiseInit( void );
 
@@ -1844,6 +1857,8 @@ struct shaderCommands_s
 
 	qboolean	SSInitializedWind;
 
+	//rww - doing a fade, don't compute shader color/alpha overrides
+	bool		fading;
 };
 #ifdef _WIN32//_MSVC_VER
 typedef __declspec(align(16)) shaderCommands_s	shaderCommands_t;
@@ -2007,37 +2022,73 @@ ANIMATED MODELS
 void R_MakeAnimModel( model_t *model );
 void R_AddAnimSurfaces( trRefEntity_t *ent );
 void RB_SurfaceAnim( md4Surface_t *surfType );
+
+class CBoneCache;
+
 /*
 Ghoul2 Insert Start
 */
+#ifdef _MSC_VER
 #pragma warning (disable: 4512)	//default assignment operator could not be gened
+#endif
 class CRenderableSurface
 {
 public:
+#ifdef _G2_GORE
+	int				ident;
+#else
 	const int		ident;			// ident of this surface - required so the materials renderer knows what sort of surface this refers to 
-	void	 		*boneList;		// pointer to transformed bone list for this surface - required client side for rendering DONOT USE IN GAME	SIDE
-	mdxmSurface_t	*surfaceData;	// pointer to surface data loaded into file - only used by client renderer DO NOT USE IN GAME SIDE - if there is a vid restart this will be out of wack on the game
+#endif
+	CBoneCache* boneCache;
+	mdxmSurface_t* surfaceData;	// pointer to surface data loaded into file - only used by client renderer DO NOT USE IN GAME SIDE - if there is a vid restart this will be out of wack on the game
+#ifdef _G2_GORE
+	float* alternateTex;		// alternate texture coordinates.
+	void* goreChain;
 
-CRenderableSurface():	
-	ident(SF_MDX),
-	boneList(0),
-	surfaceData(0)
+	float			scale;
+	float			fade;
+	float			impactTime; // this is a number between 0 and 1 that dictates the progression of the bullet impact
+#endif
+
+#ifdef _G2_GORE
+	CRenderableSurface& operator= (const CRenderableSurface& src)
+	{
+		ident = src.ident;
+		boneCache = src.boneCache;
+		surfaceData = src.surfaceData;
+		alternateTex = src.alternateTex;
+		goreChain = src.goreChain;
+
+		return *this;
+	}
+#endif
+
+	CRenderableSurface() :
+		ident(SF_MDX),
+		boneCache(0),
+#ifdef _G2_GORE
+		surfaceData(0),
+		alternateTex(0),
+		goreChain(0)
+#else
+		surfaceData(0)
+#endif
 	{}
 
-~CRenderableSurface() {
-#if R_SMP
-	if (boneList) {
-		delete (mdxaBone_v*)boneList;
+#ifdef _G2_GORE
+	void Init()
+	{
+		ident = SF_MDX;
+		boneCache = 0;
+		surfaceData = 0;
+		alternateTex = 0;
+		goreChain = 0;
 	}
-	//if (surfaceData) {
-	//	delete surfaceData;
-	//}
 #endif
-}
 };
 
-void R_AddGhoulSurfaces( trRefEntity_t *ent );
-void RB_SurfaceGhoul( CRenderableSurface *surface );
+void R_AddGhoulSurfaces(trRefEntity_t* ent);
+void RB_SurfaceGhoul(CRenderableSurface* surface);
 /*
 Ghoul2 Insert End
 */
@@ -2251,8 +2302,8 @@ Ghoul2 Insert Start
 // tr_ghoul2.cpp
 void		Create_Matrix(const float *angle, mdxaBone_t *matrix);
 void		Multiply_3x4Matrix(mdxaBone_t *out, mdxaBone_t *in2, mdxaBone_t *in);
-extern qboolean R_LoadMDXM (model_t *mod, void *buffer, const char *name, qboolean bAlreadyCached );
-extern qboolean R_LoadMDXA (model_t *mod, void *buffer, const char *name, qboolean bAlreadyCached );
+extern qboolean R_LoadMDXM (model_t *mod, void *buffer, const char *name, qboolean &bAlreadyCached );
+extern qboolean R_LoadMDXA (model_t *mod, void *buffer, const char *name, qboolean &bAlreadyCached );
 bool LoadTGAPalletteImage ( const char *name, byte **pic, int *width, int *height);
 void		RE_InsertModelIntoHash(const char *name, model_t *mod);
 /*
@@ -2264,6 +2315,8 @@ void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
 #endif
 #endif //TR_LOCAL_H
 
+
+qboolean ShaderHashTableExists(void);
 
 //MME
 int SaveJPG( int quality, int image_width, int image_height, mmeShotType_t image_type, byte *image_buffer, byte *out_buffer, int out_size );

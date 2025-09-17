@@ -582,6 +582,7 @@
     <ClCompile Include="qcommon\GenericParser2.cpp" />
     <ClCompile Include="qcommon\hstring.cpp" />
     <ClCompile Include="qcommon\huffman.cpp" />
+    <ClCompile Include="qcommon\matcomp.cpp" />
     <ClCompile Include="qcommon\md4.cpp" />
     <ClCompile Include="qcommon\msg.cpp" />
     <ClCompile Include="qcommon\net_chan.cpp" />
@@ -791,6 +792,7 @@
     <ClInclude Include="qcommon\GenericParser2.h" />
     <ClInclude Include="qcommon\hstring.h" />
     <ClInclude Include="qcommon\INetProfile.h" />
+    <ClInclude Include="qcommon\matcomp.h" />
     <ClInclude Include="qcommon\MiniHeap.h" />
     <ClInclude Include="qcommon\qcommon.h" />
     <ClInclude Include="qcommon\qfiles.h" />

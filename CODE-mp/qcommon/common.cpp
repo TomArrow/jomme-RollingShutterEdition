@@ -1680,6 +1680,16 @@ qboolean Hunk_CheckMark( void ) {
 	return qfalse;
 }
 
+qboolean Com_TheHunkMarkHasBeenMade(void)
+{
+	return Hunk_CheckMark(); // is this right? idk
+	//if (hunk_tag == TAG_HUNK_MARK2)
+	//{
+	//	return qtrue;
+	//}
+	//return qfalse;
+}
+
 void CL_ShutdownCGame( void );
 void CL_ShutdownUI( void );
 void SV_ShutdownGameProgs( void );

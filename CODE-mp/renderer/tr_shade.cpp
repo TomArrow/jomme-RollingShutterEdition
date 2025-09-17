@@ -367,6 +367,8 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 		tess.shaderTime = tess.shader->clampTime;
 	}
 
+	tess.fading = false;
+
 	R_FrameBuffer_SetDynamicUniforms2(NULL,NULL,NULL,state->styles);
 }
 
@@ -1881,7 +1883,10 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 			continue;
 		}
 
-		ComputeColors( pStage, forceRGBGen, input->shader->isHud, input->shader->shaderFlags);
+		if (!input->fading)
+		{ //this means ignore this, while we do a fade-out
+			ComputeColors(pStage, forceRGBGen, input->shader->isHud, input->shader->shaderFlags);
+		}
 		ComputeTexCoords( pStage );
 
 		if ( !setArraysOnce )

@@ -818,6 +818,9 @@
     <ClCompile Include="hypersonic-rle\simd_platform.c">
       <Filter>hypersonic-rle</Filter>
     </ClCompile>
+    <ClCompile Include="qcommon\matcomp.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client\client.h">
@@ -1332,6 +1335,9 @@
     </ClInclude>
     <ClInclude Include="hypersonic-rle\simd_platform.h">
       <Filter>hypersonic-rle</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\matcomp.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

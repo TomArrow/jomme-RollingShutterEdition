@@ -30,7 +30,7 @@ Ghoul2 Insert Start
 #include "../qcommon/strip.h"
 
 #ifdef G2_COLLISION_ENABLED
-extern CMiniHeap *G2VertSpaceClient;
+extern IHeapAllocator*G2VertSpaceClient;
 #endif
 
 /*
@@ -519,7 +519,7 @@ The cgame module is making a system call
 #else
 #define	VMF(x)	((float *)args)[x]
 #endif
-extern bool RicksCrazyOnServer;
+//extern bool RicksCrazyOnServer;
 #ifdef _WIN64
 intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 #else
@@ -1091,7 +1091,9 @@ Ghoul2 Insert Start
 		return G2API_GetBoltMatrix((CGhoul2Info_v *)args[1], args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5),(const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
 
 	case CG_G2_INITGHOUL2MODEL:
-		RicksCrazyOnServer=false;
+#ifdef _FULL_G2_LEAK_CHECKING
+		g_G2AllocServer = 0;
+#endif
 		return	G2API_InitGhoul2Model((CGhoul2Info_v **)VMA(1), (const char *)VMA(2), args[3], (qhandle_t) args[4],
 									  (qhandle_t) args[5], args[6], args[7]);
 

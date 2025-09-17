@@ -435,10 +435,10 @@ clients along with it.
 This is NOT called for map_restart
 ================
 */
-extern void FixGhoul2InfoLeaks(bool,bool);
+//extern void FixGhoul2InfoLeaks(bool,bool);
 
 #ifdef G2_COLLISION_ENABLED
-extern CMiniHeap *G2VertSpaceServer;
+extern IHeapAllocator *G2VertSpaceServer;
 #define G2_VERT_SPACE_SERVER_SIZE 256
 #endif
 
@@ -457,7 +457,7 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 	// shut down the existing game if it is running
 	SV_ShutdownGameProgs();
 
-	FixGhoul2InfoLeaks(false,true);
+	//FixGhoul2InfoLeaks(false,true);
 
 
 	Com_Printf ("------ Server Initialization ------\n");

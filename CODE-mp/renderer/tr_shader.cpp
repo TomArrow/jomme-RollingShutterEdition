@@ -104,6 +104,15 @@ static	shader_t*		hashTable[FILE_HASH_SIZE];
 #define MAX_SHADERTEXT_HASH		2048
 static char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
 
+qboolean ShaderHashTableExists(void)
+{
+	if (shaderTextHashTable[0])
+	{
+		return qtrue;
+	}
+	return qfalse;
+}
+
 const int lightmapsNone[MAXLIGHTMAPS_REAL] = 
 { 
 	LIGHTMAP_NONE,

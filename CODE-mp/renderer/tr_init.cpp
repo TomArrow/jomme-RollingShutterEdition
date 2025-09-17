@@ -31,7 +31,7 @@ extern void ParseWaveformAlone(char** text, waveForm_t* output);
 //#endif
 
 #ifdef G2_COLLISION_ENABLED
-CMiniHeap *G2VertSpaceServer = NULL;
+IHeapAllocator*G2VertSpaceServer = NULL;
 #endif
 
 #ifndef DEDICATED
@@ -166,6 +166,7 @@ cvar_t	*r_vertexLight;
 cvar_t	*r_styleOnly;
 cvar_t	*r_uiFullScreen;
 cvar_t	*r_shadows;
+cvar_t	*r_shadowRange;
 cvar_t	*r_flares;
 cvar_t	*r_mode;
 cvar_t	*r_nobind;
@@ -236,6 +237,21 @@ cvar_t	*r_Ghoul2UnSqashAfterSmooth=0;
 //cvar_t	*r_Ghoul2NoLerp;
 //cvar_t	*r_Ghoul2NoBlend;
 //cvar_t	*r_Ghoul2BlendMultiplier=0;
+
+
+cvar_t* broadsword = 0;
+cvar_t* broadsword_kickbones = 0;
+cvar_t* broadsword_kickorigin = 0;
+cvar_t* broadsword_playflop = 0;
+cvar_t* broadsword_dontstopanim = 0;
+cvar_t* broadsword_waitforshot = 0;
+cvar_t* broadsword_smallbbox = 0;
+cvar_t* broadsword_extra1 = 0;
+cvar_t* broadsword_extra2 = 0;
+
+cvar_t* broadsword_effcorr = 0;
+cvar_t* broadsword_ragtobase = 0;
+cvar_t* broadsword_dircap = 0;
 
 /*
 Ghoul2 Insert End
@@ -1094,6 +1110,7 @@ void R_Register( void )
 	r_lockpvs = ri.Cvar_Get ("r_lockpvs", "0", CVAR_CHEAT);
 	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_CHEAT);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", 0 );
+	r_shadowRange = ri.Cvar_Get("r_shadowRange", "1000", 0);
 
 	r_maxpolys = ri.Cvar_Get( "r_maxpolys", va("%d", MAX_POLYS), 0);
 	r_maxpolyverts = ri.Cvar_Get( "r_maxpolyverts", va("%d", MAX_POLYVERTS), 0);
@@ -1107,6 +1124,21 @@ Ghoul2 Insert Start
 
 	r_Ghoul2AnimSmooth = ri.Cvar_Get( "r_ghoul2animsmooth", ".3", 0 );
 	r_Ghoul2UnSqashAfterSmooth = ri.Cvar_Get( "r_ghoul2unsqashaftersmooth", "1", 0 );
+
+
+	broadsword = ri.Cvar_Get("broadsword", "0", 0);
+	broadsword_kickbones = ri.Cvar_Get("broadsword_kickbones", "1", 0);
+	broadsword_kickorigin = ri.Cvar_Get("broadsword_kickorigin", "1", 0);
+	broadsword_dontstopanim = ri.Cvar_Get("broadsword_dontstopanim", "0", 0);
+	broadsword_waitforshot = ri.Cvar_Get("broadsword_waitforshot", "0", 0);
+	broadsword_playflop = ri.Cvar_Get("broadsword_playflop", "1", 0);
+	broadsword_smallbbox = ri.Cvar_Get("broadsword_smallbbox", "0", 0);
+	broadsword_extra1 = ri.Cvar_Get("broadsword_extra1", "0", 0);
+	broadsword_extra2 = ri.Cvar_Get("broadsword_extra2", "0", 0);
+	broadsword_effcorr = ri.Cvar_Get("broadsword_effcorr", "1", 0);
+	broadsword_ragtobase = ri.Cvar_Get("broadsword_ragtobase", "2", 0);
+	broadsword_dircap = ri.Cvar_Get("broadsword_dircap", "64", 0);
+
 /*
 Ghoul2 Insert End
 */

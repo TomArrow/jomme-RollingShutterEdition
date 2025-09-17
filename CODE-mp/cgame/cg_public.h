@@ -348,6 +348,19 @@ typedef enum {
 //void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
 //					 int skipNumber, int mask );
 
+
+	CG_G2TRACE,
+	//void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
+	//					 int skipNumber, int mask );
+
+	CG_G2MARK,
+
+	CG_RAG_CALLBACK,
+
+	CG_INCOMING_CONSOLE_COMMAND,
+
+	CG_GET_USEABLE_FORCE,
+
 	CG_GET_ORIGIN,		// int entnum, vec3_t origin
 	CG_GET_ANGLES,		// int entnum, vec3_t angle
 
@@ -440,6 +453,62 @@ typedef struct
 	vec3_t			angles;				// input
 	vec3_t			modelScale;			// input
 } TCGPositionOnBolt;
+
+
+//ragdoll callback structs -rww
+#define RAG_CALLBACK_NONE				0
+#define RAG_CALLBACK_DEBUGBOX			1
+typedef struct
+{
+	vec3_t			mins;
+	vec3_t			maxs;
+	int				duration;
+} ragCallbackDebugBox_t;
+
+#define RAG_CALLBACK_DEBUGLINE			2
+typedef struct
+{
+	vec3_t			start;
+	vec3_t			end;
+	int				time;
+	int				color;
+	int				radius;
+} ragCallbackDebugLine_t;
+
+#define RAG_CALLBACK_BONESNAP			3
+typedef struct
+{
+	char			boneName[128]; //name of the bone in question
+	int				entNum; //index of entity who owns the bone in question
+} ragCallbackBoneSnap_t;
+
+#define RAG_CALLBACK_BONEIMPACT			4
+typedef struct
+{
+	char			boneName[128]; //name of the bone in question
+	int				entNum; //index of entity who owns the bone in question
+} ragCallbackBoneImpact_t;
+
+#define RAG_CALLBACK_BONEINSOLID		5
+typedef struct
+{
+	vec3_t			bonePos; //world coordinate position of the bone
+	int				entNum; //index of entity who owns the bone in question
+	int				solidCount; //higher the count, the longer we've been in solid (the worse off we are)
+} ragCallbackBoneInSolid_t;
+
+#define RAG_CALLBACK_TRACELINE			6
+typedef struct
+{
+	trace_t			tr;
+	vec3_t			start;
+	vec3_t			end;
+	vec3_t			mins;
+	vec3_t			maxs;
+	int				ignore;
+	int				mask;
+} ragCallbackTraceLine_t;
+
 
 #define	MAX_CG_SHARED_BUFFER_SIZE		2048
 

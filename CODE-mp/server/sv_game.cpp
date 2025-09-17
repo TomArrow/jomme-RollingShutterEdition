@@ -16,7 +16,7 @@
 botlib_export_t	*botlib_export;
 
 #ifdef G2_COLLISION_ENABLED
-extern CMiniHeap *G2VertSpaceServer;
+extern IHeapAllocator *G2VertSpaceServer;
 #endif
 
 void SV_GameError( const char *string ) {
@@ -949,7 +949,9 @@ int SV_GameSystemCalls( int *args ) {
 		return G2API_GetBoltMatrix((CGhoul2Info_v *)args[1], args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5),(const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
 
 	case G_G2_INITGHOUL2MODEL:
-		RicksCrazyOnServer=true;
+#ifdef _FULL_G2_LEAK_CHECKING
+		g_G2AllocServer = 1;
+#endif
 		return	G2API_InitGhoul2Model((CGhoul2Info_v **)VMA(1), (const char *)VMA(2), args[3], (qhandle_t) args[4],
 									  (qhandle_t) args[5], args[6], args[7]);
 
