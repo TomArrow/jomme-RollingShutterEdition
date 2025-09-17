@@ -4430,19 +4430,30 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 			}
 #endif
 
-			if (isAnOldModelFile)
+			if (!isAnOldModelFile)
 			{
-				int *boneRef = (int *) ( (byte *)surf + surf->ofsBoneReferences );
-				for ( j = 0 ; j < surf->numBoneReferences ; j++ ) 
+				int* boneRef = (int*)((byte*)surf + surf->ofsBoneReferences);
+				for (j = 0; j < surf->numBoneReferences; j++)
 				{
-					assert(boneRef[j] >= 0 && boneRef[j] < 72);
-					if (boneRef[j] >= 0 && boneRef[j] < 72)
+					assert(boneRef[j] >= 0 && boneRef[j] < 53);
+					if (boneRef[j] >= 0 && boneRef[j] < 53)
 					{
-						boneRef[j]=OldToNewRemapTable[boneRef[j]];
+						int k;
+
+						for (k = 0; k < 72; k++)
+						{
+							if (OldToNewRemapTable[k] == boneRef[j])
+							{
+								boneRef[j] = k;
+								break;
+							}
+
+							if (k == 72) boneRef[j] = 0;
+						}
 					}
 					else
 					{
-						boneRef[j]=0;
+						boneRef[j] = 0;
 					}
 				}
 			}
