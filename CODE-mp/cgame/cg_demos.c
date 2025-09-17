@@ -39,6 +39,10 @@ extern void trap_R_RandomSeed( int time, float timeFraction );
 extern void trap_FX_RandomSeed( int time, float timeFraction );
 extern void trap_S_UpdateScale( float scale );
 
+int			trap_G2API_GetTime(void);
+void		trap_G2API_SetTime(int time, int clock);
+void		trap_G2API_SetTimeFraction(float timeFraction);
+
 int lastMusicStart;
 static void demoSynchMusic( int start, float length ) {
 	if ( length > 0 ) {
@@ -743,6 +747,10 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 	} else {
 		trap_FX_AdjustTime(cg.time, cg.frametime, cg.timeFraction, cg.refdef.vieworg, cg.refdef.viewaxis);
 	}
+
+	trap_G2API_SetTime(cg.time, 0);
+	trap_G2API_SetTime(cg.time, 1);
+	trap_G2API_SetTimeFraction(cg.timeFraction);
 
 	CG_RunLightStyles();
 	/* Prepare to render the screen */		

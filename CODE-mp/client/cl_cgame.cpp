@@ -1191,6 +1191,20 @@ Ghoul2 Insert End
 	case CG_G2_SETNEWORIGIN:
 		return G2API_SetNewOrigin((CGhoul2Info_v *)args[1], /*(const int)VMA(2)*/args[2]);
 
+
+	case CG_G2_GETTIME:
+		return G2API_GetTime(0);
+
+	case CG_G2_SETTIME:
+		G2API_SetTime(args[1], args[2]);
+		return 0;
+
+	case CG_G2_SETTIMEFRACTION:
+		//entTODO: add timefraction thing to another new G2API
+		G2API_SetTimeFraction(VMF(1));
+		return 0;
+
+
 	case CG_SP_GETSTRINGTEXTSTRING:
 //	case CG_SP_GETSTRINGTEXT:
 		const char* text;
@@ -1402,6 +1416,13 @@ CL_CGameRendering
 =====================
 */
 void CL_CGameRendering( stereoFrame_t stereo ) {
+	//rww - RAGDOLL_BEGIN
+	if (!com_sv_running->integer)
+	{ //set the server time to match the client time, if we don't have a server going.
+		G2API_SetTime(cl.serverTime, 0);
+	}
+	G2API_SetTime(cl.serverTime, 1);
+	//rww - RAGDOLL_END
 	if (clc.newDemoPlayer) {
 		demoRenderFrame( stereo );
 	} else {

@@ -990,3 +990,32 @@ float trap_R_EvalWaveform(waveForm_t* wf) {
 	int retVal = syscall(CG_R_EVALWAVEFORM, wf);
 	return *(float*)&retVal;
 }
+
+
+
+
+
+
+
+int trap_G2API_GetTime(void)
+{
+	return syscall(CG_G2_GETTIME);
+}
+
+void trap_G2API_SetTime(int time, int clock)
+{
+	syscall(CG_G2_SETTIME, time, clock);
+}
+
+void trap_G2API_SetTimeFraction(float timeFraction)
+{
+	syscall(CG_G2_SETTIMEFRACTION, PASSFLOAT(timeFraction));
+}
+
+
+
+
+
+
+
+

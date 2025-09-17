@@ -4306,10 +4306,10 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 		return qtrue;	// All done. Stop, go no further, do not LittleLong(), do not pass Go...
 	}
 
-	bool isAnOldModelFile = false;
-	if (mdxm->numBones == 72 && strstr(mdxm->animName,"_humanoid") )
+	bool isANewModelFile = false;
+	if (mdxm->numBones == 53 && strstr(mdxm->animName,"_humanoid") )
 	{
-		isAnOldModelFile = true;
+		isANewModelFile = true;
 	}
 
 	surfInfo = (mdxmSurfHierarchy_t *)( (byte *)mdxm + mdxm->ofsSurfHierarchy);
@@ -4430,7 +4430,7 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 			}
 #endif
 
-			if (!isAnOldModelFile)
+			if (isANewModelFile)
 			{
 				int* boneRef = (int*)((byte*)surf + surf->ofsBoneReferences);
 				for (j = 0; j < surf->numBoneReferences; j++)
