@@ -1160,6 +1160,29 @@ Ghoul2 Insert Start
 		return (int)G2API_RemoveGhoul2Model((CGhoul2Info_v **)VMA(1), args[2]);
 		//return (int)G2API_RemoveGhoul2Model((CGhoul2Info_v **)args[1], args[2]);
 
+
+	case CG_G2_GETNUMGOREMARKS:
+#ifdef _G2_GORE
+	{
+		CGhoul2Info_v& g2 = *((CGhoul2Info_v*)args[1]);
+		return G2API_GetNumGoreMarks(&g2[args[2]]);
+	}
+#endif
+	return 0;
+
+	case CG_G2_ADDSKINGORE:
+#ifdef _G2_GORE
+		G2API_AddSkinGore(*((CGhoul2Info_v*)args[1]), *(SSkinGoreData*)VMA(2));
+#endif
+		return 0;
+
+	case CG_G2_CLEARSKINGORE:
+#ifdef _G2_GORE
+		G2API_ClearSkinGore(*((CGhoul2Info_v*)args[1]));
+#endif
+		return 0;
+
+
 	case CG_G2_ADDBOLT:
 		return G2API_AddBolt((CGhoul2Info_v *)args[1], args[2], (const char *)VMA(3));
 

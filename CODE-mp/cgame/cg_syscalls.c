@@ -889,6 +889,23 @@ qboolean trap_G2API_RemoveGhoul2Model(void *ghlInfo, int modelIndex)
 	return syscall(CG_G2_REMOVEGHOUL2MODEL, ghlInfo, modelIndex);
 }
 
+
+int trap_G2API_GetNumGoreMarks(void* ghlInfo, int modelIndex)
+{
+	return syscall(CG_G2_GETNUMGOREMARKS, ghlInfo, modelIndex);
+}
+
+void trap_G2API_AddSkinGore(void* ghlInfo, SSkinGoreData* gore)
+{
+	syscall(CG_G2_ADDSKINGORE, ghlInfo, gore);
+}
+
+void trap_G2API_ClearSkinGore(void* ghlInfo)
+{
+	syscall(CG_G2_CLEARSKINGORE, ghlInfo);
+}
+
+
 int	trap_G2API_AddBolt(void *ghoul2, int modelIndex, const char *boneName)
 {
 	return syscall(CG_G2_ADDBOLT, ghoul2, modelIndex, boneName);

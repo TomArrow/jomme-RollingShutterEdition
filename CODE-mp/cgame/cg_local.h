@@ -460,6 +460,7 @@ typedef struct centity_s {
 	vec3_t				saberAnglesNonDead;
 	vec3_t				saberAxisNonDead[3];
 	int					nextAllowedSaberTraceEffect;
+	int					storageTime;
 } centity_t;
 
 
@@ -654,6 +655,7 @@ typedef struct localEntity_s {
 				int				powerups;
 				int				owner;
 				int				nextAllowedSaberTraceEffect;
+				int				storageTime;
 			} saber;
 		} fragment;
 	} data;
@@ -1613,6 +1615,11 @@ typedef struct {
 	sfxHandle_t	zoomEnd;
 	sfxHandle_t	disruptorZoomLoop;
 
+	qhandle_t	bdecal_bodyburn1;
+	qhandle_t	bdecal_saberglow;
+	qhandle_t	bdecal_burn1;
+	qhandle_t	mSaberDamageGlow;
+
 	// Force looping sounds
 	sfxHandle_t speedLoopSound;
 	sfxHandle_t protectLoopSound;
@@ -1951,6 +1958,8 @@ extern	vmCvar_t		cg_oldPainSounds;
 
 #ifdef G2_COLLISION_ENABLED
 extern	vmCvar_t		cg_saberModelTraceEffect;
+extern	vmCvar_t		cg_saberClientVisualCompensation;
+extern	vmCvar_t		cg_ghoul2Marks;
 #endif
 
 extern	vmCvar_t		cg_fpls;
@@ -2878,6 +2887,11 @@ void		trap_G2API_CopySpecificGhoul2Model(void *g2From, int modelFrom, void *g2To
 void		trap_G2API_DuplicateGhoul2Instance(void *g2From, void **g2To);
 qboolean	trap_G2API_HasGhoul2ModelOnIndex(void *ghlInfo, int modelIndex);
 qboolean	trap_G2API_RemoveGhoul2Model(void *ghlInfo, int modelIndex);
+
+//rww - for adding gore (or whatever) shaders to the g2 model
+int			trap_G2API_GetNumGoreMarks(void* ghlInfo, int modelIndex);
+void		trap_G2API_AddSkinGore(void* ghlInfo, SSkinGoreData* gore);
+void		trap_G2API_ClearSkinGore(void* ghlInfo);
 
 int			trap_G2API_AddBolt(void *ghoul2, int modelIndex, const char *boneName);
 //qboolean	trap_G2API_RemoveBolt(void *ghoul2, int index);

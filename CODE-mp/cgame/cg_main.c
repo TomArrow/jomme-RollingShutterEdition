@@ -516,6 +516,8 @@ vmCvar_t	cg_oldPainSounds;
 
 #ifdef G2_COLLISION_ENABLED
 vmCvar_t	cg_saberModelTraceEffect;
+vmCvar_t	cg_saberClientVisualCompensation;
+vmCvar_t	cg_ghoul2Marks;
 #endif
 
 vmCvar_t	cg_fpls;
@@ -853,6 +855,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 
 #ifdef G2_COLLISION_ENABLED
 	{ &cg_saberModelTraceEffect, "cg_saberModelTraceEffect", "2", NULL, CVAR_ARCHIVE },
+	{ &cg_saberClientVisualCompensation, "cg_saberClientVisualCompensation", "1", NULL, CVAR_ARCHIVE },
+	{ &cg_ghoul2Marks, "cg_ghoul2Marks", "16", NULL, CVAR_ARCHIVE },
 #endif
 
 	{ &cg_fpls, "cg_fpls", "0", NULL, 0 },
@@ -3154,6 +3158,12 @@ Ghoul2 Insert End
 	cgs.textFont.glyphScale = 0;
 	trap_MME_RegisterFont( mov_fontName.string, mov_fontSize.integer, &cgs.textFont );
 	cgs.textFontValid = cgs.textFont.glyphScale > 0;
+
+	//body decal shaders -rww
+	cgs.media.bdecal_bodyburn1 = trap_R_RegisterShader("gfx/damage/bodyburnmark1");
+	cgs.media.bdecal_saberglow = trap_R_RegisterShader("gfx/damage/saberglowmark");
+	cgs.media.bdecal_burn1 = trap_R_RegisterShader("gfx/damage/bodybigburnmark1");
+	cgs.media.mSaberDamageGlow = trap_R_RegisterShader("gfx/effects/saberDamageGlow");
 
 	CG_InitConsoleCommands();
 

@@ -1009,7 +1009,8 @@ void G2_GorePolys( const mdxmSurface_t *surface, CTraceSurface &TS, const mdxmSu
 			sizeof(float)*2*newNumVerts+ // texture coordinates
 			sizeof(int)*newNumTris*3;  // new indecies
 
-		int *data=(int *)Z_Malloc ( sizeof(int)*size, TAG_GHOUL2_GORE, qtrue );
+		//int *data=(int *)Z_Malloc ( sizeof(int)*size, TAG_GHOUL2_GORE, qtrue );
+		int *data=(int *)malloc ( sizeof(int)*size );
 
 #ifdef _DEBUG
 		g_goreTexAllocs++;
@@ -1017,7 +1018,8 @@ void G2_GorePolys( const mdxmSurface_t *surface, CTraceSurface &TS, const mdxmSu
 
 		if ( gore->tex[TS.lod] )
 		{
-			Z_Free(gore->tex[TS.lod]);
+			//Z_Free(gore->tex[TS.lod]);
+			free(gore->tex[TS.lod]);
 #ifdef _DEBUG
 			g_goreTexAllocs--;
 #endif

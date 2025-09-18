@@ -2050,6 +2050,8 @@ public:
 	float			impactTime; // this is a number between 0 and 1 that dictates the progression of the bullet impact
 #endif
 
+	bool			deletable= true; // if coming from rsstorage, we set this to false so debug doesnt explode when trying to delete static storage. idk what the logic behind rsstorage is. - TA
+
 #ifdef _G2_GORE
 	CRenderableSurface& operator= (const CRenderableSurface& src)
 	{

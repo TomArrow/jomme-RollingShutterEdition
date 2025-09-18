@@ -23,7 +23,8 @@ struct GoreTextureCoordinates {
 				extern int g_goreTexAllocs;
 				g_goreTexAllocs--;
 #endif
-				Z_Free(tex[i]);
+				//Z_Free(tex[i]);
+				free(tex[i]);
 				tex[i] = 0;
 			}
 		}

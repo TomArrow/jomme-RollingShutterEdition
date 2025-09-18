@@ -782,6 +782,7 @@ CRenderableSurface *AllocRS()
 	ret->Init();
 	NextRS++;
 	NextRS%=MAX_RENDER_SURFACES;
+	ret->deletable = false;
 	return ret;
 }
 #endif
@@ -3621,7 +3622,9 @@ void RB_SurfaceGhoul( CRenderableSurface *surf )
 	CBoneCache *bones = surf->boneCache;
 
 #ifndef _G2_GORE //we use this later, for gore
-	delete surf;
+	if (surf->deletable) {
+		delete surf;
+	}
 #endif
 
 #ifdef VV_LIGHTING
@@ -3844,10 +3847,10 @@ void RB_SurfaceGhoul( CRenderableSurface *surf )
 #if 1
 	if ((!tess.shader->hasGlow || g_bRenderGlowingObjects || !g_bDynamicGlowSupported || !r_DynamicGlow->integer)
 		&& (!tr.capturingDofOrStereo || (tr.capturingDofOrStereo && tr.latestDofOrStereoFrame))
-		&& !g_bRenderZPrepass) {
+		&& !g_bRenderZPrepass && surf->deletable) {
 #else
 	if ((!tess.shader->hasGlow || g_bRenderGlowingObjects || !g_bDynamicGlowSupported || !r_DynamicGlow->integer)
-		&& (!tr.capturingDofOrStereo || (tr.capturingDofOrStereo && tr.latestDofOrStereoFrame))) {
+		&& (!tr.capturingDofOrStereo || (tr.capturingDofOrStereo && tr.latestDofOrStereoFrame)) && surf->deletable) {
 #endif 
 		delete surf;
 	}
