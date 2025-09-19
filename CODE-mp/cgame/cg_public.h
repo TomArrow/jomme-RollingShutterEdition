@@ -227,6 +227,8 @@ Ghoul2 Insert Start
 	CG_G2_CLEANMODELS,
 	CG_G2_ANGLEOVERRIDE,
 	CG_G2_PLAYANIM,
+	CG_G2_GETBONEANIM,
+	CG_G2_GETBONEFRAME,
 	CG_G2_GETGLANAME,
 	CG_G2_COPYGHOUL2INSTANCE,
 	CG_G2_COPYSPECIFICGHOUL2MODEL,
@@ -467,6 +469,14 @@ typedef struct
 	vec3_t	mStart, mMins, mMaxs, mEnd;	// input
 	int		mSkipNumber, mMask;			// input
 } TCGTrace;
+
+// CG_G2MARK
+typedef struct
+{
+	int			shader;
+	float		size;
+	vec3_t		start, dir;
+} TCGG2Mark;
 
 // CG_FX_CAMERASHAKE
 typedef struct

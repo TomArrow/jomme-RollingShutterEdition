@@ -514,6 +514,34 @@ static void CG_General( centity_t *cent ) {
 		}
 	}
 
+	
+	//rww - now do ragdoll stuff
+	if (cent->ghoul2 &&
+		(cent->currentState.eType == ET_BODY || (cent->currentState.eFlags & EF_RAG)))
+	{
+		if (!(cent->currentState.eFlags & EF_NODRAW) &&
+			!(cent->currentState.eFlags & EF_DISINTEGRATION)
+			//&&	cent->bodyFadeTime <= cg.time
+			)
+		{
+			vec3_t forcedAngles;
+
+			VectorClear(forcedAngles);
+			forcedAngles[YAW] = cent->lerpAngles[YAW];
+
+			CG_RagDoll(cent, forcedAngles);
+		}
+	}
+	else if (cent->isRagging)
+	{
+		cent->isRagging = qfalse;
+
+		if (cent->ghoul2 && trap_G2_HaveWeGhoul2Models(cent->ghoul2))
+		{ //May not be valid, in the case of a ragged entity being removed and a non-g2 ent filling its slot.
+			trap_G2API_SetRagDoll(cent->ghoul2, NULL); //calling with null parms resets to no ragdoll.
+		}
+	}
+
 	if (cent->currentState.modelGhoul2 >= G2_MODELPART_HEAD &&
 		cent->currentState.modelGhoul2 <= G2_MODELPART_RLEG &&
 		cent->currentState.modelindex < MAX_CLIENTS &&

@@ -440,6 +440,9 @@ typedef enum {
 #define EF_DISINTEGRATION	0x02000000		// being disintegrated by the disruptor
 #define EF_INVULNERABLE		0x04000000		// just spawned in or whatever, so is protected
 
+#define EF_RAG				0x08000000		//ragdoll him even if he's alive ((1<<6) == 64 in jka, gotta map it, cant reuse cuz the award bullshit is using it).
+
+//#define EF_RAG					(1<<6)		//ragdoll him even if he's alive
 
 
 typedef enum {
@@ -1069,7 +1072,8 @@ typedef struct
 extern saberMoveData_t	saberMoveData[LS_MOVE_MAX];
 extern saberMoveData_t	saberMoveData15[LS_MOVE_MAX];
 
-qboolean BG_LegalizedForcePowers(char *powerOut, int maxRank, qboolean freeSaber, int teamForce, int gametype, int fpDisabled);
+qboolean BG_LegalizedForcePowers(char *powerOut, int maxRank, qboolean freeSaber, int teamForce, int gametype, int fpDisabled); 
+void BG_GiveMeVectorFromMatrix(mdxaBone_t* boltMatrix, int flags, vec3_t vec);
 
 //BG anim utility functions:
 qboolean BG_InSpecialJump( int anim );

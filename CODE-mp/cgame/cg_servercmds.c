@@ -658,6 +658,8 @@ void CG_KillCEntityInstances()
 			{
 				trap_G2API_CleanGhoul2Models(&(cg_entities[i].ghoul2));
 			}
+			cg_entities[i].isRagging = qfalse;
+			cg_entities[i].ikStatus = qfalse;
 		}
 		/*
 		else

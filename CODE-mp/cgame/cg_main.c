@@ -142,6 +142,8 @@ static void C_GetModelScale(void);
 static void C_Trace(void);
 static void C_GetBoltPos(void);
 static void C_ImpactMark(void);
+static void C_G2Trace(void);
+static void C_G2Mark(void);
 
 /*
 ================
@@ -224,6 +226,15 @@ int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int a
 	case CG_TRACE:
 		C_Trace();
 		return 0;
+
+	case CG_G2TRACE:
+		C_G2Trace();
+		return 0;
+	case CG_G2MARK:
+		C_G2Mark();
+		return 0;
+	case CG_RAG_CALLBACK:
+		return CG_RagCallback(arg0);
 
 	case CG_GET_ORIGIN:
 		VectorCopy(cg_entities[arg0].currentState.pos.trBase, (float *)arg1);
@@ -323,6 +334,162 @@ static void C_GetBoltPos(void)
 	{
 		VectorCopy(cg_entities[data->mEntityNum].lerpAngles, data->mAngle);
 	}
+}
+
+
+static void C_G2Trace(void)
+{
+	TCGTrace	*td = (TCGTrace *)cg.sharedBuffer;
+
+	CG_G2Trace(&td->mResult, td->mStart, td->mMins, td->mMaxs, td->mEnd, td->mSkipNumber, td->mMask);
+}
+
+static void C_G2Mark(void)
+{
+	TCGG2Mark	*td = (TCGG2Mark *)cg.sharedBuffer;
+	trace_t		tr;
+	vec3_t		end;
+
+	VectorMA(td->start, 64, td->dir, end);
+	CG_G2Trace(&tr, td->start, NULL, NULL, end, ENTITYNUM_NONE, MASK_PLAYERSOLID);
+
+	if (tr.entityNum < ENTITYNUM_WORLD &&
+		cg_entities[tr.entityNum].ghoul2)
+	{ //hit someone with a ghoul2 instance, let's project the decal on them then.
+		centity_t *cent = &cg_entities[tr.entityNum];
+
+		//CG_TestLine(tr.endpos, end, 2000, 0x0000ff, 1);
+
+		CG_AddGhoul2Mark(td->shader, td->size, tr.endpos, end, tr.entityNum,
+			cent->lerpOrigin, cent->lerpAngles[YAW], cent->ghoul2, cent->modelScale,
+			Q_irand(2000, 4000));
+		//I'm making fx system decals have a very short lifetime.
+	}
+}
+
+static void CG_DebugBoxLines(vec3_t mins, vec3_t maxs, int duration)
+{
+	vec3_t start;
+	vec3_t end;
+	vec3_t vert;
+
+	float x = maxs[0] - mins[0];
+	float y = maxs[1] - mins[1];
+
+	start[2] = maxs[2];
+	vert[2] = mins[2];
+
+	vert[0] = mins[0];
+	vert[1] = mins[1];
+	start[0] = vert[0];
+	start[1] = vert[1];
+	CG_TestLine(start, vert, duration, 0x00000ff, 1);
+
+	vert[0] = mins[0];
+	vert[1] = maxs[1];
+	start[0] = vert[0];
+	start[1] = vert[1];
+	CG_TestLine(start, vert, duration, 0x00000ff, 1);
+
+	vert[0] = maxs[0];
+	vert[1] = mins[1];
+	start[0] = vert[0];
+	start[1] = vert[1];
+	CG_TestLine(start, vert, duration, 0x00000ff, 1);
+
+	vert[0] = maxs[0];
+	vert[1] = maxs[1];
+	start[0] = vert[0];
+	start[1] = vert[1];
+	CG_TestLine(start, vert, duration, 0x00000ff, 1);
+
+	// top of box
+	VectorCopy(maxs, start);
+	VectorCopy(maxs, end);
+	start[0] -= x;
+	CG_TestLine(start, end, duration, 0x00000ff, 1);
+	end[0] = start[0];
+	end[1] -= y;
+	CG_TestLine(start, end, duration, 0x00000ff, 1);
+	start[1] = end[1];
+	start[0] += x;
+	CG_TestLine(start, end, duration, 0x00000ff, 1);
+	CG_TestLine(start, maxs, duration, 0x00000ff, 1);
+	// bottom of box
+	VectorCopy(mins, start);
+	VectorCopy(mins, end);
+	start[0] += x;
+	CG_TestLine(start, end, duration, 0x00000ff, 1);
+	end[0] = start[0];
+	end[1] += y;
+	CG_TestLine(start, end, duration, 0x00000ff, 1);
+	start[1] = end[1];
+	start[0] -= x;
+	CG_TestLine(start, end, duration, 0x00000ff, 1);
+	CG_TestLine(start, mins, duration, 0x00000ff, 1);
+}
+
+//handle ragdoll callbacks, for events and debugging -rww
+static int CG_RagCallback(int callType)
+{
+	switch(callType)
+	{
+	case RAG_CALLBACK_DEBUGBOX:
+		{
+			ragCallbackDebugBox_t *callData = (ragCallbackDebugBox_t *)cg.sharedBuffer;
+
+			CG_DebugBoxLines(callData->mins, callData->maxs, callData->duration);
+		}
+		break;
+	case RAG_CALLBACK_DEBUGLINE:
+		{
+			ragCallbackDebugLine_t *callData = (ragCallbackDebugLine_t *)cg.sharedBuffer;
+
+			CG_TestLine(callData->start, callData->end, callData->time, callData->color, callData->radius);
+		}
+		break;
+	case RAG_CALLBACK_BONESNAP:
+		{
+			ragCallbackBoneSnap_t *callData = (ragCallbackBoneSnap_t *)cg.sharedBuffer;
+			centity_t *cent = &cg_entities[callData->entNum];
+			int snapSound = trap_S_RegisterSound(va("sound/player/bodyfall_human%i.wav", Q_irand(1, 3)));
+
+			trap_S_StartSound(cent->lerpOrigin, callData->entNum, CHAN_AUTO, snapSound);
+		}
+	case RAG_CALLBACK_BONEIMPACT:
+		break;
+	case RAG_CALLBACK_BONEINSOLID:
+#if 0
+		{
+			ragCallbackBoneInSolid_t *callData = (ragCallbackBoneInSolid_t *)cg.sharedBuffer;
+
+			if (callData->solidCount > 16)
+			{ //don't bother if we're just tapping into solidity, we'll probably recover on our own
+				centity_t *cent = &cg_entities[callData->entNum];
+				vec3_t slideDir;
+
+				VectorSubtract(cent->lerpOrigin, callData->bonePos, slideDir);
+				VectorAdd(cent->ragOffsets, slideDir, cent->ragOffsets);
+
+				cent->hasRagOffset = qtrue;
+			}
+		}
+#endif
+		break;
+	case RAG_CALLBACK_TRACELINE:
+		{
+			ragCallbackTraceLine_t *callData = (ragCallbackTraceLine_t *)cg.sharedBuffer;
+
+			CG_Trace(&callData->tr, callData->start, callData->mins, callData->maxs,
+				callData->end, callData->ignore, callData->mask);
+		}
+		break;
+	default:
+		Com_Error(ERR_DROP, "Invalid callType in CG_RagCallback");
+		break;
+	}
+
+	return 0;
 }
 
 static void C_ImpactMark()
@@ -543,6 +710,8 @@ vmCvar_t	cg_auraShell;
 vmCvar_t	cg_otherPlayerAlpha;
 
 vmCvar_t	cg_animBlend;
+
+vmCvar_t	broadsword;
 
 vmCvar_t	cg_dismember;
 vmCvar_t	cg_dismemberAllowMultiple;
@@ -881,6 +1050,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_otherPlayerAlpha, "cg_otherPlayerAlpha", "1.0", NULL, CVAR_ARCHIVE },
 
 	{ &cg_animBlend, "cg_animBlend", "1", NULL, 0 },
+
+	{ &broadsword, "broadsword", "2", NULL, CVAR_ARCHIVE },
 
 	{ &cg_dismember, "cg_dismember", "2", NULL, CVAR_ARCHIVE },
 	{ &cg_dismemberAllowMultiple, "cg_dismemberAllowMultiple", "1", NULL, CVAR_ARCHIVE },

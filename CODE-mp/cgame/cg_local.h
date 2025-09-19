@@ -431,6 +431,12 @@ typedef struct centity_s {
 	int				teamPowerEffectTime;
 	qboolean		teamPowerType; //0 regen, 1 heal, 2 drain, 3 absorb
 
+	qboolean		isRagging;
+	qboolean		ownerRagging;
+	int				overridingBones;
+
+	qboolean		ikStatus;
+
 	struct {
 		//qboolean cut[DISM_TOTAL];  //limbs cut off //DISM_*
 		int cut; // bitmask now :) easy to check against shadowlines
@@ -1986,6 +1992,8 @@ extern	vmCvar_t		cg_otherPlayerAlpha;
 
 extern	vmCvar_t		cg_animBlend;
 
+extern	vmCvar_t		broadsword;
+
 extern	vmCvar_t		cg_dismember;
 extern	vmCvar_t		cg_dismemberAllowMultiple;
 
@@ -2345,6 +2353,10 @@ qhandle_t CG_StatusHandle(int task);
 //
 // cg_player.c
 //
+qboolean CG_RagDoll(centity_t* cent, vec3_t forcedAngles);
+qboolean CG_G2TraceCollide(trace_t* tr, const vec3_t mins, const vec3_t maxs, const vec3_t lastValidStart, const vec3_t lastValidEnd);
+void CG_AddGhoul2Mark(int shader, float size, vec3_t start, vec3_t end, int entnum,
+	vec3_t entposition, float entangle, void* ghoul2, vec3_t scale, int lifeTime);
 void CG_Player( centity_t *cent );
 void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team );
@@ -2361,6 +2373,8 @@ void CG_ClientOverride_f(void);
 void CG_BuildSolidList( void );
 int	CG_PointContents( const vec3_t point, int passEntityNum );
 void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
+					 int skipNumber, int mask );
+void CG_G2Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
 					 int skipNumber, int mask );
 void CG_PredictPlayerState( void );
 void CG_LoadDeferredPlayers( void );
@@ -2907,6 +2921,27 @@ qboolean	trap_G2API_SetBoneAnim(void *ghoul2, const int modelIndex, const char *
 qboolean	trap_G2API_SetRootSurface(void *ghoul2, const int modelIndex, const char *surfaceName);
 qboolean	trap_G2API_SetSurfaceOnOff(void *ghoul2, const char *surfaceName, const int flags);
 qboolean	trap_G2API_SetNewOrigin(void *ghoul2, const int boltIndex);
+
+void		trap_G2API_AbsurdSmoothing(void* ghoul2, qboolean status);
+
+void		trap_G2API_SetRagDoll(void* ghoul2, sharedRagDollParams_t* params);
+void		trap_G2API_AnimateG2Models(void* ghoul2, int time, sharedRagDollUpdateParams_t* params);
+
+//additional ragdoll options -rww
+qboolean	trap_G2API_RagPCJConstraint(void* ghoul2, const char* boneName, vec3_t min, vec3_t max); //override default pcj bonee constraints
+qboolean	trap_G2API_RagPCJGradientSpeed(void* ghoul2, const char* boneName, const float speed); //override the default gradient movespeed for a pcj bone
+qboolean	trap_G2API_RagEffectorGoal(void* ghoul2, const char* boneName, vec3_t pos); //override an effector bone's goal position (world coordinates)
+qboolean	trap_G2API_GetRagBonePos(void* ghoul2, const char* boneName, vec3_t pos, vec3_t entAngles, vec3_t entPos, vec3_t entScale); //current position of said bone is put into pos (world coordinates)
+qboolean	trap_G2API_RagEffectorKick(void* ghoul2, const char* boneName, vec3_t velocity); //add velocity to a rag bone
+qboolean	trap_G2API_RagForceSolve(void* ghoul2, qboolean force); //make sure we are actively performing solve/settle routines, if desired
+
+qboolean	trap_G2API_SetBoneIKState(void* ghoul2, int time, const char* boneName, int ikState, sharedSetBoneIKStateParams_t* params);
+qboolean	trap_G2API_IKMove(void* ghoul2, int time, sharedIKMoveParams_t* params);
+
+//for removing bones so they no longer have their own seperate animation hierarchy. Or whatever reason you may have. -rww
+qboolean	trap_G2API_RemoveBone(void* ghoul2, const char* boneName, int modelIndex);
+
+
 
 void		CG_Init_CG(void);
 void		CG_Init_CGents(void);

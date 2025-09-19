@@ -795,11 +795,20 @@ static void CG_BodyQueueCopy(centity_t *cent, int clientNum, int knownWeapon)
 		return;
 	}
 
+	cent->isRagging = qfalse; //reset in case it's still set from another body that was in this cent slot.
+	cent->ownerRagging = source->isRagging; //if the owner was in ragdoll state, then we want to go into it too right away.
+
 	cent->isATST = source->isATST;
 
 	cent->dustTrailTime = source->dustTrailTime;
 
 	trap_G2API_DuplicateGhoul2Instance(source->ghoul2, &cent->ghoul2);
+
+	if (source->isRagging)
+	{ //just reset it now.
+		source->isRagging = qfalse;
+		trap_G2API_SetRagDoll(source->ghoul2, NULL); //calling with null parms resets to no ragdoll.
+	}
 
 	cent->shadowBolts = ci->shadowBolts;
 	cent->dism.cut = source->dism.cut;
@@ -820,41 +829,45 @@ static void CG_BodyQueueCopy(centity_t *cent, int clientNum, int knownWeapon)
 		anim = &bgGlobalAnimations[ cent->currentState.torsoAnim ];
 	animSpeed = 50.0f / anim->frameLerp;
 
-	//this will just set us to the last frame of the animation, in theory
-	if (source->isATST) {
-		int aNum = cgs.clientinfo[source->currentState.number].frame+1;
-		if (demo15detected)
-			anim = &bgGlobalAnimations15[BOTH_DEAD1_15];
-		else
-			anim = &bgGlobalAnimations[BOTH_DEAD1];
-		animSpeed = 1;
+	if (!cent->ownerRagging) {
 
-		flags &= ~BONE_ANIM_OVERRIDE_LOOP;
+		//this will just set us to the last frame of the animation, in theory
+		if (source->isATST) {
+			int aNum = cgs.clientinfo[source->currentState.number].frame + 1;
+			if (demo15detected)
+				anim = &bgGlobalAnimations15[BOTH_DEAD1_15];
+			else
+				anim = &bgGlobalAnimations[BOTH_DEAD1];
+			animSpeed = 1;
 
-		while (aNum >= anim->firstFrame+anim->numFrames) {
-			aNum--;
+			flags &= ~BONE_ANIM_OVERRIDE_LOOP;
+
+			while (aNum >= anim->firstFrame + anim->numFrames) {
+				aNum--;
+			}
+
+			trap_G2API_SetBoneAnim(cent->ghoul2, 0, "pelvis", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
 		}
+		else {
+			int aNum = cgs.clientinfo[source->currentState.number].frame + 1;
 
-		trap_G2API_SetBoneAnim(cent->ghoul2, 0, "pelvis", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
-	} else {
-		int aNum = cgs.clientinfo[source->currentState.number].frame+1;
+			while (aNum >= anim->firstFrame + anim->numFrames) {
+				aNum--;
+			}
 
-		while (aNum >= anim->firstFrame+anim->numFrames) {
-			aNum--;
+			if (aNum < anim->firstFrame - 1) { //wrong animation...?
+				aNum = (anim->firstFrame + anim->numFrames) - 1;
+			}
+
+			//if (!cgs.clientinfo[source->currentState.number].frame || (cent->currentState.torsoAnim&~ANIM_TOGGLEBIT) != (source->currentState.torsoAnim&~ANIM_TOGGLEBIT) )
+			//{
+			//	aNum = (anim->firstFrame+anim->numFrames)-1;
+			//}
+
+			trap_G2API_SetBoneAnim(cent->ghoul2, 0, "upper_lumbar", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
+			trap_G2API_SetBoneAnim(cent->ghoul2, 0, "model_root", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
+			trap_G2API_SetBoneAnim(cent->ghoul2, 0, "Motion", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
 		}
-
-		if (aNum < anim->firstFrame-1) { //wrong animation...?
-			aNum = (anim->firstFrame+anim->numFrames)-1;
-		}
-
-		//if (!cgs.clientinfo[source->currentState.number].frame || (cent->currentState.torsoAnim&~ANIM_TOGGLEBIT) != (source->currentState.torsoAnim&~ANIM_TOGGLEBIT) )
-		//{
-		//	aNum = (anim->firstFrame+anim->numFrames)-1;
-		//}
-
-		trap_G2API_SetBoneAnim(cent->ghoul2, 0, "upper_lumbar", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
-		trap_G2API_SetBoneAnim(cent->ghoul2, 0, "model_root", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
-		trap_G2API_SetBoneAnim(cent->ghoul2, 0, "Motion", aNum, anim->firstFrame + anim->numFrames, flags, animSpeed, cg.time, -1, 150);
 	}
 
 	//After we create the bodyqueue, regenerate any limbs on the real instance
