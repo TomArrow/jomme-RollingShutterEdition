@@ -1841,6 +1841,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, int demoPlayb
 
 	trap_FX_AdjustTime( cg.time, cg.frametime, 0, cg.refdef.vieworg, cg.refdef.viewaxis );
 
+	trap_G2API_SetTime(cg.time, 0);
+	trap_G2API_SetTime(cg.time, 1);
+	trap_G2API_SetTimeFraction(0, 1);
+
 	CG_RunLightStyles();
 
 	// any looped sounds will be respecified as entities
