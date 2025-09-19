@@ -1,6 +1,10 @@
 // leave this as first line for PCH reasons...
 //
 //Anything above this #include will be ignored by the compiler
+
+
+// TODO Reimplement the R_SMP fix from 8275f332aa22f2108887ef0ba214a9c944348e9f
+
 #include "../game/q_shared.h"
 #include "../qcommon/qcommon.h"
 
