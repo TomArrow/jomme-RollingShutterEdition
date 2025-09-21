@@ -2847,10 +2847,10 @@ qboolean CG_RagDoll(centity_t *cent, vec3_t forcedAngles)
 		return qfalse;
 	}
 
-	if (cent->localAnimIndex)
-	{ //don't rag non-humanoids
-		return qfalse;
-	}
+	//if (cent->localAnimIndex) // in jk2 this is just qtrue for players, idk why it even exists
+	//{ //don't rag non-humanoids
+		//return qfalse;
+	//}
 
 	VectorCopy(cent->lerpOrigin, usedOrg);
 
@@ -2888,7 +2888,7 @@ qboolean CG_RagDoll(centity_t *cent, vec3_t forcedAngles)
 
 		if (!inSomething)
 		{
-			int anim = (cent->currentState.legsAnim);
+			int anim = (cent->currentState.legsAnim) &~ ANIM_TOGGLEBIT;
 			// 	int dur = (bgAllAnims[cent->localAnimIndex].anims[anim].numFrames - 1) * fabs((float)(bgAllAnims[cent->localAnimIndex].anims[anim].frameLerp));
 			int dur = (anims[anim].numFrames - 1) * fabs((float)(anims[anim].frameLerp));
 			int i = 0;
@@ -3036,8 +3036,8 @@ qboolean CG_RagDoll(centity_t *cent, vec3_t forcedAngles)
 			if (trap_G2API_GetBoneAnim(cent->ghoul2, "model_root", cg.time, &currentFrame, &startFrame, &endFrame, &flags, &animSpeed, cgs.gameModels, 0))
 			{ //lock the anim on the current frame.
 				int blendTime = 500;
-				//animation_t *curAnim = &bgAllAnims[cent->localAnimIndex].anims[cent->currentState.legsAnim];
-				animation_t *curAnim = &anims[cent->currentState.legsAnim];
+				//animation_t *curAnim = &bgAllAnims[cent->localAnimIndex].anims[cent->currentState.legsAnim  &~ ANIM_TOGGLEBIT];
+				animation_t *curAnim = &anims[cent->currentState.legsAnim & ~ANIM_TOGGLEBIT];
 
 				if (currentFrame >= (curAnim->firstFrame + curAnim->numFrames-1))
 				{ //this is sort of silly but it works for now.

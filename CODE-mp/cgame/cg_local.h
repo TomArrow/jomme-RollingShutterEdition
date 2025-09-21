@@ -2917,6 +2917,9 @@ qboolean	trap_G2API_SetBoneAngles(void *ghoul2, int modelIndex, const char *bone
 void		trap_G2API_GetGLAName(void *ghoul2, int modelIndex, char *fillBuf);
 qboolean	trap_G2API_SetBoneAnim(void *ghoul2, const int modelIndex, const char *boneName, const int startFrame, const int endFrame,
 							  const int flags, const float animSpeed, const int currentTime, const float setFrame , const int blendTime );
+qboolean	trap_G2API_GetBoneAnim(void* ghoul2, const char* boneName, const int currentTime, float* currentFrame, int* startFrame,
+	int* endFrame, int* flags, float* animSpeed, int* modelList, const int modelIndex);
+qboolean	trap_G2API_GetBoneFrame(void* ghoul2, const char* boneName, const int currentTime, float* currentFrame, int* modelList, const int modelIndex);
 
 qboolean	trap_G2API_SetRootSurface(void *ghoul2, const int modelIndex, const char *surfaceName);
 qboolean	trap_G2API_SetSurfaceOnOff(void *ghoul2, const char *surfaceName, const int flags);

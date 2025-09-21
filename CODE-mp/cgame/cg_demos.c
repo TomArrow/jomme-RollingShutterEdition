@@ -720,9 +720,9 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 		for (i = 0; i < MAX_GENTITIES /*MAX_CLIENTS  && mov_dismember.integer*/; i++) {
 			if (cg_entities[i].anyDismember) {
 				CG_ReattachLimb(&cg_entities[i]);
-				if (cent->ghoul2) {
-					trap_G2API_ClearSkinGore(cent->ghoul2);
-					cent->storageTime = 0;
+				if (cg_entities[i].ghoul2) {
+					trap_G2API_ClearSkinGore(cg_entities[i].ghoul2);
+					cg_entities[i].storageTime = 0;
 				}
 			}
 		}
