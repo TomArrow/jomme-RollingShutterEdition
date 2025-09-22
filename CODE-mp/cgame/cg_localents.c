@@ -979,6 +979,9 @@ CG_AddLocalEntities
 */
 void CG_AddLocalEntities( void ) {
 	localEntity_t	*le, *next;
+	static int lastTime = -1;
+	static float lastTimeFraction = -1;
+	qboolean paused = cg.time == lastTime && cg.timeFraction == lastTimeFraction;
 
 	// walk the list backwards, so any new local entities generated
 	// (trails, marks, etc) will be present this frame
@@ -1052,7 +1055,15 @@ void CG_AddLocalEntities( void ) {
 			CG_AddLine( le );
 			break;
 		}
+
+		if (paused && (le->leFlags & LEF_SINGLEFRAME_IF_PAUSED) || (le->leFlags & LEF_SINGLEFRAME)) {
+			CG_FreeLocalEntity(le); // fix some performance issues when paused and in general with cg_drawhitbox
+			continue;
+		}
 	}
+
+	lastTime = cg.time;
+	lastTimeFraction = cg.timeFraction;
 }
 
 

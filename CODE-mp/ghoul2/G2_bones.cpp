@@ -1971,8 +1971,8 @@ if (index>=0)
 //	int rhand=
 	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"rhand",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(6.0f*sRadEArm)*fRadScale);
 	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"lhand",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(6.0f*sRadEArm)*fRadScale);
-	//G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"rtarsal",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale);
-	//G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"ltarsal",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale);
+	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"rtarsal",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale); // was commented out in jka
+	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"ltarsal",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale); // was commented out in jka
 //	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"rtibia",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale);
 //	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"ltibia",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale);
 	G2_Set_Bone_Angles_Rag(ghoul2, mod_a,blist,"rtalus",RAG_EFFECTOR|RAG_BONE_LIGHTWEIGHT,(4.0f*sRadELeg)*fRadScale);
@@ -2562,7 +2562,7 @@ static void G2_RagDoll(CGhoul2Info_v &ghoul2V,int g2Index,CRagDollUpdateParams *
 }
 
 #ifdef _DEBUG
-#define _DEBUG_BONE_NAMES
+//#define _DEBUG_BONE_NAMES
 #endif
 
 static inline char *G2_Get_Bone_Name(CGhoul2Info *ghlInfo, boneInfo_v &blist, int boneNum)
@@ -4616,8 +4616,8 @@ void G2_InitIK(CGhoul2Info_v &ghoul2V, sharedRagDollUpdateParams_t *parms, int t
 
 	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"rhand",pcjFlags,6.0f);
 	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"lhand",pcjFlags,6.0f);
-//	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"rtarsal",pcjFlags,4.0f);
-//	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"ltarsal",pcjFlags,4.0f);
+	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"rtarsal",pcjFlags,4.0f); // was commented out in jka
+	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"ltarsal",pcjFlags,4.0f); // was commented out in jka
 	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"rtibia",pcjFlags,4.0f);
 	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"ltibia",pcjFlags,4.0f);
 	G2_Set_Bone_Angles_IK(ghoul2, mod_a,blist,"rtalus",pcjFlags,4.0f);

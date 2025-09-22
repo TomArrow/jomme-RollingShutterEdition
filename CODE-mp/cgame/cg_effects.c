@@ -141,6 +141,10 @@ void CG_TestLine( vec3_t start, vec3_t end, int time, unsigned int color, int ra
 	le->startTime = cg.time;
 	le->endTime = cg.time + time;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	le->leFlags |= LEF_SINGLEFRAME_IF_PAUSED; // avoid fps issues when pausing demos (yea sadly it is actually an issue)
+	if (time == 1) {
+		le->leFlags |= LEF_SINGLEFRAME;
+	}
 
 	re = &le->refEntity;
 	VectorCopy( start, re->origin );

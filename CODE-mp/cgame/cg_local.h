@@ -513,7 +513,9 @@ typedef enum {
 	LEF_PUFF_DONT_SCALE = 0x0001,			// do not scale size over time
 	LEF_TUMBLE			= 0x0002,			// tumble over time, used for ejecting shells
 	LEF_FADE_RGB		= 0x0004,			// explicitly fade
-	LEF_NO_RANDOM_ROTATE= 0x0008			// MakeExplosion adds random rotate which could be bad in some cases
+	LEF_NO_RANDOM_ROTATE= 0x0008,			// MakeExplosion adds random rotate which could be bad in some cases
+	LEF_SINGLEFRAME_IF_PAUSED		= 0x0010,			// to avoid fps crawling to a halt with testline
+	LEF_SINGLEFRAME		= 0x0020			// to avoid fps crawling to a halt with testline
 } leFlag_t;
 
 typedef enum {
