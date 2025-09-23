@@ -18,6 +18,9 @@ static	int			r_firstSceneDlight;
 static	int			r_numshadowlines;
 static	int			r_firstSceneShadowLine;
 
+static	int			r_numsceneviews;
+static	int			r_firstSceneSceneView;
+
 static	int			r_numcheaplights;
 static	int			r_firstSceneCheapLight;
 
@@ -58,6 +61,9 @@ void R_ToggleSmpFrame( void ) {
 	r_numshadowlines = 0;
 	r_firstSceneShadowLine = 0;
 
+	r_numsceneviews = 0;
+	r_firstSceneSceneView = 0;
+
 	r_numcheaplights = 0;
 	r_firstSceneCheapLight = 0;
 
@@ -83,6 +89,7 @@ RE_ClearScene
 void RE_ClearScene( void ) {
 	r_firstSceneCheapLight = r_numcheaplights;
 	r_firstSceneShadowLine = r_numshadowlines;
+	r_firstSceneSceneView = r_numsceneviews;
 	r_firstSceneDlight = r_numdlights;
 	r_firstSceneEntity = r_numentities;
 	r_firstScenePoly = r_numpolys;
@@ -455,6 +462,41 @@ void RE_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width, flo
 
 /*
 =====================
+RE_AddViewToScene
+
+=====================
+*/
+int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis ) {
+	sceneView_t	*sv;
+
+	if ( !tr.registered ) {
+		return -1;
+	}
+	if (r_numsceneviews >= MAX_SCENE_VIEWS) {
+		return -1;
+	}
+
+	sv = &backEndData[tr.smpFrame]->sceneViews[r_numsceneviews];
+
+	sv->id = r_numsceneviews;
+
+	VectorCopy (origin, sv->origin);
+	if (axis) {
+		Com_Memcpy(sv->axis, axis, sizeof(float) * 9);
+	}
+	else {
+		Com_Memset(sv->axis, 0, sizeof(sv->axis));
+	}
+	sv->is360 = is360;
+	sv->copyAxis = copyAxis;
+
+	r_numsceneviews++;
+
+	return sv->id;
+}
+
+/*
+=====================
 RE_AddAdditiveLightToScene
 
 =====================
@@ -548,6 +590,8 @@ void RE_RenderScene( const refdef_t *fd ) {
 	viewParms_t		parms;
 	int				startTime;
 	static	int		lastTime = 0;
+	sceneView_t*	sceneViews; // extra views to be rendered for stuff like 360 reflections
+	int				sceneViewCount;
 
 	if ( !tr.registered ) {
 		return;
@@ -627,6 +671,9 @@ void RE_RenderScene( const refdef_t *fd ) {
 	tr.refdef.num_entities = r_numentities - r_firstSceneEntity;
 	tr.refdef.entities = &backEndData[tr.smpFrame]->entities[r_firstSceneEntity];
 	tr.refdef.miniEntities = &backEndData[tr.smpFrame]->miniEntities[r_firstSceneMiniEntity];
+
+	sceneViews = &backEndData[tr.smpFrame]->sceneViews[r_firstSceneSceneView];
+	sceneViewCount = r_numsceneviews - r_firstSceneSceneView;
 
 	tr.refdef.num_dlights = r_numdlights - r_firstSceneDlight;
 	tr.refdef.dlights = &backEndData[tr.smpFrame]->dlights[r_firstSceneDlight];
@@ -733,11 +780,26 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	VectorCopy( fd->vieworg, parms.pvsOrigin );
 
+	for (int i = 0; i < sceneViewCount; i++,sceneViews++) { // extra views for reflections and such
+		viewParms_t sceneViewViewParms = parms;
+		sceneViewViewParms.isSceneView = qtrue;
+		sceneViewViewParms.sceneView = *sceneViews;
+		VectorCopy(sceneViews->origin, sceneViewViewParms.ori.origin);
+		VectorCopy(sceneViews->origin, sceneViewViewParms.pvsOrigin);
+		if (!sceneViews->copyAxis) {
+			VectorCopy(sceneViews->axis[0], sceneViewViewParms.ori.axis[0]);
+			VectorCopy(sceneViews->axis[1], sceneViewViewParms.ori.axis[1]);
+			VectorCopy(sceneViews->axis[2], sceneViewViewParms.ori.axis[2]);
+		}
+		R_RenderView(&sceneViewViewParms);
+	}
+
 	R_RenderView( &parms );
 
 	// the next scene rendered in this frame will tack on after this one
 	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
 	r_firstSceneEntity = r_numentities;
+	r_firstSceneSceneView = r_numsceneviews;
 	r_firstSceneMiniEntity = r_numminientities;
 	r_firstSceneCheapLight = r_numcheaplights;
 	r_firstSceneDlight = r_numdlights;

@@ -324,6 +324,9 @@ void	trap_R_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width,
 	// 2 for : use for a bit of simplistic ambient occlusion on world. Player nearby: Make a lil shadowy thingie
 	syscall( CG_R_ADDSHADOWLINE, p1, p2, PASSFLOAT(width), PASSFLOAT(a), PASSFLOAT(b), flags);
 }
+int		trap_R_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const vec3_t axis[3]) {
+	return syscall( CG_R_ADDVIEWTOSCENE, origin, is360, copyAxis, axis);
+}
 void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap) {
 	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist), (intptr_t)cheap);
 }

@@ -95,7 +95,7 @@ static qboolean	R_CullSurface( surfaceType_t *surface, shader_t *shader ) {
 	srfSurfaceFace_t *sface;
 	float			d;
 
-	if ( r_nocull->integer ) {
+	if ( r_nocull->integer || tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) {
 		return qfalse;
 	}
 
@@ -474,7 +474,7 @@ static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits )
 		// if the bounding volume is outside the frustum, nothing
 		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
 
-		if ( !r_nocull->integer ) {
+		if ( !r_nocull->integer && !(tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) ) {
 			int		r;
 
 			if ( planeBits & 1 ) {

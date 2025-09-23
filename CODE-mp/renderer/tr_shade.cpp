@@ -372,6 +372,23 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 	R_FrameBuffer_SetDynamicUniforms2(NULL,NULL,NULL,state->styles);
 }
 
+static void R_BindSceneViewImage() {
+	if (backEnd.currentEntity->e.useSceneViewTexture) {
+		GL_SelectTexture(30);
+		qglEnable(GL_TEXTURE_2D);
+		R_BindSceneViewImage(backEnd.currentEntity->e.sceneViewTexture, true);
+		GL_SelectTexture(0);
+	}
+}
+static void R_UnbindSceneViewImage() {
+	if (backEnd.currentEntity->e.useSceneViewTexture) {
+		GL_SelectTexture(30);
+		GL_Bind(tr.defaultImage);
+		qglDisable(GL_TEXTURE_2D);
+		GL_SelectTexture(0);
+	}
+}
+
 static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* input) {
 	for (int i = 0; i < 2; i++) {
 
@@ -408,6 +425,7 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 		qglEnable(GL_TEXTURE_2D);
 		GL_Bind(tr.cloudsImage);
 	}
+	R_BindSceneViewImage();
 }
 static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* input) {
 
@@ -437,6 +455,7 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 		GL_SelectTexture(29);
 		qglDisable(GL_TEXTURE_2D);
 	}
+	R_UnbindSceneViewImage();
 }
 
 /*
@@ -1937,10 +1956,16 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 				GL_State( stateBits );
 			}
 
+
+			R_BindSceneViewImage();
+
 			//
 			// draw
 			//
 			R_DrawElements( input->numIndexes, input->indexes );
+
+
+			R_UnbindSceneViewImage();
 		}
 	}
 }
@@ -2164,12 +2189,16 @@ void RB_StageIteratorVertexLitTexture( void )
 	int colorGen = tess.xstages[0]->rgbGen;
 	R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen);
 
+	R_BindSceneViewImage();
+
 	//
 	// call special shade routine
 	//
 	R_BindAnimatedImage( &tess.xstages[0]->bundle[0] );
 	GL_State( tess.xstages[0]->stateBits );
 	R_DrawElements( input->numIndexes, input->indexes );
+
+	R_UnbindSceneViewImage();
 
 	// 
 	// now do any dynamic lighting needed

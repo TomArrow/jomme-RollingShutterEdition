@@ -66,7 +66,7 @@
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
-#define NUM_TEXTURE_SAMPLERS 30
+#define NUM_TEXTURE_SAMPLERS 31  // 29 = cloud image, 30 = sceneview image
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
@@ -336,6 +336,12 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 	uniformLocations_t* uniformLocationsTess = &uniformLocationsTessArr[shaderbits];
 	uniformLocations_t* uniformLocations = &uniformLocationsArr[shaderbits];
 
+	int fishEye = backEnd.viewParms.isSceneView && backEnd.viewParms.sceneView.is360 ? 2 : r_fboFishEye->integer;
+	int extraRenderFlags = backEnd.viewParms.isSceneView ? RENDERFLAG_SCENEVIEW : 0;
+	if (backEnd.currentEntity && backEnd.currentEntity->e.useSceneViewTexture) {
+		extraRenderFlags |= RENDERFLAG_SCENEVIEWBOUND;
+	}
+
 	if (tess) {
 
 		qglUniform3fv(uniformLocationsTess->viewOriginUniform, 1, tr.refdef.vieworg);
@@ -343,7 +349,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform3fv(uniformLocationsTess->dofJitterUniform, 1, fbo.fishEyeData.dofJitter3D);
 		qglUniform1f(uniformLocationsTess->dofFocusUniform, fbo.fishEyeData.dofFocus);
 		qglUniform1f(uniformLocationsTess->dofRadiusUniform, fbo.fishEyeData.dofRadius);
-		qglUniform1i(uniformLocationsTess->fishEyeModeUniform, r_fboFishEye->integer);
+		qglUniform1i(uniformLocationsTess->fishEyeModeUniform, fishEye);
 		qglUniform1f(uniformLocationsTess->fovXUniform, fbo.fishEyeData.fovX);
 		qglUniform1f(uniformLocationsTess->fovYUniform, fbo.fishEyeData.fovY);
 		qglUniform1i(uniformLocationsTess->pixelWidthUniform, width*superSampleMultiplier);
@@ -381,7 +387,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocationsTess->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
 		qglUniform1f(uniformLocationsTess->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
-		qglUniform1i(uniformLocationsTess->renderFlagsUniform, fbo.fishEyeData.renderFlags);
+		qglUniform1i(uniformLocationsTess->renderFlagsUniform, fbo.fishEyeData.renderFlags | extraRenderFlags);
 
 		qglUniform1i(uniformLocationsTess->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
@@ -443,7 +449,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform3fv(uniformLocations->dofJitterUniform, 1, fbo.fishEyeData.dofJitter3D);
 		qglUniform1f(uniformLocations->dofFocusUniform, fbo.fishEyeData.dofFocus);
 		qglUniform1f(uniformLocations->dofRadiusUniform, fbo.fishEyeData.dofRadius);
-		qglUniform1i(uniformLocations->fishEyeModeUniform, r_fboFishEye->integer);
+		qglUniform1i(uniformLocations->fishEyeModeUniform, fishEye);
 		qglUniform1f(uniformLocations->fovXUniform, fbo.fishEyeData.fovX);
 		qglUniform1f(uniformLocations->fovYUniform, fbo.fishEyeData.fovY);
 		qglUniform1i(uniformLocations->pixelWidthUniform, width * superSampleMultiplier);
@@ -481,7 +487,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocations->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
 		qglUniform1f(uniformLocations->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
-		qglUniform1i(uniformLocations->renderFlagsUniform, fbo.fishEyeData.renderFlags);
+		qglUniform1i(uniformLocations->renderFlagsUniform, fbo.fishEyeData.renderFlags | extraRenderFlags);
 
 		qglUniform1i(uniformLocations->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
 
@@ -765,18 +771,18 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 	}
 	if (simpleLighting) {
 		if (*simpleLighting) {
-			fbo.fishEyeData.renderFlags |= 1;
+			fbo.fishEyeData.renderFlags |= RENDERFLAG_SIMPLELIGHTING;
 		}
 		else {
-			fbo.fishEyeData.renderFlags &= ~1;
+			fbo.fishEyeData.renderFlags &= ~RENDERFLAG_SIMPLELIGHTING;
 		}
 	}
 	if (noLighting) {
 		if (*noLighting) {
-			fbo.fishEyeData.renderFlags |= 2; // for sky and such
+			fbo.fishEyeData.renderFlags |= RENDERFLAG_NOLIGHTING; // for sky and such
 		}
 		else {
-			fbo.fishEyeData.renderFlags &= ~2;
+			fbo.fishEyeData.renderFlags &= ~RENDERFLAG_NOLIGHTING;
 		}
 	}
 	if (stageInfoForMultipass) {
@@ -845,10 +851,10 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	}
 	if (nocull) {
 		if (*nocull) {
-			fbo.fishEyeData.renderFlags |= 4; // for grass and foliage and such
+			fbo.fishEyeData.renderFlags |= RENDERFLAG_TWOSIDED; // for grass and foliage and such
 		}
 		else {
-			fbo.fishEyeData.renderFlags &= ~4;
+			fbo.fishEyeData.renderFlags &= ~RENDERFLAG_TWOSIDED;
 		}
 	}
 	if (shaderStyles) {
@@ -957,7 +963,7 @@ qboolean R_FrameBuffer_FishEyeDeactivateTessellation() {
 static GLenum fishEyeProcessGLMode(GLenum mode) {
 	if (!fbo.fishEyeActive) return mode;
 
-	if (((r_fboFishEye->integer && r_fboFishEyeTessellate->integer) || musicDeformSSBOData) && mode == GL_TRIANGLES) { // Tessellation only for triangles rn
+	if (((r_fboFishEye->integer && r_fboFishEyeTessellate->integer) || musicDeformSSBOData || backEnd.viewParms.isSceneView && backEnd.viewParms.sceneView.is360) && mode == GL_TRIANGLES) { // Tessellation only for triangles rn
 		if (R_FrameBuffer_FishEyeActivateTessellation()) {
 			return GL_PATCHES;
 		}
@@ -1002,6 +1008,31 @@ void R_SetGL2DSize (int width, int height) {
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity ();
 	//R_FrameBuffer_DeactivateFisheye();
+}
+
+
+void R_BindSceneViewImage( int index, bool makeMipMaps) {
+#ifdef HAVE_GLES
+	//TODO
+#else
+	if (index < 0 || index >= MAX_SCENE_VIEWS) {
+		return;
+	}
+
+	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+		return;
+	}
+
+	if ( glState.currenttextures[glState.currenttmu] != fbo.extraViews[index]->color ) {
+		qglBindTexture(GL_TEXTURE_2D, fbo.extraViews[index]->color);
+		glState.currenttextures[glState.currenttmu] = fbo.extraViews[index]->color;
+
+		if (makeMipMaps) {
+			qglGenerateMipmap(GL_TEXTURE_2D);
+		}
+	};
+
+#endif
 }
 
 void R_DrawQuad( GLuint tex, int width, int height, bool forceMakeMipmaps = false) {
@@ -1685,6 +1716,10 @@ void R_FrameBuffer_Init( void ) {
 	fbo.exposure = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
 	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
+	for (int i = 0; i < MAX_SCENE_VIEWS; i++) {
+		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags, superSampleMultiplier);
+	}
+
 	if (!fbo.main) {
 		// if the main fbuffer failed then we should disable framebuffer 
 		// rendering
@@ -2145,6 +2180,40 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWr
 	return qtrue;
 #endif
 }
+
+qboolean R_FrameBuffer_SaveSceneView( int index ) {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	float c;
+	if ( !fbo.blur )
+		return qfalse;
+
+	R_FrameBuffer_TempDeactivateFisheye();
+
+	R_FrameBuffer_GenerateMainMipMaps();
+
+	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.extraViews[index]->fbo );
+	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+	//The color used to blur add this frame
+	c = 1.0f;
+	qglColor4f( c , c , c , 1 );
+	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHTEST_DISABLE);
+	R_SetGL2DSize( glConfig.vidWidth, glConfig.vidHeight );
+	R_DrawQuad(	fbo.main->color, glConfig.vidWidth, glConfig.vidHeight );
+	//Reset fbo
+	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
+	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+
+	mipMapsAlreadyGeneratedThisFrame = qfalse;
+
+	R_FrameBuffer_ReactivateFisheye();
+
+	return qtrue;
+#endif
+}
+
 #ifdef RELDEBUG
 //#pragma optimize("", off)
 #endif

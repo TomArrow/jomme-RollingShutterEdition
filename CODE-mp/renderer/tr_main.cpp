@@ -39,7 +39,7 @@ int R_CullLocalBox (vec3_t bounds[2]) {
 	int			anyBack;
 	int			front, back;
 
-	if ( r_nocull->integer ) {
+	if ( r_nocull->integer || tr.viewParms.isSceneView && tr.viewParms.sceneView.is360 ) {
 		return CULL_CLIP;
 	}
 
@@ -123,7 +123,7 @@ int R_CullPointAndRadius( vec3_t pt, float radius )
 	cplane_t	*frust;
 	qboolean mightBeClipped = qfalse;
 
-	if ( r_nocull->integer ) {
+	if ( r_nocull->integer || tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) {
 		return CULL_CLIP;
 	}
 
@@ -1471,6 +1471,13 @@ void R_AddEntitySurfaces (void) {
 		// mirrors, because the true body position will already be drawn
 		//
 		if ( (ent->e.renderfx & RF_FIRST_PERSON) && tr.viewParms.isPortal) {
+			continue;
+		}
+
+		// sceneviews are extra views we render for stuff like fancy reflections
+		// they may be rendered from the position of a player for example. the player itself should not be rendered in them
+		// so we check if that's the case here.
+		if (tr.viewParms.isSceneView && (ent->e.hideInSceneViews & (1 << tr.viewParms.sceneView.id))) {
 			continue;
 		}
 

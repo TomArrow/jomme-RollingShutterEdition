@@ -115,6 +115,15 @@ typedef struct shadowline_s {
 	vec4_t			lightdir;
 } shadowline_t;
 
+// this is an extra view we render for le random purposes like reflections
+typedef struct sceneView_s {
+	vec3_t		origin;
+	vec3_t		axis[3]; // only needed if copyAxis is qfalse
+	qboolean	copyAxis;
+	qboolean	is360;
+	int			id;
+} sceneView_t;
+
 typedef struct variousSSBOData_s { // various static ssbo stuff.
 	vec4_t	styleSundirections[MAX_LIGHT_STYLES];
 }variousSSBOData_t;
@@ -713,6 +722,8 @@ typedef struct {
 	cplane_t	frustum[4];
 	vec3_t		visBounds[2];
 	float		zFar;
+	qboolean	isSceneView;
+	sceneView_t sceneView;
 } viewParms_t;
 
 
@@ -2007,6 +2018,7 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 void RE_AddCheapLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
+int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
 void RE_ApplyPostProcessing(qboolean captureShot);
@@ -2256,6 +2268,7 @@ typedef enum {
 typedef struct {
 	drawSurf_t	drawSurfs[MAX_DRAWSURFS];
 	shadowline_t	shadowLines[MAX_SHADOWLINES_TO_SORT];
+	sceneView_t		sceneViews[MAX_SCENE_VIEWS]; // extra views we render for stuff like premium 360 reflections
 	dlightCheap_t	cheaplights[MAX_CHEAPLIGHTS_TO_SORT];
 	dlight_t	dlights[MAX_DLIGHTS_TO_SORT];
 	//trRefEntity_t	entities[MAX_ENTITIES];
@@ -2440,6 +2453,7 @@ typedef struct {
 	frameBufferData_t* dof;
 	frameBufferData_t* colorSpaceConv;
 	frameBufferData_t* colorSpaceConvResult;
+	frameBufferData_t* extraViews[MAX_SCENE_VIEWS];
 	std::vector<doubleFrameBufferData_t> rollingShutterBuffers;
 	qboolean fishEyeActive;
 	int fishEyeTempDisabled;
@@ -2452,6 +2466,13 @@ typedef struct {
 	qboolean reloadGLSL;
 } fbo_t;
 
+
+
+#define RENDERFLAG_SIMPLELIGHTING 1
+#define RENDERFLAG_NOLIGHTING 2 // skyboxes and such
+#define RENDERFLAG_TWOSIDED 4 // grass and such
+#define RENDERFLAG_SCENEVIEW 8 // for reflection view renders, simplified lighting and such
+#define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
 
 enum HDRConvertSource {
 	HDRCONVSOURCE_MAINFBO,
@@ -2466,6 +2487,8 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex);
 //Try to do an fbo blur
 qboolean R_FrameBuffer_Blur(float scale, int frame, int total, qboolean forceWriteback);
+void	R_BindSceneViewImage(int index, bool makeMipMaps);
+qboolean R_FrameBuffer_SaveSceneView(int index);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);

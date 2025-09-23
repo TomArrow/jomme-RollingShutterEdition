@@ -1585,6 +1585,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.AddPolyToScene = RE_AddPolyToScene;
 	re.LightForPoint = R_LightForPoint;
 	re.AddShadowLineToScene = RE_AddShadowLineToScene;
+	re.AddViewToScene = RE_AddViewToScene;
 	re.AddLightToScene = RE_AddLightToScene;
 	re.AddCheapLightToScene = RE_AddCheapLightToScene;
 	re.GetShaderLightMultiplier = RE_GetShaderLightMultiplier;

@@ -12,6 +12,8 @@
 #define	MAX_SHADOWLINES_TO_SORT		(10*MAX_SHADOWLINES)		// About 18 per player
 //#define	MAX_ENTITIES	1023		// can't be increased without changing drawsurf bit packing
 
+#define	MAX_SCENE_VIEWS	3 // extra views we render for stuff like premium 360 reflections
+
 #define MAX_CHEAPLIGHTS				1024
 #define MAX_CHEAPLIGHTS_TO_SORT		10*1024
 
@@ -166,6 +168,10 @@ typedef struct {
 	// specific full refEntity_t data
 	//
 	//
+
+	qboolean	useSceneViewTexture;
+	int			sceneViewTexture;	// renderer will attempt to bind a texture containing the rendered sceneview of this id (like for reflections)
+	int			hideInSceneViews;	// bitmask of scene view ids this ent should be hidden in.
 
 	// most recent data
 	vec3_t		lightingOrigin;		// so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)

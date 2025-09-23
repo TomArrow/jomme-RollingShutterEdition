@@ -847,7 +847,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
 		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted 
-			|| ( entityNum != oldEntityNum && !shader->entityMergable ) ) {
+			|| ( entityNum != oldEntityNum && (!shader->entityMergable || backEnd.refdef.entities[entityNum].e.sceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.sceneViewTexture || backEnd.refdef.entities[entityNum].e.useSceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.useSceneViewTexture)) ) {
 			if (oldShader != NULL) {
 #ifdef __MACOS__	// crutch up the mac's limited buffer queue size
 				int		t;
@@ -979,6 +979,11 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		didShadowPass = true;
 	}
 #endif
+
+	if (backEnd.viewParms.isSceneView) {
+		// copy it into the appropriate buffer
+		R_FrameBuffer_SaveSceneView(backEnd.viewParms.sceneView.id);
+	}
 
 	// add light flares on lights that aren't obscured
 

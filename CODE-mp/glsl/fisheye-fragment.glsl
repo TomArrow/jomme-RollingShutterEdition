@@ -131,6 +131,7 @@ uniform sampler2D text_in26;
 uniform sampler2D text_in27;
 uniform sampler2D text_in28;
 uniform sampler2D text_in29;
+uniform sampler2D text_in30;
 
 
 vec4 sampleTextureSafe(sampler2D sampler,vec2 uvCoords,float thelod,vec4 thegrad){
@@ -205,6 +206,9 @@ varying vec4 pureVertexCoordsGeom;
 
 #define RENDERFLAG_SIMPLELIGHTING 1
 #define RENDERFLAG_NOLIGHTING 2 // skyboxes and such
+#define RENDERFLAG_TWOSIDED 4 // grass and such
+#define RENDERFLAG_SCENEVIEW 8 // for reflection view renders, simplified lighting and such
+#define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
 
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
@@ -226,6 +230,19 @@ uniform int shaderDebugUniform;
 uniform float	cloudScaleUniform;
 uniform float	cloudTimeScaleUniform;
 uniform float	cloudPowerUniform;
+
+
+float angleOnPlane(vec3 point, vec3 axis1, vec3 axis2)
+{
+
+	vec2 planePosition = vec2(dot(point, axis1), dot(point, axis2));
+	return acos(dot(vec2(1, 0), normalize(planePosition)));
+}
+vec3 getPerpendicularAxis(vec3 point, vec3 mainAxis)
+{
+	return normalize(point - dot(point, mainAxis) *mainAxis);
+}
+
 
 const vec3 rgbToGray = vec3( 0.2989f,0.5870f, 0.1140f);
 
@@ -1368,7 +1385,9 @@ bool main_real(inout vec4 outFragColor)
 	int perlinFuckery = 0;
 #endif
 
-	bool twoSided = (renderFlagsUniform & 4) > 0;
+	bool twoSided = (renderFlagsUniform & RENDERFLAG_TWOSIDED) > 0;
+	bool sceneView = (renderFlagsUniform & RENDERFLAG_SCENEVIEW) > 0;
+	bool fastLighting = sceneView; // can add additional options
 	
 	bool multitex = (stageImageBitmaskUniform & 2) > 0;
 	bool standAloneLightmap = !multitex && (stageLightmapBitmaskUniform & 1) > 0;
@@ -1751,54 +1770,56 @@ bool main_real(inout vec4 outFragColor)
 				//vec3 lightVectorAbs = worldPixel-dlightOrigin;
 				//vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
 				int s =mainLightShadowLinesCalculated;
-				for(;s<shadowLinesCountUniform;s++){
+				if(!fastLighting){
+					for(;s<shadowLinesCountUniform;s++){
 
-					if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
-						continue;
+						if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
+							continue;
+						}
+						//if(dot(shadowLines[s].point2.xyz-worldPixel,normal) <=0.0 && dot(shadowLines[s].point1.xyz-worldPixel,normal) <=0.0){ // actually makes performance worse
+						//	continue;
+						//}
+
+						//lightVector1 : pointing to light 
+						//
+						vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
+						float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
+						if(distanceToSL < 0) {
+							continue;
+						}
+
+						float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+
+						float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
+						if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint*10.0f){
+							continue;
+						}
+
+						int type= 0;
+						float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
+						float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+						shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
+
+						if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
+							break;
+						}
+
+	//					switch(type){
+	//						case 0:
+	//						shadowDebugColor = vec3(1.0,0.0,0.0);
+	//						break;
+	//						case 1:
+	//						shadowDebugColor = vec3(0.0,1.0,0.0);
+	//						break;
+	//						case 2:
+	//						shadowDebugColor = vec3(0.0,0.0,1.0);
+	//						break;
+	//						case 3:
+	//						shadowDebugColor = vec3(1.0,1.0,0.0);
+	//						break;
+	//					}
+
 					}
-					//if(dot(shadowLines[s].point2.xyz-worldPixel,normal) <=0.0 && dot(shadowLines[s].point1.xyz-worldPixel,normal) <=0.0){ // actually makes performance worse
-					//	continue;
-					//}
-
-					//lightVector1 : pointing to light 
-					//
-					vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
-					float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
-					if(distanceToSL < 0) {
-						continue;
-					}
-
-					float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
-
-					float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
-					if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint*10.0f){
-						continue;
-					}
-
-					int type= 0;
-					float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
-					float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-					shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
-
-					if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
-						break;
-					}
-
-//					switch(type){
-//						case 0:
-//						shadowDebugColor = vec3(1.0,0.0,0.0);
-//						break;
-//						case 1:
-//						shadowDebugColor = vec3(0.0,1.0,0.0);
-//						break;
-//						case 2:
-//						shadowDebugColor = vec3(0.0,0.0,1.0);
-//						break;
-//						case 3:
-//						shadowDebugColor = vec3(1.0,1.0,0.0);
-//						break;
-//					}
-
 				}
 				mainLightShadowLinesCalculated= s;
 
@@ -1848,38 +1869,40 @@ bool main_real(inout vec4 outFragColor)
 					lightVoxelPathChecked = true;
 #endif
 					int s=mainLightShadowLinesCalculated;
-					for(;s<shadowLinesCountUniform;s++){
+					if(!fastLighting){
+						for(;s<shadowLinesCountUniform;s++){
 
-						if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
-							continue;
-						}
+							if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
+								continue;
+							}
 						
-						vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
-						float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
-						if(distanceToSL < 0) {
-							continue;
-						}
+							vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
+							float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
+							if(distanceToSL < 0) {
+								continue;
+							}
 
-						float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+							float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
 
-						float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
-						if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint){
-							continue;
-						}
+							float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
+							if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint){
+								continue;
+							}
 
-						int type= 0;
-						float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
-						// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
-						float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
-						shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
-						if(allInvocationsARB(shadowedIntensity < fastSkipThresSpec)){
-							break;
-						}
+							int type= 0;
+							float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
+							// We can reuse shadowedIntensity if it was already calculated for the main light but otherwise we have to recalculate it here.
+							float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,dlightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+							shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
+							if(allInvocationsARB(shadowedIntensity < fastSkipThresSpec)){
+								break;
+							}
 				
-						// Actually dont do this, looks bad :) already occluded by geometry
-						//float maxDistance = shortestDistanceLines(worldPixel,worldViewer,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type);
-						//float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
-						//shadowedIntensity = min(lightIntensityHere*lightIntensityHere,shadowedIntensity);
+							// Actually dont do this, looks bad :) already occluded by geometry
+							//float maxDistance = shortestDistanceLines(worldPixel,worldViewer,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type);
+							//float lightIntensityHere = max(0.0f,maxDistance / shadowLines[s].width);
+							//shadowedIntensity = min(lightIntensityHere*lightIntensityHere,shadowedIntensity);
+						}
 					}
 					mainLightShadowLinesCalculated = s;
 					//}
@@ -2051,6 +2074,8 @@ bool main_real(inout vec4 outFragColor)
 			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 			didThermal= true;
 		}
+
+
 	}
 
 	//if(stageLightmapBitmaskUniform > 0){
@@ -2063,6 +2088,44 @@ bool main_real(inout vec4 outFragColor)
 	
 	if(thermalVision && !didThermal){
 		heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
+	}
+
+	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0){
+	
+		vec3 axis[3];
+		axis[0] = vec3(0.0, 0.0, -1.0);
+		axis[1] = vec3(-1.0, 0.0, 0.0);
+		axis[2] = vec3(0.0, 1.0, 0.0);
+		// lightNormal or lightReferenceNormal
+		vec3 surfaceNormal = lightReferenceNormal;
+		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
+		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
+		vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
+
+		outVec = -normalize(outVec);
+
+		float pi = radians(180);
+		float xAngle = angleOnPlane(outVec, -axis[1].xyz, axis[0].xyz) / pi;
+		vec3 perpendicularZAxisToPoint = getPerpendicularAxis(outVec, axis[2].xyz);
+		float yAngle = angleOnPlane(outVec, axis[2].xyz, perpendicularZAxisToPoint) / pi;
+		
+		float depth = dot(axis[0].xyz, outVec);
+		xAngle -= 0.5;
+		xAngle *= 2;
+		float widthSign = sign(xAngle);
+		xAngle = depth <= 0 ? xAngle : widthSign *(1.0 + (1.0 - abs(xAngle)));
+		xAngle *= 0.5;
+
+		yAngle -= 0.5;
+		yAngle *= 2;
+		float heightSign = sign(yAngle);
+		outFragColor.x = -xAngle;
+		outFragColor.y = 0;//yAngle;
+		outFragColor.z = 0;
+		vec2 uvRefl = vec2((xAngle+1.0)/2.0f,(yAngle+1.0)/2.0f);
+		outFragColor.xyz = texture2D(text_in30, uvRefl).xyz;
+		//outFragColor.xyz = sampleTextureSafe(text_in30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
+		//outFragColor.xyz = sampleTextureSafe(text_in30, uvCoords, thelod,thegrad).xyz;
 	}
 
 	return true;

@@ -315,6 +315,7 @@ Ghoul2 Insert End
 	CG_MME_GETROLLINGSHUTTERINFO,
 	CG_R_REGISTERSHADERWITHFLAGS, // For controlling HUD Brightness, special handler
 	CG_R_ADDSHADOWLINE, // For player shadow experiment
+	CG_R_ADDVIEWTOSCENE, // For reflections and such
 	CG_MME_GETJITTERSEGMENTADVANCEINFO,
 
 	CG_MME_SETMUSICDEFORMDATA,

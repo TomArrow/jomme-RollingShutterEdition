@@ -8556,9 +8556,13 @@ void CG_Player( centity_t *cent ) {
 	qboolean		g2HasWeapon = qfalse;
 	qboolean		spriteDrawn = qfalse;
 	qboolean		forceSaberOn = qfalse;
+	qboolean		gigaReflections = qfalse;
+	int				gigaReflectionsSceneViewId = -1;
 	refdef_t		*refdef = &cg.refdef;
 
 	forceSaberOn = (cg_saberForceOn.integer & 1) && cent->currentState.clientNum == cg.predictedPlayerState.clientNum || (cg_saberForceOn.integer & 2) && cent->currentState.clientNum != cg.predictedPlayerState.clientNum;
+
+	gigaReflections = cent->currentState.clientNum == cg.predictedPlayerState.clientNum;
 
 	if (cgQueueLoad)
 	{
@@ -8669,6 +8673,10 @@ void CG_Player( centity_t *cent ) {
 		!cent->isATST)
 	{
 		return;
+	}
+
+	if (gigaReflections) {
+		gigaReflectionsSceneViewId = trap_R_AddViewToScene(cent->lerpOrigin,qtrue,qtrue,NULL);
 	}
 
 	if (!cent->trickAlphaTime || (cg.time - cent->trickAlphaTime) > 1000)
@@ -8890,6 +8898,12 @@ skipEffectOverride:
 	memset (&legs, 0, sizeof(legs));
 
 	CG_SetGhoul2Info(&legs, cent);
+
+	if (gigaReflections && gigaReflectionsSceneViewId != -1) {
+		//legs.useSceneViewTexture = qtrue;
+		legs.hideInSceneViews = (1 << gigaReflectionsSceneViewId);
+		//legs.sceneViewTexture = gigaReflectionsSceneViewId;
+	}
 
 	VectorSet(legs.modelScale, 1,1,1);
 	if (cent->modelScale[0]) legs.modelScale[0] = cent->modelScale[0];
@@ -10308,6 +10322,13 @@ stillDoSaber:
 		}
 	}
 doEssentialThree:
+
+
+	if (gigaReflections && gigaReflectionsSceneViewId != -1) {
+		legs.useSceneViewTexture = qtrue;
+		legs.sceneViewTexture = gigaReflectionsSceneViewId;
+	}
+
 	if (cent->currentState.eFlags & EF_DISINTEGRATION) {
 		vec3_t tempAng, hitLoc;
 		float tempLength;
@@ -10368,6 +10389,8 @@ doEssentialThree:
 	}
 
 	trap_R_AddRefEntityToScene(&legs);
+
+	legs.useSceneViewTexture = qfalse;
 
 	if (cent->isATST) {
 		//return;

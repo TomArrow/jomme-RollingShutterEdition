@@ -66,6 +66,7 @@ typedef struct {
 	void	(*AddPolyToScene)( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 	int		(*LightForPoint)( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 	void	(*AddShadowLineToScene)( const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
+	int		(*AddViewToScene)( const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis);
 	void	(*AddLightToScene)( const vec3_t org, float intensity, float r, float g, float b, float mindist);
 	void	(*AddCheapLightToScene)( const vec3_t org, float intensity, float r, float g, float b, float mindist);
 	qboolean	(*GetShaderLightMultiplier)( qhandle_t hShader, vec3_t colorOut);
