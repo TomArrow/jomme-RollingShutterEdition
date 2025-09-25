@@ -230,6 +230,7 @@ uniform int shaderDebugUniform;
 uniform float	cloudScaleUniform;
 uniform float	cloudTimeScaleUniform;
 uniform float	cloudPowerUniform;
+uniform float	cloudIntensityCompensateUniform;
 
 
 float angleOnPlane(vec3 point, vec3 axis1, vec3 axis2)
@@ -1173,7 +1174,7 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 
 			vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
 			float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
-			color.xyz *= powVec(((1.0f-weight)*multBlur) + weight*mult,cloudPowerUniform);
+			color.xyz *= powVec(((1.0f-weight)*multBlur) + weight*mult,cloudPowerUniform)*cloudIntensityCompensateUniform;
 		}
 		
 	}

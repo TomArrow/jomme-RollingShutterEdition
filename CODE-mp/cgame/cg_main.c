@@ -1095,8 +1095,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", NULL, CVAR_CHEAT },
 	{ &cg_thirdPersonPitchOffset, "cg_thirdPersonPitchOffset", "0", NULL, CVAR_CHEAT },
 	{ &cg_thirdPersonVertOffset, "cg_thirdPersonVertOffset", "16", NULL, CVAR_CHEAT },
-	{ &cg_thirdPersonCameraDamp, "cg_thirdPersonCameraDamp", "0.3", NULL, 0 },
-	{ &cg_thirdPersonTargetDamp, "cg_thirdPersonTargetDamp", "0.5", NULL, CVAR_CHEAT },
+	{ &cg_thirdPersonCameraDamp, "cg_thirdPersonCameraDamp", "1", NULL, CVAR_ARCHIVE  },
+	{ &cg_thirdPersonTargetDamp, "cg_thirdPersonTargetDamp", "1", NULL, CVAR_ARCHIVE },
 	
 	{ &cg_thirdPersonHorzOffset, "cg_thirdPersonHorzOffset", "0", NULL, CVAR_CHEAT },
 	{ &cg_thirdPersonAlpha,	"cg_thirdPersonAlpha",	"1.0", NULL, CVAR_CHEAT },

@@ -165,10 +165,15 @@ static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t int
 	}
 	else {
 		R_SampleFloatImage(&tr.cloudsImageData[0], uv, intensity);
-		if (r_fboGLSLCloudShadowPower->value != 1.0f) {
-			intensity[0] = powf(intensity[0], r_fboGLSLCloudShadowPower->value);
-			intensity[1] = powf(intensity[1], r_fboGLSLCloudShadowPower->value);
-			intensity[2] = powf(intensity[2], r_fboGLSLCloudShadowPower->value);
+		float intensityCompensateFactor = 1.0f;
+		if (r_fboGLSLCloudIntensityCompensate->value != 0.0f && tr.cloudsImage && tr.cloudsImage->averageBrightnessLevel > 0.0f) {
+			intensityCompensateFactor = 1.0f / tr.cloudsImage->averageBrightnessLevel;
+			intensityCompensateFactor = 1.0f + (intensityCompensateFactor - 1.0f) * r_fboGLSLCloudIntensityCompensate->value;
+		}
+		if (r_fboGLSLCloudShadowPower->value != 1.0f || intensityCompensateFactor != 1.0f) {
+			intensity[0] = powf(intensity[0], r_fboGLSLCloudShadowPower->value) * intensityCompensateFactor;
+			intensity[1] = powf(intensity[1], r_fboGLSLCloudShadowPower->value) * intensityCompensateFactor;
+			intensity[2] = powf(intensity[2], r_fboGLSLCloudShadowPower->value) * intensityCompensateFactor;
 		}
 	}
 	// TODO blending with the mip level 4 like in glsl but then we have to consider lightdirection which ... gonna make the code a bit cancer.

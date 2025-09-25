@@ -232,6 +232,7 @@ Ghoul2 Insert Start
 cvar_t	*r_noServerGhoul2;
 cvar_t	*r_Ghoul2AnimSmooth=0;
 cvar_t	*r_Ghoul2UnSqashAfterSmooth=0;
+cvar_t	*r_ghoul2fastnormals =0;
 //cvar_t	*r_Ghoul2UnSqash;
 //cvar_t	*r_Ghoul2TimeBase=0; from single player
 //cvar_t	*r_Ghoul2NoLerp;
@@ -1122,8 +1123,9 @@ Ghoul2 Insert Start
 */
 	r_noServerGhoul2 = ri.Cvar_Get( "r_noserverghoul2", "0", CVAR_CHEAT);
 
-	r_Ghoul2AnimSmooth = ri.Cvar_Get( "r_ghoul2animsmooth", ".3", 0 );
-	r_Ghoul2UnSqashAfterSmooth = ri.Cvar_Get( "r_ghoul2unsqashaftersmooth", "1", 0 );
+	r_Ghoul2AnimSmooth = ri.Cvar_Get( "r_ghoul2animsmooth", ".3", CVAR_ARCHIVE);
+	r_ghoul2fastnormals = ri.Cvar_Get( "r_ghoul2fastnormals", "0", CVAR_ARCHIVE);
+	r_Ghoul2UnSqashAfterSmooth = ri.Cvar_Get( "r_ghoul2unsqashaftersmooth", "1", CVAR_ARCHIVE);
 
 
 	broadsword = ri.Cvar_Get("broadsword", "0", 0);

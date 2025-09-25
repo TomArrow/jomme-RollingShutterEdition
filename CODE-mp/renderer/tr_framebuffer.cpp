@@ -133,6 +133,7 @@ typedef struct uniformLocations_t {
 	GLint cloudScaleUniform;
 	GLint cloudTimeScaleUniform;
 	GLint cloudPowerUniform;
+	GLint cloudIntensityCompensateUniform;
 
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
@@ -217,6 +218,7 @@ cvar_t *r_fboGLSLShaderDebug;
 cvar_t *r_fboGLSLCloudShadowScale;
 cvar_t *r_fboGLSLCloudShadowTimeScale;
 cvar_t *r_fboGLSLCloudShadowPower;
+cvar_t *r_fboGLSLCloudIntensityCompensate;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeTessellate;
 cvar_t *r_fboExposure;
@@ -342,6 +344,12 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		extraRenderFlags |= RENDERFLAG_SCENEVIEWBOUND;
 	}
 
+	float intensityCompensateFactor = 1.0f;
+	if (r_fboGLSLCloudIntensityCompensate->value != 0.0f && tr.cloudsImage && tr.cloudsImage->averageBrightnessLevel > 0.0f) {
+		intensityCompensateFactor = 1.0f / tr.cloudsImage->averageBrightnessLevel;
+		intensityCompensateFactor = 1.0f + (intensityCompensateFactor - 1.0f) * r_fboGLSLCloudIntensityCompensate->value;
+	}
+
 	if (tess) {
 
 		qglUniform3fv(uniformLocationsTess->viewOriginUniform, 1, tr.refdef.vieworg);
@@ -406,6 +414,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
 		qglUniform1f(uniformLocationsTess->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
 		qglUniform1f(uniformLocationsTess->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
+		qglUniform1f(uniformLocationsTess->cloudIntensityCompensateUniform, intensityCompensateFactor);
 
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -506,6 +515,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
 		qglUniform1f(uniformLocations->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
 		qglUniform1f(uniformLocations->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
+		qglUniform1f(uniformLocations->cloudIntensityCompensateUniform, intensityCompensateFactor);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -1027,8 +1037,9 @@ void R_BindSceneViewImage( int index, bool makeMipMaps) {
 		qglBindTexture(GL_TEXTURE_2D, fbo.extraViews[index]->color);
 		glState.currenttextures[glState.currenttmu] = fbo.extraViews[index]->color;
 
-		if (makeMipMaps) {
+		if (makeMipMaps && !(fbo.extraViewsMipMapsGenerated & (1 << index))) {
 			qglGenerateMipmap(GL_TEXTURE_2D);
+			fbo.extraViewsMipMapsGenerated |= (1 << index);
 		}
 	};
 
@@ -1215,8 +1226,8 @@ static int CreateTextureBuffer( int width, int height, GLenum internalFormat, GL
 	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, !filtering ?  GL_NEAREST : (mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) );
 	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (flags & FB_MAGLINEAR) ? GL_LINEAR : GL_NEAREST);
 
-	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (flags & FB_REPEATEDGE) ? GL_REPEAT : GL_CLAMP_TO_EDGE );
+	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (flags & FB_REPEATEDGE) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	qglTexImage2D(	GL_TEXTURE_2D, 0, internalFormat, width* superSample, height* superSample, 0, format, type, 0 );
 	if (mipmaps) {
 		qglGenerateMipmap(GL_TEXTURE_2D); 
@@ -1490,6 +1501,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->cloudScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudScaleUniform");
 		locs->cloudTimeScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudTimeScaleUniform");
 		locs->cloudPowerUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudPowerUniform");
+		locs->cloudIntensityCompensateUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudIntensityCompensateUniform");
 
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastUniform");
 		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightJitterUniform");
@@ -1619,9 +1631,10 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
 	r_fboGLSLShaderDebug = ri.Cvar_Get( "r_fboGLSLShaderDebug", "0", CVAR_TEMP);
 	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
-	r_fboGLSLCloudShadowScale = ri.Cvar_Get( "r_fboGLSLCloudShadowScale", "1.0", CVAR_TEMP);
-	r_fboGLSLCloudShadowTimeScale = ri.Cvar_Get( "r_fboGLSLCloudShadowTimeScale", "1.0", CVAR_TEMP);
-	r_fboGLSLCloudShadowPower = ri.Cvar_Get( "r_fboGLSLCloudShadowPower", "0.7", CVAR_TEMP);
+	r_fboGLSLCloudShadowScale = ri.Cvar_Get( "r_fboGLSLCloudShadowScale", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLCloudShadowTimeScale = ri.Cvar_Get( "r_fboGLSLCloudShadowTimeScale", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLCloudShadowPower = ri.Cvar_Get( "r_fboGLSLCloudShadowPower", "0.7", CVAR_ARCHIVE);
+	r_fboGLSLCloudIntensityCompensate = ri.Cvar_Get( "r_fboGLSLCloudIntensityCompensate", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );
@@ -1717,7 +1730,7 @@ void R_FrameBuffer_Init( void ) {
 	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
 	for (int i = 0; i < MAX_SCENE_VIEWS; i++) {
-		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags, superSampleMultiplier);
+		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags | FB_MIPMAP | FB_MAGLINEAR | FB_REPEATEDGE, superSampleMultiplier);
 	}
 
 	if (!fbo.main) {
@@ -2207,6 +2220,8 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
 
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
+
+	fbo.extraViewsMipMapsGenerated &= ~(1 << index);
 
 	R_FrameBuffer_ReactivateFisheye();
 

@@ -1445,6 +1445,7 @@ extern cvar_t	*r_fboGLSLShaderDebug;
 extern cvar_t	*r_fboGLSLCloudShadowScale;
 extern cvar_t	*r_fboGLSLCloudShadowTimeScale;
 extern cvar_t	*r_fboGLSLCloudShadowPower;
+extern cvar_t	*r_fboGLSLCloudIntensityCompensate;
 extern cvar_t	*r_fboFishEye;
 extern cvar_t	*r_ext_compiled_vertex_array;
 extern cvar_t	*r_ext_texture_env_add;
@@ -2382,6 +2383,7 @@ extern bool g_bTextureRectangleHack;
 #define FB_MULTISAMPLE	 		0x20		//Make a multisampled buffer
 #define FB_MIPMAP		 		0x40		//Force mipmaps
 #define FB_MAGLINEAR	 		0x80		//Force linear upscaling
+#define FB_REPEATEDGE	 		0x100		//Force linear upscaling
 
 typedef struct {
 	GLuint 	fbo;
@@ -2454,6 +2456,7 @@ typedef struct {
 	frameBufferData_t* colorSpaceConv;
 	frameBufferData_t* colorSpaceConvResult;
 	frameBufferData_t* extraViews[MAX_SCENE_VIEWS];
+	int extraViewsMipMapsGenerated; // bitmask up to MAX_SCENE_VIEWS
 	std::vector<doubleFrameBufferData_t> rollingShutterBuffers;
 	qboolean fishEyeActive;
 	int fishEyeTempDisabled;

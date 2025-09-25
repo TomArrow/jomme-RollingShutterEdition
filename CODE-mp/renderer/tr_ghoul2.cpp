@@ -99,6 +99,7 @@ qboolean G2_SetupModelPointers(CGhoul2Info_v *ghoul2);
 
 extern cvar_t	*r_Ghoul2AnimSmooth;
 extern cvar_t	*r_Ghoul2UnSqashAfterSmooth;
+extern cvar_t	*r_ghoul2fastnormals;
 
 static inline int G2_Find_Bone_ByNum(const model_t *mod, boneInfo_v &blist, const int boneNum)
 {
@@ -3672,9 +3673,9 @@ void RB_SurfaceGhoul( CRenderableSurface *surf )
 	v = (mdxmVertex_t *) ((byte *)surface + surface->ofsVerts);
 	pTexCoords = (mdxmVertexTexCoord_t *) &v[numVerts];
 
-//	if (r_ghoul2fastnormals&&r_ghoul2fastnormals->integer==0)
-#if 0
-	if (0)
+	if (r_ghoul2fastnormals&&r_ghoul2fastnormals->integer==0)
+//#if 0
+	//if (0)
 	{
 		for ( j = 0; j < numVerts; j++, baseVertex++,v++ ) 
 		{
@@ -3717,7 +3718,7 @@ void RB_SurfaceGhoul( CRenderableSurface *surf )
 	}
 	else
 	{
-#endif
+//#endif
 		float fTotalWeight;
 		float fBoneWeight;
 		float t1;
@@ -3793,9 +3794,9 @@ void RB_SurfaceGhoul( CRenderableSurface *surf )
 			tess.texCoords[baseVertex][0][0] = pTexCoords[j].texCoords[0];
 			tess.texCoords[baseVertex][0][1] = pTexCoords[j].texCoords[1];
 		}
-#if 0
+//#if 0
 	}
-#endif
+//#endif
 
 #ifdef _G2_GORE
 	CRenderableSurface *storeSurf = surf;
