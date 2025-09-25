@@ -2124,7 +2124,16 @@ bool main_real(inout vec4 outFragColor)
 		outFragColor.y = 0;//yAngle;
 		outFragColor.z = 0;
 		vec2 uvRefl = vec2((xAngle+1.0)/2.0f,(yAngle+1.0)/2.0f);
-		outFragColor.xyz = texture2D(text_in30, uvRefl).xyz;
+		
+		//outFragColor.xyz = texture2D(text_in30, uvRefl).xyz; // seam
+		//outFragColor.xyz = textureLod(text_in30,uvRefl,0).xyz; // clean but aliased
+		vec4 thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
+
+		// at the 180/-180 boundary, a discontinuity is created, causing a visible seam. fix that up.
+		if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
+		if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
+		thegrad *= gradMultiplier;
+		outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
 		//outFragColor.xyz = sampleTextureSafe(text_in30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
 		//outFragColor.xyz = sampleTextureSafe(text_in30, uvCoords, thelod,thegrad).xyz;
 	}

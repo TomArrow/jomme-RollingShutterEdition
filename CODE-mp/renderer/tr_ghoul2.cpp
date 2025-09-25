@@ -4327,7 +4327,7 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 		LL(surfInfo->parentIndex);
 
 		Q_strlwr(surfInfo->name);	//just in case
-		if ( !strcmp( &surfInfo->name[strlen(surfInfo->name)-4],"_off") )
+		if ( !strcmp( &surfInfo->name[strlen(surfInfo->name)-4],"_off") && r_loadSkinsJKA->integer == 2)
 		{
 			surfInfo->name[strlen(surfInfo->name)-4]=0;	//remove "_off" from name
 		}

@@ -462,7 +462,7 @@ retryModel:
 		}
 	}
 
-	if (!demo15detected && CG_ParseSurfsFile( modelName, skinName, surfOff, surfOn )) {
+	if (/*!demo15detected && */CG_ParseSurfsFile( modelName, skinName, surfOff, surfOn )) {
 	//turn on/off any surfs
 		const char	*token;
 		const char	*p;
