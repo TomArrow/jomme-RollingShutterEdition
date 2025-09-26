@@ -810,6 +810,7 @@ Other things could be stuck in here, like birds in the sky, etc
 */
 void RB_StageIteratorSky( void ) {
 	bool useStencil = R_UsingStencilSky();
+	bool mustClearStencil = false;
 #ifdef JEDIACADEMY_GLOW
 	if ( g_bRenderGlowingObjects || g_bRenderZPrepass && !useStencil)
 		return;
@@ -854,7 +855,13 @@ void RB_StageIteratorSky( void ) {
 		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		qglStencilMask(1); 
 		qglStencilFunc(GL_EQUAL, 1, 1);
-		qglStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // reset it again for the next sky :) works fine as long as all the actual polys are correctly being drawn over by the sky poly stuff
+		if (!tess.xstages[0]) {
+			qglStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // reset it again for the next sky :) works fine as long as all the actual polys are correctly being drawn over by the sky poly stuff
+		}
+		else {
+			qglStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); // if we have multiple stages, setting to 0 will break being able to draw them all
+			mustClearStencil = true;
+		}
 
 		g_bRenderStencilTestedSky = true; // let GL_State know to always set GLS_DEPTHTEST_DISABLE while we're doing this.
 	}
@@ -906,7 +913,9 @@ void RB_StageIteratorSky( void ) {
 	if (g_bRenderStencilTestedSky) {
 		qglDisable(GL_STENCIL_TEST);
 		qglClearStencil(0U);
-		//qglClear(GL_STENCIL_BUFFER_BIT); // seems to work ok without since we do GL_ZERO above.
+		if (mustClearStencil) {
+			qglClear(GL_STENCIL_BUFFER_BIT); // seems to work ok without since we do GL_ZERO above. But with multiple stages this is the only option.
+		}
 		g_bRenderStencilTestedSky = false;
 	}
 
