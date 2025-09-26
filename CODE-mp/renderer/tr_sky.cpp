@@ -10,6 +10,7 @@ static float s_cloudTexP[6][SKY_SUBDIVISIONS+1][SKY_SUBDIVISIONS+1];
 #ifdef JEDIACADEMY_GLOW
 extern bool g_bRenderGlowingObjects;
 #endif
+extern bool g_bRenderStencilTestedSky;
 
 /*
 ===================================================================================
@@ -795,7 +796,7 @@ void RB_DrawSun( void ) {
 
 
 
-
+void R_DrawElements(int numIndexes, const glIndex_t* indexes);
 /*
 ================
 RB_StageIteratorSky
@@ -818,6 +819,30 @@ void RB_StageIteratorSky( void ) {
 	R_FrameBuffer_SetDynamicUniforms(NULL, &falseBool, &falseBool,0,0,0,0,&trueBool);
 	int colorGen = CGEN_BAD;
 	R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen);
+
+	if (r_stencilSky->integer && (backEnd.viewParms.renderingMultipleSkies || tr.world && tr.world->wantsStencilSkies) || r_stencilSky->integer == 2 || r_stencilSky->integer == 4) {
+		GL_State(GLS_DEPTHMASK_TRUE);
+		qglEnable(GL_STENCIL_TEST);
+		qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		qglStencilMask(1);
+		qglStencilFunc(GL_ALWAYS, 1, 1);
+		qglStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+		// draw the polys
+		GL_SelectTexture(0);
+		GL_Bind(tr.whiteImage); // just random texture, it's not like anything is actually drawn. maybe we can skip this altogether?
+		qglVertexPointer(3, GL_FLOAT, sizeof(tess.xyz[0]), tess.xyz);
+		qglDisableClientState(GL_COLOR_ARRAY);
+		qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		R_DrawElements(tess.numIndexes, tess.indexes);
+
+		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		qglStencilMask(1); 
+		qglStencilFunc(GL_EQUAL, 1, 1);
+		qglStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // reset it again for the next sky :) works fine as long as all the actual polys are correctly being drawn over by the sky poly stuff
+
+		g_bRenderStencilTestedSky = true; // let GL_State know to always set GLS_DEPTHTEST_DISABLE while we're doing this.
+	}
 
 	// go through all the polygons and project them onto
 	// the sky box to see which blocks on each side need
@@ -862,6 +887,13 @@ void RB_StageIteratorSky( void ) {
 
 	// back to normal depth range
 	qglDepthRange(0, 1.0 );
+
+	if (g_bRenderStencilTestedSky) {
+		qglDisable(GL_STENCIL_TEST);
+		qglClearStencil(0U);
+		//qglClear(GL_STENCIL_BUFFER_BIT); // seems to work ok without since we do GL_ZERO above.
+		g_bRenderStencilTestedSky = false;
+	}
 
 	R_FrameBuffer_SetDynamicUniforms(NULL, 0,0, 0, 0, 0,0, &falseBool);
 

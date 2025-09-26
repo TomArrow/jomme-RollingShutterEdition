@@ -724,6 +724,10 @@ typedef struct {
 	float		zFar;
 	qboolean	isSceneView;
 	sceneView_t sceneView;
+
+	// track whether we need to use stencil for skies
+	int			lastSkyShader;
+	qboolean	renderingMultipleSkies;
 } viewParms_t;
 
 
@@ -1013,6 +1017,8 @@ typedef struct {
 
 	char		*entityString;
 	char		*entityParsePoint;
+
+	qboolean	wantsStencilSkies;
 } world_t;
 
 
@@ -1497,6 +1503,7 @@ extern	cvar_t	*r_shownormals;					// draws wireframe normals
 extern	cvar_t	*r_clear;						// force screen clear every frame
 
 extern	cvar_t	*r_shadows;						// controls shadows: 0 = none, 1 = blur, 2 = stencil, 3 = black planar projection
+extern	cvar_t	*r_stencilSky;					// use stencils to allow drawing multiple skies without overlap issues
 extern	cvar_t	*r_flares;						// light flares
 
 extern	cvar_t	*r_intensity;

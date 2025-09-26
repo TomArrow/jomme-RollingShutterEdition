@@ -32,6 +32,7 @@ bool g_bDynamicGlowSupported = false;
 bool g_SSBOsSupported = false; 
 ssboSupport_t g_SSBOProperties;
 
+bool g_bRenderStencilTestedSky = false;
 
 // Hack variable for deciding which kind of texture rectangle thing to do (for some
 // reason it acts different on radeon! It's against the spec!).
@@ -235,6 +236,12 @@ void GL_State( unsigned int stateBits )
 {
 	unsigned int rawStateBits = stateBits;
 	unsigned int diff;
+
+	if (g_bRenderStencilTestedSky) {
+		// the sky is already stencil tested
+		// depth test will just potentially mess with stuff
+		stateBits |= GLS_DEPTHTEST_DISABLE;
+	}
 
 	if (r_fboGLSL->integer && ENABLEGLSL && r_fboGLSLThermalVision->integer == 3 && !backEnd.projection2D) {
 		if ((stateBits & GLS_DSTBLEND_ONE) && (stateBits & GLS_SRCBLEND_ONE)) {
@@ -658,7 +665,7 @@ void RB_BeginDrawingView (void) {
 	// clear relevant buffers
 	clearBits = GL_DEPTH_BUFFER_BIT;
 
-	if ( r_measureOverdraw->integer || r_shadows->integer == 2 )
+	if ( r_measureOverdraw->integer || r_shadows->integer == 2 || r_stencilSky->integer )
 	{
 		clearBits |= GL_STENCIL_BUFFER_BIT;
 	}
@@ -795,6 +802,19 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 	// clear the z buffer, set the modelview, etc
 	RB_BeginDrawingView ();
+
+	// debug info
+	if (r_stencilSky->integer > 2) {
+		if (backEnd.viewParms.renderingMultipleSkies) {
+			Com_Printf("Have multiple skies.\n");
+		}
+		else if (backEnd.viewParms.lastSkyShader == -1) {
+			Com_Printf("Have no sky.\n");
+		}
+		else {
+			Com_Printf("Have single sky.\n");
+		}
+	}
 
 	// draw everything
 	oldEntityNum = -1;
