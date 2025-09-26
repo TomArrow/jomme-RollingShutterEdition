@@ -794,7 +794,9 @@ void RB_DrawSun( void ) {
 	qglDepthRange(0, 1.0 );
 }
 
-
+bool R_UsingStencilSky() {
+	return r_stencilSky->integer && (backEnd.viewParms.renderingMultipleSkies || tr.world && tr.world->wantsStencilSkies) || r_stencilSky->integer == 2 || r_stencilSky->integer == 4;
+}
 
 void R_DrawElements(int numIndexes, const glIndex_t* indexes);
 /*
@@ -807,8 +809,9 @@ Other things could be stuck in here, like birds in the sky, etc
 ================
 */
 void RB_StageIteratorSky( void ) {
+	bool useStencil = R_UsingStencilSky();
 #ifdef JEDIACADEMY_GLOW
-	if ( g_bRenderGlowingObjects || g_bRenderZPrepass )
+	if ( g_bRenderGlowingObjects || g_bRenderZPrepass && !useStencil)
 		return;
 #endif
 	//mme
@@ -820,7 +823,19 @@ void RB_StageIteratorSky( void ) {
 	int colorGen = CGEN_BAD;
 	R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen);
 
-	if (r_stencilSky->integer && (backEnd.viewParms.renderingMultipleSkies || tr.world && tr.world->wantsStencilSkies) || r_stencilSky->integer == 2 || r_stencilSky->integer == 4) {
+	if (useStencil) {
+
+		if (g_bRenderZPrepass) {
+			GL_State(GLS_DEPTHMASK_TRUE);
+			GL_SelectTexture(0);
+			GL_Bind(tr.whiteImage); // just random texture, it's not like anything is actually drawn. maybe we can skip this altogether?
+			qglVertexPointer(3, GL_FLOAT, sizeof(tess.xyz[0]), tess.xyz);
+			qglDisableClientState(GL_COLOR_ARRAY);
+			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			R_DrawElements(tess.numIndexes, tess.indexes);
+			return;
+		}
+
 		GL_State(GLS_DEPTHMASK_TRUE);
 		qglEnable(GL_STENCIL_TEST);
 		qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);

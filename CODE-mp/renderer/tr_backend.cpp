@@ -761,6 +761,8 @@ void RB_BeginDrawingView (void) {
 
 const bool trueBool = true;
 const bool falseBool = false;
+
+bool R_UsingStencilSky();
 /*
 ==================
 RB_RenderDrawSurfList
@@ -777,6 +779,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	drawSurf_t		*drawSurf;
 	uint64_t		oldSort;
 	double			originalTime;
+	bool			usingStencilSky = R_UsingStencilSky();
 #ifdef JEDIACADEMY_GLOW
 	bool			didShadowPass = false;
 #endif
@@ -849,7 +852,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #ifdef JEDIACADEMY_GLOW
 		R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
 		// If we're rendering glowing objects, but this shader has no stages with glow, skip it!
-		if ( g_bRenderGlowingObjects && !shader->hasGlow || g_bRenderZPrepass && !shader->hasDepthWrite || r_onlyShader->string[0] && Q_stricmp(r_onlyShader->string,shader->name) ) {
+		if ( g_bRenderGlowingObjects && !shader->hasGlow || g_bRenderZPrepass && !shader->hasDepthWrite && !(shader->isSky && usingStencilSky) || r_onlyShader->string[0] && Q_stricmp(r_onlyShader->string,shader->name) ) {
 			shader = oldShader;
 			entityNum = oldEntityNum;
 			fogNum = oldFogNum;
