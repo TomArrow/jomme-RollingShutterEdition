@@ -873,8 +873,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// change the tess parameters if needed
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
-		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted 
-			|| ( entityNum != oldEntityNum && (!shader->entityMergable || goreStatusChanged || sceneViewTextureChanged || usedSceneViewTextureChanged)) ) {
+		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted || goreStatusChanged
+			|| ( entityNum != oldEntityNum && (!shader->entityMergable || sceneViewTextureChanged || usedSceneViewTextureChanged)) ) {
 			if (oldShader != NULL) {
 #ifdef __MACOS__	// crutch up the mac's limited buffer queue size
 				int		t;

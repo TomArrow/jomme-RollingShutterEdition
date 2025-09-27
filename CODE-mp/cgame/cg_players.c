@@ -295,6 +295,7 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	char	surfOff[MAX_SURF_LIST_SIZE];
 	char	surfOn[MAX_SURF_LIST_SIZE];
 	centity_t* cent = cg_entities + (ci - cgs.clientinfo);
+	qboolean forceActualSkin = cg_forceActualSkin.integer == 2 || cg_forceActualSkin.integer && cg.snap && clientNum == cg.snap->ps.clientNum;
 
 	//[TrueView]
 	//Warning flag for models that are incompatible with True View
@@ -327,7 +328,7 @@ retryModel:
 		trap_G2API_CleanGhoul2Models(&(ci->ghoul2Model));
 	}
 
-	if (cgs.gametype >= GT_TEAM && (!cgs.jediVmerc || demo15detected)) {
+	if (cgs.gametype >= GT_TEAM && (!cgs.jediVmerc || demo15detected) && !forceActualSkin) {
 		if (ci->team == TEAM_RED) {
 			if (demo15detected) //does it matter?
 				Com_sprintf(ci->skinName, sizeof(ci->skinName), "red");
@@ -1088,6 +1089,7 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 	void *oldGhoul2;
 	int i = 0;
 	qboolean wasATST = qfalse;
+	qboolean forceActualSkin = cg_forceActualSkin.integer == 2 || cg_forceActualSkin.integer && cg.snap && clientNum == cg.snap->ps.clientNum;
 
 	const char	*strings[6];
 	qboolean	friendly;
@@ -1250,7 +1252,7 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 		char modelStr[MAX_QPATH];
 		char *skin;
 
-		if( cgs.gametype >= GT_TEAM ) {
+		if( cgs.gametype >= GT_TEAM && !forceActualSkin) {
 			Q_strncpyz( newInfo.modelName, DEFAULT_TEAM_MODEL, sizeof( newInfo.modelName ) );
 			Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
 		} else {
@@ -1292,7 +1294,7 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 
 	newInfo.ATST = wasATST;
 
-	if (cgs.gametype >= GT_TEAM && (!cgs.jediVmerc || demo15detected)) {
+	if (cgs.gametype >= GT_TEAM && (!cgs.jediVmerc || demo15detected) && !forceActualSkin) {
 		if (newInfo.team == TEAM_RED) {
 			strcpy(newInfo.skinName, "red");
 //			strcpy(newInfo.headSkinName, "red");
