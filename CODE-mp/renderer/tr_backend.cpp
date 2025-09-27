@@ -819,6 +819,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		}
 	}
 
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false for safety
+
 	// draw everything
 	oldEntityNum = -1;
 	backEnd.currentEntity = &tr.worldEntity;
@@ -1001,6 +1003,9 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	if ( depthRange ) {
 		qglDepthRange (0, 1);
 	}
+
+
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false again
 
 #if 0
 	RB_DrawSun();
