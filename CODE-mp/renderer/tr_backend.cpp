@@ -865,12 +865,16 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
 #endif
 
+		bool goreStatusChanged = *drawSurf->surface != oldSurfaceType && (*drawSurf->surface == SF_MDX_GORE || oldSurfaceType == SF_MDX_GORE);
+		bool sceneViewTextureChanged = backEnd.refdef.entities[entityNum].e.sceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.sceneViewTexture;
+		bool usedSceneViewTextureChanged = backEnd.refdef.entities[entityNum].e.useSceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.useSceneViewTexture;
+
 		//
 		// change the tess parameters if needed
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
 		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted 
-			|| ( entityNum != oldEntityNum && (!shader->entityMergable || backEnd.refdef.entities[entityNum].e.sceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.sceneViewTexture || backEnd.refdef.entities[entityNum].e.useSceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.useSceneViewTexture)) ) {
+			|| ( entityNum != oldEntityNum && (!shader->entityMergable || goreStatusChanged || sceneViewTextureChanged || usedSceneViewTextureChanged)) ) {
 			if (oldShader != NULL) {
 #ifdef __MACOS__	// crutch up the mac's limited buffer queue size
 				int		t;
@@ -895,7 +899,11 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			// if that becomes a problem, maybe do an endsurface here or sth idk if the state of having lightdirs changes
 			bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
 			R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool);
-			oldSurfaceType = *drawSurf->surface;
+			//oldSurfaceType = *drawSurf->surface;
+		}
+
+		if (goreStatusChanged) {
+			R_FrameBuffer_SetDynamicUniforms2(NULL,NULL,NULL,NULL,NULL,NULL, (*drawSurf->surface == SF_MDX_GORE) ? &trueBool : &falseBool);
 		}
 
 		//
@@ -945,8 +953,10 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 				bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
 				R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool);
-				oldSurfaceType = *drawSurf->surface;
+				//oldSurfaceType = *drawSurf->surface;
 			}
+
+			oldSurfaceType = *drawSurf->surface;
 
 			qglLoadMatrixf( backEnd.ori.modelMatrix ); 
 

@@ -666,6 +666,7 @@ vmCvar_t	cg_simpleItems;
 vmCvar_t	cg_fov;
 vmCvar_t	cg_distanceAwareFov;
 vmCvar_t	cg_zoomFov;
+vmCvar_t	cg_playerReflection;
 
 vmCvar_t	cg_eternalScoreboard;
 vmCvar_t	cg_colorScoreboard;
@@ -955,6 +956,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_autoswitch, "cg_autoswitch", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_drawGun, "cg_drawGun", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_zoomFov, "cg_zoomfov", "40.0", NULL, CVAR_ARCHIVE },
+	{ &cg_playerReflection, "cg_playerReflection", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_fov, "cg_fov", "120", NULL, CVAR_ARCHIVE },
 	{ &cg_distanceAwareFov, "cg_distanceAwareFov", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_viewsize, "cg_viewsize", "100", NULL, CVAR_ARCHIVE },

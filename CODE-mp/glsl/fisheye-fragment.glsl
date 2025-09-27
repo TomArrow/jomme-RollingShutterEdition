@@ -81,6 +81,64 @@ float biaslod(float baselod){
 
 
 
+
+uniform int jitterIndexUniform; 
+uniform int jitterTotalFramesUniform;
+uniform int serverTimeStartUniform;
+uniform int serverTimeUniform;
+uniform float serverTimeFractionUniform;
+#define FLOATSERVERTIME ((float(serverTimeUniform)+serverTimeFractionUniform)*1000.0f)
+
+
+
+const float PI = 3.1415926535;
+
+const float ALPHA = 0.14;
+const float INV_ALPHA = 1.0 / ALPHA;
+const float K = 2.0 / (PI * ALPHA);
+float nrand( vec2 n )
+{
+	return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
+float inv_error_function(float x)
+{
+	float y = log(1.0 - x*x);
+	float z = K + 0.5 * y;
+	return sqrt(sqrt(max(0.0001f,z*z - y * INV_ALPHA)) - z) * sign(x);
+}
+
+float gaussian_rand( vec2 n )
+{
+    int a = serverTimeUniform & 65535;
+	float t = fract(fract(float(a) *13.4326426f) + fract( serverTimeFractionUniform*13.4326426f )); // MEH
+	float x = nrand( n + 0.07*t );
+
+    float mult= 0.20f;
+    
+	float tmp = inv_error_function(x*2.0-1.0)*mult;
+    if(isinf(tmp) || isnan(tmp)){
+        return 0.5;
+    }
+    if(jitterTotalFramesUniform > 1 /*&& blurEarlyStageUniform == 0*/){
+       //tmp *= max(1.0f,0.33f*sqrt(float(jitterTotalFramesUniform)));
+       //tmp *= pow(float(jitterTotalFramesUniform),0.125f);
+       tmp *= pow(float(jitterTotalFramesUniform),0.5f);
+    }
+    if(isinf(tmp) || isnan(tmp)){
+        return 0.5;
+    }
+    return tmp + 0.5;
+}
+
+
+
+
+
+
+
+
+
+
 //need 420 if we wanna try
 //layout(early_fragment_tests) in;
 
@@ -179,10 +237,6 @@ uniform float dLightAddPowUniform;
 uniform float dLightAddPostPowMultUniform;
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
-uniform int serverTimeStartUniform;
-uniform int serverTimeUniform;
-uniform float serverTimeFractionUniform;
-#define FLOATSERVERTIME ((float(serverTimeUniform)+serverTimeFractionUniform)*1000.0f)
 
 uniform int isLightmapUniform; 
 uniform int isWorldBrushUniform; 
@@ -198,9 +252,6 @@ uniform float noiseFuckeryHDRIntensityUniform;
 uniform float noiseFuckeryLightmapIntensityUniform; 
 uniform vec3 viewOriginUniform; 
 
-uniform int jitterIndexUniform; 
-uniform int jitterTotalFramesUniform;
-
 varying vec4 eyeSpaceCoordsGeom;
 varying vec4 pureVertexCoordsGeom;
 
@@ -209,6 +260,7 @@ varying vec4 pureVertexCoordsGeom;
 #define RENDERFLAG_TWOSIDED 4 // grass and such
 #define RENDERFLAG_SCENEVIEW 8 // for reflection view renders, simplified lighting and such
 #define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
+#define RENDERFLAG_ISGORE 32 // is gore
 
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
@@ -1406,7 +1458,8 @@ bool main_real(inout vec4 outFragColor)
 	//if(thermalVisionUniform > 0){
 	//	gradMultiplier*=4.0f;
 	//}
-	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradMultiplier;
+	float gradnoise = clamp(1.15f*2.0f*gaussian_rand(uvCoords),1.0f,1.3f); // try to smooth out the transition between levels of detail, as it forms a straight line thats visible on high frequency textures even with anisotropic filtering
+	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradMultiplier * gradnoise;
 	//textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
 
     if(fishEyeModeUniform == 0){
@@ -2091,7 +2144,7 @@ bool main_real(inout vec4 outFragColor)
 		heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 	}
 
-	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0){
+	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0 && (renderFlagsUniform & RENDERFLAG_ISGORE) == 0){
 	
 		vec3 axis[3];
 		axis[0] = vec3(0.0, 0.0, -1.0);

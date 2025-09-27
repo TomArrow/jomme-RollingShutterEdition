@@ -8562,7 +8562,7 @@ void CG_Player( centity_t *cent ) {
 
 	forceSaberOn = (cg_saberForceOn.integer & 1) && cent->currentState.clientNum == cg.predictedPlayerState.clientNum || (cg_saberForceOn.integer & 2) && cent->currentState.clientNum != cg.predictedPlayerState.clientNum;
 
-	gigaReflections = cent->currentState.clientNum == cg.predictedPlayerState.clientNum;
+	gigaReflections = cg_playerReflection.integer && cent->currentState.clientNum == cg.predictedPlayerState.clientNum;
 
 	if (cgQueueLoad)
 	{

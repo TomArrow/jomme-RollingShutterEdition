@@ -1949,6 +1949,7 @@ extern	vmCvar_t		cg_simpleItems;
 extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_distanceAwareFov;
 extern	vmCvar_t		cg_zoomFov;
+extern	vmCvar_t		cg_playerReflection;
 
 extern	vmCvar_t		cg_eternalScoreboard;
 extern	vmCvar_t		cg_colorScoreboard;

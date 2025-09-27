@@ -2555,6 +2555,7 @@ void RenderSurfaces(CRenderSurface &RS) //also ended up just ripping right from 
 					{
 						CRenderableSurface *newSurf2 = AllocRS();
 						*newSurf2=*newSurf;
+						newSurf2->ident = SF_MDX_GORE;
 						newSurf2->goreChain=0;
 						newSurf2->alternateTex=tex->tex[RS.lod];
 						newSurf2->scale=1.0f;

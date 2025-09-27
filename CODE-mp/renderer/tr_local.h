@@ -754,6 +754,7 @@ Ghoul2 Insert Start
 */
 
 	SF_MDX,
+	SF_MDX_GORE,
 /*
 Ghoul2 Insert End
 */
@@ -2483,6 +2484,7 @@ typedef struct {
 #define RENDERFLAG_TWOSIDED 4 // grass and such
 #define RENDERFLAG_SCENEVIEW 8 // for reflection view renders, simplified lighting and such
 #define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
+#define RENDERFLAG_ISGORE 32 // is gore
 
 enum HDRConvertSource {
 	HDRCONVSOURCE_MAINFBO,
@@ -2503,7 +2505,7 @@ qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL );
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL, const bool* isGore=NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();

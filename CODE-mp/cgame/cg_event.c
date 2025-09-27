@@ -874,6 +874,8 @@ static void CG_BodyQueueCopy(centity_t *cent, int clientNum, int knownWeapon)
 	if (source->torsoBolt || source->anyDismember || mov_dismember.integer) {
 		CG_ReattachLimb(source);
 	}
+
+	trap_G2API_ClearSkinGore(source->ghoul2); // this seem fair?
 }
 
 const char *CG_TeamName(int team) {
@@ -2083,6 +2085,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			//if (mov_dismember.integer)
 			if (cg_entities[es->number].anyDismember)
 				CG_ReattachLimb(&cg_entities[es->number]);
+
+			if(cg_entities[es->number].ghoul2)
+				trap_G2API_ClearSkinGore(cg_entities[es->number].ghoul2);
 
 			if (tr.fraction == 1)
 				break;

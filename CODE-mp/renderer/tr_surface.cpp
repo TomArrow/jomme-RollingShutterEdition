@@ -1812,6 +1812,7 @@ void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])( void *) = {
 Ghoul2 Insert Start
 */
 	(void(*)(void*))RB_SurfaceGhoul,		// SF_MDX,
+	(void(*)(void*))RB_SurfaceGhoul,		// SF_MDX_GORE,
 /*
 Ghoul2 Insert End
 */
