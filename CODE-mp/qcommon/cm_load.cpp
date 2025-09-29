@@ -911,7 +911,7 @@ static void CM_MakeVoxelGrid(const char* name) {
 		voxelGrid = NULL;
 	}
 
-	voxelGrid = voxels->getData(true);
+	voxelGrid = voxels->release();
 	voxelGridSize = voxels->getDataSize();
 	voxelGridUpdated = 0xffffffff;
 

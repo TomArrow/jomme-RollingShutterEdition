@@ -20,36 +20,37 @@
 template<size_t bits>
 class EzBitmask {
 	//byte data[(bits / 8) + 1] = { 0 };
-	const size_t dataSize = (bits / 8) + 1;
-	byte* data = new byte[dataSize]{ 0 };
+	const size_t dataSize = (bits + 7) / 8; // if i make this static const or static constexpr, compiler runs out of heap space. :( blame MSVC
+	byte* _data = new byte[dataSize]{ 0 };
 public:
 	~EzBitmask() {
-		if (data) {
-			delete[] data;
+		if (_data) {
+			delete[] _data;
 		}
 	}
-	inline const bool operator [](size_t bit) {
-		return (data[(bit >> 3)] & (1 << (bit & 7)));
+	const bool operator [](size_t bit) {
+		return (_data[(bit >> 3)] & (1 << (bit & 7)));
 	}
-	inline void setbit(size_t bit) {
-		data[(bit >> 3)] |= (1 << (bit & 7));
+	void setbit(size_t bit) {
+		_data[(bit >> 3)] |= (1 << (bit & 7));
 	}
-	inline void clearbit(size_t bit) {
-		data[(bit >> 3)] &= ~(1 << (bit & 7));
+	void clearbit(size_t bit) {
+		_data[(bit >> 3)] &= ~(1 << (bit & 7));
 	}
-	inline const byte* getData(bool release) {
-		byte* retVal = data;
-		if (release) {
-			data = NULL;
-		}
+	const byte* data() {
+		return _data;
+	}
+	const byte* release() {
+		byte* retVal = _data;
+		_data = NULL;
 		return retVal;
 	}
-	inline const size_t getDataSize() {
+	const size_t getDataSize() {
 		return dataSize;
 	}
-	inline const void clear(size_t count = 0) {
-		if (data) {
-			memset(data, 0, count ? std::min(count/8+1,dataSize) : dataSize);
+	void clear(size_t count = 0) {
+		if (_data) {
+			memset(_data, 0, count ? std::min((bits + 7) / 8, count) : dataSize);
 		}
 	}
 };
