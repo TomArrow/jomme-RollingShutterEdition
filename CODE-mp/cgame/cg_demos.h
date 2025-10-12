@@ -280,8 +280,13 @@ demoLinePoint_t *linePointSynch(int playTime);
 void evaluateDemoCommand();
 void demoCommandsCommand_f(void);
 void commandsSave(fileHandle_t fileHandle);
+qboolean evaluateCommandVariableAt(int variableNumber, float* result);
+demoCommandVariable_t* getCommandVariableAt(int variableNumber);
+const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qboolean* isDynamic, qboolean* varsHaveChanged);
 qboolean commandsParse(BG_XMLParse_t* parse, const struct BG_XMLParseBlock_s* fromBlock, void* data);
 demoCommandPoint_t* commandPointSynch(int playTime);
+demoCommandPoint_t* commandPointSynchForLayer(int playTime, int layer);
+void evaluateCommandVariable(demoCommandVariable_t* var);
 
 // Objects
 void objectsSave(fileHandle_t fileHandle);

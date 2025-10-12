@@ -1453,6 +1453,7 @@ extern cvar_t	*r_fboGLSLCloudShadowScale;
 extern cvar_t	*r_fboGLSLCloudShadowTimeScale;
 extern cvar_t	*r_fboGLSLCloudShadowPower;
 extern cvar_t	*r_fboGLSLCloudIntensityCompensate;
+extern cvar_t	*r_fboGLSLFastPreview;
 extern cvar_t	*r_fboFishEye;
 extern cvar_t	*r_ext_compiled_vertex_array;
 extern cvar_t	*r_ext_texture_env_add;
@@ -2485,6 +2486,7 @@ typedef struct {
 #define RENDERFLAG_SCENEVIEW 8 // for reflection view renders, simplified lighting and such
 #define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
 #define RENDERFLAG_ISGORE 32 // is gore
+#define RENDERFLAG_FASTPREVIEW 64
 
 enum HDRConvertSource {
 	HDRCONVSOURCE_MAINFBO,

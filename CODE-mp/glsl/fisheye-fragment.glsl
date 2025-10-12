@@ -261,6 +261,7 @@ varying vec4 pureVertexCoordsGeom;
 #define RENDERFLAG_SCENEVIEW 8 // for reflection view renders, simplified lighting and such
 #define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
 #define RENDERFLAG_ISGORE 32 // is gore
+#define RENDERFLAG_FASTPREVIEW 64
 
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
@@ -1440,7 +1441,9 @@ bool main_real(inout vec4 outFragColor)
 
 	bool twoSided = (renderFlagsUniform & RENDERFLAG_TWOSIDED) > 0;
 	bool sceneView = (renderFlagsUniform & RENDERFLAG_SCENEVIEW) > 0;
-	bool fastLighting = sceneView; // can add additional options
+	bool fastPreview = (renderFlagsUniform & RENDERFLAG_FASTPREVIEW) > 0;
+	bool fastLighting = sceneView || fastPreview; // can add additional options
+	bool superfastLighting = fastPreview;
 	
 	bool multitex = (stageImageBitmaskUniform & 2) > 0;
 	bool standAloneLightmap = !multitex && (stageLightmapBitmaskUniform & 1) > 0;
@@ -1810,7 +1813,7 @@ bool main_real(inout vec4 outFragColor)
 
 				
 #if VOXELSTUFF
-				if(!lightVoxelPathChecked ){
+				if(!lightVoxelPathChecked && !superfastLighting){
 					vec3 voxeltarget = worldPixel +worldNormal*11.0;
 					vec3 lightpos = transformDLightForVoxelShadow(dlightRawOrigin+worldNormal*11.0,voxeltarget);
 					if(traceVoxel(lightpos,voxeltarget,collision)){
@@ -1913,7 +1916,7 @@ bool main_real(inout vec4 outFragColor)
 					//if( !mainLightShadowLinesCalculated){
 
 #if VOXELSTUFF
-					if(!lightVoxelPathChecked){
+					if(!lightVoxelPathChecked && !superfastLighting){
 						vec3 voxeltarget = worldPixel +worldNormal*11.0;
 						vec3 lightpos = transformDLightForVoxelShadow(dlightRawOrigin+worldNormal*11.0,voxeltarget);
 						if(traceVoxel(lightpos,voxeltarget,collision)){

@@ -6,16 +6,18 @@
 
 #define MAX_HUD_ITEMS	128
 
-#define HUD_TEXT_WIDTH 10
-#define HUD_TEXT_HEIGHT 13
-#define HUD_TEXT_SPACING 13
+#define HUD_TEXT_WIDTH 7 //10
+#define HUD_TEXT_HEIGHT 9 //13
+#define HUD_TEXT_SPACING 9 //13
 #define HUD_FLOAT "%.3f"
+#define HUD_INT "%d"
 
 typedef enum {
 	hudTypeNone,
 	hudTypeHandler,
 	hudTypeValue,
 	hudTypeFloat,
+	hudTypeInt,
 	hudTypeButton,
 	hudTypeCvar,
 	hudTypeText,
@@ -47,6 +49,9 @@ typedef enum {
 	hudCommandLayerHere,
 	hudCommandHere,
 	hudCommandVariablesHere,
+	hudCommandHereLayer0,hudCommandHereLayer1,hudCommandHereLayer2,hudCommandHereLayer3,hudCommandHereLayer4,hudCommandHereLayer5,hudCommandHereLayer6,hudCommandHereLayer7,hudCommandHereLayer8,hudCommandHereLayer9,
+	hudCommandVariable0,hudCommandVariable1,hudCommandVariable2,hudCommandVariable3,hudCommandVariable4,hudCommandVariable5,hudCommandVariable6,hudCommandVariable7,hudCommandVariable8,hudCommandVariable9,
+	hudCommandVariable0Interpolate,hudCommandVariable1Interpolate,hudCommandVariable2Interpolate,hudCommandVariable3Interpolate,hudCommandVariable4Interpolate,hudCommandVariable5Interpolate,hudCommandVariable6Interpolate,hudCommandVariable7Interpolate,hudCommandVariable8Interpolate,hudCommandVariable9Interpolate,
 
 	hudCamCheckPos,
 	hudCamCheckAngles,
@@ -90,6 +95,8 @@ typedef enum {
 #define MASK_EDIT				0x4
 #define MASK_ACTIVE				0x8
 
+#define MASK_CMDS_POINT			( MASK_CMDS | MASK_POINT )
+
 #define MASK_CAM_POINT			( MASK_CAM | MASK_POINT )
 #define MASK_CAM_HUD			( MASK_CAM | MASK_HUD )
 #define MASK_CAM_EDIT			( MASK_CAM | MASK_EDIT )
@@ -124,8 +131,12 @@ static struct {
 		float *focus, *radius;
 		demoDofPoint_t *point;
 	} dof;
+	struct {
+		int* layer;
+		demoCommandPoint_t* commandPoint;
+		demoCommandPoint_t* commandPointsLayer[MAX_DEMO_COMMAND_LAYERS];
+	} cmds;
 	demoLinePoint_t *linePoint;
-	demoCommandPoint_t *commandPoint;
 	demoObject_t* closestObject;
 	const char	*logLines[LOGLINES];
 } hud;
@@ -184,6 +195,8 @@ const char *demoTimeString( int time ) {
 }
 
 static int hudGetChecked( hudItem_t *item, vec4_t color ) {
+	int varNum;
+	demoCommandVariable_t* var;
 	Vector4Copy( colorWhite, color );
 	switch ( item->handler ) {
 	case hudCamCheckPos:
@@ -192,6 +205,22 @@ static int hudGetChecked( hudItem_t *item, vec4_t color ) {
 		return (hud.cam.flags[0] & CAM_ANGLES);
 	case hudCamCheckFov:
 		return (hud.cam.flags[0] & CAM_FOV);
+	case hudCommandVariable0Interpolate:
+	case hudCommandVariable1Interpolate:
+	case hudCommandVariable2Interpolate:
+	case hudCommandVariable3Interpolate:
+	case hudCommandVariable4Interpolate:
+	case hudCommandVariable5Interpolate:
+	case hudCommandVariable6Interpolate:
+	case hudCommandVariable7Interpolate:
+	case hudCommandVariable8Interpolate:
+	case hudCommandVariable9Interpolate:
+		varNum = item->handler - hudCommandVariable0Interpolate;
+		var = getCommandVariableAt(varNum);
+		if (var) {
+			return var->interpolate;
+		}
+		return 0;
 	}
 	return 0;
 }
@@ -234,6 +263,8 @@ static void hudToggleButton( hudItem_t *item, int change ) {
 }
 
 static void hudToggleChecked( hudItem_t *item ) {
+	int varNum;
+	demoCommandVariable_t* var;
 	switch ( item->handler ) {
 	case hudCamCheckPos:
 		hud.cam.flags[0] ^= CAM_ORIGIN;
@@ -243,6 +274,33 @@ static void hudToggleChecked( hudItem_t *item ) {
 		break;
 	case hudCamCheckFov:
 		hud.cam.flags[0] ^= CAM_FOV;
+		break;
+		
+	case hudCommandVariable0Interpolate:
+	case hudCommandVariable1Interpolate:
+	case hudCommandVariable2Interpolate:
+	case hudCommandVariable3Interpolate:
+	case hudCommandVariable4Interpolate:
+	case hudCommandVariable5Interpolate:
+	case hudCommandVariable6Interpolate:
+	case hudCommandVariable7Interpolate:
+	case hudCommandVariable8Interpolate:
+	case hudCommandVariable9Interpolate:
+		varNum = item->handler - hudCommandVariable0Interpolate;
+		var = getCommandVariableAt(varNum);
+		if (var) {
+			demoCommandVariable_t copy = *var;
+			if (var->raw[0] == '$') {
+				// disable interpolation
+				Q_strncpyz(var->raw,copy.raw+1,sizeof(var->raw));
+			}
+			else {
+				// enable interpolation
+				var->raw[0] = '$';
+				Q_strncpyz(var->raw+1, copy.raw, sizeof(var->raw)-1);
+			}
+			evaluateCommandVariable(var);
+		}
 		break;
 	}
 }
@@ -273,6 +331,15 @@ static float *hudGetFloat( hudItem_t *item ) {
 		return hud.dof.focus;
 	case hudDofRadius:
 		return hud.dof.radius;
+	default:
+		break;
+	}
+	return 0;
+}
+static int *hudGetInt( hudItem_t *item ) {
+	switch ( item->handler ) {
+	case hudCommandLayerHere:
+		return hud.cmds.layer;
 	default:
 		break;
 	}
@@ -356,22 +423,22 @@ static void hudGetHandler( hudItem_t *item, char *buf, int bufSize ) {
 		Com_sprintf( buf, bufSize, "%.01f", hud.cam.point->len );
 		return;
 	case hudCommandHere:
-		if (hud.commandPoint) {
-			Com_sprintf(buf, bufSize, "%s", hud.commandPoint->command);
+		if (hud.cmds.commandPoint) {
+			Com_sprintf(buf, bufSize, "%s", hud.cmds.commandPoint->command);
 		}
 		return;
 	case hudCommandVariablesHere:
-		if (hud.commandPoint) {
+		if (hud.cmds.commandPoint) {
 			buf[0] = 0;
 			count = 0;
 			for (i = 0; i < MAX_DEMO_COMMAND_VARIABLES; i++) {
-				if (hud.commandPoint->variables[i].isValid) {
+				if (hud.cmds.commandPoint->variables[i].isValid) {
 					char tmpVar[MAX_DEMO_COMMAND_VARIABLE_LENGTH + 5];
 					if (count++ == 0) {
-						Com_sprintf(tmpVar, sizeof(tmpVar), "%d:%s", i, hud.commandPoint->variables[i].raw);
+						Com_sprintf(tmpVar, sizeof(tmpVar), "%d:%s", i, hud.cmds.commandPoint->variables[i].raw);
 					}
 					else {
-						Com_sprintf(tmpVar, sizeof(tmpVar), " | %d:%s", i, hud.commandPoint->variables[i].raw);
+						Com_sprintf(tmpVar, sizeof(tmpVar), " | %d:%s", i, hud.cmds.commandPoint->variables[i].raw);
 					}
 					strcat_s(buf, bufSize, tmpVar);
 				}
@@ -379,8 +446,8 @@ static void hudGetHandler( hudItem_t *item, char *buf, int bufSize ) {
 		}
 		return;
 	case hudCommandLayerHere:
-		if (hud.commandPoint) {
-			Com_sprintf(buf, bufSize, "%d", hud.commandPoint->layer);
+		if (hud.cmds.commandPoint) {
+			Com_sprintf(buf, bufSize, "%d", hud.cmds.commandPoint->layer);
 		}
 		return;
 	case hudCamSpeed:
@@ -460,6 +527,208 @@ static void hudGetHandler( hudItem_t *item, char *buf, int bufSize ) {
 	}
 }
 
+static void hudGetText( hudItem_t *item, char *buf, int bufSize, qboolean edit ) {
+	int i,varNum;
+	demoCommandPoint_t* cmdPoint;
+	demoCommandVariable_t* var;
+	qboolean tmp;
+	unsigned char c[4];
+	float tmpFlt;
+
+	buf[0] = 0;
+	switch ( item->handler ) {
+	case hudCommandHere:
+		cmdPoint = hud.cmds.commandPoint;
+		if (!cmdPoint)
+			break;
+		if (!edit) {
+			Q_strncpyz(buf, composeDemoCommand(cmdPoint, qtrue, &tmp, &tmp), bufSize);
+		}
+		else {
+			Q_strncpyz(buf, cmdPoint->command, bufSize);
+		}
+		break;
+	case hudCommandHereLayer0:
+	case hudCommandHereLayer1:
+	case hudCommandHereLayer2:
+	case hudCommandHereLayer3:
+	case hudCommandHereLayer4:
+	case hudCommandHereLayer5:
+	case hudCommandHereLayer6:
+	case hudCommandHereLayer7:
+	case hudCommandHereLayer8:
+	case hudCommandHereLayer9:
+		varNum = item->handler - hudCommandHereLayer0;
+		cmdPoint = hud.cmds.commandPointsLayer[varNum];
+		if (!cmdPoint)
+			break;
+		if (!edit) {
+			Q_strncpyz(buf, composeDemoCommand(cmdPoint, qtrue, &tmp, &tmp), bufSize);
+		}
+		else {
+			Q_strncpyz(buf, cmdPoint->command, bufSize);
+		}
+		break;
+	case hudCommandVariable0:
+	case hudCommandVariable1:
+	case hudCommandVariable2:
+	case hudCommandVariable3:
+	case hudCommandVariable4:
+	case hudCommandVariable5:
+	case hudCommandVariable6:
+	case hudCommandVariable7:
+	case hudCommandVariable8:
+	case hudCommandVariable9:
+		varNum = item->handler - hudCommandVariable0;
+		if (edit) {
+			var = getCommandVariableAt(varNum);
+			if (var) {
+				Q_strncpyz(buf, var->raw, bufSize);
+			}
+		}
+		else {
+			evaluateCommandVariableAt(varNum, &tmpFlt);
+			Com_sprintf(buf, bufSize, HUD_FLOAT, tmpFlt);
+		}
+		break;
+	/*case hudEffectScript:
+		if (!parent)
+			break;
+		Q_strncpyz( buf, parent->scriptName, bufSize );
+		break;
+	case hudEffectShader:
+		if (!parent)
+			break;
+		Q_strncpyz( buf, parent->shaderName, bufSize );
+		break;
+	case hudEffectModel:
+		if (!parent)
+			break;
+		Q_strncpyz( buf, parent->modelName, bufSize );
+		break;
+	case hudEffectColor:
+		if (!hud.effect.color)
+			break;
+		for ( i = 0;i<4;i++)
+			c[i] = hud.effect.color[i] * 255;
+		Com_sprintf( buf, bufSize, "%02X%02X%02X%02X", c[0], c[1], c[2], c[3] );
+		break;
+	case hudScriptInit:
+		if (!hud.scriptPoint )
+			break;
+		Com_sprintf( buf, bufSize, "%s", hud.scriptPoint->init );
+		break;
+	case hudScriptRun:
+		if (!hud.scriptPoint )
+			break;
+		Com_sprintf( buf, bufSize, "%s", hud.scriptPoint->run );
+		break;*/
+	}
+}
+
+
+
+
+static void hudSetText( hudItem_t *item, const char *buf ) {
+	int i, val, varNum;
+	demoCommandPoint_t* cmdPoint;
+	demoCommandVariable_t* var;
+	
+	switch ( item->handler ) {
+		
+	case hudCommandHere:
+		cmdPoint = hud.cmds.commandPoint;
+		if (!cmdPoint)
+			break;
+		Q_strncpyz(cmdPoint->command, buf, sizeof(cmdPoint->command));
+		break;
+	case hudCommandHereLayer0:
+	case hudCommandHereLayer1:
+	case hudCommandHereLayer2:
+	case hudCommandHereLayer3:
+	case hudCommandHereLayer4:
+	case hudCommandHereLayer5:
+	case hudCommandHereLayer6:
+	case hudCommandHereLayer7:
+	case hudCommandHereLayer8:
+	case hudCommandHereLayer9:
+		varNum = item->handler - hudCommandHereLayer0;
+		cmdPoint = hud.cmds.commandPointsLayer[varNum];
+		if (!cmdPoint)
+			break;
+		Q_strncpyz(cmdPoint->command, buf, sizeof(cmdPoint->command));
+		break;
+	case hudCommandVariable0:
+	case hudCommandVariable1:
+	case hudCommandVariable2:
+	case hudCommandVariable3:
+	case hudCommandVariable4:
+	case hudCommandVariable5:
+	case hudCommandVariable6:
+	case hudCommandVariable7:
+	case hudCommandVariable8:
+	case hudCommandVariable9:
+		varNum = item->handler - hudCommandVariable0;
+		var = getCommandVariableAt(varNum);
+		if (var) {
+			Q_strncpyz(var->raw, buf, sizeof(var->raw));
+			evaluateCommandVariable(var);
+		}
+		break;
+	/*case hudEffectScript:
+		if (!parent)
+			break;
+		Q_strncpyz( parent->scriptName, buf, sizeof( parent->scriptName ));
+		parent->script = trap_FX_Register( parent->scriptName );
+		break;
+	case hudEffectShader:
+		if (!parent)
+			break;
+		Q_strncpyz( parent->shaderName, buf, sizeof( parent->shaderName ));
+		parent->shader = trap_R_RegisterShader( parent->shaderName );
+		break;
+	case hudEffectModel:
+		if (!parent)
+			break;
+		Q_strncpyz( parent->modelName, buf, sizeof( parent->modelName ));
+		parent->model = trap_R_RegisterModel( parent->modelName );
+		break;
+	case hudEffectColor:
+		if (!hud.effect.color)
+			return;
+		for (i = 0;i<6;i++) {
+            int readHex;
+			char c = buf[i];
+			if ( c >= '0' && c<= '9') {
+                readHex = c - '0';
+			} else if ( c >= 'a' && c<= 'f') {
+				readHex = 0xa + c - 'a';
+			} else if ( c >= 'A' && c<= 'F') {
+				readHex = 0xa + c - 'A';
+			} else {
+				return;
+			}
+			if ( i & 1) {
+				val|= readHex;
+				hud.effect.color[i >> 1] = val * (1 / 255.0f);
+			} else {
+				val = readHex << 4;
+			}
+		}
+		break;
+	case hudScriptInit:
+		if (!hud.scriptPoint )
+			break;
+		Q_strncpyz( hud.scriptPoint->init, buf, sizeof( hud.scriptPoint->init ) );
+		break;
+	case hudScriptRun:
+		if (!hud.scriptPoint )
+			break;
+		Q_strncpyz( hud.scriptPoint->run, buf, sizeof( hud.scriptPoint->run ) );
+		break;*/
+	}
+}
+
 static float hudItemWidth( hudItem_t *item  ) {
 	char buf[512];
 	float w, *f;
@@ -471,11 +740,11 @@ static float hudItemWidth( hudItem_t *item  ) {
 		hudGetHandler( item, buf, sizeof(buf) );
 		w += strlen( buf ) * (int)(HUD_TEXT_WIDTH*cgs.widthRatioCoef);
 		break;
-/*	case hudTypeText:
+	case hudTypeText:
 		hudGetText( item, buf, sizeof(buf), qfalse );
 		w += strlen( buf ) * (int)(HUD_TEXT_WIDTH*cgs.widthRatioCoef);
 		break;
-*/	case hudTypeValue:
+	case hudTypeValue:
 		Com_sprintf( buf, sizeof( buf ), HUD_FLOAT, item->value[0]);
 		w += strlen( buf ) * (int)(HUD_TEXT_WIDTH*cgs.widthRatioCoef);
 		break;
@@ -484,6 +753,13 @@ static float hudItemWidth( hudItem_t *item  ) {
 		if (!f)
 			break;
 		Com_sprintf( buf, sizeof( buf ), HUD_FLOAT, f[0] );
+		w += strlen( buf ) * (int)(HUD_TEXT_WIDTH*cgs.widthRatioCoef);
+		break;
+	case hudTypeInt:
+		f = hudGetInt( item );
+		if (!f)
+			break;
+		Com_sprintf( buf, sizeof( buf ), HUD_INT, f[0] );
 		w += strlen( buf ) * (int)(HUD_TEXT_WIDTH*cgs.widthRatioCoef);
 		break;
 	case hudTypeCheck:
@@ -527,6 +803,7 @@ static void hudDrawItem( hudItem_t *item ) {
 		if ( hud.keyCatcher & KEYCATCH_CGAME ) {
 			switch ( item->type ) {
 			case hudTypeFloat:
+			case hudTypeInt:
 			case hudTypeValue:
 			case hudTypeCvar:
 			case hudTypeText:
@@ -547,11 +824,11 @@ static void hudDrawItem( hudItem_t *item ) {
 		hudGetHandler( item, buf, sizeof( buf ));
 		hudDrawText( x, y, buf, colorWhite );
 		break;
-/*	case hudTypeText:
+	case hudTypeText:
 		hudGetText( item, buf, sizeof(buf), qfalse );
 		hudDrawText( x, y, buf, colorWhite );
 		break;
-*/	case hudTypeValue:
+	case hudTypeValue:
 		Com_sprintf( buf, sizeof( buf ), HUD_FLOAT, item->value[0] );
 		hudDrawText( x, y, buf, colorWhite );
 		break;
@@ -560,6 +837,13 @@ static void hudDrawItem( hudItem_t *item ) {
 		if (!f)
 			break;
 		Com_sprintf( buf, sizeof( buf ), HUD_FLOAT, f[0] );
+		hudDrawText( x, y, buf, colorWhite );
+		break;
+	case hudTypeInt:
+		f = hudGetInt( item );
+		if (!f)
+			break;
+		Com_sprintf( buf, sizeof( buf ), HUD_INT, f[0] );
 		hudDrawText( x, y, buf, colorWhite );
 		break;
 	case hudTypeCvar:
@@ -608,18 +892,26 @@ void hudDraw( void ) {
 		hud.showMask = MASK_LINE;
 		break;
 	case editCommands:
-		hud.showMask = 0;
+		hud.showMask = MASK_CMDS;
 		if (demo.commands.locked) {
-			hud.commandPoint = commandPointSynch(demo.play.time);
-			if (!hud.commandPoint || hud.commandPoint->time != demo.play.time || demo.play.fraction) {
-				hud.commandPoint = 0;
+			hud.cmds.commandPoint = commandPointSynch(demo.play.time);
+			hud.cmds.layer = NULL;
+			if (!hud.cmds.commandPoint || hud.cmds.commandPoint->time != demo.play.time || demo.play.fraction) {
+				hud.cmds.commandPoint = 0;
 			}
 			else {
-				hud.showMask |= MASK_CMDS;
+				hud.showMask |= MASK_POINT;
+				hud.cmds.layer = &hud.cmds.commandPoint->layer;
+			}
+			for (i = 0; i < MAX_DEMO_COMMAND_LAYERS; i++) {
+				hud.cmds.commandPointsLayer[i] = commandPointSynchForLayer(demo.play.time, i);
+				if (!hud.cmds.commandPointsLayer[i] || hud.cmds.commandPointsLayer[i]->time > demo.play.time) {
+					hud.cmds.commandPointsLayer[i] = 0;
+				}
 			}
 		}
 		else {
-			hud.commandPoint = 0;
+			hud.cmds.commandPoint = 0;
 		}
 		break;
 	case editObjects:
@@ -751,7 +1043,11 @@ static void hudAddFloat( float x, float y, int showMask, const char *text, int h
 	item->handler = handler;
 	item->type = hudTypeFloat;
 }
-
+static void hudAddInt( float x, float y, int showMask, const char *text, int handler ) {
+	hudItem_t *item = hudAddItem( x, y, showMask, text );
+	item->handler = handler;
+	item->type = hudTypeInt;
+}
 static void hudAddCheck( float x, float y, int showMask, const char *text, int handler ) {
 	hudItem_t *item = hudAddItem( x, y, showMask, text );
 	item->handler = handler;
@@ -766,6 +1062,11 @@ static void hudAddButton( float x, float y, int showMask, const char *text, int 
 	hudItem_t *item = hudAddItem( x, y, showMask, text );
 	item->handler = handler;
 	item->type = hudTypeButton;
+}
+static void hudAddText( float x, float y, int showMask, const char *text, int handler ) {
+	hudItem_t *item = hudAddItem( x, y, showMask, text );
+	item->handler = handler;
+	item->type = hudTypeText;
 }
 
 void hudToggleInput(void) {
@@ -789,16 +1090,46 @@ void hudInitTables(void) {
 	hudAddValue(     0,  1,  0, "Speed:", &demo.play.speed );
 	hudAddHandler(   0,  2,  0, "View:", hudViewName );
 	hudAddHandler(   0,  3,  0, "Edit:", hudEditName );
-	hudAddHandler(   0,  22,  0, "Demoname:", hudDemoName );
-	hudAddHandler(   0,  23,  0, "CG.Time:", hudCGTime);
+	hudAddHandler(   0,  28,  0, "Demoname:", hudDemoName );
+	hudAddHandler(   0,  29,  0, "CG.Time:", hudCGTime);
 
 	for (i = 0; i < LOGLINES; i++) 
 		hudAddHandler(   0,  25+i, 0, 0, hudLogBase+i );
 
 	// Command items
-	hudAddHandler(0, 4, MASK_CMDS, "Layer:", hudCommandLayerHere);
-	hudAddHandler(0, 5, MASK_CMDS, "Command:", hudCommandHere);
-	hudAddHandler(0, 6, MASK_CMDS, "Variables:", hudCommandVariablesHere);
+	hudAddFloat(0, 4, MASK_CMDS_POINT, "Layer:", hudCommandLayerHere);
+	hudAddText(0, 5, MASK_CMDS_POINT, "Command:", hudCommandHere);
+	hudAddHandler(0, 6, MASK_CMDS_POINT, "Variables:", hudCommandVariablesHere);
+	hudAddText(0, 7, MASK_CMDS, "CL0:", hudCommandHereLayer0);
+	hudAddText(0, 8, MASK_CMDS, "CL1:", hudCommandHereLayer1);
+	hudAddText(0, 9, MASK_CMDS, "CL2:", hudCommandHereLayer2);
+	hudAddText(0, 10, MASK_CMDS, "CL3:", hudCommandHereLayer3);
+	hudAddText(0, 11, MASK_CMDS, "CL4:", hudCommandHereLayer4);
+	hudAddText(0, 12, MASK_CMDS, "CL5:", hudCommandHereLayer5);
+	hudAddText(0, 13, MASK_CMDS, "CL6:", hudCommandHereLayer6);
+	hudAddText(0, 14, MASK_CMDS, "CL7:", hudCommandHereLayer7);
+	hudAddText(0, 15, MASK_CMDS, "CL8:", hudCommandHereLayer8);
+	hudAddText(0, 16, MASK_CMDS, "CL9:", hudCommandHereLayer9);
+	hudAddCheck(0, 17, MASK_CMDS, "I", hudCommandVariable0Interpolate);
+	hudAddText(5, 17, MASK_CMDS, "V0:", hudCommandVariable0);
+	hudAddCheck(0, 18, MASK_CMDS, "I", hudCommandVariable1Interpolate);
+	hudAddText(5, 18, MASK_CMDS, "V1:", hudCommandVariable1);
+	hudAddCheck(0, 19, MASK_CMDS, "I", hudCommandVariable2Interpolate);
+	hudAddText(5, 19, MASK_CMDS, "V2:", hudCommandVariable2);
+	hudAddCheck(0, 20, MASK_CMDS, "I", hudCommandVariable3Interpolate);
+	hudAddText(5, 20, MASK_CMDS, "V3:", hudCommandVariable3);
+	hudAddCheck(0, 21, MASK_CMDS, "I", hudCommandVariable4Interpolate);
+	hudAddText(5, 21, MASK_CMDS, "V4:", hudCommandVariable4);
+	hudAddCheck(0, 22, MASK_CMDS, "I", hudCommandVariable5Interpolate);
+	hudAddText(5, 22, MASK_CMDS, "V5:", hudCommandVariable5);
+	hudAddCheck(0, 23, MASK_CMDS, "I", hudCommandVariable6Interpolate);
+	hudAddText(5, 23, MASK_CMDS, "V6:", hudCommandVariable6);
+	hudAddCheck(0, 24, MASK_CMDS, "I", hudCommandVariable7Interpolate);
+	hudAddText(5, 24, MASK_CMDS, "V7:", hudCommandVariable7);
+	hudAddCheck(0, 25, MASK_CMDS, "I", hudCommandVariable8Interpolate);
+	hudAddText(5, 25, MASK_CMDS, "V8:", hudCommandVariable8);
+	hudAddCheck(0, 26, MASK_CMDS, "I", hudCommandVariable9Interpolate);
+	hudAddText(5, 26, MASK_CMDS, "V9:", hudCommandVariable9);
 
 	// Camera Items
 	hudAddFloat(   0,  4, MASK_CAM_EDIT, "PosX:",  hudCamPosX );
@@ -883,16 +1214,22 @@ static void hudEditItem( hudItem_t *item, const char *buf ) {
 			return;
 		*f = atof( buf );
 		break;
+	case hudTypeInt:
+		f = hudGetInt( item );
+		if (!f)
+			return;
+		*f = atoi( buf );
+		break;
 	case hudTypeValue:
 		item->value[0] = atof( buf );
 		break;
 	case hudTypeCvar:
 		trap_Cvar_Set( item->cvar, buf );
 		break;
-/*	case hudTypeText:
+	case hudTypeText:
 		hudSetText( item, buf );
 		break;
-*/	}
+	}
 }
 
 qboolean CG_KeyEvent(int key, qboolean down) {
@@ -934,13 +1271,22 @@ qboolean CG_KeyEvent(int key, qboolean down) {
 				hud.edit.item = item;
 				trap_Key_SetCatcher( KEYCATCH_CGAME | (catchMask &~KEYCATCH_CGAMEEXEC));
 				break;
-/*			case hudTypeText:
+			case hudTypeInt:
+				f = hudGetInt( item );
+				if (!f)
+					break;
+				Com_sprintf( hud.edit.line, sizeof( hud.edit.line ), HUD_FLOAT, *f );
+				hud.edit.cursor = strlen( hud.edit.line );
+				hud.edit.item = item;
+				trap_Key_SetCatcher( KEYCATCH_CGAME | (catchMask &~KEYCATCH_CGAMEEXEC));
+				break;
+			case hudTypeText:
 				hudGetText( item, hud.edit.line, sizeof( hud.edit.line ), qtrue );
 				hud.edit.cursor = strlen( hud.edit.line );
 				hud.edit.item = item;
 				trap_Key_SetCatcher( KEYCATCH_CGAME | (catchMask &~KEYCATCH_CGAMEEXEC));
 				break;
-*/			case hudTypeButton:
+			case hudTypeButton:
 				hudToggleButton( item, 1 );
 				break;
 			case hudTypeCheck:

@@ -780,18 +780,21 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	VectorCopy( fd->vieworg, parms.pvsOrigin );
 
-	for (int i = 0; i < sceneViewCount; i++,sceneViews++) { // extra views for reflections and such
-		viewParms_t sceneViewViewParms = parms;
-		sceneViewViewParms.isSceneView = qtrue;
-		sceneViewViewParms.sceneView = *sceneViews;
-		VectorCopy(sceneViews->origin, sceneViewViewParms.ori.origin);
-		VectorCopy(sceneViews->origin, sceneViewViewParms.pvsOrigin);
-		if (!sceneViews->copyAxis) {
-			VectorCopy(sceneViews->axis[0], sceneViewViewParms.ori.axis[0]);
-			VectorCopy(sceneViews->axis[1], sceneViewViewParms.ori.axis[1]);
-			VectorCopy(sceneViews->axis[2], sceneViewViewParms.ori.axis[2]);
+	if (!r_fboGLSLFastPreview->integer || tr.captureIsActive) {
+
+		for (int i = 0; i < sceneViewCount; i++,sceneViews++) { // extra views for reflections and such
+			viewParms_t sceneViewViewParms = parms;
+			sceneViewViewParms.isSceneView = qtrue;
+			sceneViewViewParms.sceneView = *sceneViews;
+			VectorCopy(sceneViews->origin, sceneViewViewParms.ori.origin);
+			VectorCopy(sceneViews->origin, sceneViewViewParms.pvsOrigin);
+			if (!sceneViews->copyAxis) {
+				VectorCopy(sceneViews->axis[0], sceneViewViewParms.ori.axis[0]);
+				VectorCopy(sceneViews->axis[1], sceneViewViewParms.ori.axis[1]);
+				VectorCopy(sceneViews->axis[2], sceneViewViewParms.ori.axis[2]);
+			}
+			R_RenderView(&sceneViewViewParms);
 		}
-		R_RenderView(&sceneViewViewParms);
 	}
 
 	R_RenderView( &parms );

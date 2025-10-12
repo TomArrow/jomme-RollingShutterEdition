@@ -208,6 +208,7 @@ cvar_t *r_fboGLSLDLightsAddPostPowMult;
 cvar_t *r_fboGLSLDLightsSpecIntensity;
 cvar_t *r_fboGLSLDLightsSpecBaseReflectivity;
 cvar_t *r_fboGLSLDLightsFastSkipThreshold;
+cvar_t *r_fboGLSLFastPreview;
 cvar_t *r_fboGLSLParallaxMapping;
 cvar_t *r_fboGLSLParallaxMappingIntensity;
 cvar_t *r_fboGLSLParallaxMappingDepth;
@@ -342,6 +343,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 	int extraRenderFlags = backEnd.viewParms.isSceneView ? RENDERFLAG_SCENEVIEW : 0;
 	if (backEnd.currentEntity && backEnd.currentEntity->e.useSceneViewTexture) {
 		extraRenderFlags |= RENDERFLAG_SCENEVIEWBOUND;
+	}
+	if (r_fboGLSLFastPreview->integer && !tr.captureIsActive) {
+		extraRenderFlags |= RENDERFLAG_FASTPREVIEW;
 	}
 
 	float intensityCompensateFactor = 1.0f;
@@ -1042,12 +1046,20 @@ void R_BindSceneViewImage( int index, bool makeMipMaps) {
 	}
 
 	if ( glState.currenttextures[glState.currenttmu] != fbo.extraViews[index]->color ) {
-		qglBindTexture(GL_TEXTURE_2D, fbo.extraViews[index]->color);
-		glState.currenttextures[glState.currenttmu] = fbo.extraViews[index]->color;
+		if (r_fboGLSLFastPreview->integer && !tr.captureIsActive) {
 
-		if (makeMipMaps && !(fbo.extraViewsMipMapsGenerated & (1 << index))) {
-			qglGenerateMipmap(GL_TEXTURE_2D);
-			fbo.extraViewsMipMapsGenerated |= (1 << index);
+			qglBindTexture(GL_TEXTURE_2D, tr.defaultImage->texnum);
+			glState.currenttextures[glState.currenttmu] = tr.defaultImage->texnum;
+		}
+		else {
+
+			qglBindTexture(GL_TEXTURE_2D, fbo.extraViews[index]->color);
+			glState.currenttextures[glState.currenttmu] = fbo.extraViews[index]->color;
+
+			if (makeMipMaps && !(fbo.extraViewsMipMapsGenerated & (1 << index))) {
+				qglGenerateMipmap(GL_TEXTURE_2D);
+				fbo.extraViewsMipMapsGenerated |= (1 << index);
+			}
 		}
 	};
 
@@ -1653,6 +1665,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLDLightsAddPow = ri.Cvar_Get( "r_fboGLSLDLightsAddPow", "0.7", CVAR_ARCHIVE);
 	r_fboGLSLDLightsAddPostPowMult = ri.Cvar_Get( "r_fboGLSLDLightsAddPostPowMult", "0.8", CVAR_ARCHIVE);
 	r_fboGLSLDLightsFastSkipThreshold = ri.Cvar_Get( "r_fboGLSLDLightsFastSkipThreshold", "0.00001", CVAR_ARCHIVE);
+	r_fboGLSLFastPreview = ri.Cvar_Get( "r_fboGLSLFastPreview", "1", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboFishEye = ri.Cvar_Get( "r_fboFishEye", "0", CVAR_ARCHIVE);
 	r_fboFishEyeTessellate = ri.Cvar_Get( "r_fboFishEyeTessellate", "1", CVAR_ARCHIVE);

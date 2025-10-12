@@ -56,11 +56,11 @@ demoCommandPoint_t* commandPointSynchForLayer(int playTime,int layer) {
 extern void trap_R_ParseWaveform(const char* text, waveForm_t* wf);
 extern float trap_R_EvalWaveform(waveForm_t* wf);
 
-static void evaluateCommandVariable(demoCommandVariable_t* var) {
+void evaluateCommandVariable(demoCommandVariable_t* var) {
 	var->isValid = qfalse;
 	char* text = var->raw;
 	if (strlen(text)) {
-		if (text[0] == "$") { // Prepending any command variable with $ will make it a hard value that is not interpolated from the previous point that has a value for this variable.
+		if (text[0] == '$') { // Prepending any command variable with $ will make it a hard value that is not interpolated from the previous point that has a value for this variable.
 			var->interpolate = qfalse;
 			text++;
 		}
@@ -78,6 +78,11 @@ static void evaluateCommandVariable(demoCommandVariable_t* var) {
 			var->type = DEMO_COMMAND_VARIABLE_WAVEFORM;
 			var->isValid = qtrue; // Yeah not very elegant. Would be better to verify somehow. Oh well.
 		}
+	}
+	else {
+		var->value = 0;
+		var->type = DEMO_COMMAND_VARIABLE_VALUE;
+		var->isValid = qfalse;
 	}
 }
 
@@ -405,13 +410,68 @@ void demoCommandsCommand_f(void) {
 	}
 }
 
-void evaluateDemoCommand() {
-	int i,l, srcLength;
-	qboolean isDynamic = qfalse;
-	qboolean varsHaveChanged = qfalse;
+const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qboolean* isDynamic, qboolean* varsHaveChanged) {
+	int srcLength,i ;
 	const char skipWriteCmdOn[] = "com_skipWrite 1;";
 	const char skipWriteCmdOff[] = ";com_skipWrite 0";
-	char composedCommand[MAX_DEMO_COMMAND_LENGTH+sizeof(skipWriteCmdOn)+sizeof(skipWriteCmdOff)];
+	static char composedCommand[MAX_DEMO_COMMAND_LENGTH + sizeof(skipWriteCmdOn) + sizeof(skipWriteCmdOff)];
+		
+	memset(composedCommand, 0, sizeof(composedCommand));
+
+	char* text = cmdHere->command;
+
+	if (!preview) {
+		strcat_s(composedCommand, sizeof(composedCommand), skipWriteCmdOn);// Don't write anything to a config changed during execution of a command point. We would have a config write on every single frame. Bad.
+	}
+
+	srcLength = min(strlen(cmdHere->command),sizeof(cmdHere->command));
+	for (i = 0; i < srcLength;i++) {
+		if (!text[i]) break;
+		if (text[i] == '%' && isdigit(text[i + 1]) && (i == 0 || text[i - 1] != '\\')) {
+			// This is a variable
+			char formattedNumber[100];
+
+			int variableNum = text[i + 1]-'0'; 
+			float result;
+			if (evaluateCommandVariableAt(variableNum,&result)) {
+				isDynamic = qtrue; // Probably get rid of this, it's not reliable anyway.
+			}
+			if (demo.commands.lastValue[variableNum] != result){
+				varsHaveChanged = qtrue;
+			}
+			if (!preview) {
+				demo.commands.lastValue[variableNum] = result;
+			}
+
+			if (preview) {
+				sprintf_s(formattedNumber, sizeof(formattedNumber), "(%d)%.5f", variableNum, result);
+			}
+			else {
+				sprintf_s(formattedNumber, sizeof(formattedNumber), "%.5f", result);
+			}
+			strcat_s(composedCommand, sizeof(composedCommand), formattedNumber);
+
+			i++;
+		}
+		else {
+			strncat_s(composedCommand,sizeof(composedCommand),&text[i],1);
+		}
+	}
+
+	if (!preview) {
+		strcat_s(composedCommand, sizeof(composedCommand), skipWriteCmdOff);
+
+		strncat_s(composedCommand, sizeof(composedCommand), "\n", 1);
+	}
+
+	return composedCommand;
+}
+
+void evaluateDemoCommand() {
+	int i,l;
+	qboolean isDynamic = qfalse;
+	qboolean varsHaveChanged = qfalse;
+	const char* composedCommand;
 
 	for (l = 0; l < MAX_DEMO_COMMAND_LAYERS; l++) {
 
@@ -426,41 +486,7 @@ void evaluateDemoCommand() {
 			continue;
 		}
 
-		memset(composedCommand, 0, sizeof(composedCommand));
-
-		char* text = cmdHere->command;
-
-		strcat_s(composedCommand, sizeof(composedCommand), skipWriteCmdOn);// Don't write anything to a config changed during execution of a command point. We would have a config write on every single frame. Bad.
-
-		srcLength = max(strlen(cmdHere->command),sizeof(cmdHere->command));
-		for (i = 0; i < srcLength;i++) {
-			if (text[i] == '%' && isdigit(text[i + 1]) && (i == 0 || text[i - 1] != '\\')) {
-				// This is a variable
-				char formattedNumber[100];
-
-				int variableNum = text[i + 1]-'0'; 
-				float result;
-				if (evaluateCommandVariableAt(variableNum,&result)) {
-					isDynamic = qtrue; // Probably get rid of this, it's not reliable anyway.
-				}
-				if (demo.commands.lastValue[variableNum] != result){
-					varsHaveChanged = qtrue;
-				}
-				demo.commands.lastValue[variableNum] = result;
-
-				sprintf_s(formattedNumber, sizeof(formattedNumber), "%.5f", result);
-				strcat_s(composedCommand, sizeof(composedCommand), formattedNumber);
-
-				i++;
-			}
-			else {
-				strncat_s(composedCommand,sizeof(composedCommand),&text[i],1);
-			}
-		}
-
-		strcat_s(composedCommand, sizeof(composedCommand), skipWriteCmdOff);
-
-		strncat_s(composedCommand, sizeof(composedCommand), "\n", 1);
+		composedCommand = composeDemoCommand(cmdHere, qfalse, &isDynamic, &varsHaveChanged);
 
 		if (demo.commands.lastPoint[l] != cmdHere || isDynamic || varsHaveChanged) { // Don't execute a command twice unless it is dynamic
 
@@ -527,6 +553,68 @@ qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
 		// Bah nonsense
 		*result = 0.0f;
 		return qfalse; 
+	}
+
+
+	
+}
+
+demoCommandVariable_t* getCommandVariableAt(int variableNumber) {
+
+	qboolean isDynamic = qfalse;
+	demoCommandPoint_t* last, *next;
+	demoCommandPoint_t* cmdHere = commandPointSynch(demo.play.time);
+	if (!cmdHere) {
+		return NULL;
+	}
+
+	// Find *from* keypoint.
+	if (cmdHere->time > demo.play.time) { 
+		// The keypoint lies in the future. So there's no previous keyframe.
+		last = 0;
+	}
+	else {
+		last = cmdHere;
+		while (last && !last->variables[variableNumber].isValid) {
+			// If the current keypoint doesn't have a value for this variable, keep going into the past.
+			last = last->prev;
+		}
+	}
+
+	if (last && last->time == demo.play.time && demo.play.fraction == 0.0f) {
+		// We're exactly on the keypoint right now. No need to interpolate.
+		next = 0;
+	}
+	else {
+		// Find *to* keypoint.
+		next = cmdHere->next;
+		while (next && !next->variables[variableNumber].isValid) {
+			next = next->next;
+		}
+	}
+	
+
+	if ((last && !next) || (last && next && next->variables[variableNumber].interpolate == qfalse)) {
+		// If there is no next, or if next has disabled interpolation, there is no transition. Use last value.
+		return &last->variables[variableNumber];
+	}
+	else if (next && !last) {
+		// There is no transition. Use next value.
+		return &next->variables[variableNumber];
+	}
+	else if (last && next) {
+		return &last->variables[variableNumber];
+		/*
+		float lastValue, nextValue;
+		evaluateCommandVariableValue(&last->variables[variableNumber], &lastValue);
+		evaluateCommandVariableValue(&next->variables[variableNumber], &nextValue);
+		// Lerp.
+		*result = lastValue + (float)(nextValue - lastValue) * (((float)demo.play.time+demo.play.fraction - (float)last->time) / (float)(next->time - last->time));
+		return qtrue;*/
+	}
+	else {
+		// Bah nonsense
+		return NULL;
 	}
 
 
