@@ -1227,7 +1227,7 @@ const void *RB_StretchPic ( const void *data ) {
 	}
 
 	shader = cmd->shader;
-	if ( shader != tess.shader ) {
+	if (!RB_TessShaderSame(shader, tess.shader)) {
 		if ( tess.numIndexes ) {
 			RB_EndSurface();
 		}
@@ -1292,6 +1292,92 @@ const void *RB_StretchPic ( const void *data ) {
 
 	tess.texCoords[ numVerts + 3 ][0][0] = cmd->s1;
 	tess.texCoords[ numVerts + 3 ][0][1] = cmd->t2;
+
+	return (const void *)(cmd + 1);
+}
+
+
+/*
+=============
+RB_DrawLine
+=============
+*/
+const void * RB_DrawLine( const void *data ) {
+	const drawLineCommand_t	*cmd;
+	shader_t *shader;
+	int		numVerts, numIndexes;
+	vec3_t	direction, back, perp;
+	float	xComp, yComp;
+
+	cmd = (const drawLineCommand_t*)data;
+
+	if ( !backEnd.projection2D ) {
+		RB_SetGL2D();
+	}
+
+	shader = cmd->shader;
+	if (!RB_TessShaderSame( shader , tess.shader) ) {
+		if ( tess.numIndexes ) {
+			RB_EndSurface();
+		}
+		backEnd.currentEntity = &backEnd.entity2D;
+		RB_BeginSurface( shader, 0 );
+	}
+
+	RB_CHECKOVERFLOW( 4, 6 );
+	numVerts = tess.numVertexes;
+	numIndexes = tess.numIndexes;
+
+	tess.numVertexes += 4;
+	tess.numIndexes += 6;
+
+	VectorSet(direction, cmd->x2 - cmd->x, cmd->y2 - cmd->y,0);
+	VectorNormalize(direction);
+	VectorSet(back, 0, 0, 1);
+	CrossProduct(direction, back, perp);
+	xComp = perp[0] * 0.5f;
+	yComp = perp[1] * 0.5f;
+
+
+	tess.indexes[ numIndexes ] = numVerts + 3;
+	tess.indexes[ numIndexes + 1 ] = numVerts + 0;
+	tess.indexes[ numIndexes + 2 ] = numVerts + 2;
+	tess.indexes[ numIndexes + 3 ] = numVerts + 2;
+	tess.indexes[ numIndexes + 4 ] = numVerts + 0;
+	tess.indexes[ numIndexes + 5 ] = numVerts + 1;
+
+	Vector4Copy(backEnd.color2D, tess.vertexColors[numVerts]);
+	Vector4Copy(backEnd.color2D, tess.vertexColors[numVerts + 1]);
+	Vector4Copy(backEnd.color2D, tess.vertexColors[numVerts + 2]);
+	Vector4Copy(backEnd.color2D, tess.vertexColors[numVerts + 3]);
+
+	tess.xyz[ numVerts ][0] = cmd->x - xComp;
+	tess.xyz[ numVerts ][1] = cmd->y - yComp;
+	tess.xyz[ numVerts ][2] = 0;
+
+	tess.texCoords[0][ numVerts ][0] = cmd->s1;
+	tess.texCoords[0][ numVerts ][1] = cmd->t1;
+
+	tess.xyz[ numVerts + 1 ][0] = cmd->x + xComp;
+	tess.xyz[ numVerts + 1 ][1] = cmd->y + yComp;
+	tess.xyz[ numVerts + 1 ][2] = 0;
+
+	tess.texCoords[0][ numVerts + 1 ][0] = cmd->s2;
+	tess.texCoords[0][ numVerts + 1 ][1] = cmd->t1;
+
+	tess.xyz[ numVerts + 2 ][0] = cmd->x2 + xComp;
+	tess.xyz[ numVerts + 2 ][1] = cmd->y2 + yComp;
+	tess.xyz[ numVerts + 2 ][2] = 0;
+
+	tess.texCoords[0][ numVerts + 2 ][0] = cmd->s2;
+	tess.texCoords[0][ numVerts + 2 ][1] = cmd->t2;
+
+	tess.xyz[ numVerts + 3 ][0] = cmd->x2 - xComp;
+	tess.xyz[ numVerts + 3 ][1] = cmd->y2 - yComp;
+	tess.xyz[ numVerts + 3 ][2] = 0;
+
+	tess.texCoords[0][ numVerts + 3 ][0] = cmd->s1;
+	tess.texCoords[0][ numVerts + 3 ][1] = cmd->t2;
 
 	return (const void *)(cmd + 1);
 }
@@ -1761,6 +1847,9 @@ again:
 			break;
 		case RC_STRETCH_PIC:
 			data = RB_StretchPic( data );
+			break;
+		case RC_DRAW_LINE:
+			data = RB_DrawLine(data);
 			break;
 		case RC_ROTATE_PIC:
 			data = RB_RotatePic( data );

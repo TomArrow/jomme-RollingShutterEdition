@@ -2688,6 +2688,8 @@ void		trap_R_ApplyPostProcessing(qboolean captureFrame);
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1
 void		trap_R_DrawStretchPic( float x, float y, float w, float h, 
 			float s1, float t1, float s2, float t2, qhandle_t hShader );
+void		trap_R_DrawLine(float x, float y, float x2, float y2, float width, 
+			float s1, float t1, float s2, float t2, qhandle_t hShader);
 void		trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
 int			trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int endFrame, 
 					   float frac, const char *tagName );

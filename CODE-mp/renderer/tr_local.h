@@ -1889,6 +1889,14 @@ typedef __attribute__((aligned(16))) shaderCommands_s shaderCommands_t;
 extern	shaderCommands_t	tess;
 extern	color4f_t	styleColors[MAX_LIGHT_STYLES];
 
+inline bool RB_TessShaderSame(shader_t* shader, shader_t* tessShader) {
+
+	shader_t* state = (shader->remappedShader) ? shader->remappedShader : shader;
+
+	return tessShader == state;
+
+}
+
 void RB_BeginSurface(shader_t *shader, int fogNum );
 void RB_EndSurface(void);
 void RB_CheckOverflow( int verts, int indexes );
@@ -2213,6 +2221,16 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
+	shader_t* shader;
+	float	x, y;
+	float	x2, y2;
+	float	width;
+	float	s1, t1;
+	float	s2, t2;
+} drawLineCommand_t;
+
+typedef struct {
+	int		commandId;
 	shader_t	*shader;
 	float	x, y;
 	float	w, h;
@@ -2253,7 +2271,7 @@ typedef enum {
 	RC_SET_COLOR,
 	RC_STRETCH_PIC,
 	RC_ROTATE_PIC,
-	RC_ROTATE_PIC2,
+	RC_ROTATE_PIC2, 
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
 	RC_SWAP_BUFFERS,
@@ -2261,6 +2279,7 @@ typedef enum {
 	RC_CAPTURE,
 	RC_CAPTURE_STEREO,
 	RC_POST_PROCESS,
+	RC_DRAW_LINE,
 } renderCommand_t;
 
 
@@ -2312,6 +2331,8 @@ void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, int numDrawSurfs );
 void RE_SetColor( const float *rgba );
 void RE_StretchPic ( float x, float y, float w, float h, 
 					  float s1, float t1, float s2, float t2, qhandle_t hShader );
+void RE_DrawLine(float x, float y, float x2, float y2, float width, float s1, float t1,
+	float s2, float t2, qhandle_t hShader, float xadjust, float yadjust);
 void RE_RotatePic ( float x, float y, float w, float h, 
 					  float s1, float t1, float s2, float t2,float a, qhandle_t hShader );
 void RE_RotatePic2 ( float x, float y, float w, float h, 

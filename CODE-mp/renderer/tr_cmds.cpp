@@ -277,6 +277,38 @@ void RE_StretchPic ( float x, float y, float w, float h,
 	cmd->t2 = t2;
 }
 
+
+/*
+=============
+RE_DrawLine
+
+x, y, x2 and y2 are in virtual screen coordinates
+xadjust is 640 / virtual screen width
+yadjust is 480 / virtual screen height
+=============
+*/
+void RE_DrawLine ( float x, float y, float x2, float y2, float width, float s1, float t1,
+	float s2, float t2, qhandle_t hShader, float xadjust, float yadjust )
+{
+	drawLineCommand_t*	cmd;
+
+	cmd = (drawLineCommand_t*)R_GetCommandBuffer( sizeof( *cmd ) );
+	if ( !cmd ) {
+		return;
+	}
+	cmd->commandId = RC_DRAW_LINE;
+	cmd->shader = R_GetShaderByHandle( hShader );
+	cmd->x = x * xadjust;
+	cmd->y = y * yadjust;
+	cmd->x2 = x2 * xadjust;
+	cmd->y2 = y2 * yadjust;
+	cmd->width = width;
+	cmd->s1 = s1;
+	cmd->t1 = t1;
+	cmd->s2 = s2;
+	cmd->t2 = t2;
+}
+
 /*
 =============
 RE_RotatePic
