@@ -1306,7 +1306,7 @@ const void * RB_DrawLine( const void *data ) {
 	const drawLineCommand_t	*cmd;
 	shader_t *shader;
 	int		numVerts, numIndexes;
-	vec3_t	direction, back, perp;
+	vec3_t	direction, perp;
 	float	xComp, yComp;
 
 	cmd = (const drawLineCommand_t*)data;
@@ -1333,8 +1333,7 @@ const void * RB_DrawLine( const void *data ) {
 
 	VectorSet(direction, cmd->x2 - cmd->x, cmd->y2 - cmd->y,0);
 	VectorNormalize(direction);
-	VectorSet(back, 0, 0, 1);
-	CrossProduct(direction, back, perp);
+	VectorSet(perp, direction[1], -direction[0], 0); //simple dumb variant of making a perpendicular one. am i doing it correctly winding wise? no idea
 	xComp = perp[0] * 0.5f;
 	yComp = perp[1] * 0.5f;
 
