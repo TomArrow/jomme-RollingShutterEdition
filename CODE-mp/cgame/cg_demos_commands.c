@@ -497,18 +497,18 @@ void evaluateDemoCommand() {
 	}
 }
 
-qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
+qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int time, float timeFraction) {
 
 	qboolean isDynamic = qfalse;
 	demoCommandPoint_t* last, *next;
-	demoCommandPoint_t* cmdHere = commandPointSynch(demo.play.time);
+	demoCommandPoint_t* cmdHere = commandPointSynch(time);
 	if (!cmdHere) {
 		*result = 0.0f;
 		return;
 	}
 
 	// Find *from* keypoint.
-	if (cmdHere->time > demo.play.time) { 
+	if (cmdHere->time > time) {
 		// The keypoint lies in the future. So there's no previous keyframe.
 		last = 0;
 	}
@@ -520,7 +520,7 @@ qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
 		}
 	}
 
-	if (last && last->time == demo.play.time && demo.play.fraction == 0.0f) {
+	if (last && last->time == time && timeFraction == 0.0f) {
 		// We're exactly on the keypoint right now. No need to interpolate.
 		next = 0;
 	}
@@ -546,7 +546,7 @@ qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
 		evaluateCommandVariableValue(&last->variables[variableNumber], &lastValue);
 		evaluateCommandVariableValue(&next->variables[variableNumber], &nextValue);
 		// Lerp.
-		*result = lastValue + (float)(nextValue - lastValue) * (((float)demo.play.time+demo.play.fraction - (float)last->time) / (float)(next->time - last->time));
+		*result = lastValue + (float)(nextValue - lastValue) * (((float)time + timeFraction - (float)last->time) / (float)(next->time - last->time));
 		return qtrue;
 	}
 	else {
@@ -557,6 +557,10 @@ qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
 
 
 	
+}
+
+qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
+	return evaluateCommandVariableAtTime(variableNumber, result, demo.play.time, demo.play.fraction);
 }
 
 demoCommandVariable_t* getCommandVariableAt(int variableNumber) {

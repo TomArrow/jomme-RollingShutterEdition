@@ -281,6 +281,7 @@ void evaluateDemoCommand();
 void demoCommandsCommand_f(void);
 void commandsSave(fileHandle_t fileHandle);
 qboolean evaluateCommandVariableAt(int variableNumber, float* result);
+qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int time, float timeFraction);
 demoCommandVariable_t* getCommandVariableAt(int variableNumber);
 const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qboolean* isDynamic, qboolean* varsHaveChanged);
 qboolean commandsParse(BG_XMLParse_t* parse, const struct BG_XMLParseBlock_s* fromBlock, void* data);

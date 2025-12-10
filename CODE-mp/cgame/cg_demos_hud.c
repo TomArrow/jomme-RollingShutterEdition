@@ -3,6 +3,7 @@
 #include "cg_demos.h" 
 //#include "../../ui/menudef.h"
 #include "../ui/keycodes.h"
+#include <cfloat>
 
 #define MAX_HUD_ITEMS	128
 
@@ -146,6 +147,53 @@ static void hudDrawText( float x, float y, const char *buf, const vec4_t color) 
 		return;
 	CG_DrawStringExt( x, y, buf, color, qfalse, qtrue, HUD_TEXT_WIDTH*cgs.widthRatioCoef, HUD_TEXT_HEIGHT , -1 );
 //	CG_Text_Paint( x, y, 0.3f, color, buf, 0,0,ITEM_TEXTSTYLE_SHADOWED );
+}
+
+#define HUD_GRAPH_STEPS 100
+#define HUD_GRAPH_TIMESPAN 10000
+#define HUD_GRAPH_TIMESPAN_PRE 0 // (HUD_GRAPH_TIMESPAN/2)
+#define HUD_GRAPH_TIMESTEP (HUD_GRAPH_TIMESPAN/(float)HUD_GRAPH_STEPS)
+#define HUD_GRAPH_LEFTOFFSET 100
+#define HUD_GRAPH_STEPWIDTH ((float)(640-HUD_GRAPH_LEFTOFFSET)/cgs.widthRatioCoef/(float)HUD_GRAPH_STEPS)
+
+static void hudDrawExtra(float x, float y, hudItem_t* item) {
+	int i, varNum;
+	qboolean tmp;
+	unsigned char c[4];
+	float min = FLT_MAX;
+	float max = FLT_MIN;
+	float mult = 1.0f;
+	float vals[HUD_GRAPH_STEPS];
+	float stepwidth = HUD_GRAPH_STEPWIDTH * cgs.widthRatioCoef;
+	switch (item->handler) {
+	case hudCommandVariable0:
+	case hudCommandVariable1:
+	case hudCommandVariable2:
+	case hudCommandVariable3:
+	case hudCommandVariable4:
+	case hudCommandVariable5:
+	case hudCommandVariable6:
+	case hudCommandVariable7:
+	case hudCommandVariable8:
+	case hudCommandVariable9:
+		varNum = item->handler - hudCommandVariable0;
+		for (i = 0; i < HUD_GRAPH_STEPS; i++) {
+			evaluateCommandVariableAtTime(varNum, &vals[i], demo.play.time - HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, demo.play.fraction);
+			if (vals[i] > max) {
+				max = vals[i];
+			}
+			if (vals[i] < min) {
+				min = vals[i];
+			}
+		}
+		if (max || min) {
+			mult = (float)HUD_TEXT_SPACING / (max - min);
+			for (i = 1; i < HUD_GRAPH_STEPS; i++) {
+				trap_R_DrawLine(HUD_GRAPH_LEFTOFFSET + stepwidth * (i - 1) , y + (vals[i - 1] - min) * mult, HUD_GRAPH_LEFTOFFSET + stepwidth * i, y + (vals[i - 1] - min) * mult, 1.5f, 0, 0, 1, 1, cgs.media.whiteShader);
+			}
+		}
+		break;
+	}
 }
 
 static void hudMakeTarget( int targetNum, char *dst, int dstSize) {
@@ -798,6 +846,9 @@ static void hudDrawItem( hudItem_t *item ) {
 		}
 		return;
 	}
+
+	hudDrawExtra(x,y,item);
+
 	if ( item->textLen ) {
 		float *color = colorWhite;
 		if ( hud.keyCatcher & KEYCATCH_CGAME ) {
