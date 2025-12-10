@@ -497,14 +497,21 @@ void evaluateDemoCommand() {
 	}
 }
 
-qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int time, float timeFraction) {
+qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int time, float timeFraction, qboolean* anyFound) {
 
 	qboolean isDynamic = qfalse;
 	demoCommandPoint_t* last, *next;
 	demoCommandPoint_t* cmdHere = commandPointSynch(time);
 	if (!cmdHere) {
 		*result = 0.0f;
+		if (anyFound) {
+			*anyFound = qfalse;
+		}
 		return;
+	}
+
+	if (anyFound) {
+		*anyFound = qtrue;
 	}
 
 	// Find *from* keypoint.
@@ -551,6 +558,9 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 	}
 	else {
 		// Bah nonsense
+		if (anyFound) {
+			*anyFound = qfalse;
+		}
 		*result = 0.0f;
 		return qfalse; 
 	}
@@ -560,7 +570,7 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 }
 
 qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
-	return evaluateCommandVariableAtTime(variableNumber, result, demo.play.time, demo.play.fraction);
+	return evaluateCommandVariableAtTime(variableNumber, result, demo.play.time, demo.play.fraction,NULL);
 }
 
 demoCommandVariable_t* getCommandVariableAt(int variableNumber) {

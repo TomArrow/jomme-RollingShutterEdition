@@ -165,6 +165,7 @@ static void hudDrawExtra(float x, float y, hudItem_t* item) {
 	float mult = 1.0f;
 	float vals[HUD_GRAPH_STEPS];
 	float stepwidth = HUD_GRAPH_STEPWIDTH * cgs.widthRatioCoef;
+	qboolean anyFound = qtrue;
 	switch (item->handler) {
 	case hudCommandVariable0:
 	case hudCommandVariable1:
@@ -177,8 +178,8 @@ static void hudDrawExtra(float x, float y, hudItem_t* item) {
 	case hudCommandVariable8:
 	case hudCommandVariable9:
 		varNum = item->handler - hudCommandVariable0;
-		for (i = 0; i < HUD_GRAPH_STEPS; i++) {
-			evaluateCommandVariableAtTime(varNum, &vals[i], demo.play.time - HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, demo.play.fraction);
+		for (i = 0; i < HUD_GRAPH_STEPS && anyFound; i++) {
+			evaluateCommandVariableAtTime(varNum, &vals[i], demo.play.time - HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, demo.play.fraction, &anyFound);
 			if (vals[i] > max) {
 				max = vals[i];
 			}
@@ -186,10 +187,10 @@ static void hudDrawExtra(float x, float y, hudItem_t* item) {
 				min = vals[i];
 			}
 		}
-		if (max || min) {
+		if ((max || min) && min != max && anyFound) {
 			mult = (float)HUD_TEXT_SPACING / (max - min);
 			for (i = 1; i < HUD_GRAPH_STEPS; i++) {
-				trap_R_DrawLine(HUD_GRAPH_LEFTOFFSET + stepwidth * (i - 1) , y + (vals[i - 1] - min) * mult, HUD_GRAPH_LEFTOFFSET + stepwidth * i, y + (vals[i - 1] - min) * mult, 1.5f, 0, 0, 1, 1, cgs.media.whiteShader);
+				trap_R_DrawLine(HUD_GRAPH_LEFTOFFSET + stepwidth * (i - 1) , y + (vals[i - 1] - min) * mult, HUD_GRAPH_LEFTOFFSET + stepwidth * i, y + (vals[i] - min) * mult, 1.5f, 0, 0, 1, 1, cgs.media.whiteShader);
 			}
 		}
 		break;
