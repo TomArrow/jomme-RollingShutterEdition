@@ -1313,7 +1313,7 @@ void R_Init( void ) {
 
 	for(i = 0; i < MAX_LIGHT_STYLES; i++)
 	{
-		RE_SetLightStyle(i, -1);
+		RE_SetLightStyle(i, identity255);
 	}
 	InitOpenGL();
 
@@ -1504,8 +1504,10 @@ void RE_GetLightStyle(int style, color4f_t color)
 	//*(int *)color = *(int *)styleColors[style];
 }
 
+color4f_t identity255 = { 255.0f,255.0f,255.0f,255.0f };
+color4f_t identity = { 1.0f,1.0f,1.0f,1.0f };
 const float onedividedby255 = 1.0f / 255.0f;
-void RE_SetLightStyle(int style, int color)
+void RE_SetLightStyle(int style, color4f_t color)
 {
 	if (style >= MAX_LIGHT_STYLES)
 	{
@@ -1513,12 +1515,13 @@ void RE_SetLightStyle(int style, int color)
 		return;
 	}
 
-	Vector4Copy(*(color4ub_t*)&color, styleColors[style]);
+	//Vector4Copy(*(color4ub_t*)&color, styleColors[style]);
+	Vector4Copy(color, styleColors[style]);
 	if (r_styleOnly->integer < 0 || r_styleOnly->integer == style) {
-		styleColors[style][0] = 255.0f * R_sRGBToLinear(styleColors[style][0] * onedividedby255);
-		styleColors[style][1] = 255.0f * R_sRGBToLinear(styleColors[style][1] * onedividedby255);
-		styleColors[style][2] = 255.0f * R_sRGBToLinear(styleColors[style][2] * onedividedby255);
-		styleColors[style][3] = 255.0f * R_sRGBToLinear(styleColors[style][3] * onedividedby255);
+		//styleColors[style][0] = 255.0f * R_sRGBToLinear(styleColors[style][0] * onedividedby255);
+		//styleColors[style][1] = 255.0f * R_sRGBToLinear(styleColors[style][1] * onedividedby255);
+		//styleColors[style][2] = 255.0f * R_sRGBToLinear(styleColors[style][2] * onedividedby255);
+		//styleColors[style][3] = 255.0f * R_sRGBToLinear(styleColors[style][3] * onedividedby255);
 	}
 	else {
 		styleColors[style][0] = 0.0f;

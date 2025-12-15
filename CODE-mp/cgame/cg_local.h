@@ -12,6 +12,8 @@
 
 extern camera_t cam;
 
+extern color4f_t cl_lightstyle_mod[MAX_LIGHT_STYLES];
+
 
 // The entire cgame module is unloaded and reloaded on each level change,
 // so there is NO persistant data between levels on the client side.
@@ -2702,7 +2704,7 @@ void	trap_R_DrawRotatePic2( float x, float y, float w, float h,
 void		trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
 
 void		trap_R_GetLightStyle(int style, color4f_t color);
-void		trap_R_SetLightStyle(int style, int color);
+void		trap_R_SetLightStyle(int style, color4f_t color);
 
 void		trap_R_GetBModelVerts(int bmodelIndex, vec3_t *verts, vec3_t normal );
 

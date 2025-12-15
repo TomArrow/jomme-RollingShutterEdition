@@ -5,6 +5,7 @@
 #endif
 
 static	clightstyle_t	cl_lightstyle[MAX_LIGHT_STYLES];
+color4f_t		cl_lightstyle_mod[MAX_LIGHT_STYLES];
 static	int				lastofs;
 
 /*
@@ -22,6 +23,10 @@ void CG_ClearLightStyles (void)
 	for(i=0;i<MAX_LIGHT_STYLES*3;i++)
 	{
 		CG_SetLightstyle (i);
+		cl_lightstyle_mod[i][0] = 1.0f;
+		cl_lightstyle_mod[i][1] = 1.0f;
+		cl_lightstyle_mod[i][2] = 1.0f;
+		cl_lightstyle_mod[i][3] = 1.0f;
 	}
 }
 
@@ -61,9 +66,15 @@ void CG_RunLightStyles (void)
 			ls->value[2] = ls->map[ofs%ls->length][2];
 			ls->value[3] = 255; //ls->map[ofs%ls->length][3];
 		}
-		trap_R_SetLightStyle(i, *(int*)ls->value);
+		ls->value[0] *= cl_lightstyle_mod[i][0];
+		ls->value[1] *= cl_lightstyle_mod[i][1];
+		ls->value[2] *= cl_lightstyle_mod[i][2];
+		ls->value[3] *= cl_lightstyle_mod[i][3];
+		trap_R_SetLightStyle(i, ls->value);
 	}
 }
+
+const float onedividedby255 = 1.0f / 255.0f;
 
 void CG_SetLightstyle (int i)
 {
@@ -81,5 +92,6 @@ void CG_SetLightstyle (int i)
 	for (k=0 ; k<j ; k++)
 	{
 		cl_lightstyle[(i/3)].map[k][(i%3)] = (float)(s[k]-'a')/(float)('z'-'a') * 255.0;
+		cl_lightstyle[(i / 3)].map[k][(i % 3)] = 255.0f * sRGBToLinear(cl_lightstyle[(i / 3)].map[k][(i % 3)] * onedividedby255);
 	}
 }

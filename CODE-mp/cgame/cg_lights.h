@@ -5,8 +5,8 @@
 typedef struct
 {
 	int				length;
-	color4ub_t		value;
-	color4ub_t		map[MAX_QPATH];
+	color4f_t		value;
+	color4f_t		map[MAX_QPATH];
 } clightstyle_t;
 
 void	CG_ClearLightStyles (void);

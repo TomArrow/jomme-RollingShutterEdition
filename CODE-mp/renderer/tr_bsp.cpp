@@ -2650,7 +2650,7 @@ static void R_CalcVertexLightDirs(void)
 
 	for (i = 0; i < MAX_LIGHT_STYLES; i++)
 	{
-		RE_SetLightStyle(i, -1);
+		RE_SetLightStyle(i, identity255);
 	}
 
 	ri.Printf(PRINT_ALL,"Calced %d vertex lightdirs\n", lightdirsCalced);

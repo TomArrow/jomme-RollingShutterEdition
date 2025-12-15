@@ -386,7 +386,7 @@ void	trap_R_GetLightStyle(int style, color4f_t color)
 	syscall( CG_R_GET_LIGHT_STYLE, style, color );
 }
 
-void	trap_R_SetLightStyle(int style, int color)
+void	trap_R_SetLightStyle(int style, color4f_t color)
 {
 	syscall( CG_R_SET_LIGHT_STYLE, style, color );
 }

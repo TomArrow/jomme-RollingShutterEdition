@@ -120,7 +120,7 @@ typedef struct {
 	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );
 
 	void (*GetLightStyle)(int style, color4f_t color);
-	void (*SetLightStyle)(int style, int color);
+	void (*SetLightStyle)(int style, color4f_t color);
 
 	void	(*GetBModelVerts)( int bmodelIndex, vec3_t *vec, vec3_t normal );
 

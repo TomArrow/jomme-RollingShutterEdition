@@ -66,6 +66,9 @@
 typedef byte color4ub_t[4];
 typedef float color4f_t[4];
 
+extern color4f_t identity255;
+extern color4f_t identity;
+
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
