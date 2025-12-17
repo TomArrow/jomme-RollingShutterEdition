@@ -47,10 +47,18 @@ typedef enum {
 typedef char demoCommandVariableRaw_t[MAX_DEMO_COMMAND_VARIABLE_LENGTH];
 typedef demoCommandVariableRaw_t demoCommandVariableRawCollection_t[MAX_DEMO_COMMAND_VARIABLES];
 
+typedef enum {
+	DEMO_COMMAND_VARIABLE_INTERPOLATION_NONE,
+	DEMO_COMMAND_VARIABLE_INTERPOLATION_LINEAR,
+	DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHSTEP,
+	DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHERSTEP,
+	DEMO_COMMAND_VARIABLE_INTERPOLATION_CONSTANTPOWER,
+} demoCommandVariableInterpolationType_t;
+
 typedef struct demoCommandVariable_s {
 	demoCommandVariableRaw_t	raw;
 	demoCommandVariableType_t	type;
-	qboolean					interpolate;
+	demoCommandVariableInterpolationType_t	interpolate;
 	qboolean					isValid;
 	waveForm_t					waveForm;
 	float						value;

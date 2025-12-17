@@ -59,13 +59,39 @@ extern float trap_R_EvalWaveform(waveForm_t* wf);
 void evaluateCommandVariable(demoCommandVariable_t* var) {
 	var->isValid = qfalse;
 	char* text = var->raw;
+	qboolean tmp;
 	if (strlen(text)) {
 		if (text[0] == '$') { // Prepending any command variable with $ will make it a hard value that is not interpolated from the previous point that has a value for this variable.
-			var->interpolate = qfalse;
+			var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_NONE;
 			text++;
 		}
 		else {
-			var->interpolate = qtrue;
+			var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_LINEAR;
+		}
+		while (*text == ' ') {
+			text++;
+		}
+		if (*text == '#') {
+			text++;
+			tmp = var->interpolate;
+			if (!Q_stricmpn(text,"sstep",5) || !Q_stricmpn(text, "smoothstep", 10)) {
+				var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHSTEP;
+			}
+			else if (!Q_stricmpn(text,"sstep2",6) || !Q_stricmpn(text, "smootherstep", 12)) {
+				var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHERSTEP;
+			}
+			else if (!Q_stricmpn(text,"power",5)) {
+				var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_CONSTANTPOWER;
+			}
+			if (!tmp) {
+				var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_NONE;
+			}
+			while (*text && *text != ' ') {
+				text++;
+			}
+		}
+		while (*text == ' ') {
+			text++;
 		}
 		if (isdigit(text[0])) {
 			var->value = atof(text);
@@ -540,7 +566,7 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 	}
 	
 
-	if ((last && !next) || (last && next && next->variables[variableNumber].interpolate == qfalse)) {
+	if ((last && !next) || (last && next && !next->variables[variableNumber].interpolate)) {
 		// If there is no next, or if next has disabled interpolation, there is no transition. Use last value.
 		return evaluateCommandVariableValue(&last->variables[variableNumber],result);
 	}
@@ -550,10 +576,24 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 	}
 	else if (last && next) {
 		float lastValue, nextValue;
+		float fraction;
 		evaluateCommandVariableValue(&last->variables[variableNumber], &lastValue);
 		evaluateCommandVariableValue(&next->variables[variableNumber], &nextValue);
 		// Lerp.
-		*result = lastValue + (float)(nextValue - lastValue) * (((float)time + timeFraction - (float)last->time) / (float)(next->time - last->time));
+		fraction = (((float)time + timeFraction - (float)last->time) / (float)(next->time - last->time));
+		if (next->variables[variableNumber].interpolate == DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHSTEP) {
+			fraction = fraction * fraction * (3.0f - 2.0f * fraction);
+			*result = lastValue + (float)(nextValue - lastValue) * fraction;
+		} else if (next->variables[variableNumber].interpolate == DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHERSTEP) {
+			fraction = fraction * fraction * fraction * ( fraction * ( 6.0f * fraction - 15.0f ) + 10.0f );
+			*result = lastValue + (float)(nextValue - lastValue) * fraction;
+		} else if (next->variables[variableNumber].interpolate == DEMO_COMMAND_VARIABLE_INTERPOLATION_CONSTANTPOWER) {
+			fraction = fraction * (M_PI * 0.5f);
+			*result = lastValue * cosf(fraction) + nextValue * sinf(fraction);
+		}
+		else {
+			*result = lastValue + (float)(nextValue - lastValue) * fraction;
+		}
 		return qtrue;
 	}
 	else {
@@ -608,7 +648,7 @@ demoCommandVariable_t* getCommandVariableAt(int variableNumber) {
 	}
 	
 
-	if ((last && !next) || (last && next && next->variables[variableNumber].interpolate == qfalse)) {
+	if ((last && !next) || (last && next && !next->variables[variableNumber].interpolate)) {
 		// If there is no next, or if next has disabled interpolation, there is no transition. Use last value.
 		return &last->variables[variableNumber];
 	}

@@ -190,7 +190,7 @@ static void hudDrawExtra(float x, float y, hudItem_t* item) {
 		if ((max || min) && min != max && anyFound) {
 			mult = (float)HUD_TEXT_SPACING / (max - min);
 			for (i = 1; i < HUD_GRAPH_STEPS; i++) {
-				trap_R_DrawLine(HUD_GRAPH_LEFTOFFSET + stepwidth * (i - 1) , y + (vals[i - 1] - min) * mult, HUD_GRAPH_LEFTOFFSET + stepwidth * i, y + (vals[i] - min) * mult, 1.5f, 0, 0, 1, 1, cgs.media.whiteShader);
+				trap_R_DrawLine(HUD_GRAPH_LEFTOFFSET + stepwidth * (i - 1) , y + HUD_TEXT_SPACING  - (vals[i - 1] - min) * mult, HUD_GRAPH_LEFTOFFSET + stepwidth * i, y + HUD_TEXT_SPACING -(vals[i] - min) * mult, 1.5f, 0, 0, 1, 1, cgs.media.whiteShader);
 			}
 		}
 		break;
