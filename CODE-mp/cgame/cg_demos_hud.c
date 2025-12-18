@@ -265,7 +265,7 @@ static int hudGetChecked( hudItem_t *item, vec4_t color ) {
 	case hudCommandVariable8Interpolate:
 	case hudCommandVariable9Interpolate:
 		varNum = item->handler - hudCommandVariable0Interpolate;
-		var = getCommandVariableAt(varNum);
+		var = getCommandVariableAt(varNum, NULL);
 		if (var) {
 			return var->interpolate;
 		}
@@ -313,6 +313,7 @@ static void hudToggleButton( hudItem_t *item, int change ) {
 
 static void hudToggleChecked( hudItem_t *item ) {
 	int varNum;
+	int time;
 	demoCommandVariable_t* var;
 	switch ( item->handler ) {
 	case hudCamCheckPos:
@@ -336,7 +337,7 @@ static void hudToggleChecked( hudItem_t *item ) {
 	case hudCommandVariable8Interpolate:
 	case hudCommandVariable9Interpolate:
 		varNum = item->handler - hudCommandVariable0Interpolate;
-		var = getCommandVariableAt(varNum);
+		var = getCommandVariableAt(varNum,&time);
 		if (var) {
 			demoCommandVariable_t copy = *var;
 			if (var->raw[0] == '$') {
@@ -348,7 +349,7 @@ static void hudToggleChecked( hudItem_t *item ) {
 				var->raw[0] = '$';
 				Q_strncpyz(var->raw+1, copy.raw, sizeof(var->raw)-1);
 			}
-			evaluateCommandVariable(var);
+			evaluateCommandVariable(var,time);
 		}
 		break;
 	}
@@ -630,7 +631,7 @@ static void hudGetText( hudItem_t *item, char *buf, int bufSize, qboolean edit )
 	case hudCommandVariable9:
 		varNum = item->handler - hudCommandVariable0;
 		if (edit) {
-			var = getCommandVariableAt(varNum);
+			var = getCommandVariableAt(varNum, NULL);
 			if (var) {
 				Q_strncpyz(buf, var->raw, bufSize);
 			}
@@ -679,7 +680,7 @@ static void hudGetText( hudItem_t *item, char *buf, int bufSize, qboolean edit )
 
 
 static void hudSetText( hudItem_t *item, const char *buf ) {
-	int i, val, varNum;
+	int i, val, varNum,time;
 	demoCommandPoint_t* cmdPoint;
 	demoCommandVariable_t* var;
 	
@@ -718,10 +719,10 @@ static void hudSetText( hudItem_t *item, const char *buf ) {
 	case hudCommandVariable8:
 	case hudCommandVariable9:
 		varNum = item->handler - hudCommandVariable0;
-		var = getCommandVariableAt(varNum);
+		var = getCommandVariableAt(varNum,&time);
 		if (var) {
 			Q_strncpyz(var->raw, buf, sizeof(var->raw));
-			evaluateCommandVariable(var);
+			evaluateCommandVariable(var,time);
 		}
 		break;
 	/*case hudEffectScript:

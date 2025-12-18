@@ -560,13 +560,16 @@ void CG_StyleMod_f(void) {
 	char arg[20] = { 0 };
 	color4f_t color;
 	int colorsToSet[4] = { -1, -1, -1, -1 };
-	int colorsToSetCount = 0;
+	//int colorsToSetCount = 0;
 	int i,c;
 	float lastNum = 1.0f;
 	const char* s;
 	int argCount = trap_Argc();
+	qboolean magnitude = qfalse;
+	float tmp;
 	if (argCount < 4) {
-		Com_Printf("usage: style [num] [r|g|b|a] [numbers...]\n");
+		Com_Printf("usage: style [num] [r|g|b|a|m] [numbers...]\n");
+		Com_Printf("m = magnitude based on existing value\n");
 		return;
 	}
 	trap_Argv(1, arg, sizeof(arg));
@@ -588,20 +591,24 @@ void CG_StyleMod_f(void) {
 	i = 0;
 	while (*s && i < 4) {
 		if (*s == 'r') {
-			colorsToSetCount++;
+			//colorsToSetCount++;
 			colorsToSet[0] = i;
 		}
 		else if (*s == 'g') {
-			colorsToSetCount++;
+			//colorsToSetCount++;
 			colorsToSet[1] = i;
 		}
 		else if (*s == 'b') {
-			colorsToSetCount++;
+			//colorsToSetCount++;
 			colorsToSet[2] = i;
 		}
 		else if (*s == 'a') {
-			colorsToSetCount++;
+			//colorsToSetCount++;
 			colorsToSet[3] = i;
+		}
+		else if (*s == 'm') {
+			//colorsToSetCount++;
+			magnitude = qtrue;
 		}
 		s++;
 		i++;
@@ -609,7 +616,12 @@ void CG_StyleMod_f(void) {
 
 	for (i = 0; i < 4; i++) {
 		if (argCount < 4 + i) {
-			color[i] = lastNum;
+			if (i == 3) {
+				color[i] = 1.0f;
+			}
+			else {
+				color[i] = lastNum;
+			}
 		}
 		else {
 			trap_Argv(3 + i, arg, sizeof(arg));
@@ -619,10 +631,26 @@ void CG_StyleMod_f(void) {
 		lastNum = color[i];
 	}
 
-	for (i = start; i < end; i++) {
-		for (c = 0; c < 4; c++) {
-			if (colorsToSet[c] != -1) {
-				cl_lightstyle_mod[i][c] = color[colorsToSet[c]];
+	if (magnitude) {
+		for (i = start; i < end; i++) {
+			tmp = RGBTOGRAY(cl_lightstyle_mod[i]);
+			if (tmp == 0.0f) {
+				VectorSet(cl_lightstyle_mod[i], color[0], color[0], color[0]);
+			}
+			else {
+				tmp = color[0] / tmp;
+				for (c = 0; c < 3; c++) {
+					cl_lightstyle_mod[i][c] *= tmp;
+				}
+			}
+		}
+	}
+	else {
+		for (i = start; i < end; i++) {
+			for (c = 0; c < 4; c++) {
+				if (colorsToSet[c] != -1) {
+					cl_lightstyle_mod[i][c] = color[colorsToSet[c]];
+				}
 			}
 		}
 	}

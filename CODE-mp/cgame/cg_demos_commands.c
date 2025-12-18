@@ -56,10 +56,12 @@ demoCommandPoint_t* commandPointSynchForLayer(int playTime,int layer) {
 extern void trap_R_ParseWaveform(const char* text, waveForm_t* wf);
 extern float trap_R_EvalWaveform(waveForm_t* wf);
 
-void evaluateCommandVariable(demoCommandVariable_t* var) {
+void evaluateCommandVariable(demoCommandVariable_t* var, int time) {
 	var->isValid = qfalse;
 	char* text = var->raw;
 	qboolean tmp;
+	qboolean autoOffset = qfalse;
+	var->decay = 0.0f;
 	if (strlen(text)) {
 		if (text[0] == '$') { // Prepending any command variable with $ will make it a hard value that is not interpolated from the previous point that has a value for this variable.
 			var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_NONE;
@@ -71,7 +73,7 @@ void evaluateCommandVariable(demoCommandVariable_t* var) {
 		while (*text == ' ') {
 			text++;
 		}
-		if (*text == '#') {
+		while (*text == '#') {
 			text++;
 			tmp = var->interpolate;
 			if (!Q_stricmpn(text,"sstep",5) || !Q_stricmpn(text, "smoothstep", 10)) {
@@ -83,10 +85,24 @@ void evaluateCommandVariable(demoCommandVariable_t* var) {
 			else if (!Q_stricmpn(text,"power",5)) {
 				var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_CONSTANTPOWER;
 			}
+			else if (!Q_stricmpn(text,"ao",2)) {
+				autoOffset = qtrue;
+			}
+			else if (!Q_stricmpn(text,"decay",5)) {
+				int decayHalftime = 500;
+				text += 5;
+				if (isdigit(*text)) {
+					decayHalftime = atoi(text);
+				}
+				var->decay = -(1.0f / (float)decayHalftime); // exponent factor
+			}
 			if (!tmp) {
 				var->interpolate = DEMO_COMMAND_VARIABLE_INTERPOLATION_NONE;
 			}
 			while (*text && *text != ' ') {
+				text++;
+			}
+			while (*text == ' ') {
 				text++;
 			}
 		}
@@ -103,6 +119,9 @@ void evaluateCommandVariable(demoCommandVariable_t* var) {
 			trap_R_ParseWaveform(tmp, &var->waveForm);
 			var->type = DEMO_COMMAND_VARIABLE_WAVEFORM;
 			var->isValid = qtrue; // Yeah not very elegant. Would be better to verify somehow. Oh well.
+			if (autoOffset) {
+				var->waveForm.baseTime = time;
+			}
 		}
 	}
 	else {
@@ -140,7 +159,7 @@ static qboolean commandPointAdd(int layer, int time, const char* command, demoCo
 	newPoint->layer = layer;
 	for (int i = 0; i< MAX_DEMO_COMMAND_VARIABLES; i++) {
 		strcpy_s(newPoint->variables[i].raw, sizeof(demoCommandVariableRaw_t), (*variableCollection)[i]);
-		evaluateCommandVariable(&newPoint->variables[i]);
+		evaluateCommandVariable(&newPoint->variables[i], newPoint->time);
 	}
 	return qtrue;
 }
@@ -361,6 +380,14 @@ void demoCommandsCommand_f(void) {
 		if (!strlen(commandToAdd) && !hasAtLeastOneVariable) { // We Will actually allow empty commands now so we can make keypoints solely for the variables
 
 			CG_DemosAddLog("Failed to add command point. Need at least a command or one variable. Syntax: commands add \"[command]\" \"[optional variable 0\"  \"[optional variable 1\"...");
+			Com_Printf("Failed to add command point. Need at least a command or one variable. Syntax: commands add \"[command]\" \"[optional variable 0\"  \"[optional variable 1\"...\n");
+			Com_Printf("%s","Use variables inside commands with the percent symbol (%0, %1 etc)\n");
+			Com_Printf("Optional variable syntax: Float number (e.g. 1.0) or waveform. Prepend with '$' to disable interpolation from previous variable keyframe.\n");
+			Com_Printf("Before waveform or number, use #sstep for smoothstep interpolation, #sstep2 for smootherstep interpolation or #power for constant power interpolation.\n");
+			Com_Printf("Before waveform or number, use #decay1234. 1234 is any number of milliseconds for the half-life duration from the time of the variable keyframe.\n");
+			Com_Printf("Before waveform or number, use #ao. Auto-offset. Will automatically match the phase of the waveform so the function is starting at the keyframe time.\n");
+			Com_Printf("Waveform help:\n");
+			Com_Printf("<sin|square|triangle|sawtooth|inversesawtooth|noise|random> <base> <amplitude> <phase> <frequency>\n");
 		}
 		else {
 			if (commandPointAdd(layer,demo.play.time, commandToAdd, varCollection)) {
@@ -460,10 +487,10 @@ const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qb
 			int variableNum = text[i + 1]-'0'; 
 			float result;
 			if (evaluateCommandVariableAt(variableNum,&result)) {
-				isDynamic = qtrue; // Probably get rid of this, it's not reliable anyway.
+				*isDynamic = qtrue; // Probably get rid of this, it's not reliable anyway.
 			}
 			if (demo.commands.lastValue[variableNum] != result){
-				varsHaveChanged = qtrue;
+				*varsHaveChanged = qtrue;
 			}
 			if (!preview) {
 				demo.commands.lastValue[variableNum] = result;
@@ -568,17 +595,17 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 
 	if ((last && !next) || (last && next && !next->variables[variableNumber].interpolate)) {
 		// If there is no next, or if next has disabled interpolation, there is no transition. Use last value.
-		return evaluateCommandVariableValue(&last->variables[variableNumber],result);
+		return evaluateCommandVariableValue(&last->variables[variableNumber], last->time, time, timeFraction,result);
 	}
 	else if (next && !last) {
 		// There is no transition. Use next value.
-		return evaluateCommandVariableValue(&next->variables[variableNumber], result);
+		return evaluateCommandVariableValue(&next->variables[variableNumber], next->time, time, timeFraction, result);
 	}
 	else if (last && next) {
 		float lastValue, nextValue;
 		float fraction;
-		evaluateCommandVariableValue(&last->variables[variableNumber], &lastValue);
-		evaluateCommandVariableValue(&next->variables[variableNumber], &nextValue);
+		evaluateCommandVariableValue(&last->variables[variableNumber], last->time, time, timeFraction, &lastValue);
+		evaluateCommandVariableValue(&next->variables[variableNumber], next->time, time, timeFraction, &nextValue);
 		// Lerp.
 		fraction = (((float)time + timeFraction - (float)last->time) / (float)(next->time - last->time));
 		if (next->variables[variableNumber].interpolate == DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHSTEP) {
@@ -613,11 +640,14 @@ qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
 	return evaluateCommandVariableAtTime(variableNumber, result, demo.play.time, demo.play.fraction,NULL);
 }
 
-demoCommandVariable_t* getCommandVariableAt(int variableNumber) {
+demoCommandVariable_t* getCommandVariableAt(int variableNumber, int* time) {
 
 	qboolean isDynamic = qfalse;
 	demoCommandPoint_t* last, *next;
 	demoCommandPoint_t* cmdHere = commandPointSynch(demo.play.time);
+	if (time) {
+		*time = 0;
+	}
 	if (!cmdHere) {
 		return NULL;
 	}
@@ -650,13 +680,22 @@ demoCommandVariable_t* getCommandVariableAt(int variableNumber) {
 
 	if ((last && !next) || (last && next && !next->variables[variableNumber].interpolate)) {
 		// If there is no next, or if next has disabled interpolation, there is no transition. Use last value.
+		if (time) {
+			*time = last->time;
+		}
 		return &last->variables[variableNumber];
 	}
 	else if (next && !last) {
 		// There is no transition. Use next value.
+		if (time) {
+			*time = next->time;
+		}
 		return &next->variables[variableNumber];
 	}
 	else if (last && next) {
+		if (time) {
+			*time = last->time;
+		}
 		return &last->variables[variableNumber];
 		/*
 		float lastValue, nextValue;
@@ -675,21 +714,35 @@ demoCommandVariable_t* getCommandVariableAt(int variableNumber) {
 	
 }
 
-qboolean evaluateCommandVariableValue(demoCommandVariable_t* variable, float* result) {
+qboolean evaluateCommandVariableValue(demoCommandVariable_t* variable, int keyFrameTime, int time, float timeFraction, float* result) {
 
+	qboolean retVal = qfalse;
 	switch (variable->type) {
 	case DEMO_COMMAND_VARIABLE_VALUE:
 		*result = variable->value;
-		return qfalse;
+		retVal = qfalse;
+		break;
 	case DEMO_COMMAND_VARIABLE_WAVEFORM:
 		*result = trap_R_EvalWaveform(&variable->waveForm);
-		return qtrue;
+		retVal = qtrue;
 		break;
 	default:
 		// Shouldn't really happen
 		*result = 0.0f;
-		return qfalse;
+		retVal = qfalse;
+		break;
 	}
+
+	if (variable->decay != 0.0f) {
+		int t = time - keyFrameTime;
+		float f;
+		if (t < 0) {
+			return retVal;
+		}
+		f = powf(2,variable->decay*((float)t + timeFraction));
+		*result *= f;
+	}
+	return retVal;
 }
 
 

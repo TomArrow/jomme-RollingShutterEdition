@@ -2592,6 +2592,7 @@ typedef struct {
 	float amplitude;
 	float phase;
 	float frequency;
+	int baseTime;
 } waveForm_t;
 
 

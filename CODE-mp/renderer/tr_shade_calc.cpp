@@ -5,15 +5,15 @@
 
 #define	WAVEVALUE( table, base, amplitude, phase, freq )  ((base) + table[ myftol( ( ( (phase) + tess.shaderTime * (freq) ) * FUNCTABLE_SIZE ) ) & FUNCTABLE_MASK ] * (amplitude))
 
-float WAVEVALUENEW(genFunc_t func, float base, float amplitude, float phase, float freq) {
-	double t = (tr.refdef.time ? (double)(tr.refdef.time * 0.001) : tess.shaderTime);
+float WAVEVALUENEW(genFunc_t func, float base, float amplitude, float phase, float freq, int baseTime) {
+	double t = (tr.refdef.time ? (double)((tr.refdef.time-baseTime) * 0.001) : (tess.shaderTime-(double)baseTime*0.001));
 	if (func == GF_SAWTOOTH || func == GF_INVERSE_SAWTOOTH)
 		//maybe some other shaders require that too
 		//linear + clamp require tess.shaderTime
 		if (!Q_stricmp(tess.shader->name, "halfShieldShell"))
-			t = tr.refdef.time * 0.001;
+			t = (tr.refdef.time - baseTime) * 0.001;
 		else
-			t = tess.shaderTime;
+			t = (tess.shaderTime - (double)baseTime * 0.001);
 	double index = (double)phase + t * (double)freq + (double)tr.refdef.timeFraction * (double)freq * 0.001;
 	index = fmod(index, 1.0);
 
@@ -83,23 +83,23 @@ static float *TableForFunc( genFunc_t func ) {
 */
 extern float GetNoiseTime( int t ); //from tr_noise, returns 0 to 2
 float EvalWaveForm( const waveForm_t *wf ) {
-	float	*table;
+	//float	*table;
 
 	if ( wf->func == GF_NOISE ) {
 		//return  ( wf->base + R_NoiseGet4f( 0, 0, 0, ( backEnd.refdef.floatTime + wf->phase + tr.refdef.timeFraction * 0.001 ) * wf->frequency ) * wf->amplitude );
-		return  ( wf->base + R_NoiseGet4f( 0, 0, 0, ( tr.refdef.floatTime + wf->phase + tr.refdef.timeFraction * 0.001 ) * wf->frequency ) * wf->amplitude );
+		return  ( wf->base + R_NoiseGet4f( 0, 0, 0, ( tr.refdef.floatTime - (double)wf->baseTime + wf->phase + tr.refdef.timeFraction * 0.001 ) * wf->frequency ) * wf->amplitude );
 	} else if (wf->func == GF_RAND) {
 		//if( GetNoiseTime( backEnd.refdef.time + wf->phase ) <= wf->frequency ) {
-		if( GetNoiseTime( tr.refdef.time + wf->phase ) <= wf->frequency ) {
+		if( GetNoiseTime( tr.refdef.time - wf->baseTime + wf->phase ) <= wf->frequency ) {
 			return (wf->base + wf->amplitude);
 		} else {
 			return wf->base;
 		}
 	}
-	table = TableForFunc( wf->func );
+	//table = TableForFunc( wf->func );
 
 //	return WAVEVALUE( table, wf->base, wf->amplitude, wf->phase, wf->frequency );
-	return WAVEVALUENEW( wf->func, wf->base, wf->amplitude, wf->phase, wf->frequency );
+	return WAVEVALUENEW( wf->func, wf->base, wf->amplitude, wf->phase, wf->frequency, wf->baseTime );
 }
 
 static float EvalWaveFormClamped( const waveForm_t *wf ) {
@@ -174,7 +174,8 @@ void RB_CalcDeformVertexes( deformStage_t *ds ) {
 				ds->deformationWave.base,
 				ds->deformationWave.amplitude,
 				ds->deformationWave.phase + off,
-				ds->deformationWave.frequency );
+				ds->deformationWave.frequency, 
+				ds->deformationWave.baseTime );
 
 			VectorScale( normal, scale, offset );			
 			xyz[0] += offset[0];
@@ -307,7 +308,8 @@ void RB_CalcMoveVertexes( deformStage_t *ds ) {
 		ds->deformationWave.base,
 		ds->deformationWave.amplitude,
 		ds->deformationWave.phase,
-		ds->deformationWave.frequency );
+		ds->deformationWave.frequency,
+		ds->deformationWave.baseTime );
 
 	VectorScale( ds->moveVector, scale, offset );
 

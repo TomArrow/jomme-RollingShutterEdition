@@ -547,6 +547,8 @@ static void ParseWaveForm( const char **text, waveForm_t *wave )
 		return;
 	}
 	wave->frequency = atof( token );
+
+	wave->baseTime = 0;
 }
 
 
