@@ -12,7 +12,7 @@
 
 extern camera_t cam;
 
-extern color4f_t cl_lightstyle_mod[MAX_LIGHT_STYLES];
+extern color5f_t cl_lightstyle_mod[MAX_LIGHT_STYLES];
 
 
 // The entire cgame module is unloaded and reloaded on each level change,

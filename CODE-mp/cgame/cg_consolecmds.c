@@ -558,8 +558,8 @@ void CG_Dismember_f(void) {
 void CG_StyleMod_f(void) {
 	int start, end;
 	char arg[20] = { 0 };
-	color4f_t color;
-	int colorsToSet[4] = { -1, -1, -1, -1 };
+	color5f_t color;
+	int colorsToSet[5] = { -1, -1, -1, -1, -1 };
 	//int colorsToSetCount = 0;
 	int i,c;
 	float lastNum = 1.0f;
@@ -568,8 +568,9 @@ void CG_StyleMod_f(void) {
 	qboolean magnitude = qfalse;
 	float tmp;
 	if (argCount < 4) {
-		Com_Printf("usage: style [num] [r|g|b|a|m] [numbers...]\n");
-		Com_Printf("m = magnitude based on existing value\n");
+		Com_Printf("usage: style [num] [r|g|b|a|m|n] [numbers...]\n");
+		Com_Printf("m = magnitude (multiplier)\n");
+		Com_Printf("n = magnitude (multiplier but as brightness target value)\n");
 		return;
 	}
 	trap_Argv(1, arg, sizeof(arg));
@@ -591,37 +592,31 @@ void CG_StyleMod_f(void) {
 	i = 0;
 	while (*s && i < 4) {
 		if (*s == 'r') {
-			//colorsToSetCount++;
 			colorsToSet[0] = i;
 		}
 		else if (*s == 'g') {
-			//colorsToSetCount++;
 			colorsToSet[1] = i;
 		}
 		else if (*s == 'b') {
-			//colorsToSetCount++;
 			colorsToSet[2] = i;
 		}
 		else if (*s == 'a') {
-			//colorsToSetCount++;
 			colorsToSet[3] = i;
 		}
 		else if (*s == 'm') {
-			//colorsToSetCount++;
+			colorsToSet[4] = i;
+		}
+		else if (*s == 'n') {
+			colorsToSet[4] = i;
 			magnitude = qtrue;
 		}
 		s++;
 		i++;
 	}
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 5; i++) {
 		if (argCount < 4 + i) {
-			if (i == 3) {
-				color[i] = 1.0f;
-			}
-			else {
-				color[i] = lastNum;
-			}
+			color[i] = lastNum;
 		}
 		else {
 			trap_Argv(3 + i, arg, sizeof(arg));
@@ -631,7 +626,27 @@ void CG_StyleMod_f(void) {
 		lastNum = color[i];
 	}
 
-	if (magnitude) {
+
+	for (i = start; i < end; i++) {
+		for (c = 0; c < 5; c++) {
+			if (colorsToSet[c] != -1) {
+				if (c == 4 && magnitude) {
+					tmp = RGBTOGRAY(cl_lightstyle_mod[i]);
+					if (tmp == 0.0f) {
+						cl_lightstyle_mod[i][c] = color[colorsToSet[c]];
+					}
+					else {
+						tmp = color[colorsToSet[c]] / tmp;
+						cl_lightstyle_mod[i][c] = tmp;
+					}
+				}
+				else {
+					cl_lightstyle_mod[i][c] = color[colorsToSet[c]];
+				}
+			}
+		}
+	}
+	/*if (magnitude) {
 		for (i = start; i < end; i++) {
 			tmp = RGBTOGRAY(cl_lightstyle_mod[i]);
 			if (tmp == 0.0f) {
@@ -653,7 +668,7 @@ void CG_StyleMod_f(void) {
 				}
 			}
 		}
-	}
+	}*/
 
 }
 

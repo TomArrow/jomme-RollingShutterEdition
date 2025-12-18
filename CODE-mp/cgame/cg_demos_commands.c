@@ -381,7 +381,7 @@ void demoCommandsCommand_f(void) {
 
 			CG_DemosAddLog("Failed to add command point. Need at least a command or one variable. Syntax: commands add \"[command]\" \"[optional variable 0\"  \"[optional variable 1\"...");
 			Com_Printf("Failed to add command point. Need at least a command or one variable. Syntax: commands add \"[command]\" \"[optional variable 0\"  \"[optional variable 1\"...\n");
-			Com_Printf("%s","Use variables inside commands with the percent symbol (%0, %1 etc)\n");
+			Com_Printf("%s","Use variables inside commands with the percent symbol (%0, %1 etc). Append 'i' for inversion. Append float number to i for inversion reference.\n");
 			Com_Printf("Optional variable syntax: Float number (e.g. 1.0) or waveform. Prepend with '$' to disable interpolation from previous variable keyframe.\n");
 			Com_Printf("Before waveform or number, use #sstep for smoothstep interpolation, #sstep2 for smootherstep interpolation or #power for constant power interpolation.\n");
 			Com_Printf("Before waveform or number, use #decay1234. 1234 is any number of milliseconds for the half-life duration from the time of the variable keyframe.\n");
@@ -484,7 +484,8 @@ const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qb
 			// This is a variable
 			char formattedNumber[100];
 
-			int variableNum = text[i + 1]-'0'; 
+			int variableNum = text[i + 1]-'0';
+			i++;
 			float result;
 			if (evaluateCommandVariableAt(variableNum,&result)) {
 				*isDynamic = qtrue; // Probably get rid of this, it's not reliable anyway.
@@ -496,6 +497,22 @@ const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qb
 				demo.commands.lastValue[variableNum] = result;
 			}
 
+			i++;
+			if (text[i] == 'i') { // invert
+				i++;
+				if (isdigit(text[i])) {
+					float reference = atof(&text[i]); // with reference value.
+					result = reference - result;
+					while (isdigit(text[i]) || text[i] == '.' || text[i] == '-') {
+						i++;
+					}
+				}
+				else {
+					result = 1.0f - result;
+				}
+			}
+			i--;
+
 			if (preview) {
 				sprintf_s(formattedNumber, sizeof(formattedNumber), "(%d)%.5f", variableNum, result);
 			}
@@ -503,8 +520,6 @@ const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qb
 				sprintf_s(formattedNumber, sizeof(formattedNumber), "%.5f", result);
 			}
 			strcat_s(composedCommand, sizeof(composedCommand), formattedNumber);
-
-			i++;
 		}
 		else {
 			strncat_s(composedCommand,sizeof(composedCommand),&text[i],1);
@@ -550,7 +565,7 @@ void evaluateDemoCommand() {
 	}
 }
 
-qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int time, float timeFraction, qboolean* anyFound) {
+qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int time, float timeFraction, int timeOffset, qboolean* anyFound) {
 
 	qboolean isDynamic = qfalse;
 	demoCommandPoint_t* last, *next;
@@ -595,17 +610,17 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 
 	if ((last && !next) || (last && next && !next->variables[variableNumber].interpolate)) {
 		// If there is no next, or if next has disabled interpolation, there is no transition. Use last value.
-		return evaluateCommandVariableValue(&last->variables[variableNumber], last->time, time, timeFraction,result);
+		return evaluateCommandVariableValue(&last->variables[variableNumber], last->time, time, timeFraction, timeOffset,result);
 	}
 	else if (next && !last) {
 		// There is no transition. Use next value.
-		return evaluateCommandVariableValue(&next->variables[variableNumber], next->time, time, timeFraction, result);
+		return evaluateCommandVariableValue(&next->variables[variableNumber], next->time, time, timeFraction, timeOffset, result);
 	}
 	else if (last && next) {
 		float lastValue, nextValue;
 		float fraction;
-		evaluateCommandVariableValue(&last->variables[variableNumber], last->time, time, timeFraction, &lastValue);
-		evaluateCommandVariableValue(&next->variables[variableNumber], next->time, time, timeFraction, &nextValue);
+		evaluateCommandVariableValue(&last->variables[variableNumber], last->time, time, timeFraction, timeOffset, &lastValue);
+		evaluateCommandVariableValue(&next->variables[variableNumber], next->time, time, timeFraction, timeOffset, &nextValue);
 		// Lerp.
 		fraction = (((float)time + timeFraction - (float)last->time) / (float)(next->time - last->time));
 		if (next->variables[variableNumber].interpolate == DEMO_COMMAND_VARIABLE_INTERPOLATION_SMOOTHSTEP) {
@@ -637,7 +652,7 @@ qboolean evaluateCommandVariableAtTime(int variableNumber, float* result, int ti
 }
 
 qboolean evaluateCommandVariableAt(int variableNumber, float* result) {
-	return evaluateCommandVariableAtTime(variableNumber, result, demo.play.time, demo.play.fraction,NULL);
+	return evaluateCommandVariableAtTime(variableNumber, result, demo.play.time, demo.play.fraction,0,NULL);
 }
 
 demoCommandVariable_t* getCommandVariableAt(int variableNumber, int* time) {
@@ -714,7 +729,7 @@ demoCommandVariable_t* getCommandVariableAt(int variableNumber, int* time) {
 	
 }
 
-qboolean evaluateCommandVariableValue(demoCommandVariable_t* variable, int keyFrameTime, int time, float timeFraction, float* result) {
+qboolean evaluateCommandVariableValue(demoCommandVariable_t* variable, int keyFrameTime, int time, float timeFraction, int timeOffset, float* result) {
 
 	qboolean retVal = qfalse;
 	switch (variable->type) {
@@ -723,7 +738,9 @@ qboolean evaluateCommandVariableValue(demoCommandVariable_t* variable, int keyFr
 		retVal = qfalse;
 		break;
 	case DEMO_COMMAND_VARIABLE_WAVEFORM:
+		variable->waveForm.baseTime -= timeOffset;
 		*result = trap_R_EvalWaveform(&variable->waveForm);
+		variable->waveForm.baseTime += timeOffset;
 		retVal = qtrue;
 		break;
 	default:

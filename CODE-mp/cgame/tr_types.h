@@ -65,6 +65,12 @@
 
 typedef byte color4ub_t[4];
 typedef float color4f_t[4];
+typedef float color5f_t[5]; // 5th is magnitude that is multiplied with rgb
+
+//typedef struct color4fm_s {
+//	color4f_t	color;
+//	float		magnitude;
+//}color4fm_t;
 
 extern color4f_t identity255;
 extern color4f_t identity;

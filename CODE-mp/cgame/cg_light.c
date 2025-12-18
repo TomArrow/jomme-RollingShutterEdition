@@ -5,7 +5,7 @@
 #endif
 
 static	clightstyle_t	cl_lightstyle[MAX_LIGHT_STYLES];
-color4f_t		cl_lightstyle_mod[MAX_LIGHT_STYLES];
+color5f_t		cl_lightstyle_mod[MAX_LIGHT_STYLES];
 static	int				lastofs;
 
 /*
@@ -27,6 +27,7 @@ void CG_ClearLightStyles (void)
 		cl_lightstyle_mod[i][1] = 1.0f;
 		cl_lightstyle_mod[i][2] = 1.0f;
 		cl_lightstyle_mod[i][3] = 1.0f;
+		cl_lightstyle_mod[i][4] = 1.0f; // [4] is magnitude to multiply rgb with
 	}
 }
 
@@ -66,9 +67,9 @@ void CG_RunLightStyles (void)
 			ls->value[2] = ls->map[ofs%ls->length][2];
 			ls->value[3] = 255; //ls->map[ofs%ls->length][3];
 		}
-		ls->value[0] *= cl_lightstyle_mod[i][0];
-		ls->value[1] *= cl_lightstyle_mod[i][1];
-		ls->value[2] *= cl_lightstyle_mod[i][2];
+		ls->value[0] *= cl_lightstyle_mod[i][0] * cl_lightstyle_mod[i][4];
+		ls->value[1] *= cl_lightstyle_mod[i][1] * cl_lightstyle_mod[i][4];
+		ls->value[2] *= cl_lightstyle_mod[i][2] * cl_lightstyle_mod[i][4];
 		ls->value[3] *= cl_lightstyle_mod[i][3];
 		trap_R_SetLightStyle(i, ls->value);
 	}

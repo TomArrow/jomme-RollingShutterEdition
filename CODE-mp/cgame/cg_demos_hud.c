@@ -179,7 +179,7 @@ static void hudDrawExtra(float x, float y, hudItem_t* item) {
 	case hudCommandVariable9:
 		varNum = item->handler - hudCommandVariable0;
 		for (i = 0; i < HUD_GRAPH_STEPS && anyFound; i++) {
-			evaluateCommandVariableAtTime(varNum, &vals[i], demo.play.time - HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, demo.play.fraction, &anyFound);
+			evaluateCommandVariableAtTime(varNum, &vals[i], demo.play.time - HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, demo.play.fraction, -HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, &anyFound);
 			if (vals[i] > max) {
 				max = vals[i];
 			}
