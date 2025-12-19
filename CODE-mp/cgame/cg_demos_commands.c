@@ -381,11 +381,20 @@ void demoCommandsCommand_f(void) {
 
 			CG_DemosAddLog("Failed to add command point. Need at least a command or one variable. Syntax: commands add \"[command]\" \"[optional variable 0\"  \"[optional variable 1\"...");
 			Com_Printf("Failed to add command point. Need at least a command or one variable. Syntax: commands add \"[command]\" \"[optional variable 0\"  \"[optional variable 1\"...\n");
-			Com_Printf("%s","Use variables inside commands with the percent symbol (%0, %1 etc). Append 'i' for inversion. Append float number to i for inversion reference.\n");
+			Com_Printf("%s","Use variables inside commands with the percent symbol (%0, %1 etc).\n");
+			Com_Printf("Modifiers for variables in commands (append):\n");
+			Com_Printf("- 'i' for inversion. Append float number for inversion reference.\n");
+			Com_Printf("- 'd' or 'b' for decay. Append float number for halving stepsize. Default 0.1. 'b' will additionally fade linearly to 0 on last step above 0.\n");
+			Com_Printf("- 'c' for cubic. Append float number for scaling reference. E.g. 2.0 will treat 0-2 like 0-1.\n");
+			Com_Printf("- 's' for square. Append float number for scaling reference. E.g. 2.0 will treat 0-2 like 0-1.\n");
+			Com_Printf("- 'p' for power. Append float number for power to raise to.\n");
+			Com_Printf("- 'e' for exponential. Append float number for base to raise with current number.\n");
+			Com_Printf("- '*', '-', '/', '-' for math operations. Append float number for other number.\n");
 			Com_Printf("Optional variable syntax: Float number (e.g. 1.0) or waveform. Prepend with '$' to disable interpolation from previous variable keyframe.\n");
-			Com_Printf("Before waveform or number, use #sstep for smoothstep interpolation, #sstep2 for smootherstep interpolation or #power for constant power interpolation.\n");
-			Com_Printf("Before waveform or number, use #decay1234. 1234 is any number of milliseconds for the half-life duration from the time of the variable keyframe.\n");
-			Com_Printf("Before waveform or number, use #ao. Auto-offset. Will automatically match the phase of the waveform so the function is starting at the keyframe time.\n");
+			Com_Printf("Before waveform or number:\n");
+			Com_Printf("- #sstep for smoothstep interpolation, #sstep2 for smootherstep interpolation or #power for constant power interpolation.\n");
+			Com_Printf("- #decay1234. 1234 is any number of milliseconds for the half-life duration from the time of the variable keyframe.\n");
+			Com_Printf("- #ao. Auto-offset. Will automatically match the phase of the waveform so the function is starting at the keyframe time.\n");
 			Com_Printf("Waveform help:\n");
 			Com_Printf("<sin|square|triangle|sawtooth|inversesawtooth|noise|random> <base> <amplitude> <phase> <frequency>\n");
 		}
@@ -490,28 +499,114 @@ const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qb
 			if (evaluateCommandVariableAt(variableNum,&result)) {
 				*isDynamic = qtrue; // Probably get rid of this, it's not reliable anyway.
 			}
+
+			i++;
+			while (text[i] == 'i' || text[i] == 'd' ||  text[i] == 'b' || text[i] == 'c' || text[i] == 's' || text[i] == 'p'  || text[i] == 'e' || text[i] == '*' || text[i] == '+' || text[i] == '-' || text[i] == '/') {
+				char what = text[i];
+				qboolean haveVal = qfalse;
+				float val = 1.0f;
+				i++;
+
+				if (isdigit(text[i])) {
+					haveVal = qtrue;
+					val = atof(&text[i]); // with reference value.
+					while (isdigit(text[i]) || text[i] == '.' || text[i] == '-') {
+						i++;
+					}
+				}
+
+				switch (what) {
+				case 'i':
+					result = (haveVal ? val : 1.0f) - result;
+					break;
+				case 'd':
+				case 'b':
+					// kinda exponential decay thingie.
+					// the value defines the half-value stepsize.
+					// e.g. if we specify 0.2, then the value halves each 0.2.
+					// so 1.0 is 1.0, then 0.8 is 0.5, then 0.6 is 0.25, 0.4 is 0.125, 0.2 is 0.0625
+					// 'b' option changes how the last step towards 0 behaves.
+					// without 'b', 0 would then be 0.03125, but with 'b' it's going to be actually 0.
+					// 'b' will take the last stepsize above 0 to do an additional linear blend.
+					// since log never rly reaches 0
+					{
+						float oldVal = result;
+						float stepSize = (haveVal ? val : 0.1f);
+						float exponentFactor = 1.0f / stepSize;
+						result = powf(2.0f, exponentFactor * (result - 1.0f));
+						if (what == 'b' && oldVal < stepSize) {
+							if (oldVal <= 0) {
+								result = 0;
+							}
+							else {
+								float fadedVal = oldVal / stepSize;
+								result = min(fadedVal, result);
+							}
+						}
+					}
+					break;
+				case 's':
+					if (haveVal) {
+						// scale it down kinda so we have that 0-1 range in another range
+						result /= val;
+						result = result * result;
+						result *= val;
+					}
+					else {
+						result = result * result;
+					}
+					break;
+				case 'c':
+					if (haveVal) {
+						// scale it down kinda so we have that 0-1 range in another range
+						result /= val;
+						result = result * result * result;
+						result *= val;
+					}
+					else {
+						result = result * result * result;
+					}
+					break;
+				case '*':
+					if (haveVal) {
+						result *= val;
+					}
+					break;
+				case '+':
+					if (haveVal) {
+						result += val;
+					}
+					break;
+				case '/':
+					if (haveVal) {
+						result /= val;
+					}
+					break;
+				case '-':
+					if (haveVal) {
+						result -= val;
+					}
+					break;
+				case 'p':
+					if (haveVal) {
+						result = powf(result,val);
+					}
+					break;
+				case 'e':
+					if (haveVal) {
+						result = powf(haveVal ? val : 2,result); // should i use euler here? meh
+					}
+					break;
+				}
+			}
+			i--;
+
 			if (demo.commands.lastValue[variableNum] != result){
 				*varsHaveChanged = qtrue;
 			}
 			if (!preview) {
 				demo.commands.lastValue[variableNum] = result;
 			}
-
-			i++;
-			if (text[i] == 'i') { // invert
-				i++;
-				if (isdigit(text[i])) {
-					float reference = atof(&text[i]); // with reference value.
-					result = reference - result;
-					while (isdigit(text[i]) || text[i] == '.' || text[i] == '-') {
-						i++;
-					}
-				}
-				else {
-					result = 1.0f - result;
-				}
-			}
-			i--;
 
 			if (preview) {
 				sprintf_s(formattedNumber, sizeof(formattedNumber), "(%d)%.5f", variableNum, result);
