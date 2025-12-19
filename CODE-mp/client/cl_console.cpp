@@ -411,7 +411,7 @@ void CL_ConsolePrint( char *txt ) {
 	Vector4Copy(g_color_table[color],colorVec);
 	txt = (char*)CL_ConsolePrintTimeStamp(txt); // TODO: this doesn't work. Try and fix someday.
 	while ( (c = (unsigned char) *txt) != 0 ) {
-		if (Q_IsColorStringHex((unsigned char*)txt + 1)) {
+		if (Q_IsColorStringHex((unsigned char*)txt)) {
 			int skipCount = 0;
 			Q_parseColorHex(txt + 1, colorVec, &skipCount);
 			txt += 1 + skipCount;

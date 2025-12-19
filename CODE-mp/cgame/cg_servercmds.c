@@ -603,7 +603,7 @@ static void CG_AddToTeamChat( const char *str ) {
 			ls = NULL;
 		}
 
-		if (Q_IsColorStringHex(str + 1)) {// TODO Check if this doesnt cause some weird issues with the line wrap or whatever...
+		if (Q_IsColorStringHex(str)) {// TODO Check if this doesnt cause some weird issues with the line wrap or whatever...
 			int skipCount = 0;
 			Q_parseColorHex(str + 1, 0, &skipCount);
 			*p++ = *str++;

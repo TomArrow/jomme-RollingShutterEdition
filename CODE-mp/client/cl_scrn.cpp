@@ -191,7 +191,7 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, float *set
 	s = string;
 	xx = x;
 	while ( *s ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, 0, &skipCount);
 			s += 1 + skipCount;
@@ -213,7 +213,7 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, float *set
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, color, &skipCount);
 			s += 1 + skipCount;
@@ -258,7 +258,7 @@ static void SCR_DrawStringExt2( float x, float y, float charWidth, float charHei
 	s = string;
 	xx = x;
 	while ( *s ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, 0, &skipCount);
 			s += 1 + skipCount;
@@ -280,7 +280,7 @@ static void SCR_DrawStringExt2( float x, float y, float charWidth, float charHei
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, color, &skipCount);
 			s += 1 + skipCount;
@@ -350,7 +350,7 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, color, &skipCount);
 			s += 1 + skipCount;
@@ -394,7 +394,7 @@ static int SCR_Strlen( const char *str ) {
 	int count = 0;
 
 	while ( *s ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, 0, &skipCount);
 			s += 1 + skipCount;

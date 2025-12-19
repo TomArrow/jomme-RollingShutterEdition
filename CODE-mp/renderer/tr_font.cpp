@@ -997,7 +997,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 				if ( (i < 1 || psText[i-1] != '^') &&
 					(!psText[i+1] || psText[i+1] != '^') ) {
 					//If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
-					if (Q_IsColorStringHex(&psText[i+1])) {
+					if (Q_IsColorStringHex(&psText[i])) {
 						int skipCount = 0;
 						Q_parseColorHex(&psText[i+1], 0, &skipCount);
 						i += 1 + skipCount;
@@ -1066,7 +1066,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 		{
 		case '^':
 		{
-			if (Q_IsColorStringHex(psText))
+			if (Q_IsColorStringHex(psText - 1))
 			{ 
 				vec4_t color;
 				int skipCount;

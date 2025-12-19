@@ -1200,7 +1200,7 @@ int Q_PrintStrlenNT( const char *string ) {
 	len = 0;
 	p = string;
 	while( *p ) {
-		if (Q_IsColorStringHex(p + 1)) {
+		if (Q_IsColorStringHex(p)) {
 			int skipCount = 0;
 			Q_parseColorHex(p + 1, 0, &skipCount);
 			p += 1 + skipCount;
@@ -1227,7 +1227,7 @@ int Q_PrintStrlen( const char *string ) {
 	len = 0;
 	p = string;
 	while( *p ) {
-		if (Q_IsColorStringHex(p + 1)) {
+		if (Q_IsColorStringHex(p)) {
 			int skipCount = 0;
 			Q_parseColorHex(p + 1, 0, &skipCount);
 			p += 1 + skipCount;
@@ -1251,7 +1251,7 @@ char *Q_CleanStrNT( char *string ) {
 	s = string;
 	d = string;
 	while ((c = *s) != 0 ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, 0, &skipCount);
 			s += skipCount;
@@ -1277,7 +1277,7 @@ char *Q_CleanStr( char *string ) {
 	s = string;
 	d = string;
 	while ((c = *s) != 0 ) {
-		if (Q_IsColorStringHex(s + 1)) {
+		if (Q_IsColorStringHex(s)) {
 			int skipCount = 0;
 			Q_parseColorHex(s + 1, 0, &skipCount);
 			s += skipCount;
@@ -1317,7 +1317,7 @@ void Q_StripColor(char *text)
 		read = write = text;
 		while ( *read )
 		{
-			if (Q_IsColorStringHex(read + 1)) {
+			if (Q_IsColorStringHex(read)) {
 				doPass = qtrue;
 				int skipCount = 0;
 				Q_parseColorHex(read + 1, 0, &skipCount);
@@ -1360,7 +1360,7 @@ void Q_StripColorNewNT(char *text) {
 
 	read = write = text;
 	while ( *read ) {
-		if (Q_IsColorStringHex(read + 1)) {
+		if (Q_IsColorStringHex(read)) {
 			int skipCount = 0;
 			Q_parseColorHex(read + 1, 0, &skipCount);
 			read += 1 + skipCount;
@@ -1387,7 +1387,7 @@ void Q_StripColorNew(char *text) {
 
 	read = write = text;
 	while ( *read ) {
-		if (Q_IsColorStringHex(read+1)) {
+		if (Q_IsColorStringHex(read)) {
 			int skipCount = 0;
 			Q_parseColorHex(read + 1, 0, &skipCount);
 			read += 1 + skipCount;
