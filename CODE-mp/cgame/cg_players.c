@@ -5798,6 +5798,9 @@ Ghoul2 Insert Start
 	futureAngles[PITCH] = angles[PITCH];
 	futureAngles[ROLL] = angles[ROLL];
 
+	client = nonPlayer ? NULL : &cgs.clientinfo[cent1->currentState.number];
+	saberTrail = nonPlayer ? (!cent1 ? &lent->data.fragment.saber.saberTrail : &cent1->entSaberTrail) : (client ? &client->saberTrail : NULL);
+
 	// figure out where the actual model muzzle is
 	if (fromSaber)
 	{
@@ -5817,6 +5820,29 @@ Ghoul2 Insert Start
 			trap_G2API_GetBoltMatrix(scent->ghoul2, 1, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, scent->modelScale);
 		}
 	}
+
+	if (saberTrail) { // cheaply imitate r_ghoul2animsmooth so the saber remains closer to the rendered geometry. it's not perfect, but it's a patchwork solution
+		if (cg_r_ghoul2animsmooth.value > 0.0f && saberTrail->oldBoltMatrixSet) {
+			jitterSegmentAdvanceInfo_t* jitseg = trap_CG_MME_GetJitterSegmentAdvanceInfo();
+			float smoothFactor = cg_r_ghoul2animsmooth.value;
+			if (jitseg->isRecording && jitseg->totalFrames > 1) { // when doing motion blur, we still want to preserve the same basic amount of smoothing. will make the motion blur nicer too
+				smoothFactor = powf(smoothFactor, 1.0f / (float)jitseg->totalFrames);
+			}
+			if (smoothFactor > 0.0f) {
+				int j;
+				float* oldM = &saberTrail->oldBoltMatrix.matrix[0][0];
+				float* newM = &boltMatrix.matrix[0][0];
+				for (i = 0; i < 12; i++, oldM++, newM++)
+				{
+					//*oldM = smoothFactor * (*oldM - *newM) + *newM;
+					*newM = smoothFactor * (*oldM - *newM) + *newM;
+				}
+			}
+		}
+		saberTrail->oldBoltMatrix = boltMatrix;
+		saberTrail->oldBoltMatrixSet = qtrue;
+	}
+
 	// work the matrix axis stuff into the original axis and origins used.
 	trap_G2API_GiveMeVectorFromMatrix(&boltMatrix, ORIGIN, org_);
 	trap_G2API_GiveMeVectorFromMatrix(&boltMatrix, NEGATIVE_Y, axis_[0]);
@@ -5840,8 +5866,6 @@ Ghoul2 Insert Start
 #endif
 		VectorCopy(org_, saberEnt->currentState.pos.trBase);
 	}
-
-	client = nonPlayer ? NULL : &cgs.clientinfo[cent1->currentState.number];
 
 	if (!client && !nonPlayer)
 	{ //something horrible has apparently happened
@@ -5949,7 +5973,6 @@ Ghoul2 Insert Start
 	int saberMarksFps = cg_saberMarksFps.integer ? cg_saberMarksFps.integer : fx_vfps.integer;
 	int iterations = cg_saberMarksDoubleSided.integer ? 2 : 1;
 
-	saberTrail = nonPlayer ? (!cent1 ? &lent->data.fragment.saber.saberTrail: &cent1->entSaberTrail) : &client->saberTrail;
 	saberHitWallSoundDebounceTime = nonPlayer ? (!cent1 ? &lent->data.fragment.saber.saberHitWallSoundDebounceTime : &cent1->saberHitWallSoundDebounceTime) : &client->saberHitWallSoundDebounceTime;
 
 	if (cg.time < saberTrail->lastTimeMark) // In case we rewind.

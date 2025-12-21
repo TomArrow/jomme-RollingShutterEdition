@@ -2132,6 +2132,14 @@ void G2_TransformGhoulBones(boneInfo_v &rootBoneList,mdxaBone_t &rootMatrix, CGh
 			}
 #endif
 
+			if (tr.captureIsActive) {
+				jitterSegmentAdvanceInfo_t jseg;
+				R_MME_GetCGameJitterInfo(&jseg);
+				if (jseg.totalFrames > 1) { // when doing motion blur, we still want to preserve the same basic amount of smoothing. will make the motion blur nicer too
+					val = powf(val,1.0f/(float)jseg.totalFrames);
+				}
+			}
+
 //			ghoul2.mBoneCache->mSmoothFactor=(val + 1.0f-pow(1.0f-val,50.0f/dif))/2.0f;  // meaningless formula
 			ghoul2.mBoneCache->mSmoothFactor=val;  // meaningless formula
 			ghoul2.mBoneCache->mSmoothingActive=true;

@@ -927,6 +927,8 @@ vmCvar_t	cg_trueRoll;
 vmCvar_t	cg_trueSaber;
 vmCvar_t	cg_trueSpin;
 
+vmCvar_t	cg_r_ghoul2animsmooth;
+
 
 vmCvar_t	mvsdk_cgFlags;
 
@@ -1241,6 +1243,7 @@ Ghoul2 Insert End
 	{ &cg_trueRoll,			"cg_trueRoll",			"2",			NULL,	CVAR_ARCHIVE	},
 	{ &cg_trueSaber,		"cg_trueSaber",			"0",			NULL,	CVAR_ARCHIVE	},
 	{ &cg_trueSpin,			"cg_trueSpin",			"1",			NULL,	CVAR_ARCHIVE	},
+	{ &cg_r_ghoul2animsmooth,"r_ghoul2animsmooth",	".3",			NULL,	0	},
 
 	{ &cg_eternalScoreboard,"cg_eternalScoreboard",	"1",			NULL,	CVAR_ARCHIVE	},
 	{ &cg_smallScoreboard,	"cg_smallScoreboard",	"0",			NULL,	CVAR_ARCHIVE	},

@@ -507,7 +507,7 @@ const char* composeDemoCommand(demoCommandPoint_t* cmdHere, qboolean preview, qb
 				float val = 1.0f;
 				i++;
 
-				if (isdigit(text[i])) {
+				if (isdigit(text[i]) || text[i] == '.' || text[i] == '-') {
 					haveVal = qtrue;
 					val = atof(&text[i]); // with reference value.
 					while (isdigit(text[i]) || text[i] == '.' || text[i] == '-') {
