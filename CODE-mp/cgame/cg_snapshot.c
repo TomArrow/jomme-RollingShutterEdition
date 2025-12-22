@@ -58,15 +58,18 @@ static void CG_TransitionEntity( centity_t *cent ) {
 		CG_ResetEntity( cent );
 	} else { //mme
 		int newHeight;
+		float oldHeightReal;
 		int maxs = ((cent->currentState.solid >> 16) & 255) - 32;
 		if ( maxs > 16 )
 			newHeight = DEFAULT_VIEWHEIGHT;
 		else
 			newHeight = CROUCH_VIEWHEIGHT;
 
-		if ( newHeight != cent->pe.viewHeight ) {
+		oldHeightReal = CG_GetLerpedViewHeight(cent->pe.viewHeight, cent->pe.duckTime, cent->pe.duckChange);
+
+		if ((float)newHeight != oldHeightReal) {
 			cent->pe.duckTime = cg.snap->serverTime;
-			cent->pe.duckChange = newHeight - cent->pe.viewHeight;
+			cent->pe.duckChange = (float)newHeight - oldHeightReal;
 			cent->pe.viewHeight = newHeight;
 		}
 	}

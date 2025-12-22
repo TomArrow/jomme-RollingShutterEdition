@@ -533,6 +533,8 @@ CG_TransitionPlayerState
 ===============
 */
 void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
+	float oldHeightReal;
+
 	// check for changing follow mode
 	if ( ps->clientNum != ops->clientNum ) {
 		cg.thisFrameTeleport = qtrue;
@@ -567,11 +569,12 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	CG_CheckPlayerstateEvents( ps, ops );
 
 	//mme
+	oldHeightReal = CG_GetLerpedViewHeight(ops->viewheight, cg_entities[cg.predictedPlayerState.clientNum].pe.duckTime, cg_entities[cg.predictedPlayerState.clientNum].pe.duckChange);
 	cg_entities[cg.predictedPlayerState.clientNum].pe.viewHeight = ps->viewheight;
 	// smooth the ducking viewheight change
-	if ( ps->viewheight != ops->viewheight ) {
+	if ( (float)ps->viewheight != oldHeightReal) {
 		//mme
-		cg_entities[cg.predictedPlayerState.clientNum].pe.duckChange = ps->viewheight - ops->viewheight;
+		cg_entities[cg.predictedPlayerState.clientNum].pe.duckChange = (float)ps->viewheight - oldHeightReal;
 		cg_entities[cg.predictedPlayerState.clientNum].pe.duckTime = cg.time;
 	}
 }

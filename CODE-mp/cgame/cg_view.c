@@ -251,6 +251,16 @@ cg.refdefViewAngles
 ===============
 */
 
+float CG_GetLerpedViewHeight(float viewHeight, float duckTime, float duckChange) {
+	
+	float timeDelta = (cg.time - duckTime) + cg.timeFraction;
+	if (timeDelta >= 0 && timeDelta < DUCK_TIME) {
+		viewHeight -= duckChange
+			* (DUCK_TIME - timeDelta) / DUCK_TIME;
+	}
+	return viewHeight;
+}
+
 /*
 ===============
 CG_CalcTargetThirdPersonViewLocation
@@ -283,6 +293,9 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 
 		//mme
 		playerEntity_t* pe = &cg_entities[cg.snap->ps.clientNum].pe;
+
+		cameraFocusLoc[2] += CG_GetLerpedViewHeight(cg.snap->ps.viewheight, pe->duckTime, pe->duckChange);
+		/*
 		cameraFocusLoc[2] += cg.snap->ps.viewheight;
 		// smooth out duck height changes
 		//mme
@@ -290,7 +303,7 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 		if (timeDelta >= 0 && timeDelta < DUCK_TIME) {
 			cameraFocusLoc[2] -= pe->duckChange
 				* (DUCK_TIME - timeDelta) / DUCK_TIME;
-		}
+		}*/
 	} else {
 		cameraFocusLoc[2] += cg.playerCent->pe.viewHeight;
 		if (mme_chaseViewHeightFix.integer) {
@@ -951,6 +964,8 @@ static void CG_OffsetFirstPersonView( void ) {
 
 	// add view height
 	//mme
+	origin[2] += CG_GetLerpedViewHeight(pe->viewHeight, pe->duckTime, pe->duckChange);
+	/*
 	origin[2] += pe->viewHeight;
 
 	// smooth out duck height changes
@@ -959,7 +974,7 @@ static void CG_OffsetFirstPersonView( void ) {
 	if ( timeDelta >= 0 && timeDelta < DUCK_TIME) {
 		origin[2] -= pe->duckChange 
 			* (DUCK_TIME - timeDelta) / DUCK_TIME;
-	}
+	}*/
 
 	// add bob height
 	bob = cg.bobfracsin * cg.xyspeed * cg_bobup.value;
