@@ -5694,6 +5694,7 @@ const vec3_t container = { -8.0f, 8.0f, 8.0f };
 void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
 	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
 	vec3_t	basePos;
+	vec3_t	baseAxis[3];
 	float	traceFraction, traceFractionOther;
 	trace_t	trace;
 	int i = 0;
@@ -5805,9 +5806,13 @@ Ghoul2 Insert Start
 	if (!cent1 && lent) {
 		//VectorCopy(lent->pos.trBase, basePos);
 		VectorCopy(lent->refEntity.origin, basePos);
+		VectorCopy(lent->refEntity.axis[0], baseAxis[0]);
+		VectorCopy(lent->refEntity.axis[1], baseAxis[1]);
+		VectorCopy(lent->refEntity.axis[2], baseAxis[2]);
 	}
 	else {
 		VectorCopy(scent->lerpOrigin, basePos);
+		AnglesToAxis(scent->lerpAngles, baseAxis);
 	}
 
 	// figure out where the actual model muzzle is
@@ -5860,9 +5865,16 @@ Ghoul2 Insert Start
 	}
 
 	if (saberTrail) { // cheaply imitate r_ghoul2animsmooth so the saber remains closer to the rendered geometry. it's not perfect, but it's a patchwork solution
-		vec3_t cleanPos, cleanDir;
-		VectorSubtract(org_, basePos, cleanPos);
-		VectorCopy(axis_[0], cleanDir);
+		vec3_t tmp,cleanPos, cleanDir;
+		VectorSubtract(org_, basePos, tmp);
+		// try get rid of rotation
+		cleanPos[0] = DotProduct(tmp, baseAxis[0]);
+		cleanPos[1] = DotProduct(tmp, baseAxis[1]);
+		cleanPos[2] = DotProduct(tmp, baseAxis[2]);
+		VectorCopy(axis_[0], tmp);
+		cleanDir[0] = DotProduct(tmp, baseAxis[0]);
+		cleanDir[1] = DotProduct(tmp, baseAxis[1]);
+		cleanDir[2] = DotProduct(tmp, baseAxis[2]);
 		if (cg_saberG2AnimSmoothCompensate.integer && cg_r_ghoul2animsmooth.value > 0.0f && saberTrail->oldSmoothPos.set) {
 			jitterSegmentAdvanceInfo_t* jitseg = trap_CG_MME_GetJitterSegmentAdvanceInfo();
 			float smoothFactor = cg_r_ghoul2animsmooth.value;
@@ -5876,8 +5888,15 @@ Ghoul2 Insert Start
 					cleanDir[i] = smoothFactor * (saberTrail->oldSmoothPos.dir[i] - cleanDir[i]) + cleanDir[i];
 				}
 			}
-			VectorAdd(basePos, cleanPos, org_);
-			VectorCopy(cleanDir, axis_[0]);
+			// put rotation back
+			tmp[0] = cleanPos[0] * baseAxis[0][0] + cleanPos[1] * baseAxis[1][0] + cleanPos[2] * baseAxis[2][0];
+			tmp[1] = cleanPos[0] * baseAxis[0][1] + cleanPos[1] * baseAxis[1][1] + cleanPos[2] * baseAxis[2][1];
+			tmp[2] = cleanPos[0] * baseAxis[0][2] + cleanPos[1] * baseAxis[1][2] + cleanPos[2] * baseAxis[2][2];
+			VectorAdd(basePos, tmp, org_);
+			tmp[0] = cleanDir[0] * baseAxis[0][0] + cleanDir[1] * baseAxis[1][0] + cleanDir[2] * baseAxis[2][0];
+			tmp[1] = cleanDir[0] * baseAxis[0][1] + cleanDir[1] * baseAxis[1][1] + cleanDir[2] * baseAxis[2][1];
+			tmp[2] = cleanDir[0] * baseAxis[0][2] + cleanDir[1] * baseAxis[1][2] + cleanDir[2] * baseAxis[2][2];
+			VectorCopy(tmp, axis_[0]);
 		}
 
 		saberTrail->oldSmoothPos.set = qtrue;
