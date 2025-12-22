@@ -230,6 +230,12 @@ typedef struct {
 
 //=================================================
 
+typedef struct {
+	qboolean	set;
+	vec3_t		pos;
+	vec3_t		dir;
+} oldSaberPos_t;
+
 typedef struct
 {
 	// Actual trail stuff
@@ -251,8 +257,10 @@ typedef struct
 							//	..then we'll need the normal to project a mark blob onto the impact point
 	
 	// to cheaply imitate r2_ghoul2AnimSmooth to have better sync
-	mdxaBone_t	oldBoltMatrix;
-	qboolean	oldBoltMatrixSet;
+	//mdxaBone_t	oldBoltMatrix;
+	//qboolean	oldBoltMatrixSet;
+	oldSaberPos_t	oldSmoothPos;
+	//oldSaberPos_t	oldSmoothPosDual;
 } saberTrail_t;
 
 typedef enum {
@@ -2205,6 +2213,7 @@ extern	vmCvar_t	cg_trueSaber;
 extern	vmCvar_t	cg_trueSpin;
 
 extern	vmCvar_t	cg_r_ghoul2animsmooth;
+extern	vmCvar_t	cg_saberG2AnimSmoothCompensate;
 
 
 /*

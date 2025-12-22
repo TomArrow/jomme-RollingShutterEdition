@@ -927,6 +927,7 @@ vmCvar_t	cg_trueRoll;
 vmCvar_t	cg_trueSaber;
 vmCvar_t	cg_trueSpin;
 
+vmCvar_t	cg_saberG2AnimSmoothCompensate;
 vmCvar_t	cg_r_ghoul2animsmooth;
 
 
@@ -1244,6 +1245,7 @@ Ghoul2 Insert End
 	{ &cg_trueSaber,		"cg_trueSaber",			"0",			NULL,	CVAR_ARCHIVE	},
 	{ &cg_trueSpin,			"cg_trueSpin",			"1",			NULL,	CVAR_ARCHIVE	},
 	{ &cg_r_ghoul2animsmooth,"r_ghoul2animsmooth",	".3",			NULL,	0	},
+	{ &cg_saberG2AnimSmoothCompensate,"cg_saberG2AnimSmoothCompensate",	"0",			NULL,	CVAR_ARCHIVE },
 
 	{ &cg_eternalScoreboard,"cg_eternalScoreboard",	"1",			NULL,	CVAR_ARCHIVE	},
 	{ &cg_smallScoreboard,	"cg_smallScoreboard",	"0",			NULL,	CVAR_ARCHIVE	},

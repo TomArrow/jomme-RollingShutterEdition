@@ -5693,6 +5693,7 @@ void CG_SaberCompWork(vec3_t start, vec3_t end, int ownerNum)// , centity_t* own
 const vec3_t container = { -8.0f, 8.0f, 8.0f };
 void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
 	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
+	vec3_t	basePos;
 	float	traceFraction, traceFractionOther;
 	trace_t	trace;
 	int i = 0;
@@ -5801,6 +5802,14 @@ Ghoul2 Insert Start
 	client = nonPlayer ? NULL : &cgs.clientinfo[cent1->currentState.number];
 	saberTrail = nonPlayer ? (!cent1 ? &lent->data.fragment.saber.saberTrail : &cent1->entSaberTrail) : (client ? &client->saberTrail : NULL);
 
+	if (!cent1 && lent) {
+		//VectorCopy(lent->pos.trBase, basePos);
+		VectorCopy(lent->refEntity.origin, basePos);
+	}
+	else {
+		VectorCopy(scent->lerpOrigin, basePos);
+	}
+
 	// figure out where the actual model muzzle is
 	if (fromSaber)
 	{
@@ -5819,28 +5828,6 @@ Ghoul2 Insert Start
 		else {
 			trap_G2API_GetBoltMatrix(scent->ghoul2, 1, 0, &boltMatrix, futureAngles, origin, cg.time, cgs.gameModels, scent->modelScale);
 		}
-	}
-
-	if (saberTrail) { // cheaply imitate r_ghoul2animsmooth so the saber remains closer to the rendered geometry. it's not perfect, but it's a patchwork solution
-		if (cg_r_ghoul2animsmooth.value > 0.0f && saberTrail->oldBoltMatrixSet) {
-			jitterSegmentAdvanceInfo_t* jitseg = trap_CG_MME_GetJitterSegmentAdvanceInfo();
-			float smoothFactor = cg_r_ghoul2animsmooth.value;
-			if (jitseg->isRecording && jitseg->totalFrames > 1) { // when doing motion blur, we still want to preserve the same basic amount of smoothing. will make the motion blur nicer too
-				smoothFactor = powf(smoothFactor, 1.0f / (float)jitseg->totalFrames);
-			}
-			if (smoothFactor > 0.0f) {
-				int j;
-				float* oldM = &saberTrail->oldBoltMatrix.matrix[0][0];
-				float* newM = &boltMatrix.matrix[0][0];
-				for (i = 0; i < 12; i++, oldM++, newM++)
-				{
-					//*oldM = smoothFactor * (*oldM - *newM) + *newM;
-					*newM = smoothFactor * (*oldM - *newM) + *newM;
-				}
-			}
-		}
-		saberTrail->oldBoltMatrix = boltMatrix;
-		saberTrail->oldBoltMatrixSet = qtrue;
 	}
 
 	// work the matrix axis stuff into the original axis and origins used.
@@ -5870,6 +5857,32 @@ Ghoul2 Insert Start
 	if (!client && !nonPlayer)
 	{ //something horrible has apparently happened
 		return;
+	}
+
+	if (saberTrail) { // cheaply imitate r_ghoul2animsmooth so the saber remains closer to the rendered geometry. it's not perfect, but it's a patchwork solution
+		vec3_t cleanPos, cleanDir;
+		VectorSubtract(org_, basePos, cleanPos);
+		VectorCopy(axis_[0], cleanDir);
+		if (cg_saberG2AnimSmoothCompensate.integer && cg_r_ghoul2animsmooth.value > 0.0f && saberTrail->oldSmoothPos.set) {
+			jitterSegmentAdvanceInfo_t* jitseg = trap_CG_MME_GetJitterSegmentAdvanceInfo();
+			float smoothFactor = cg_r_ghoul2animsmooth.value;
+			if (jitseg->isRecording && jitseg->totalFrames > 1) { // when doing motion blur, we still want to preserve the same basic amount of smoothing. will make the motion blur nicer too
+				smoothFactor = powf(smoothFactor, 1.0f / (float)jitseg->totalFrames);
+			}
+
+			if (smoothFactor > 0.0f) {
+				for (i = 0; i < 3; i++) {
+					cleanPos[i] = smoothFactor * (saberTrail->oldSmoothPos.pos[i] - cleanPos[i]) + cleanPos[i];
+					cleanDir[i] = smoothFactor * (saberTrail->oldSmoothPos.dir[i] - cleanDir[i]) + cleanDir[i];
+				}
+			}
+			VectorAdd(basePos, cleanPos, org_);
+			VectorCopy(cleanDir, axis_[0]);
+		}
+
+		saberTrail->oldSmoothPos.set = qtrue;
+		VectorCopy(cleanPos, saberTrail->oldSmoothPos.pos);
+		VectorCopy(cleanDir, saberTrail->oldSmoothPos.dir);
 	}
 
 	if (*bolt2)
