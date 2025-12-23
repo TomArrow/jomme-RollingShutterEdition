@@ -356,12 +356,22 @@ const vec3 veryFarColor = vec3(76,-12,-32);
 const vec3 farColor = vec3(65,-11,-47);
 void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 	bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+	bool mult = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 || (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
     bool additiveToAlpha = thermalVisionUniform == 3 && additive;
 	bool legacy = thermalVisionUniform == 2;
 	vec3 colorIn = colorInOut.xyz;
+	float rawIntensity = clamp(dot(rgbToGray,colorInOut.xyz),0.0f,1.0f);
 	float powfactor = 0.2f;
 	float normalmult = 1.0f;
 	float distanceFactor =  0.25f;
+	//if(/* additive || mult || isSaberUniform > 0 ||*/(rawStateBitsUniform & (GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS)) == 0){
+		//colorInOut = vec4(0.0f,0.0f,0.0f,0.0f);
+		//return;
+	//}
+	//if((rawStateBitsUniform & (GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS)) > 0 ){
+	//	colorInOut = vec4(0.0f,0.0f,0.0f,0.0f);
+	//	return;
+	//}
 	if((renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 		// dont do for sky cuz it spazzes out
 		distanceFactor =  length(eyeSpaceCoordsGeom);
@@ -384,19 +394,20 @@ void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 	colorIn.x = pow(colorIn.x,powfactor);
 	colorIn.y = pow(colorIn.y,powfactor);
 	colorIn.z = pow(colorIn.z,powfactor);
-	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
+	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE && !additive){
 		colorIn *= 0.5f;
 		colorIn += vec3(0.5f);
 		colorIn *= 40.0f;
 	}
-	float intensity = dot(rgbToGray,colorIn+lightmapIn*1.0f)*0.03f*normalmult;
+	float lightmapMult = additiveToAlpha ? rawIntensity : 1.0f;
+	float intensity =  dot(rgbToGray,colorIn+lightmapMult*lightmapIn*1.0f)*0.03f*normalmult;
 	float multiplier = 1.0f;
 	if(intensity < 0.0f){
 		intensity = 0.0f;
 	}  
 	if(thermalVisionUniform == 2 || thermalVisionUniform == 3){
 		if(additiveToAlpha){
-			float alpha = clamp(intensity,0.0f,1.0f);
+			float alpha = rawIntensity;//clamp(intensity,0.0f,1.0f);
 			//alpha *= alpha;
 			if(intensity > 1.0f){
 				intensity=1.0f + (1.0f-1.0f/intensity);
@@ -409,8 +420,8 @@ void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 			if(intensity > 1.0f){
 				intensity=1.0f;
 			}
-			float alpha = !additive ? 1.0f : clamp(intensity,0.0f,1.0f);
-			colorInOut.xyz = vec3(0.0f,intensity,distanceFactor*alpha);
+			float alpha = !additive ? 1.0f : rawIntensity;//clamp(intensity,0.0f,1.0f);
+			colorInOut.xyz = vec3(0.0f,intensity*alpha,distanceFactor*alpha);
 		}
 		return;
 	}
@@ -1517,15 +1528,15 @@ bool main_real(inout vec4 outFragColor)
 
 	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	
-	bool usesBlending = (appliedStateBitsUniform & GLS_SRCBLEND_BITS) > 0 && (appliedStateBitsUniform & GLS_DSTBLEND_BITS) > 0;
+	//bool usesBlending = (appliedStateBitsUniform & GLS_SRCBLEND_BITS) > 0 && (appliedStateBitsUniform & GLS_DSTBLEND_BITS) > 0;
 
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
 		if(thermalVision){
 			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 		}
 		return true;
-	} else if(effectiveAlpha <= 0.0 && usesBlending) {
-		return true; // this seem fair?
+	//} else if(effectiveAlpha <= 0.0 && usesBlending) { // this causes issues (thermalvision 3) in its current form. leads to WEIRD negative values and all sorts of weird af shit
+		//return true; // this seem fair?
 	} else if(alphaFuncUniform > 0){
 		if(
 		alphaFuncUniform == ALPHA_GREATER && effectiveAlpha <= alphaFuncValueUniform

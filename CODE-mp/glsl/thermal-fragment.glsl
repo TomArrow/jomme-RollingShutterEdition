@@ -173,8 +173,8 @@ float fracs[6] = {
 const vec3 veryFarColor = vec3(76,-12,-32);
 const vec3 farColor = vec3(65,-11,-47);
 void applyThermal(inout vec3 color){
-    float intensity = color.y;
-    float distanceFactor = color.z;
+    float intensity = color.y;//max(0.0f,color.y);
+    float distanceFactor = color.z;//max(0.0f,color.z);
     float multiplier = 1.0f;
     
 	//if(intensity > 1.0f){
@@ -204,6 +204,14 @@ void main(void)
 	// Let's assume 400 nits for a typical gaming monitor (so the target for 1.0f from source buffer)
 	// 400/10000 = 0.04f				
 	vec3 inputColorTmp = textureBicubic(text_in, gl_TexCoord[0].st,0).xyz;
+    if(shaderDebugUniform == 3){
+	    gl_FragColor = vec4(inputColorTmp,1.0f);
+        return;
+    }
+    if(shaderDebugUniform == -3){
+	    gl_FragColor = vec4(-inputColorTmp,1.0f);
+        return;
+    }
 	vec3 inputColorTmpBlurred = inputColorTmp;
     for(int i=1;i<5;i++){
         vec3 newval = textureBicubic(text_in, gl_TexCoord[0].st,i).xyz;
@@ -212,6 +220,14 @@ void main(void)
         } else{
             inputColorTmpBlurred = mix(inputColorTmpBlurred,newval,fracs[i]);
         }
+    }
+    if(shaderDebugUniform == 4){
+	    gl_FragColor = vec4(inputColorTmpBlurred,1.0f);
+        return;
+    }
+    if(shaderDebugUniform == -4){
+	    gl_FragColor = vec4(-inputColorTmpBlurred,1.0f);
+        return;
     }
     if(thermalVisionUniform ==2||thermalVisionUniform ==3){
         inputColorTmp = inputColorTmpBlurred;
