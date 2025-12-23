@@ -1,3 +1,32 @@
+
+### Allow mod stuffs
+/build/**/*
+!/build/mme/
+!/build/mme/shaders
+!/build/mme/shaders/*
+!/build/mme/shaders/**
+!/build/mme/shaders/**/*
+!/build/mme/data
+!/build/mme/data/*
+!/build/mme/data/**
+!/build/mme/data/**/*
+!/build/mme/effects
+!/build/mme/effects/*
+!/build/mme/effects/**
+!/build/mme/effects/**/*
+!/build/mme/gfx
+!/build/mme/gfx/*
+!/build/mme/gfx/**
+!/build/mme/gfx/**/*
+!/build/mme/models
+!/build/mme/models/*
+!/build/mme/models/**
+!/build/mme/models/**/*
+!/build/mme/sound
+!/build/mme/sound/*
+!/build/mme/sound/**
+!/build/mme/sound/**/*
+
 #################
 ## Eclipse
 #################
@@ -145,7 +174,6 @@ Desktop.ini
 *.egg
 *.egg-info
 dist
-build
 eggs
 parts
 bin
@@ -174,8 +202,8 @@ pip-log.txt
 #############
 ## Unix
 #############
-build
 build-release
 build-debug
 *.o
 *.so
+
