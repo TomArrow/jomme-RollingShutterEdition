@@ -472,6 +472,8 @@ typedef struct {
 	int				stageImageBitmask;		// to tell glsl what images exist
 	int				stageLightmapBitmask;	// to tell glsl what images are lightmaps
 	int				multitextureEnv;		// to tell glsl the multitex env info
+
+	qboolean		isAdditiveGlow;			// kind of automated way to guess if a stage is meant to be just an additive overlay like for lights on a wall, so we can scale its intensity
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -1478,6 +1480,7 @@ extern cvar_t* r_HUDBrightness;
 extern cvar_t* r_HUDBrightnessOld;
 extern cvar_t* r_LightmapBrightness;
 extern cvar_t* r_LightBrightness;
+extern cvar_t* r_additiveWorldGlow;
 
 extern cvar_t* r_hideMissingModels; // don't draw the colorful RGB null axis
 

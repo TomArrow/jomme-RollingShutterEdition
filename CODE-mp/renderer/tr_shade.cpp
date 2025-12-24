@@ -1519,6 +1519,10 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 	if ((/*isLit ||*/ tess.shader->hasLightmapStage) && r_LightBrightness->value != 1.0f) {
 		VectorScale(variousStuffMultiplier, r_LightBrightness->value, variousStuffMultiplier);
 	}
+
+	if (tess.shader->isWorldShader && pStage->isAdditiveGlow && r_additiveWorldGlow->value != 1.0f) {
+		VectorScale(variousStuffMultiplier, r_additiveWorldGlow->value, variousStuffMultiplier);
+	}
 	
 	if (variousStuffMultiplier[0] != 1.0f || variousStuffMultiplier[1] != 1.0f || variousStuffMultiplier[2] != 1.0f) {
 		for (i = 0; i < tess.numVertexes; i++)

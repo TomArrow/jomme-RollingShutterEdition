@@ -2917,6 +2917,9 @@ static qboolean CollapseMultitexture( void ) {
 				stages[0].bundle[i] = stages[1].bundle[i];
 			}
 		}
+		if (stages[1].isAdditiveGlow && collapse[i].multitextureEnv == GL_ADD) {
+			stages[0].isAdditiveGlow = qtrue;
+		}
 	}
 
 	// set the new blend state bits
@@ -3423,6 +3426,32 @@ static shader_t *FinishShader( void ) {
 						shader.sort = SS_BLEND0;
 					}
 				}
+			}
+		}
+	}
+
+	if (stage > 1) {
+		// if the last stage is additive and its not the only stage, consider this as a kind of glow overlay and let us amplify its intensity later for hdr purposes
+		shaderStage_t* pStage = &stages[stage-1];
+		int blendSrcBits = pStage->stateBits & GLS_SRCBLEND_BITS;
+		int blendDstBits = pStage->stateBits & GLS_DSTBLEND_BITS;
+		if ((blendSrcBits == GLS_SRCBLEND_ONE) 
+			&& (blendDstBits == GLS_DSTBLEND_ONE)
+			) {
+			// check all the bundles
+			qboolean qualified = qtrue;
+			int i, j;
+
+			for (i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+				if (!pStage->bundle[i].image[0]) break;
+				if (pStage->bundle[i].tcGen != TCGEN_TEXTURE || pStage->bundle[i].numTexMods > 0) { // this is some other fancy shit. ignore it.
+					qualified = qfalse;
+					break;
+				}
+			}
+
+			if (qualified) {
+				pStage->isAdditiveGlow = qtrue;
 			}
 		}
 	}
