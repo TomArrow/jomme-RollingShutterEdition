@@ -1204,6 +1204,26 @@ void CG_LaunchGib( vec3_t origin, vec3_t velocity, qhandle_t hModel ) {
 	le->leMarkType = LEMT_BLOOD;
 }
 
+void CG_FX_AddLight(vec3_t org, float size1, float size2, float sizeParm,
+	vec3_t rgb1, vec3_t rgb2, float rgbParm,
+	int killTime, int flags) {
+	effectLightStruct_t light;
+
+	memset(&light, 0, sizeof(light));
+
+	VectorCopy(org, light.origin);
+	VectorCopy(rgb1, light.rgb1);
+	VectorCopy(rgb2, light.rgb2);
+	light.size1 = size1;
+	light.size2 = size2;
+	light.sizeParm = sizeParm;
+	light.rgbParm = rgbParm;
+	light.killTime = killTime;
+	light.flags = flags;
+
+	trap_FX_AddLight(&light);
+}
+
 /*
 ===================
 CG_GibPlayer

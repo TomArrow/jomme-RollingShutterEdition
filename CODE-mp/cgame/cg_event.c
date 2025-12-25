@@ -1739,6 +1739,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		if (es->eventParm)
 		{ //saber block
 			vec3_t fxDir;
+			vec3_t lightColor = { 1.0f, 0.8f, 0.6f };
 			VectorCopy(es->angles, fxDir);
 			if (!fxDir[0] && !fxDir[1] && !fxDir[2])
 			{
@@ -1746,6 +1747,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			}
 			trap_S_StartSound(es->origin, es->number, CHAN_AUTO, trap_S_RegisterSound(va( "sound/weapons/saber/saberblock%d.wav", Q_irand(1, 9) )));
 			trap_FX_PlayEffectID( trap_FX_RegisterEffect("saber/saber_block.efx"), es->origin, fxDir );
+			CG_FX_AddLight(es->origin, Q_irand(320,11), 100, 0, lightColor, lightColor, 0, 80, FX_SIZE_LINEAR);
 
 			g_saberFlashTime = cg.time-50;
 			VectorCopy( es->origin, g_saberFlashPos );

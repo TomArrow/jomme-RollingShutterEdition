@@ -2472,3 +2472,22 @@ void FX_FeedTrail(effectTrailArgStruct_t *a)
 
 	FX_AddPrimitive((CEffect **)&fx, NULL, a->mKillTime);
 }
+
+void FX_FeedLight(effectLightStruct_t*a)
+{
+	vec3_t rgb1, rgb2;
+	if (r_gammaSrgbLightvalues->integer) {
+		rgb1[0] = R_sRGBToLinear(a->rgb1[0]);
+		rgb1[1] = R_sRGBToLinear(a->rgb1[1]);
+		rgb1[2] = R_sRGBToLinear(a->rgb1[2]);
+		rgb2[0] = R_sRGBToLinear(a->rgb2[0]);
+		rgb2[1] = R_sRGBToLinear(a->rgb2[1]);
+		rgb2[2] = R_sRGBToLinear(a->rgb2[2]);
+	}
+	else {
+		VectorCopy(a->rgb1,rgb1);
+		VectorCopy(a->rgb2,rgb2);
+	}
+	FX_AddLight(NULL,a->origin,a->size1,a->size2,a->sizeParm,rgb1,rgb2,a->rgbParm,a->killTime,a->flags);
+}
+

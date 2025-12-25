@@ -106,22 +106,4 @@ FxRunner
 	]
 }
 
-Light
-		
-{
-	life				80
-			
-
-	rgb
-	{
-		start			1 0.8 0.6
-	}
-
-	size
-	{
-		start			320 330
-		end				100
-		flags			linear
-	}
-}
 

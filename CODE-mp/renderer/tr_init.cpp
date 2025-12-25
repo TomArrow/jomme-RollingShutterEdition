@@ -1022,7 +1022,7 @@ void R_Register( void )
 	r_HUDBrightnessOld = ri.Cvar_Get("r_HUDBrightnessOld", "0.5", CVAR_ARCHIVE);
 	r_LightmapBrightness = ri.Cvar_Get("r_LightmapBrightness", "1.0", CVAR_ARCHIVE);
 	r_LightBrightness = ri.Cvar_Get("r_LightBrightness", "1.0", CVAR_ARCHIVE);
-	r_additiveWorldGlow = ri.Cvar_Get("r_additiveWorldGlow", "1.0", CVAR_ARCHIVE);
+	r_additiveWorldGlow = ri.Cvar_Get("r_additiveWorldGlow", "64.0", CVAR_ARCHIVE);
 
 	r_hideMissingModels = ri.Cvar_Get("r_hideMissingModels", "1", CVAR_ARCHIVE);
 

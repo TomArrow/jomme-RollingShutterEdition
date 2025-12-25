@@ -2193,6 +2193,19 @@ typedef struct effectTrailArgStruct_s {
 	int							mKillTime;
 } effectTrailArgStruct_t;
 
+typedef struct
+{
+	vec3_t	origin;
+	float	size1;
+	float	size2;
+	float	sizeParm;
+	vec3_t	rgb1; 
+	vec3_t	rgb2; 
+	float	rgbParm;
+	int		killTime; 
+	int		flags;
+} effectLightStruct_t;
+
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define	SOLID_BMODEL	0xffffff
 

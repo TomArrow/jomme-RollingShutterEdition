@@ -51,6 +51,7 @@ extern void demoRenderFrame( stereoFrame_t stereo );
 extern int demoSeek( int seekTime );
 
 void FX_FeedTrail(effectTrailArgStruct_t *a);
+void FX_FeedLight(effectLightStruct_t* a);
 
 /*
 ====================
@@ -1002,6 +1003,17 @@ int CL_CgameSystemCalls( int *args ) {
 		if (a)
 		{
 			FX_FeedTrail(a);
+		}
+		return 0;
+
+	case CG_FX_ADDLIGHT:
+		effectLightStruct_t* aaaaa;
+
+		aaaaa = (effectLightStruct_t*)VMA(1);//args[1];
+
+		if (aaaaa)
+		{
+			FX_FeedLight(aaaaa);
 		}
 		return 0;
 

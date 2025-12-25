@@ -2509,6 +2509,8 @@ void CG_ScorePlum( int client, vec3_t org, int score );
 
 void CG_Bleed( vec3_t origin, int entityNum );
 
+void CG_FX_AddLight(vec3_t org, float size1, float size2, float sizeParm, vec3_t rgb1, vec3_t rgb2, float rgbParm, int killTime, int flags);
+
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir, 
 								qhandle_t hModel, int numframes, qhandle_t shader, int msec,
 								qboolean isSprite, float scale, int flags );// Overloaded in single player
@@ -2828,6 +2830,7 @@ void trap_FX_AddPoly( addpolyArgStruct_t *p );
 void trap_FX_AddBezier( addbezierArgStruct_t *p );
 void trap_FX_AddPrimitive( effectTrailArgStruct_t *p );
 void trap_FX_AddSprite( addspriteArgStruct_t *p );
+void trap_FX_AddLight( effectLightStruct_t* p );
 
 void trap_SP_Print(const unsigned ID, byte *Data);
 int trap_SP_GetStringTextString(const char *text, char *buffer, int bufferLength);

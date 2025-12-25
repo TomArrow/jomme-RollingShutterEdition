@@ -710,6 +710,11 @@ void trap_FX_AddPrimitive( effectTrailArgStruct_t *p )
 	syscall( CG_FX_ADDPRIMITIVE, p );
 }
 
+void trap_FX_AddLight( effectLightStruct_t *p )
+{
+	syscall(CG_FX_ADDLIGHT, p );
+}
+
 void trap_FX_AddSprite( addspriteArgStruct_t *p )
 {
 	if( p->shader == cgs.media.bryarFrontFlash			||
