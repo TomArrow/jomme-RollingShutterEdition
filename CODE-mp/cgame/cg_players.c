@@ -3,6 +3,7 @@
 // cg_players.c -- handle the media and animation for player entities
 #include "cg_local.h"
 #include "../ghoul2/G2.h"
+#include "fx_local.h"
 
 //[TrueView]
 #define TURN_ON				0x00000000
@@ -6027,12 +6028,14 @@ Ghoul2 Insert Start
 			if (trace.fraction < 1.0f)
 			{
 				vec3_t trDir;
+				vec3_t lightColor = { 0.5f, 0.25f, 0.0f };
 				VectorCopy(trace.plane.normal, trDir);
 				if (!trDir[0] && !trDir[1] && !trDir[2])
 				{
 					trDir[1] = 1;
 				}
 				trap_FX_PlayEffectID(cgs.effects.mSparks, trace.endpos, trDir);
+				CG_FX_AddLight(trace.endpos, Q_irand(100, 21), 80, 0, lightColor, lightColor, 0, 20, FX_SIZE_LINEAR);
 
 				//Stop saber? (it wouldn't look right if it was stuck through a thin wall and unable to hurt players on the other side)
 				VectorSubtract(org_, trace.endpos, v);
@@ -6068,6 +6071,7 @@ Ghoul2 Insert Start
 							for (int sp = 0; sp < newSparksCount; sp++) {
 								VectorAdd(sparkPosition,direction, sparkPosition);
 								trap_FX_PlayEffectID(cgs.effects.mSparks, sparkPosition, trDir); // Effect direction should be interpolated I guess but fuck it.
+								CG_FX_AddLight(sparkPosition, Q_irand(100, 21), 80, 0, lightColor, lightColor, 0, 20, FX_SIZE_LINEAR);
 							}
 						}
 

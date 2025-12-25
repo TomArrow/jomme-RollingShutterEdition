@@ -1696,6 +1696,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			{ //Make lots of sparks, something special happened
 				vec3_t fxDir;
 				VectorCopy(es->angles, fxDir);
+				vec3_t lightColor = { 0.5f, 0.25f, 0.0f };
 				if (!fxDir[0] && !fxDir[1] && !fxDir[2])
 				{
 					fxDir[1] = 1;
@@ -1707,28 +1708,33 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				trap_FX_PlayEffectID(trap_FX_RegisterEffect("saber/blood_sparks.efx"), es->origin, fxDir);
 				trap_FX_PlayEffectID(trap_FX_RegisterEffect("saber/blood_sparks.efx"), es->origin, fxDir);
 				trap_FX_PlayEffectID(trap_FX_RegisterEffect("saber/blood_sparks.efx"), es->origin, fxDir);
+				CG_FX_AddLight(es->origin, Q_irand(100, 21), 80, 0, lightColor, lightColor, 0, 20, FX_SIZE_LINEAR);
 			}
 			else if (es->eventParm)
 			{ //hit a person
 				vec3_t fxDir;
 				VectorCopy(es->angles, fxDir);
+				vec3_t lightColor = { 0.5f, 0.25f, 0.0f };
 				if (!fxDir[0] && !fxDir[1] && !fxDir[2])
 				{
 					fxDir[1] = 1;
 				}
 				trap_S_StartSound(es->origin, es->number, CHAN_AUTO, hitSound);
 				trap_FX_PlayEffectID(trap_FX_RegisterEffect("saber/blood_sparks.efx"), es->origin, fxDir);
+				CG_FX_AddLight(es->origin, Q_irand(100, 21), 80, 0, lightColor, lightColor, 0, 20, FX_SIZE_LINEAR);
 			}
 			else
 			{ //hit something else
 				vec3_t fxDir;
 				VectorCopy(es->angles, fxDir);
+				vec3_t lightColor = { 0.5f, 0.25f, 0.0f };
 				if (!fxDir[0] && !fxDir[1] && !fxDir[2])
 				{
 					fxDir[1] = 1;
 				}
 				trap_S_StartSound(es->origin, es->number, CHAN_AUTO, trap_S_RegisterSound("sound/weapons/saber/saberhit.wav"));
 				trap_FX_PlayEffectID(trap_FX_RegisterEffect("saber/spark.efx"), es->origin, fxDir);
+				CG_FX_AddLight(es->origin, Q_irand(100, 21), 80, 0, lightColor, lightColor, 0, 20, FX_SIZE_LINEAR);
 			}
 		}
 		break;
@@ -1755,12 +1761,14 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		else
 		{ //projectile block
 			vec3_t fxDir;
+			vec3_t lightColor = { 1.0f, 0.8f, 0.6f };
 			VectorCopy(es->angles, fxDir);
 			if (!fxDir[0] && !fxDir[1] && !fxDir[2])
 			{
 				fxDir[1] = 1;
 			}
 			trap_FX_PlayEffectID(trap_FX_RegisterEffect("blaster/deflect.efx"), es->origin, fxDir);
+			CG_FX_AddLight(es->origin, Q_irand(320, 11), 100, 0, lightColor, lightColor, 0, 80, FX_SIZE_LINEAR);
 		}
 		break;
 
