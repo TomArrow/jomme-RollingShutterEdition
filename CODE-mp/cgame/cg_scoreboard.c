@@ -89,8 +89,8 @@ static int SB_NAME_X = (SB_SCORELINE_X_CONST + .48 * SB_SCORELINE_WIDTH_CONST);
 #define ETSB_RIGHT_BOTICON_X	(SCOREBOARD_X+64)
 #define ETSB_RIGHT_HEAD_X		(SCOREBOARD_X+96)
 // Normal
-#define ETSB_BOTICON_X		(SCOREBOARD_X+32)
-#define ETSB_HEAD_X			(SCOREBOARD_X+64)
+#define ETSB_BOTICON_X		(SCOREBOARD_X+40)
+//#define ETSB_HEAD_X			(SCOREBOARD_X+64)
 
 #define ETSB_SCORELINE_X		100
 #define ETSB_SCORELINE_WIDTH	(640 - ETSB_SCORELINE_X * 2)
@@ -158,7 +158,7 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 		}
 	} else if ( ci->powerups & ( 1 << PW_REDFLAG ) ) {
 		if( largeFormat ) {
-			CG_DrawFlagModel( iconx*cgs.screenXScale, y*cgs.screenYScale, 32*cgs.screenXScale*cgs.widthRatioCoef, 32*cgs.screenYScale, TEAM_RED, qfalse );
+			CG_DrawFlagModel( iconx*cgs.screenXScale, y*cgs.screenYScale, 32*cgs.screenXScale*cgs.widthRatioCoef*cgs.widthRatioCoef, 32*cgs.screenYScale, TEAM_RED, qfalse );
 		}
 		else {
 			CG_DrawFlagModel( iconx*cgs.screenXScale, y*cgs.screenYScale, 32*cgs.screenXScale*cgs.widthRatioCoef, 32*cgs.screenYScale, TEAM_RED, qfalse );
@@ -300,30 +300,31 @@ static void CG_DrawClientScoreEternal(int y, score_t* score, float* color, float
 	}
 
 	iconx = ETSB_BOTICON_X + (ETSB_RATING_WIDTH / 2);
+	//iconx = (SCREEN_WIDTH / 2) - ((SCREEN_WIDTH / 2) - iconx) * cgs.widthRatioCoef;
 
 	// draw the handicap or bot skill marker (unless player has flag)
 	if (ci->powerups & (1 << PW_NEUTRALFLAG)) {
 		if (largeFormat) {
-			CG_DrawFlagModel(iconx, y - (32 - BIGCHAR_HEIGHT) / 2, 32, 32, TEAM_FREE, qfalse);
+			CG_DrawFlagModel(iconx, y - (32 - BIGCHAR_HEIGHT) / 2, 32*cgs.widthRatioCoef, 32, TEAM_FREE, qfalse);
 		}
 		else {
-			CG_DrawFlagModel(iconx + 32, y, 16, 16, TEAM_FREE, qfalse);
+			CG_DrawFlagModel(iconx + 32, y, 16 * cgs.widthRatioCoef, 16, TEAM_FREE, qfalse);
 		}
 	}
 	else if (ci->powerups & (1 << PW_REDFLAG)) {
 		if (largeFormat) {
-			CG_DrawFlagModel(iconx, y, 32, 32, TEAM_RED, qfalse);
+			CG_DrawFlagModel(iconx, y + 2, 32 * cgs.widthRatioCoef, 32, TEAM_RED, qfalse);
 		}
 		else {
-			CG_DrawFlagModel(iconx + 32, y, 16, 16, TEAM_RED, qfalse);
+			CG_DrawFlagModel(iconx + 32, y + 2, 16 * cgs.widthRatioCoef, 16, TEAM_RED, qfalse);
 		}
 	}
 	else if (ci->powerups & (1 << PW_BLUEFLAG)) {
 		if (largeFormat) {
-			CG_DrawFlagModel(iconx, y, 32, 32, TEAM_BLUE, qfalse);
+			CG_DrawFlagModel(iconx, y + 2, 32 * cgs.widthRatioCoef, 32, TEAM_BLUE, qfalse);
 		}
 		else {
-			CG_DrawFlagModel(iconx + 32, y, 16, 16, TEAM_BLUE, qfalse);
+			CG_DrawFlagModel(iconx + 32, y + 2, 16 * cgs.widthRatioCoef, 16, TEAM_BLUE, qfalse);
 		}
 	}
 	else {
