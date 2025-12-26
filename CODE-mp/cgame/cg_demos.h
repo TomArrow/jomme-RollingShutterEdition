@@ -276,6 +276,7 @@ void chaseEntityOrigin( centity_t *cent, vec3_t origin );
 void chaseSave( fileHandle_t fileHandle );
 qboolean chaseParse( BG_XMLParse_t *parse, const struct BG_XMLParseBlock_s *fromBlock, void *data);
 demoChasePoint_t *chasePointSynch(int time );
+demoViewType_t getBlendAdjustedViewType();
 
 //LINE
 void demoMoveLine( void );

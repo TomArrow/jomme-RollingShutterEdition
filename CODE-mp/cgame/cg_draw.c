@@ -222,6 +222,10 @@ static void CG_DrawZoomMask( void )
 //	int val[5];
 	float max, fi;
 
+	if (mov_blendCam.value != 0.0f) {
+		return; // better way?
+	}
+
 	// Check for Binocular specific zooming since we'll want to render different bits in each case
 	if ( cg.playerPredicted && cg.predictedPlayerState.zoomMode == 2 )
 	{
@@ -1238,7 +1242,7 @@ void CG_DrawHUD(centity_t	*cent)
 	if (cg_hudFiles.integer)
 	{
 		int x = 0;
-		int y = SCREEN_HEIGHT-80;
+		int y = SCREEN_HEIGHT-80 + mov_blendCam.value * SCREEN_HEIGHT;
 		char ammoString[64];
 		int weapX = x;
 
@@ -1318,32 +1322,36 @@ void CG_DrawHUD(centity_t	*cent)
 
 	if (cam_specDrawHUDFrame.integer || cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum) {
 
+		float xOffset = -mov_blendCam.value * SCREEN_WIDTH;
+		float yOffset = mov_blendCam.value * SCREEN_HEIGHT;
 		menuHUD = Menus_FindByName("lefthud");
 		if (menuHUD)
 		{
-			CG_DrawHUDLeftFrame1(menuHUD->window.rect.x, menuHUD->window.rect.y);
+			CG_DrawHUDLeftFrame1(menuHUD->window.rect.x + xOffset, menuHUD->window.rect.y + yOffset);
 			if (cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum)
 			{
-				CG_DrawArmor(menuHUD->window.rect.x, menuHUD->window.rect.y);
-				CG_DrawHealth(menuHUD->window.rect.x, menuHUD->window.rect.y);
+				CG_DrawArmor(menuHUD->window.rect.x + xOffset, menuHUD->window.rect.y + yOffset);
+				CG_DrawHealth(menuHUD->window.rect.x + xOffset, menuHUD->window.rect.y + yOffset);
 			}
-			CG_DrawHUDLeftFrame2(menuHUD->window.rect.x, menuHUD->window.rect.y);
+			CG_DrawHUDLeftFrame2(menuHUD->window.rect.x + xOffset, menuHUD->window.rect.y + yOffset);
 		}
 		else
 		{ //Apparently we failed to get proper coordinates from the menu, so resort to manually inputting them.
-			CG_DrawHUDLeftFrame1(0, SCREEN_HEIGHT - 80);
+			CG_DrawHUDLeftFrame1(0 + xOffset, SCREEN_HEIGHT - 80 + yOffset);
 			if (cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum)
 			{
-				CG_DrawArmor(0, SCREEN_HEIGHT - 80);
-				CG_DrawHealth(0, SCREEN_HEIGHT - 80);
+				CG_DrawArmor(0 + xOffset, SCREEN_HEIGHT - 80 + yOffset);
+				CG_DrawHealth(0 + xOffset, SCREEN_HEIGHT - 80 + yOffset);
 			}
-			CG_DrawHUDLeftFrame2(0, SCREEN_HEIGHT - 80);
+			CG_DrawHUDLeftFrame2(0 + xOffset, SCREEN_HEIGHT - 80 + yOffset);
 		}
 	}
 
 	if (cg_drawScore.integer && (
 		cam_specDrawScore.integer || cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum
 		)) {
+		float xOffset = mov_blendCam.value * SCREEN_WIDTH;
+		float yOffset = mov_blendCam.value * SCREEN_HEIGHT;
 		//scoreStr = va("Score: %i", cgs.clientinfo[cg.snap->ps.clientNum].score);
 		if (cg_drawScoreDefrag.integer) {
 			// it's actually a time in seconds.
@@ -1392,32 +1400,35 @@ void CG_DrawHUD(centity_t	*cent)
 #ifdef OLDHUDBRIGHTNESS
 		VectorScale(scaledColor, r_HUDBrightness, scaledColor);
 #endif
-		UI_DrawScaledProportionalString(SCREEN_WIDTH - 124 * cgs.widthRatioCoef/*(strlen(scoreStr)*20.5)*/, SCREEN_HEIGHT - 23, scoreStr, UI_RIGHT | UI_DROPSHADOW, scaledColor, 0.7);
+		UI_DrawScaledProportionalString(SCREEN_WIDTH - 124 * cgs.widthRatioCoef/*(strlen(scoreStr)*20.5)*/ + xOffset, SCREEN_HEIGHT - 23 + yOffset, scoreStr, UI_RIGHT | UI_DROPSHADOW, scaledColor, 0.7);
 	}
 
 	if (cam_specDrawHUDFrame.integer || cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum) {
 
+		float xOffset = mov_blendCam.value * SCREEN_WIDTH;
+		float yOffset = mov_blendCam.value * SCREEN_HEIGHT;
+
 		menuHUD = Menus_FindByName("righthud");
 		if (menuHUD)
 		{
-			CG_DrawHUDRightFrame1(menuHUD->window.rect.x,menuHUD->window.rect.y);
+			CG_DrawHUDRightFrame1(menuHUD->window.rect.x+xOffset,menuHUD->window.rect.y + yOffset);
 			if (cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum)
 			{
-				CG_DrawForcePower(menuHUD->window.rect.x, menuHUD->window.rect.y);
-				CG_DrawAmmo(cent, menuHUD->window.rect.x, menuHUD->window.rect.y);
+				CG_DrawForcePower(menuHUD->window.rect.x + xOffset, menuHUD->window.rect.y + yOffset);
+				CG_DrawAmmo(cent, menuHUD->window.rect.x + xOffset, menuHUD->window.rect.y + yOffset);
 			}
-			CG_DrawHUDRightFrame2(menuHUD->window.rect.x,menuHUD->window.rect.y);
+			CG_DrawHUDRightFrame2(menuHUD->window.rect.x + xOffset,menuHUD->window.rect.y + yOffset);
 
 		}
 		else
 		{ //Apparently we failed to get proper coordinates from the menu, so resort to manually inputting them.
-			CG_DrawHUDRightFrame1(SCREEN_WIDTH-80,SCREEN_HEIGHT-80);
+			CG_DrawHUDRightFrame1(SCREEN_WIDTH-80 + xOffset,SCREEN_HEIGHT-80 + yOffset);
 			if (cam_specEnt.integer == -1 || cam_specEnt.integer == cg.snap->ps.clientNum)
 			{
-				CG_DrawForcePower(SCREEN_WIDTH - 80, SCREEN_HEIGHT - 80);
-				CG_DrawAmmo(cent, SCREEN_WIDTH - 80, SCREEN_HEIGHT - 80);
+				CG_DrawForcePower(SCREEN_WIDTH - 80 + xOffset, SCREEN_HEIGHT - 80 + yOffset);
+				CG_DrawAmmo(cent, SCREEN_WIDTH - 80 + xOffset, SCREEN_HEIGHT - 80 + yOffset);
 			}
-			CG_DrawHUDRightFrame2(SCREEN_WIDTH-80,SCREEN_HEIGHT-80);
+			CG_DrawHUDRightFrame2(SCREEN_WIDTH-80 + xOffset,SCREEN_HEIGHT-80 + yOffset);
 		}
 
 	}
@@ -1520,7 +1531,7 @@ void CG_DrawForceSelect( void )
 	pad = 12;
 
 	x = 320;
-	y = 425;
+	y = 425 + mov_blendCam.value * SCREEN_HEIGHT;
 
 	// Background
 	length = (sideLeftIconCnt * smallIconSize) + (sideLeftIconCnt*pad) +
@@ -1701,7 +1712,7 @@ void CG_DrawInvenSelect( void )
 	pad = 16;
 
 	x = 320;
-	y = 410;
+	y = 410 + mov_blendCam.value * SCREEN_HEIGHT;
 
 	// Left side ICONS
 	// Work backwards from current icon
@@ -2390,7 +2401,7 @@ CG_DrawUpperRight
 static void CG_DrawUpperRight( void ) {
 	float	y;
 
-	y = 0;
+	y = 0 - mov_blendCam.value * SCREEN_HEIGHT;
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 1 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qtrue );
@@ -2479,7 +2490,7 @@ static void CG_DrawReward( void ) {
 	if ( cg.rewardCount[0] >= 10 ) {
 		//y = 56;
 		//x = 320 - (ICON_SIZE/2)*cgs.widthRatioCoef;
-		y = cg_drawRewardsHeight.value + 56 + ((maxIconSize - iconSize) / 2);
+		y = cg_drawRewardsHeight.value + 56 + ((maxIconSize - iconSize) / 2) - mov_blendCam.value * SCREEN_HEIGHT;
 		//x = 0.5f * (SCREEN_WIDTH - iconSize);
 		x = 320 - (iconSize/2)*cgs.widthRatioCoef;
 		CG_DrawPic( x, y, (iconSize -4)*cgs.widthRatioCoef, iconSize -4, cg.rewardShader[0] );
@@ -2493,7 +2504,7 @@ static void CG_DrawReward( void ) {
 		count = cg.rewardCount[0];
 
 		//y = 56;
-		y = cg_drawRewardsHeight.value + 56 + ((maxIconSize - iconSize) / 2);
+		y = cg_drawRewardsHeight.value + 56 + ((maxIconSize - iconSize) / 2) - mov_blendCam.value * SCREEN_HEIGHT;
 		x = 320 - count * (iconSize /2)*cgs.widthRatioCoef;
 		for ( i = 0 ; i < count ; i++ ) {
 			CG_DrawPic( x, y, (iconSize -4)*cgs.widthRatioCoef, iconSize -4, cg.rewardShader[0] );
@@ -2644,8 +2655,8 @@ static void CG_DrawLagometer( void ) {
 	//
 	// draw the graph
 	//
-	x = (float)SCREEN_WIDTH - 48.0f*cgs.widthRatioCoef;
-	y = (float)SCREEN_HEIGHT - 165.0f;
+	x = (float)SCREEN_WIDTH - 48.0f*cgs.widthRatioCoef + mov_blendCam.value * SCREEN_WIDTH;
+	y = (float)SCREEN_HEIGHT - 165.0f + mov_blendCam.value * SCREEN_HEIGHT;
 
 	trap_R_SetColor( NULL );
 	CG_DrawPic( x, y, 48.0f*cgs.widthRatioCoef, 48.0f, cgs.media.lagometerShader );
@@ -2871,7 +2882,7 @@ static void CG_DrawCenterString( void ) {
 	if (start[0] == ' ' && start[1] == ' ' && start[2] == ' ' && start[3] == ' ')
 		while (*start && *start == ' ') start++;
 
-	y = cg.centerPrintY - cg.centerPrintLines * BIGCHAR_HEIGHT / 2;
+	y = cg.centerPrintY - cg.centerPrintLines * BIGCHAR_HEIGHT / 2 - mov_blendCam.value * SCREEN_HEIGHT;
 	if ( cgs.textFontValid ) {
 		scale *= 0.5;
 		y += scale * BIGCHAR_HEIGHT;
@@ -2942,6 +2953,10 @@ static void CG_DrawCrosshair( vec3_t worldPoint, int chEntValid ) {
 
 	if (cg_strafeHelper.integer & SHELPER_CROSSHAIR)
 	{
+		return;
+	}
+
+	if (mov_blendCam.value != 0.0f) {
 		return;
 	}
 
@@ -3182,8 +3197,8 @@ static void CG_DrawHolocronIcons(void) {
 //--------------------------------------------------------------
 	int icon_size = 40;
 	int i = 0;
-	int startx = 10;
-	int starty = 10;//SCREEN_HEIGHT - icon_size*3;
+	int startx = 10 - mov_blendCam.value * SCREEN_WIDTH;
+	int starty = 10 - mov_blendCam.value * SCREEN_HEIGHT;//SCREEN_HEIGHT - icon_size*3;
 
 	int endx = icon_size;
 	int endy = icon_size;
@@ -3230,8 +3245,8 @@ static void CG_DrawActivePowers(void) {
 //--------------------------------------------------------------
 	float icon_size = 40.0f;
 	int i = 0;
-	float startx = (icon_size*2.0f+16.0f)*cgs.widthRatioCoef;
-	float starty = (float)SCREEN_HEIGHT - icon_size*2.0f;
+	float startx = (icon_size*2.0f+16.0f)*cgs.widthRatioCoef - mov_blendCam.value * SCREEN_WIDTH;
+	float starty = (float)SCREEN_HEIGHT - icon_size*2.0f + mov_blendCam.value * SCREEN_HEIGHT;
 
 	float endx = icon_size*cgs.widthRatioCoef;
 	float endy = icon_size;
@@ -3581,6 +3596,9 @@ static void CG_DrawCrosshairNames( void ) {
 		return;
 	}
 	if ( !cg_drawCrosshairNames.integer ) {
+		return;
+	}
+	if (mov_blendCam.value != 0.0f) {
 		return;
 	}
 	// scan the known entities to see if the crosshair is sighted on one
@@ -4148,7 +4166,8 @@ void CG_DrawEnhancedFlagStatus(void)
 	char redFlagTimeStr[8] = { 0 }, blueFlagTimeStr[8] = { 0 }, yellowFlagTimeStr[8] = { 0 };
 	vec_t* redFlagTimeColor = colorTable[CT_WHITE], * blueFlagTimeColor = colorTable[CT_WHITE], * yellowFlagTimeColor = colorTable[CT_WHITE];
 	vec4_t hcolor = { 0 };
-	float startDrawPos = 365.0f;
+	float startDrawPos = 365.0f + mov_blendCam.value * SCREEN_HEIGHT;
+	float xOffset = 2.0f - mov_blendCam.value * SCREEN_WIDTH;
 	float ico_size = 32.0f;
 	float ico_sizeX = ico_size * cgs.widthRatioCoef;
 
@@ -4307,18 +4326,18 @@ void CG_DrawEnhancedFlagStatus(void)
 							else
 								Com_sprintf(flagStatusHP, sizeof(flagStatusHP), "(%i)", cgs.yellowFlagCarrier->health);
 
-							CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
-							CG_Text_Paint(2.0f + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+							CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+							CG_Text_Paint(xOffset + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 						}
 						else {
 							yellowFlagShader = cgs.media.flagShaderTaken[TEAM_FREE];
-							CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.yellowFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+							CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.yellowFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 						}
 					}
 					if (cg_enhancedFlagStatus.integer > 1 && yellowFlagTimeStr[0] != '\0')
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, yellowFlagTimeColor, yellowFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, yellowFlagTimeColor, yellowFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 				}
-				CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, yellowFlagShader);
+				CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, yellowFlagShader);
 				startDrawPos -= ico_size + 2.0f;
 			}
 		}
@@ -4338,18 +4357,18 @@ void CG_DrawEnhancedFlagStatus(void)
 						else
 							Com_sprintf(flagStatusHP, sizeof(flagStatusHP), "(%i)", cgs.blueFlagCarrier->health);
 
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 					else {
 						blueFlagShader = cgs.media.flagShaderTaken[TEAM_BLUE];
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.blueFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.blueFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 				}
 				if (cg_enhancedFlagStatus.integer > 1 && blueFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, blueFlagTimeColor, blueFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, blueFlagTimeColor, blueFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, blueFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, blueFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 
@@ -4358,12 +4377,12 @@ void CG_DrawEnhancedFlagStatus(void)
 			if (cgs.redflag == FLAG_TAKEN)
 			{
 				if (cgs.redFlagCarrier && cgs.redFlagCarrier->infoValid) {
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.redFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.redFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 				}
 				if (cg_enhancedFlagStatus.integer > 1 && redFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, redFlagTimeColor, redFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, redFlagTimeColor, redFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, redFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, redFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 	}
@@ -4394,18 +4413,18 @@ void CG_DrawEnhancedFlagStatus(void)
 						else
 							Com_sprintf(flagStatusHP, sizeof(flagStatusHP), "(%i)", cgs.blueFlagCarrier->health);
 
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 					else {
 						blueFlagShader = cgs.media.flagShaderTaken[TEAM_BLUE];
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.blueFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.blueFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 				}
 				if (cg_enhancedFlagStatus.integer > 1 && blueFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, blueFlagTimeColor, blueFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, blueFlagTimeColor, blueFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, blueFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, blueFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 
@@ -4426,18 +4445,18 @@ void CG_DrawEnhancedFlagStatus(void)
 						else
 							Com_sprintf(flagStatusHP, sizeof(flagStatusHP), "(%i)", cgs.redFlagCarrier->health);
 
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 					else {
 						redFlagShader = cgs.media.flagShaderTaken[TEAM_RED];
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.redFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.redFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 				}
 				if (cg_enhancedFlagStatus.integer > 1 && redFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, redFlagTimeColor, redFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, redFlagTimeColor, redFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, redFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, redFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 
@@ -4446,12 +4465,12 @@ void CG_DrawEnhancedFlagStatus(void)
 			if (cgs.yellowflag == FLAG_TAKEN)
 			{
 				if (cgs.yellowFlagCarrier && cgs.yellowFlagCarrier->infoValid) {
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.yellowFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.yellowFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 				}
 				if (cg_enhancedFlagStatus.integer > 1 && yellowFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, yellowFlagTimeColor, yellowFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, yellowFlagTimeColor, yellowFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, yellowFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, yellowFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 	}
@@ -4483,18 +4502,18 @@ void CG_DrawEnhancedFlagStatus(void)
 							else
 								Com_sprintf(flagStatusHP, sizeof(flagStatusHP), "(%i)", cgs.yellowFlagCarrier->health);
 
-							CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
-							CG_Text_Paint(2.0f + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+							CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+							CG_Text_Paint(xOffset  + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 						}
 						else {
 							yellowFlagShader = cgs.media.flagShaderTaken[TEAM_FREE];
-							CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.yellowFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+							CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.yellowFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 						}
 					}
 					if (cg_enhancedFlagStatus.integer > 1 && yellowFlagTimeStr[0] != '\0')
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, yellowFlagTimeColor, yellowFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, yellowFlagTimeColor, yellowFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 				}
-				CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, yellowFlagShader);
+				CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, yellowFlagShader);
 				startDrawPos -= ico_size + 2.0f;
 			}
 		}
@@ -4516,18 +4535,18 @@ void CG_DrawEnhancedFlagStatus(void)
 						else
 							Com_sprintf(flagStatusHP, sizeof(flagStatusHP), "(%i)", cgs.redFlagCarrier->health);
 
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, flagStatus, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f + CG_Text_Width(flagStatus, 0.65f, FONT_MEDIUM), startDrawPos + 9.0f, 0.65f, hcolor, flagStatusHP, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 					else {
 						redFlagShader = cgs.media.flagShaderTaken[TEAM_RED];
-						CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.redFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+						CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.redFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 					}
 				}
 				if (cg_enhancedFlagStatus.integer > 1.0f && redFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, redFlagTimeColor, redFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, redFlagTimeColor, redFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, redFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, redFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 
@@ -4536,12 +4555,12 @@ void CG_DrawEnhancedFlagStatus(void)
 			if (cgs.blueflag == FLAG_TAKEN)
 			{
 				if (cgs.blueFlagCarrier && cgs.blueFlagCarrier->infoValid) {
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.blueFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos + 9.0f, 0.65f, colorWhite, cgs.blueFlagCarrier->name, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_MEDIUM);
 				}
 				if (cg_enhancedFlagStatus.integer > 1 && blueFlagTimeStr[0] != '\0')
-					CG_Text_Paint(2.0f + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, blueFlagTimeColor, blueFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
+					CG_Text_Paint(xOffset + ico_sizeX + 4.0f, startDrawPos - 3.0f, 0.65f, blueFlagTimeColor, blueFlagTimeStr, 0.0f, 0, ITEM_TEXTSTYLE_SHADOWED, FONT_SMALL);
 			}
-			CG_DrawPic(2.0f, startDrawPos, ico_sizeX, ico_size, blueFlagShader);
+			CG_DrawPic(xOffset, startDrawPos, ico_sizeX, ico_size, blueFlagShader);
 			startDrawPos -= ico_size + 2.0f;
 		}
 	}
@@ -4560,7 +4579,8 @@ void CG_DrawFlagStatus() {
 	int myFlagTakenShader = 0;
 	int theirFlagShader = 0;
 	int team = 0;
-	float startDrawPos = 2.0f*cgs.widthRatioCoef;
+	float startDrawPos = 2.0f*cgs.widthRatioCoef - mov_blendCam.value * SCREEN_WIDTH;
+	float y = 365.0f + mov_blendCam.value * SCREEN_HEIGHT;
 	int ico_size = 32;
 
 	if (!cg.snap)
@@ -4591,22 +4611,22 @@ void CG_DrawFlagStatus() {
 	trap_R_SetColor( NULL );
 
 	if (CG_YourTeamHasFlag()) {
-		CG_DrawPic( startDrawPos, 365.0f, ico_size * cgs.widthRatioCoef, ico_size, theirFlagShader );
+		CG_DrawPic( startDrawPos, y, ico_size * cgs.widthRatioCoef, ico_size, theirFlagShader );
 		startDrawPos += (ico_size+2)*cgs.widthRatioCoef;
 	} else if (CG_OtherFlagDropped()) {
 		vec4_t c = {1.0f, 1.0f, 1.0f, 0.5f};
 		trap_R_SetColor(c);
-		CG_DrawPic( startDrawPos, 365.0f, ico_size * cgs.widthRatioCoef, ico_size, theirFlagShader );
+		CG_DrawPic( startDrawPos, y, ico_size * cgs.widthRatioCoef, ico_size, theirFlagShader );
 		startDrawPos += (ico_size+2)*cgs.widthRatioCoef;
 		trap_R_SetColor( NULL );
 	}
 
 	if (CG_OtherTeamHasFlag()) {
-		CG_DrawPic( startDrawPos, 365.0f, ico_size * cgs.widthRatioCoef, ico_size, myFlagTakenShader );
+		CG_DrawPic( startDrawPos, y, ico_size * cgs.widthRatioCoef, ico_size, myFlagTakenShader );
 	} else if (CG_YourFlagDropped()) {
 		vec4_t c = {1.0f, 1.0f, 1.0f, 0.5f};
 		trap_R_SetColor(c);
-		CG_DrawPic( startDrawPos, 365.0f, ico_size * cgs.widthRatioCoef, ico_size, myFlagTakenShader );
+		CG_DrawPic( startDrawPos, y, ico_size * cgs.widthRatioCoef, ico_size, myFlagTakenShader );
 		trap_R_SetColor( NULL );
 	}
 }
@@ -5494,8 +5514,8 @@ static void CG_MovementKeys(centity_t* cent)
 		}
 	}
 	
-	x = SCREEN_WIDTH - cgs.widthRatioCoef* cg_movementKeysX.integer;
-	y = cg_movementKeysY.integer;
+	x = SCREEN_WIDTH - cgs.widthRatioCoef* cg_movementKeysX.integer + mov_blendCam.value * SCREEN_WIDTH;
+	y = cg_movementKeysY.integer + mov_blendCam.value * SCREEN_HEIGHT;
 
 	w = 16 * cg_movementKeysSize.value;
 	h = 16 * cg_movementKeysSize.value;

@@ -877,6 +877,8 @@ vmCvar_t	mov_ratioFix;
 vmCvar_t	mov_saberTeamColour;
 vmCvar_t	mov_wallhack;
 vmCvar_t	mov_camerafps;
+vmCvar_t	mov_blendCam;
+vmCvar_t	mov_blendCamQuat;
 
 vmCvar_t	mov_dismember;
 vmCvar_t	mov_dismemberTryImprove; // tried to make the new limbs align properly with the original body. couldn't get it to work and got annoyed. maybe revisit someday.
@@ -1213,6 +1215,8 @@ Ghoul2 Insert End
 	{ &mov_saberTeamColour,	"mov_saberTeamColour",	"1",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_wallhack,		"mov_wallhack",			"0",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_camerafps,		"mov_camerafps",		"125",			NULL,	CVAR_ARCHIVE	},
+	{ &mov_blendCam,		"mov_blendCam",			"0.0",			NULL,	CVAR_TEMP		},
+	{ &mov_blendCamQuat,	"mov_blendCamQuat",		"1",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_dismember,		"mov_dismember",		"2",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_dismemberClassical,		"mov_dismemberClassical",		"1",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_dismemberDisallowNative,		"mov_dismemberDisallowNative",		"0",			NULL,	CVAR_ARCHIVE	}, // Should normal dismemberment be deactivated when mov_dismember is used?

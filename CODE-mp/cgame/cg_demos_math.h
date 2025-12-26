@@ -19,6 +19,7 @@ void QuatFromAnglesClosest( const vec3_t angles, const Quat_t qc, Quat_t dst);
 void QuatToAngles( const Quat_t q, vec3_t angles);
 void QuatToAxis( const Quat_t q, vec3_t axis[3]);
 void QuatSquad( float t, const Quat_t q0, const Quat_t q1, const Quat_t q2, const Quat_t q3, Quat_t qr);
+void QuatSlerp(float t, const Quat_t q0, const Quat_t q1, Quat_t qr);
 void QuatTimeSpline( float t, const int times[4], const Quat_t quats[4], Quat_t qr);
 
 void VectorTimeSpline( float t, const int times[4], float *control, float *result, int dim);

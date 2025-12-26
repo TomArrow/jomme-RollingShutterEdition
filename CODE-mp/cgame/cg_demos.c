@@ -192,6 +192,19 @@ void CG_SetPredictedThirdPerson(void) {
 		cg.renderingThirdPerson = qfalse;
 	}
 }
+demoViewType_t getBlendAdjustedViewType() {
+	if (demo.viewType == viewChase) {
+		if (mov_blendCam.value == 1.0f) {
+			return viewCamera;
+		}
+		else {
+			return viewChase;
+		}
+	}
+	else {
+		return demo.viewType;
+	}
+}
 
 static int demoSetupView( void) {
 	vec3_t forward;
@@ -282,6 +295,32 @@ static int demoSetupView( void) {
 		break;
 	default:
 		return inwater;
+	}
+
+	if (mov_blendCam.value > 0.0f) {
+		float tmp;
+		// blend in the camera.
+
+		//memset(&cg.refdef, 0, sizeof(refdef_t));
+		if (mov_blendCamQuat.integer) {
+			Quat_t from, to, res;
+			QuatFromAngles(demo.viewAngles, from);
+			QuatFromAnglesClosest(demo.camera.angles, from, to);
+			QuatSlerp(mov_blendCam.value, from, to, res);
+			QuatToAngles(res,demo.viewAngles);
+		}
+		else {
+			LerpAngles(demo.viewAngles, demo.camera.angles, demo.viewAngles, mov_blendCam.value);
+		}
+		LerpOrigin(demo.viewOrigin, demo.camera.origin, demo.viewOrigin, mov_blendCam.value);
+		//demo.viewFov = demo.camera.fov + cg_fov.value;
+		tmp = demo.camera.fov + cg_fov.value;
+		demo.viewFov = demo.viewFov + (tmp - demo.viewFov) * mov_blendCam.value;
+		demo.viewTarget = demo.camera.target; // hmm
+		cg.renderingThirdPerson = qtrue;
+		cameraMove();
+		gCGHasFallVector = qfalse;
+		zoomFix = qfalse;
 	}
 
 	demo.viewAngles[YAW]	+= mov_deltaYaw.value;

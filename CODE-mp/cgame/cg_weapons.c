@@ -918,7 +918,7 @@ void CG_DrawIconBackground(void)
 	}
 
 	x2 = 30;
-	y2 = SCREEN_HEIGHT-70;
+	y2 = SCREEN_HEIGHT-70 + mov_blendCam.value * SCREEN_HEIGHT;
 
 	prongLeftX =x2+37; 
 	prongRightX =640-(36+x2)*cgs.widthRatioCoef;
@@ -1167,7 +1167,7 @@ void CG_DrawWeaponSelect( void ) {
 	pad = 12;
 
 	x = 320;
-	y = 410;
+	y = 410 + mov_blendCam.value * SCREEN_HEIGHT;
 
 	// Background
 //	memcpy(calcColor, colorTable[CT_WHITE], sizeof(vec4_t));
