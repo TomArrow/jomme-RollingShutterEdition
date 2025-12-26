@@ -1504,6 +1504,10 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 		variousStuffMultiplier[2] *= pStage->rgbMult[2];
 	}
 
+	if (ENABLEGLSL && r_fboGLSL->integer && r_fboGLSLThermalVision->integer > 0 && r_fboGLSLThermalVision->integer < 4 && pStage->heatMultSet) {
+		VectorScale(variousStuffMultiplier, pStage->heatMult, variousStuffMultiplier);
+	}
+
 	if (isHUD && r_HUDBrightness->value != 1.0f) { // Brightness scaling for HUD elements
 		VectorScale(variousStuffMultiplier, r_HUDBrightness->value, variousStuffMultiplier);
 	}

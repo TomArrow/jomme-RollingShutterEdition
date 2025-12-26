@@ -1610,6 +1610,20 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			}
 		}
 		//
+		// heatMult (TA mod)
+		//
+		else if ( !Q_stricmp( token, "heatMult" ) )
+		{
+			token = COM_ParseExt(text, qfalse);
+			if (token[0] == 0)
+			{
+				ri.Printf(PRINT_WARNING, "WARNING: missing parameter for heatMult in shader '%s'\n", shader.name);
+				continue;
+			}
+			stage->heatMult = atof(token);
+			stage->heatMultSet = qtrue;
+		}
+		//
 		// alphaGen 
 		//
 		else if ( !Q_stricmp( token, "alphaGen" ) )

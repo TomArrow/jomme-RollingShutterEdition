@@ -4879,9 +4879,14 @@ static void CG_RGBForSaberColor(saber_colors_t color, vec3_t rgb, int cnum) {
 		if (cnum < MAX_CLIENTS && cnum >= 0) {
 			int i;
 			clientInfo_t *ci = &cgs.clientinfo[cnum];
-			VectorCopy(ci->rgb1, rgb);
-			for(i = 0; i < 3; i++)
-				rgb[i] /= 255;
+			if (ci->rgb1[0] || ci->rgb1[1] || ci->rgb1[2]) {
+				VectorCopy(ci->rgb1, rgb);
+				for (i = 0; i < 3; i++)
+					rgb[i] /= 255;
+			}
+			else {
+				VectorSet(rgb, 1.0f, 1.0f, 1.0f);
+			}
 		} else {
 			VectorSet( rgb, 0.2f, 0.4f, 1.0f );
 		}
