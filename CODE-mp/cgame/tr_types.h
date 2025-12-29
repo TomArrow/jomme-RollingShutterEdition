@@ -10,7 +10,7 @@
 #define	MAX_DLIGHTS_TO_SORT		512			// this is how many lights we start out with. then we sort by distance to keep 32.
 #define	MAX_SHADOWLINES		(64*18)			// About 18 per player
 #define	MAX_SHADOWLINES_TO_SORT		(10*MAX_SHADOWLINES)		// About 18 per player
-#define	MAX_WINDPOINTS		(64)			// About 18 per player
+#define	MAX_WINDPOINTS		(512)			// About 18 per player
 #define	MAX_WINDPOINTS_TO_SORT		(10*MAX_WINDPOINTS)		// About 18 per player
 //#define	MAX_ENTITIES	1023		// can't be increased without changing drawsurf bit packing
 

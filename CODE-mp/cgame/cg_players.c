@@ -57,9 +57,9 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*taunt.wav"
 };
 
-#define WINDPOINT_TIME_MAX 2000
+#define WINDPOINT_TIME_MAX 10000
 #define WINDPOINT_BASE_FPS 20.0f
-void CG_AddPlayerWindPoints(centity_t* cent) {
+/*void CG_AddPlayerWindPoints(centity_t* cent) {
 	timedEntityState_t* a, *prev = NULL, *next = NULL;
 	vec3_t dir;
 	int slotCheck, lowestSlot;
@@ -103,6 +103,102 @@ void CG_AddPlayerWindPoints(centity_t* cent) {
 			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.1f * (WINDPOINT_BASE_FPS / fps);
 			if (factor > 1.0f) {
 				trap_R_AddWindPointToScene(a->es.pos.trBase, dir, factor, cg_playerWindPointRadius.value);
+			}
+			prev = a;
+			slotCheck--;
+		}
+	}
+}*/
+void CG_AddPlayerWindPoints(centity_t* cent) {
+	timedWindState_t* a, *b, *prev = NULL, *next = NULL;
+	vec3_t dir;
+	int slotCheck, lowestSlot;
+	float decay = -(1.0f/ cg_playerWindPointDecayHalfTime.value);
+	float factor;
+	float fps = 20;
+	float pointDist = cg_playerWindPointRadius.value * 0.5f;
+	float distToOld;
+	if (!cg_playerWindPoints.integer) {
+		return;
+	}
+
+	// initialize if needed
+	if (cent->windHistory.nextSlot == 0) {
+		a = &cent->windHistory.states[cent->windHistory.nextSlot++];
+		memset(a,0,sizeof(*a));
+		VectorCopy(cent->lerpOrigin,a->origin);
+		VectorCopy(cent->currentState.pos.trDelta,a->velocityCum);
+		a->cumCount = 1;
+		a->factor = 1.0f;
+		a->time = cg.time;
+		a->timeFraction = cg.timeFraction;
+
+		b = &cent->windHistory.states[cent->windHistory.nextSlot++];
+		*b = *a;
+		VectorClear(b->velocityCum);
+		b->cumCount = 0;
+		b->factor = 0.0f;
+	}
+
+	// update current one and check if we need to do create a fresh one
+
+	a = &cent->windHistory.states[(cent->windHistory.nextSlot-1) % MAX_PLAYER_WIND_HISTORY];
+	b = &cent->windHistory.states[(cent->windHistory.nextSlot-2) % MAX_PLAYER_WIND_HISTORY];
+
+	VectorCopy(cent->lerpOrigin, a->origin);
+
+	distToOld = VectorDistance(a->origin, b->origin);
+	if (distToOld >= pointDist) {
+		b = a;
+		a = &cent->windHistory.states[(cent->windHistory.nextSlot++) % MAX_PLAYER_WIND_HISTORY];
+
+		memset(a, 0, sizeof(*a));
+		b->factor = 1.0f;
+		distToOld = 0.0f;
+	}
+
+	VectorCopy(cent->lerpOrigin, a->origin);
+	a->time = cg.time;
+	a->timeFraction = cg.timeFraction;
+	VectorAdd(a->velocityCum,cent->currentState.pos.trDelta, a->velocityCum);
+	a->cumCount++; 
+	factor = powf(2.0f, (float)(cg.time - b->time) * decay);
+	a->factor = 1.0f-((pointDist-distToOld)/pointDist)*factor;
+	a->factor = max(min(a->factor,1.0f),0.0f);
+
+	if (cent->windHistory.nextSlot > 0) {
+		slotCheck = cent->windHistory.nextSlot;
+		lowestSlot = max(0, cent->windHistory.nextSlot - MAX_PLAYER_WIND_HISTORY);
+		while (slotCheck > lowestSlot) {
+			slotCheck--;
+			a = &cent->windHistory.states[slotCheck % MAX_PLAYER_WIND_HISTORY];
+
+			// fps guessing to get stuff somewhat even. ugly af. can we improve that?
+			if (prev) {
+				fps = fabsf(1000.0f / (prev->time-a->time));
+			}
+			else if(slotCheck > 0) {
+				next = &cent->windHistory.states[(slotCheck-1) % MAX_PLAYER_WIND_HISTORY];
+				fps = fabsf(1000.0f / (a->time - next->time));
+			}
+			else {
+				fps = 20.0f;
+			}
+
+			//if (prev && prev->time == a->time) {
+			//	continue;
+			//}
+			if (a->time > cg.time) {
+				continue;
+			}
+			if (cg.time - a->time > WINDPOINT_TIME_MAX) {
+				break;
+			}
+			factor = powf(2.0f,(float)(cg.time-a->time)*decay);
+			VectorScale(a->velocityCum,(1.0f/(float)a->cumCount),dir);
+			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.1f * (WINDPOINT_BASE_FPS / fps) * a->factor;
+			if (factor > 1.0f) {
+				trap_R_AddWindPointToScene(a->origin, dir, factor, cg_playerWindPointRadius.value);
 			}
 			prev = a;
 			slotCheck--;

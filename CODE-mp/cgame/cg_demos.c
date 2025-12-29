@@ -764,6 +764,7 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 					cg_entities[i].storageTime = 0;
 				}
 			}
+			memset(&cg_entities[i].windHistory,0,sizeof(cg_entities[i].windHistory));
 		}
 		CG_LoadDeferredPlayers();
 	} else if (cg.frametime > 100) {

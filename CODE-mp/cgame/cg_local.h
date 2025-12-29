@@ -302,6 +302,21 @@ typedef struct psHistory_s {
 } psHistory_t;
 
 
+#define MAX_PLAYER_WIND_HISTORY 32
+typedef struct timedWindState_s {
+	int time;
+	float timeFraction; // meh?
+	vec3_t velocityCum; // cumulative
+	int cumCount; // cumulative count for averaging
+	vec3_t origin;
+	float factor; // scaled for newest and 1.0 for older
+} timedWindState_t;
+typedef struct playerWindHistory_s {
+	int		nextSlot;
+	timedWindState_t	states[MAX_PLAYER_WIND_HISTORY];
+} playerWindHistory_t;
+
+
 typedef enum shadowLineBoltType_s {
 	SLB_RTIBIA,
 	SLB_LTIBIA,
@@ -481,6 +496,8 @@ typedef struct centity_s {
 	vec3_t				saberAxisNonDead[3];
 	int					nextAllowedSaberTraceEffect;
 	int					storageTime;
+
+	playerWindHistory_t	windHistory;
 } centity_t;
 
 
