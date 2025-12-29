@@ -969,6 +969,7 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 			}
 		}
 	}
+
 	trap_R_RenderScene( &cg.refdef );
 	trap_R_ApplyPostProcessing( captureFrame );
 

@@ -57,6 +57,58 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*taunt.wav"
 };
 
+#define WINDPOINT_TIME_MAX 2000
+#define WINDPOINT_BASE_FPS 20.0f
+void CG_AddPlayerWindPoints(centity_t* cent) {
+	timedEntityState_t* a, *prev = NULL, *next = NULL;
+	vec3_t dir;
+	int slotCheck, lowestSlot;
+	float decay = -(1.0f/ cg_playerWindPointDecayHalfTime.value);
+	float factor;
+	float fps = 20;
+	if (!cg_playerWindPoints.integer) {
+		return;
+	}
+
+	if (cent->stateHistory.nextSlot > 0) {
+		slotCheck = cent->stateHistory.nextSlot;
+		lowestSlot = max(0, cent->stateHistory.nextSlot - MAX_STATE_HISTORY);
+		while (slotCheck > lowestSlot) {
+			slotCheck--;
+			a = &cent->stateHistory.states[slotCheck % MAX_STATE_HISTORY];
+
+			// fps guessing to get stuff somewhat even. ugly af. can we improve that?
+			if (prev) {
+				fps = fabsf(1000.0f / (prev->serverTime-a->serverTime));
+			}
+			else if(slotCheck > 0) {
+				next = &cent->stateHistory.states[(slotCheck-1) % MAX_STATE_HISTORY];
+				fps = fabsf(1000.0f / (a->serverTime - next->serverTime));
+			}
+			else {
+				fps = 20.0f;
+			}
+
+			//if (prev && prev->time == a->time) {
+			//	continue;
+			//}
+			if (a->serverTime > cg.time) {
+				continue;
+			}
+			if (cg.time - a->serverTime > WINDPOINT_TIME_MAX) {
+				break;
+			}
+			factor = powf(2.0f,(float)(cg.time-a->serverTime)*decay);
+			VectorCopy(a->es.pos.trDelta,dir);
+			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.1f * (WINDPOINT_BASE_FPS / fps);
+			if (factor > 1.0f) {
+				trap_R_AddWindPointToScene(a->es.pos.trBase, dir, factor, cg_playerWindPointRadius.value);
+			}
+			prev = a;
+			slotCheck--;
+		}
+	}
+}
 
 /*
 ================
@@ -7417,6 +7469,7 @@ void CG_G2Animated( centity_t *cent )
 		return;
 	}
 
+	CG_AddPlayerWindPoints(cent);
 
 	g2HasWeapon = trap_G2API_HasGhoul2ModelOnIndex(&(cent->ghoul2), 1);
 
@@ -8674,6 +8727,8 @@ void CG_Player( centity_t *cent ) {
 		}
 		return;
 	}
+
+	CG_AddPlayerWindPoints(cent);
 
 	g2HasWeapon = trap_G2API_HasGhoul2ModelOnIndex(&(cent->ghoul2), 1);
 

@@ -18,6 +18,9 @@ static	int			r_firstSceneDlight;
 static	int			r_numshadowlines;
 static	int			r_firstSceneShadowLine;
 
+static	int			r_numwindpoints;
+static	int			r_firstSceneWindPoint;
+
 static	int			r_numsceneviews;
 static	int			r_firstSceneSceneView;
 
@@ -66,6 +69,9 @@ void R_ToggleSmpFrame( void ) {
 
 	r_numcheaplights = 0;
 	r_firstSceneCheapLight = 0;
+
+	r_numwindpoints = 0;
+	r_firstSceneWindPoint = 0;
 
 	r_numentities = 0;
 	r_firstSceneEntity = 0;
@@ -462,6 +468,37 @@ void RE_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width, flo
 
 /*
 =====================
+RE_AddWindPointToScene
+
+=====================
+*/
+void RE_AddWindPointToScene( const vec3_t origin, const vec3_t direction, float intensity, float radius) {
+	windpoint_t	*wp;
+	vec3_t dir;
+
+	if ( !tr.registered ) {
+		return;
+	}
+	if ( r_numwindpoints >= MAX_WINDPOINTS_TO_SORT) {
+		return;
+	}
+
+	wp = &backEndData[tr.smpFrame]->windpoints[r_numwindpoints++];
+
+	VectorCopy (origin, wp->origin);
+	VectorCopy (direction, dir);
+	VectorNormalize(dir);
+	wp->direction[0] = dir[0] * wp->intensity;
+	wp->direction[1] = dir[1] * wp->intensity;
+	wp->centerDirScale = wp->intensity * (1.0f - sqrtf(dir[0] * dir[0] + dir[1] * dir[1])); // whatever part of the force isnt horizontal will just radiate outwards from origin
+
+	wp->intensity = intensity;
+	wp->radius = radius;
+
+}
+
+/*
+=====================
 RE_AddViewToScene
 
 =====================
@@ -509,6 +546,24 @@ void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, flo
 static int cmpDlightViewOrgDistance(const void* a, const void* b) {
 	dlight_t* aa = (dlight_t*)a;
 	dlight_t* bb = (dlight_t*)b;
+	float dist1, dist2;
+
+	if (!aa->pvsVisible) {
+		return 1;
+	}
+	if (!bb->pvsVisible) {
+		return -1;
+	}
+	
+
+	dist1 = DistanceSquared(aa->origin,tr.refdef.vieworg);
+	dist2 = DistanceSquared(bb->origin,tr.refdef.vieworg);
+
+	return dist1 - dist2;
+}
+static int cmpWindPointViewOrgDistance(const void* a, const void* b) {
+	windpoint_t* aa = (windpoint_t*)a;
+	windpoint_t* bb = (windpoint_t*)b;
 	float dist1, dist2;
 
 	if (!aa->pvsVisible) {
@@ -689,6 +744,22 @@ void RE_RenderScene( const refdef_t *fd ) {
 	if (tr.refdef.num_dlights > MAX_DLIGHTS) {
 		// sort by distance.
 		tr.refdef.num_dlights = MAX_DLIGHTS;
+	} 
+
+	tr.refdef.num_windpoints = r_numwindpoints - r_firstSceneWindPoint;
+	tr.refdef.windpoints = &backEndData[tr.smpFrame]->windpoints[r_firstSceneWindPoint];
+
+	numVisible = 0;
+	for (int i = 0; i < tr.refdef.num_windpoints; i++) {
+		if (tr.refdef.windpoints[i].pvsVisible = R_inPVSAndVisible(tr.refdef.vieworg, tr.refdef.windpoints[i].origin)) {
+			numVisible++;
+		}
+	}
+	qsort(tr.refdef.windpoints, tr.refdef.num_windpoints, sizeof(windpoint_t), cmpWindPointViewOrgDistance);
+	tr.refdef.num_windpoints = numVisible;
+	if (tr.refdef.num_windpoints > MAX_WINDPOINTS) {
+		// sort by distance.
+		tr.refdef.num_windpoints = MAX_WINDPOINTS;
 	}
 
 	tr.refdef.num_shadowlines = r_numshadowlines - r_firstSceneShadowLine;

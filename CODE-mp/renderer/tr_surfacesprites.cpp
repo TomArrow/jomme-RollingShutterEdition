@@ -272,7 +272,7 @@ static void R_SurfaceSpriteFrameUpdate(void)
 	curWindPointForce = r_windPointForce->value - (ratio * (r_windPointForce->value - curWindPointForce));
 	if (curWindPointForce < 0.01)
 	{
-		curWindPointActive = qfalse;
+		curWindPointActive = (qboolean)!!(backEnd.refdef.num_windpoints > 0); // TA: aside from main one, we can use API call ones 
 	}
 	else
 	{
@@ -564,6 +564,10 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 	// Wind only needs initialization once per tess.
 	if (usewindpoint && !tess.SSInitializedWind)
 	{
+		int i;
+		windpoint_t* wp;
+		vec2_t extraWindDir;
+		float step2,step3;
 		for (curvert=0; curvert<input->numVertexes;curvert++)
 		{	// Calc wind at each point
 			dist[0]=input->xyz[curvert][0] - curWindPoint[0];
@@ -592,6 +596,49 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 					step = 1.0 - (1.0 / (step * WINDPOINT_RADIUS));	// 1- (dist/maxradius) = a scale from 0 to 1 linearly dropping off
 					SSVertWindForce[curvert] = curWindPointForce * stage->ss.wind * step;	// *step means divide by the distance.
 				}
+			}
+
+			extraWindDir[0] = extraWindDir[1] = 0.0f;
+			// do API windpoints now.
+			for (i = 0, wp=backEnd.refdef.windpoints; i < backEnd.refdef.num_windpoints; i++,wp++) {
+				// Calc wind at each point
+				dist[0] = input->xyz[curvert][0] - wp->origin[0];
+				dist[1] = input->xyz[curvert][1] - wp->origin[1];
+				dist[2] = input->xyz[curvert][2] - wp->origin[2];
+				step = (dist[0] * dist[0] + dist[1] * dist[1] + dist[2] * dist[2]);	// dist squared
+
+				if (step < (float)(wp->radius * wp->radius))
+				{
+					step2 = Q_rsqrt(step);		// Equals 1 over the distance.
+					step3 = 1.0 - (1.0 / (step2 * wp->radius));
+
+					extraWindDir[0] += wp->direction[0] * step2;
+					extraWindDir[1] += wp->direction[1] * step2;
+
+					if (step > 1 && wp->centerDirScale > 0.001f) // to not divide by 0?
+					{
+						extraWindDir[0] = dist[0] * step2 * wp->centerDirScale;
+						extraWindDir[1] = dist[1] * step2 * wp->centerDirScale;
+					}
+				}
+			}
+
+			if (!SSVertWindDir[curvert][0] && !SSVertWindDir[curvert][1]) {
+				// nothing rly there yet direction wise so go with what we have now.
+				float scale = Vector2Normalize(extraWindDir);
+				SSVertWindForce[curvert] += scale * stage->ss.wind;
+				SSVertWindDir[curvert][0] = extraWindDir[0];
+				SSVertWindDir[curvert][1] = extraWindDir[1];
+			}
+			else {
+				// we have to mix with what's already there
+				float scale;
+				extraWindDir[0] = SSVertWindDir[curvert][0] * SSVertWindForce[curvert] + extraWindDir[0];
+				extraWindDir[1] = SSVertWindDir[curvert][1] * SSVertWindForce[curvert] + extraWindDir[1];
+				scale = Vector2Normalize(extraWindDir);
+				SSVertWindForce[curvert] = scale * stage->ss.wind;
+				SSVertWindDir[curvert][0] = extraWindDir[0];
+				SSVertWindDir[curvert][1] = extraWindDir[1];
 			}
 		}
 		tess.SSInitializedWind = qtrue;

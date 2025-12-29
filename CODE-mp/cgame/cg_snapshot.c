@@ -84,7 +84,7 @@ static void CG_TransitionEntity( centity_t *cent ) {
 
 void CG_AddToHistory(int serverTime, entityState_t* state, centity_t* cent) {
 	timedEntityState_t* tstate = &cent->stateHistory.states[cent->stateHistory.nextSlot % MAX_STATE_HISTORY], * prev = NULL;
-	if (state->number >= MAX_CLIENTS && state->eType != ET_MOVER) {
+	if (state->number >= MAX_CLIENTS && state->eType != ET_MOVER && state->eType != ET_GRAPPLE) {
 		return;
 	}
 	if (cent->stateHistory.nextSlot > 0) {

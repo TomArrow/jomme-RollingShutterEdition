@@ -330,6 +330,9 @@ int		trap_R_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxi
 void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap) {
 	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist), (intptr_t)cheap);
 }
+void	trap_R_AddWindPointToScene( const vec3_t org, const vec3_t direction, float force, float radius) {
+	syscall(CG_R_ADDWINDPOINT, org, direction, PASSFLOAT(force), PASSFLOAT(radius));
+}
 
 void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist) {
 	syscall( CG_R_ADDADDITIVELIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) , PASSFLOAT(mindist) );

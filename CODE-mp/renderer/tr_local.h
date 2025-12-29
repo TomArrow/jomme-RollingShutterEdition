@@ -115,6 +115,15 @@ typedef struct shadowline_s {
 	vec4_t			lightdir;
 } shadowline_t;
 
+typedef struct windpoint_s {
+	vec3_t			origin; 
+	vec2_t			direction; // scaled xy direction
+	float			centerDirScale; // scale for wind coming from center to sides
+	float			radius;
+	float			intensity;
+	qboolean		pvsVisible;
+} windpoint_t;
+
 // this is an extra view we render for le random purposes like reflections
 typedef struct sceneView_s {
 	vec3_t		origin;
@@ -661,6 +670,9 @@ typedef struct {
 
 	int			num_dlights;
 	struct dlight_s	*dlights;
+
+	int			num_windpoints;
+	struct windpoint_s	*windpoints;
 
 	int			num_shadowlines;
 	struct shadowline_s	*shadowlines;
@@ -2041,6 +2053,7 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 void RE_AddCheapLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
+void RE_AddWindPointToScene(const vec3_t origin, const vec3_t direction, float intensity, float radius);
 int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
@@ -2304,6 +2317,7 @@ typedef struct {
 	shadowline_t	shadowLines[MAX_SHADOWLINES_TO_SORT];
 	sceneView_t		sceneViews[MAX_SCENE_VIEWS]; // extra views we render for stuff like premium 360 reflections
 	dlightCheap_t	cheaplights[MAX_CHEAPLIGHTS_TO_SORT];
+	windpoint_t		windpoints[MAX_WINDPOINTS_TO_SORT];
 	dlight_t	dlights[MAX_DLIGHTS_TO_SORT];
 	//trRefEntity_t	entities[MAX_ENTITIES];
 	trRefEntity_t	entities[MAX_REFENTITIES];
