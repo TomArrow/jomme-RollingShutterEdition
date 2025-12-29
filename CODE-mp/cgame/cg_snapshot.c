@@ -336,7 +336,9 @@ void CG_SetNextSnap(snapshot_t* snap) {
 	//cg_entities[ cg.snap->ps.clientNum ].interpolate = qtrue;
 	//No longer want to do this, as the cg_entities[clnum] and cg.predictedPlayerEntity are one in the same.
 	BG_PlayerStateToEntityStateExtraPolate(&snap->ps, &pes, snap->ps.commandTime, qfalse);
-	CG_AddToHistory(snap->serverTime, &pes, &cg_entities[snap->ps.clientNum]);
+	if (cg.nextNextSnap[0] == NULL) {
+		CG_AddToHistory(snap->serverTime, &pes, &cg_entities[snap->ps.clientNum]);
+	}
 	//cg_entities[snap->ps.clientNum].interpolate = qtrue;
 	 
 	// check for extrapolation errors
@@ -357,12 +359,14 @@ void CG_SetNextSnap(snapshot_t* snap) {
 			cent->interpolate = qtrue;
 		}
 
-		CG_AddToHistory(snap->serverTime, es, cent);
+		if (cg.nextNextSnap[0] == NULL) {
+			CG_AddToHistory(snap->serverTime, es, cent);
+		}
 	}
 
 	cg.nextFrameTeleport = CG_IsTeleport(cg.snap, snap);
 
-	if (cg.nextNextSnap == NULL) {
+	if (cg.nextNextSnap[0] == NULL) {
 		CG_UpdateTps(snap, cg.nextFrameTeleport);
 	}
 
@@ -376,23 +380,30 @@ CG_SetNextNextSnap
 A new snapshot has just been read in from the client system.
 ===================
 */
-void CG_SetNextNextSnap(snapshot_t* snap) {
+void CG_SetNextNextSnap(snapshot_t* snap, int index) {
 	int num;
 	entityState_t* es, pes;
 	centity_t* cent;
-	cg.nextNextSnap = snap;
-	CG_UpdateTps(snap, CG_IsTeleport(cg.nextSnap, snap));
+	qboolean needToAdd = (qboolean)(index == MAX_NEXTNEXTSNAPS - 1 || cg.nextNextSnap[index + 1] == NULL);
+	cg.nextNextSnap[index] = snap;
+	if (needToAdd) {
+		CG_UpdateTps(snap, CG_IsTeleport(index == 0 ? cg.nextSnap : cg.nextNextSnap[index - 1], snap));
+	}
 	BG_PlayerStateToEntityStateExtraPolate(&snap->ps, &pes, snap->ps.commandTime, qfalse);
 	//cg_entities[ cg.snap->ps.clientNum ].interpolate = qtrue;
 	//No longer want to do this, as the cg_entities[clnum] and cg.predictedPlayerEntity are one in the same.
-	CG_AddToHistory(snap->serverTime, &pes, &cg_entities[snap->ps.clientNum]);
+	if (needToAdd) {
+		CG_AddToHistory(snap->serverTime, &pes, &cg_entities[snap->ps.clientNum]);
+	}
 
 	for (num = 0; num < snap->numEntities; num++)
 	{
 		es = &snap->entities[num];
 		cent = &cg_entities[es->number];
 
-		CG_AddToHistory(snap->serverTime, es, cent);
+		if (needToAdd) {
+			CG_AddToHistory(snap->serverTime, es, cent);
+		}
 	}
 }
 
@@ -445,12 +456,22 @@ void CG_TransitionSnapshot( void ) {
 		cent->snapShotTime = cg.snap->serverTime;
 	}
 
-	if (!cg.nextNextSnap) {
+	if (!cg.nextNextSnap[0]) {
 		cg.nextSnap = NULL;
 	}
 	else {
-		CG_SetNextSnap(cg.nextNextSnap);
-		cg.nextNextSnap = NULL;
+		CG_SetNextSnap(cg.nextNextSnap[0]);
+		cg.nextNextSnap[0] = NULL;
+	}
+
+	for (i = 1; i < MAX_NEXTNEXTSNAPS; i++) {
+		if (!cg.nextNextSnap[i]) {
+			cg.nextNextSnap[i-1] = NULL;
+		}
+		else {
+			CG_SetNextNextSnap(cg.nextNextSnap[i],i-1);
+			cg.nextNextSnap[i] = NULL;
+		}
 	}
 
 	// check for playerstate transition events
@@ -569,7 +590,7 @@ of an interpolating one)
 */
 void CG_ProcessSnapshots( void ) {
 	snapshot_t		*snap;
-	int				n;
+	int				n,i;
 
 	// see what the latest snapshot the client system has is
 	trap_GetCurrentSnapshotNumber( &n, &cg.latestSnapshotTime );
@@ -621,18 +642,21 @@ void CG_ProcessSnapshots( void ) {
 			}
 		}
 
-		if (!cg.nextNextSnap) {
-			snap = CG_ReadNextSnapshot();
+		for (i = 0; i < MAX_NEXTNEXTSNAPS; i++) {
+			if (!cg.nextNextSnap[i]) {
+				snap = CG_ReadNextSnapshot();
 
-			// if we still don't have a nextframe, we will just have to
-			// extrapolate
-			if (snap) {
-				CG_SetNextNextSnap(snap);
+				// if we still don't have a nextframe, we will just have to
+				// extrapolate
+				if (snap) {
+					CG_SetNextNextSnap(snap,i);
 
 
-				// if time went backwards, we have a level restart
-				if (cg.nextNextSnap->serverTime < cg.nextSnap->serverTime) {
-					CG_Error("CG_ProcessSnapshots: Server time went backwards");
+					// if time went backwards, we have a level restart
+					// if (cg.nextNextSnap->serverTime < cg.nextSnap->serverTime) {
+					if (i == 0 && cg.nextNextSnap[0]->serverTime < cg.nextSnap->serverTime || i > 0 && cg.nextNextSnap[i]->serverTime < cg.nextNextSnap[i-1]->serverTime) {
+						CG_Error("CG_ProcessSnapshots: Server time went backwards");
+					} 
 				}
 			}
 		}

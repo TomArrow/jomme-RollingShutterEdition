@@ -942,7 +942,7 @@ typedef struct chatBoxItem_s
 
 
 
-
+#define MAX_NEXTNEXTSNAPS 4
 
 typedef struct {
 	int			clientFrame;		// incremented each frame
@@ -961,7 +961,7 @@ typedef struct {
 
 	snapshot_t	*snap;				// cg.snap->serverTime <= cg.time
 	snapshot_t	*nextSnap;			// cg.nextSnap->serverTime > cg.time, or NULL
-	snapshot_t* nextNextSnap; // cg.nextNextSnap->serverTime > cg.nextSnap->serverTime, or NULL
+	snapshot_t* nextNextSnap[MAX_NEXTNEXTSNAPS]; // cg.nextNextSnap->serverTime > cg.nextSnap->serverTime, or NULL
 //	snapshot_t	activeSnapshots[2];
 
 	float		frameInterpolation;	// (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)

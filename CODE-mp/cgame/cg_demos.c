@@ -420,7 +420,7 @@ static int demoSetupView( void) {
 
 extern snapshot_t *CG_ReadNextSnapshot(void);
 extern void CG_SetNextSnap(snapshot_t *snap);
-extern void CG_SetNextNextSnap(snapshot_t* snap);	
+extern void CG_SetNextNextSnap(snapshot_t* snap, int index);	
 extern void CG_TransitionSnapshot(void);
 extern void CG_AddToHistory(int serverTime, entityState_t* state, centity_t* cent);
 extern void CG_UpdateTps(snapshot_t* snap, qboolean isTeleport);
@@ -439,7 +439,9 @@ void demoProcessSnapShots(qboolean hadSkip) {
 			cgs.serverCommandSequence = cg.snap->serverCommandSequence;
 		cg.snap = 0;
 		cg.nextSnap = 0;
-		cg.nextNextSnap = 0;
+		for (i = 0; i < MAX_NEXTNEXTSNAPS; i++) {
+			cg.nextNextSnap[i] = 0;
+		}
 
 		for (i=-1;i<MAX_GENTITIES;i++) {
 			centity_t *cent = i < 0 ? &cg_entities[cg.predictedPlayerState.clientNum] : &cg_entities[i];
@@ -510,11 +512,13 @@ void demoProcessSnapShots(qboolean hadSkip) {
 				break;
 			CG_SetNextSnap( snap );
 		}
-		if (!cg.nextNextSnap) {
-			snap = CG_ReadNextSnapshot();
-			if (!snap)
-				break;
-			CG_SetNextNextSnap(snap);
+		for (i = 0; i < MAX_NEXTNEXTSNAPS; i++) {
+			if (!cg.nextNextSnap[i]) {
+				snap = CG_ReadNextSnapshot();
+				if (!snap)
+					break;
+				CG_SetNextNextSnap(snap,i);
+			}
 		}
 		if (cg.timeFraction >= cg.snap->serverTime - cg.time && cg.timeFraction < cg.nextSnap->serverTime - cg.time)
 			break;
