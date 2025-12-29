@@ -115,7 +115,7 @@ void CG_AddPlayerWindPoints(centity_t* cent) {
 	int slotCheck, lowestSlot;
 	float decay = -(1.0f/ cg_playerWindPointDecayHalfTime.value);
 	float factor;
-	float fps = 20;
+	//float fps = 20;
 	float pointDist = cg_playerWindPointRadius.value * 0.5f;
 	float distToOld;
 	if (!cg_playerWindPoints.integer) {
@@ -174,7 +174,7 @@ void CG_AddPlayerWindPoints(centity_t* cent) {
 			a = &cent->windHistory.states[slotCheck % MAX_PLAYER_WIND_HISTORY];
 
 			// fps guessing to get stuff somewhat even. ugly af. can we improve that?
-			if (prev) {
+			/*if (prev) {
 				fps = fabsf(1000.0f / (prev->time-a->time));
 			}
 			else if(slotCheck > 0) {
@@ -183,7 +183,7 @@ void CG_AddPlayerWindPoints(centity_t* cent) {
 			}
 			else {
 				fps = 20.0f;
-			}
+			}*/
 
 			//if (prev && prev->time == a->time) {
 			//	continue;
@@ -196,7 +196,7 @@ void CG_AddPlayerWindPoints(centity_t* cent) {
 			}
 			factor = powf(2.0f,(float)(cg.time-a->time)*decay);
 			VectorScale(a->velocityCum,(1.0f/(float)a->cumCount),dir);
-			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.001f * (WINDPOINT_BASE_FPS / fps) * a->factor;
+			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.001f */* (WINDPOINT_BASE_FPS / fps) **/ a->factor;
 			if (factor > 0.0001f) {
 				trap_R_AddWindPointToScene(a->origin, dir, factor, cg_playerWindPointRadius.value);
 			}

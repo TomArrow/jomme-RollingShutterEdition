@@ -968,7 +968,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_zoomFov, "cg_zoomfov", "40.0", NULL, CVAR_ARCHIVE },
 	{ &cg_playerReflection, "cg_playerReflection", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPoints, "cg_playerWindPoints", "1", NULL, CVAR_ARCHIVE },
-	{ &cg_playerWindPointMultiplier, "cg_playerWindPointMultiplier", "2.2", NULL, CVAR_ARCHIVE },
+	{ &cg_playerWindPointMultiplier, "cg_playerWindPointMultiplier", "0.7", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPointRadius, "cg_playerWindPointRadius", "120.0", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPointDecayHalfTime, "cg_playerWindPointDecayHalfTime", "200.0f", NULL, CVAR_ARCHIVE },
 	{ &cg_fov, "cg_fov", "120", NULL, CVAR_ARCHIVE },
