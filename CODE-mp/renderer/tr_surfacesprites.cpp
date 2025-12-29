@@ -612,13 +612,13 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 					step2 = Q_rsqrt(step);		// Equals 1 over the distance.
 					step3 = 1.0 - (1.0 / (step2 * wp->radius));
 
-					extraWindDir[0] += wp->direction[0] * step2;
-					extraWindDir[1] += wp->direction[1] * step2;
+					extraWindDir[0] += wp->direction[0] * step3;
+					extraWindDir[1] += wp->direction[1] * step3;
 
 					if (step > 1 && wp->centerDirScale > 0.001f) // to not divide by 0?
 					{
-						extraWindDir[0] = dist[0] * step2 * wp->centerDirScale;
-						extraWindDir[1] = dist[1] * step2 * wp->centerDirScale;
+						extraWindDir[0] = dist[0] * step2 * wp->centerDirScale * step3;
+						extraWindDir[1] = dist[1] * step2 * wp->centerDirScale * step3;
 					}
 				}
 			}
@@ -633,10 +633,10 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 			else {
 				// we have to mix with what's already there
 				float scale;
-				extraWindDir[0] = SSVertWindDir[curvert][0] * SSVertWindForce[curvert] + extraWindDir[0];
-				extraWindDir[1] = SSVertWindDir[curvert][1] * SSVertWindForce[curvert] + extraWindDir[1];
+				extraWindDir[0] = SSVertWindDir[curvert][0] * SSVertWindForce[curvert] + extraWindDir[0] * stage->ss.wind;
+				extraWindDir[1] = SSVertWindDir[curvert][1] * SSVertWindForce[curvert] + extraWindDir[1] * stage->ss.wind;
 				scale = Vector2Normalize(extraWindDir);
-				SSVertWindForce[curvert] = scale * stage->ss.wind;
+				SSVertWindForce[curvert] = scale;
 				SSVertWindDir[curvert][0] = extraWindDir[0];
 				SSVertWindDir[curvert][1] = extraWindDir[1];
 			}

@@ -196,8 +196,8 @@ void CG_AddPlayerWindPoints(centity_t* cent) {
 			}
 			factor = powf(2.0f,(float)(cg.time-a->time)*decay);
 			VectorScale(a->velocityCum,(1.0f/(float)a->cumCount),dir);
-			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.1f * (WINDPOINT_BASE_FPS / fps) * a->factor;
-			if (factor > 1.0f) {
+			factor *= VectorNormalize(dir) * cg_playerWindPointMultiplier.value * 0.001f * (WINDPOINT_BASE_FPS / fps) * a->factor;
+			if (factor > 0.0001f) {
 				trap_R_AddWindPointToScene(a->origin, dir, factor, cg_playerWindPointRadius.value);
 			}
 			prev = a;
