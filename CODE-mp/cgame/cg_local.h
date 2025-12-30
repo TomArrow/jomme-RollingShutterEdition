@@ -2185,6 +2185,7 @@ extern	vmCvar_t	mov_wallhack;
 extern	vmCvar_t	mov_camerafps;
 extern	vmCvar_t	mov_blendCam;
 extern	vmCvar_t	mov_blendCamQuat;
+extern	vmCvar_t	mov_quatViewAngles;
 
 extern	vmCvar_t	mov_dismember;
 extern	vmCvar_t	mov_dismemberTryImprove;

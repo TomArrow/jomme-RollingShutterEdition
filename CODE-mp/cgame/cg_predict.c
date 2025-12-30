@@ -6,6 +6,7 @@
 // It also handles local physics interaction, like fragments bouncing off walls
 
 #include "cg_local.h"
+#include "cg_demos_math.h"
 
 static	pmove_t		cg_pmove;
 
@@ -235,11 +236,16 @@ int		CG_PointContents( const vec3_t point, int passEntityNum ) {
 	return contents;
 }
 
-void CG_ComputeCommandSmoothPlayerstates(timedPlayerState_t** currentState, timedPlayerState_t** nextState, qboolean* isTeleport) {
+void CG_ComputeCommandSmoothPlayerstates(timedPlayerState_t** currentState, timedPlayerState_t** nextState, qboolean* isTeleport, timedPlayerState_t** lastState, timedPlayerState_t** nextNextState) {
 	psHistory_t* hist = &cg.psHistory;
 	timedPlayerState_t* tps = &hist->states[cg.currentPsHistory % MAX_STATE_HISTORY];
 	timedPlayerState_t* nexttps = &hist->states[(cg.currentPsHistory + 1) % MAX_STATE_HISTORY];
+	timedPlayerState_t* nextnexttps = NULL;
+	timedPlayerState_t* previoustps = NULL;
 	int nextTpsOffset = 1;
+	int nextnextTpsOffset = 2;
+	int previousTpsOffset = -1;
+	int lowestAvailable = 0;
 	// advance as needed
 	while (nexttps->time - cg.time <= cg.timeFraction && cg.currentPsHistory + 1 < hist->nextSlot) {
 		cg.currentPsHistory++;
@@ -257,10 +263,58 @@ void CG_ComputeCommandSmoothPlayerstates(timedPlayerState_t** currentState, time
 		nextIsTeleport |= nexttps->isTeleport;
 	}
 	*isTeleport = nextIsTeleport;
+
+	// get next one after next (for quat squad)
+	nextnextTpsOffset = nextTpsOffset + 1;
+	if (cg.currentPsHistory + nextnextTpsOffset < hist->nextSlot) {
+		nextnexttps = &hist->states[(cg.currentPsHistory + nextnextTpsOffset) % MAX_STATE_HISTORY];
+		qboolean nextNextIsTeleport = nextnexttps->isTeleport;
+		while (nexttps->time >= nextnexttps->time && cg.currentPsHistory + nextnextTpsOffset < hist->nextSlot) {
+			nextnextTpsOffset++;
+			nextnexttps = &hist->states[(cg.currentPsHistory + nextnextTpsOffset) % MAX_STATE_HISTORY];
+			nextNextIsTeleport |= nextnexttps->isTeleport;
+		}
+
+		if (cg.currentPsHistory + nextnextTpsOffset < hist->nextSlot && !nextNextIsTeleport) {
+			*nextNextState = nextnexttps;
+		}
+		else {
+			*nextNextState = NULL;
+		}
+	}
+	else {
+		*nextNextState = NULL;
+	}
+
+	// get previous before current (for quat squad)
+	previousTpsOffset = -1;
+	lowestAvailable = max(0, (hist->nextSlot - MAX_STATE_HISTORY));
+	if (cg.currentPsHistory + previousTpsOffset >= lowestAvailable) {
+		previoustps = &hist->states[(cg.currentPsHistory + previousTpsOffset) % MAX_STATE_HISTORY];
+		qboolean previousIsTeleport = previoustps->isTeleport;
+		while (previoustps->time >= tps->time && cg.currentPsHistory + previousTpsOffset >= lowestAvailable) {
+			previousTpsOffset--;
+			previoustps = &hist->states[(cg.currentPsHistory + previousTpsOffset) % MAX_STATE_HISTORY];
+			previousIsTeleport |= previoustps->isTeleport;
+		}
+
+		if (cg.currentPsHistory + previousTpsOffset >= lowestAvailable && !previousIsTeleport) {
+			*lastState = previoustps;
+		}
+		else {
+			*lastState = NULL;
+		}
+	}
+	else {
+		*lastState = NULL;
+	}
+
 	if (cg.currentPsHistory + nextTpsOffset == hist->nextSlot) {
 		// couldn't find a valid nexttps
 #ifdef _DEBUG
-		Com_Printf("couldn't find valid nexttps\n");
+		if (!cg_debugSuppressAnnoyingDebugs.integer) {
+			Com_Printf("couldn't find valid nexttps\n");
+		}
 #endif
 		* nextState = NULL;
 		return;
@@ -282,7 +336,7 @@ void CG_InterpolatePlayerState( qboolean grabAngles ) {
 	int				i;
 	playerState_t	*out;
 	snapshot_t		*prev, *next;
-	playerState_t* curps = NULL, * nextps = NULL;
+	playerState_t* curps = NULL, * nextps = NULL, *prevps = NULL, *nextnextps=NULL;
 	qboolean		nextPsTeleport = qfalse;
 	int currentTime = 0, nextTime = 0, currentServerTime = 0, nextServerTime = 0;
 
@@ -291,8 +345,8 @@ void CG_InterpolatePlayerState( qboolean grabAngles ) {
 	next = cg.nextSnap;
 
 	if (cg_commandSmooth.integer) {
-		timedPlayerState_t* tps, * nexttps;
-		CG_ComputeCommandSmoothPlayerstates(&tps, &nexttps, &nextPsTeleport);
+		timedPlayerState_t* tps, * nexttps, *prevtps, *nextnexttps;
+		CG_ComputeCommandSmoothPlayerstates(&tps, &nexttps, &nextPsTeleport, &prevtps, &nextnexttps);
 		curps = &tps->ps;
 		currentTime = tps->time;
 		currentServerTime = tps->serverTime;
@@ -300,6 +354,12 @@ void CG_InterpolatePlayerState( qboolean grabAngles ) {
 			nextps = &nexttps->ps;
 			nextTime = nexttps->time;
 			nextServerTime = nexttps->serverTime;
+		}
+		if (prevtps) {
+			prevps = &prevtps->ps;
+		}
+		if (nextnexttps) {
+			nextnextps = &nextnexttps->ps;
 		}
 	}
 	else {
@@ -373,11 +433,21 @@ void CG_InterpolatePlayerState( qboolean grabAngles ) {
 	}
 	out->bobCycle = curps->bobCycle + f * (i - curps->bobCycle);
 
+	if (!grabAngles && mov_quatViewAngles.integer) {
+		if (mov_quatViewAngles.integer == 2 && (prevps || nextnextps)) {
+			QuatSquadEz(f, prevps ? prevps->viewangles : curps->viewangles, curps->viewangles, nextps->viewangles, nextnextps ? nextnextps->viewangles : nextps->viewangles, out->viewangles);
+		}
+		else {
+			QuatLerpEz(f,curps->viewangles, nextps->viewangles, out->viewangles);
+		}
+	}
 	for ( i = 0 ; i < 3 ; i++ ) {
 		out->origin[i] = curps->origin[i] + f * (nextps->origin[i] - curps->origin[i]);
 		if ( !grabAngles ) {
-			out->viewangles[i] = LerpAngle( 
-				curps->viewangles[i], nextps->viewangles[i], f);
+			if(!mov_quatViewAngles.integer) {
+				out->viewangles[i] = LerpAngle(
+					curps->viewangles[i], nextps->viewangles[i], f);
+			}
 		}
 		out->velocity[i] = curps->velocity[i] +
 			f * (nextps->velocity[i] - curps->velocity[i]);

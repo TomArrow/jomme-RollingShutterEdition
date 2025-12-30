@@ -286,6 +286,25 @@ void QuatSlerp(float t, const Quat_t q0, const Quat_t q1, Quat_t qr) {
     }
 }
 
+void QuatLerpEz(float t, const vec3_t ang1, const vec3_t ang2, vec3_t out) {
+	Quat_t from, to, res;
+	QuatFromAngles(ang1, from);
+	QuatFromAnglesClosest(ang2, from, to);
+	QuatSlerp(t, from, to, res);
+	QuatToAngles(res, out);
+	AnglesNormalize180(out);
+}
+void QuatSquadEz(float t, const vec3_t ang0,const vec3_t ang1, const vec3_t ang2, const vec3_t ang3, vec3_t out) {
+	Quat_t q0, q1, q2, q3, res;
+	QuatFromAngles(ang1, q1);
+	QuatFromAnglesClosest(ang0, q1, q0);
+	QuatFromAnglesClosest(ang2, q1, q2);
+	QuatFromAnglesClosest(ang3, q2, q3);
+	QuatSquad(t, q0, q1, q2, q3, res);
+	QuatToAngles(res, out);
+	AnglesNormalize180(out);
+}
+
 void QuatSquad( float t, const Quat_t q0, const Quat_t q1, const Quat_t q2, const Quat_t q3, Quat_t qr) {  
 	Quat_t qp0, qp1, qt0, qt1;
 

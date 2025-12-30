@@ -21,6 +21,8 @@ void QuatToAxis( const Quat_t q, vec3_t axis[3]);
 void QuatSquad( float t, const Quat_t q0, const Quat_t q1, const Quat_t q2, const Quat_t q3, Quat_t qr);
 void QuatSlerp(float t, const Quat_t q0, const Quat_t q1, Quat_t qr);
 void QuatTimeSpline( float t, const int times[4], const Quat_t quats[4], Quat_t qr);
+void QuatLerpEz(float t, const vec3_t ang1, const vec3_t ang2, vec3_t out);
+void QuatSquadEz(float t, const vec3_t ang0, const vec3_t ang1, const vec3_t ang2, const vec3_t ang3, vec3_t out);
 
 void VectorTimeSpline( float t, const int times[4], float *control, float *result, int dim);
 
