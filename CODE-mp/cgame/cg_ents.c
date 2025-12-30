@@ -3,6 +3,7 @@
 // cg_ents.c -- present snapshot entities, happens every single frame
 
 #include "cg_local.h"
+#include "cg_demos_math.h"
 /*
 Ghoul2 Insert Start
 */
@@ -2297,11 +2298,16 @@ void CG_AdvanceStateHistory(centity_t* cent) {
 	cent->currentStateHistory++;
 }
 
-void CG_ComputeCommandSmoothStates(centity_t* cent, timedEntityState_t** currentState, timedEntityState_t** nextState) {
+void CG_ComputeCommandSmoothStates(centity_t* cent, timedEntityState_t** currentState, timedEntityState_t** nextState, timedEntityState_t** lastState, timedEntityState_t** nextNextState) {
 	playerHistory_t* hist = &cent->stateHistory;
 	timedEntityState_t* curEsh = &hist->states[cent->currentStateHistory % MAX_STATE_HISTORY];
 	timedEntityState_t* nextEsh = &hist->states[(cent->currentStateHistory + 1) % MAX_STATE_HISTORY];
+	timedPlayerState_t* nextnextEsh = NULL;
+	timedPlayerState_t* previousEsh = NULL;
 	int nextEshOffset = 1;
+	int nextnextEshOffset = 2;
+	int previousEshOffset = -1;
+	int lowestAvailable = 0;
 	// advance as needed
 	while (nextEsh->time - cg.time <= cg.timeFraction && cent->currentStateHistory + 1 < hist->nextSlot) {
 		CG_AdvanceStateHistory(cent);
@@ -2318,6 +2324,53 @@ void CG_ComputeCommandSmoothStates(centity_t* cent, timedEntityState_t** current
 		nextEsh = &hist->states[(cent->currentStateHistory + nextEshOffset) % MAX_STATE_HISTORY];
 		nextIsTeleport |= nextEsh->isTeleport;
 	}
+
+
+	// get next one after next (for quat squad)
+	nextnextEshOffset = nextEshOffset + 1;
+	if (cent->currentStateHistory + nextnextEshOffset < hist->nextSlot) {
+		nextnextEsh = &hist->states[(cent->currentStateHistory + nextnextEshOffset) % MAX_STATE_HISTORY];
+		qboolean nextNextIsTeleport = nextnextEsh->isTeleport;
+		while (nextEsh->time >= nextnextEsh->time && cent->currentStateHistory + nextnextEshOffset < hist->nextSlot) {
+			nextnextEshOffset++;
+			nextnextEsh = &hist->states[(cent->currentStateHistory + nextnextEshOffset) % MAX_STATE_HISTORY];
+			nextNextIsTeleport |= nextnextEsh->isTeleport;
+		}
+
+		if (cent->currentStateHistory + nextnextEshOffset < hist->nextSlot && !nextNextIsTeleport) {
+			*nextNextState = nextnextEsh;
+		}
+		else {
+			*nextNextState = NULL;
+		}
+	}
+	else {
+		*nextNextState = NULL;
+	}
+
+	// get previous before current (for quat squad)
+	previousEshOffset = -1;
+	lowestAvailable = max(0, (hist->nextSlot - MAX_STATE_HISTORY));
+	if (cent->currentStateHistory + previousEshOffset >= lowestAvailable) {
+		previousEsh = &hist->states[(cent->currentStateHistory + previousEshOffset) % MAX_STATE_HISTORY];
+		qboolean previousIsTeleport = previousEsh->isTeleport;
+		while (previousEsh->time >= curEsh->time && cent->currentStateHistory + previousEshOffset >= lowestAvailable) {
+			previousEshOffset--;
+			previousEsh = &hist->states[(cent->currentStateHistory + previousEshOffset) % MAX_STATE_HISTORY];
+			previousIsTeleport |= previousEsh->isTeleport;
+		}
+
+		if (cent->currentStateHistory + previousEshOffset >= lowestAvailable && !previousIsTeleport) {
+			*lastState = previousEsh;
+		}
+		else {
+			*lastState = NULL;
+		}
+	}
+	else {
+		*lastState = NULL;
+	}
+
 	if (cent->currentStateHistory + nextEshOffset == hist->nextSlot || nextIsTeleport) {
 		// couldn't find a valid nextEsh
 #ifdef _DEBUG
@@ -2337,11 +2390,11 @@ CG_InterpolateEntityPosition
 =============================
 */
 static void CG_InterpolateEntityPosition( centity_t *cent ) {
-	vec3_t		current, next;
+	vec3_t		current, next, prev, nextNext;
 	float		f;
-	entityState_t* currentState, * nextState;
-	timedEntityState_t* curEsh = NULL, * nextEsh = NULL;
-	int currentStateTime, nextStateTime;
+	entityState_t* currentState, * nextState, * prevState = NULL, * nextNextState = NULL;;
+	timedEntityState_t* curEsh = NULL, * nextEsh = NULL, * prevEsh = NULL, * nextnextEsh = NULL;
+	int currentStateTime, nextStateTime, prevStateTime, nextNextStateTime;
 	if (cg.snap) {
 		currentStateTime = cg.snap->serverTime;
 	}
@@ -2363,7 +2416,7 @@ static void CG_InterpolateEntityPosition( centity_t *cent ) {
 	}
 
 	if (cg_commandSmooth.integer > 1 && (cent->currentState.number < MAX_CLIENTS || cent->currentState.eType == ET_GRAPPLE && cent->currentState.pos.trType == TR_LINEAR_STOP) && cent != &cg_entities[cg.snap->ps.clientNum]) {
-		CG_ComputeCommandSmoothStates(cent, &curEsh, &nextEsh);
+		CG_ComputeCommandSmoothStates(cent, &curEsh, &nextEsh, &prevEsh, &nextnextEsh);
 		currentState = &curEsh->es;
 		currentStateTime = curEsh->time;
 		if (nextEsh == NULL) {
@@ -2374,6 +2427,14 @@ static void CG_InterpolateEntityPosition( centity_t *cent ) {
 			BG_EvaluateTrajectory(&currentState->pos, cg.time, cent->lerpOrigin);
 			BG_EvaluateTrajectory(&currentState->apos, cg.time, cent->lerpAngles);
 			return;
+		}
+		if (prevEsh) {
+			prevState = &prevEsh->es;
+			prevStateTime = prevEsh->time;
+		}
+		if (nextnextEsh) {
+			nextNextState = &nextnextEsh->es;
+			nextNextStateTime = nextnextEsh->time;
 		}
 		nextState = &nextEsh->es;
 		nextStateTime = nextEsh->time;
@@ -2413,9 +2474,26 @@ static void CG_InterpolateEntityPosition( centity_t *cent ) {
 	BG_EvaluateTrajectory(&currentState->apos, currentStateTime, current);
 	BG_EvaluateTrajectory(&nextState->apos, nextStateTime, next);
 
-	cent->lerpAngles[0] = LerpAngle( current[0], next[0], f );
-	cent->lerpAngles[1] = LerpAngle( current[1], next[1], f );
-	cent->lerpAngles[2] = LerpAngle( current[2], next[2], f );
+	if (mov_quatViewAngles.integer) {
+		if (mov_quatViewAngles.integer == 2 && (prevState || nextNextState)) {
+			if (prevState) {
+				BG_EvaluateTrajectory(&prevState->apos, prevStateTime, prev);
+			}
+			if (nextNextState) {
+				BG_EvaluateTrajectory(&nextNextState->apos, nextNextStateTime, nextNext);
+			}
+			QuatSquadEz(f, prevState ? prev : current, current, next, nextNextState ? nextNext : next, cent->lerpAngles);
+		}
+		else {
+			QuatLerpEz(f, current, next, cent->lerpAngles);
+		}
+	}
+	else {
+		cent->lerpAngles[0] = LerpAngle(current[0], next[0], f);
+		cent->lerpAngles[1] = LerpAngle(current[1], next[1], f);
+		cent->lerpAngles[2] = LerpAngle(current[2], next[2], f);
+	}
+
 
 	if (cg_commandSmooth.integer > 1 && cent->currentState.number < MAX_CLIENTS && cent != &cg_entities[cg.snap->ps.clientNum]) {
 		// adjust for the movement of the groundentity
@@ -2439,11 +2517,11 @@ CG_CalcEntityLerpPositions
 */
 void CG_CalcEntityLerpPositions( centity_t *cent ) {
 
-	entityState_t* currentState, * nextState;
+	entityState_t* currentState, * nextState, * prevState, * nextNextState;
 
 	if (cg_commandSmooth.integer > 1 && (cent->currentState.number < MAX_CLIENTS || cent->currentState.eType == ET_GRAPPLE && cent->currentState.pos.trType == TR_LINEAR_STOP) && cent != &cg_entities[cg.snap->ps.clientNum]) {
 		timedEntityState_t* curEsh, * nextEsh;
-		CG_ComputeCommandSmoothStates(cent, &curEsh, &nextEsh);
+		CG_ComputeCommandSmoothStates(cent, &curEsh, &nextEsh, &prevState, &nextNextState);
 		currentState = &curEsh->es;
 		nextState = nextEsh == NULL ? NULL : &nextEsh->es;
 	}
