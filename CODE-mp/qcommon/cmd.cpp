@@ -564,11 +564,11 @@ void	Cmd_RemoveCommand( const char *cmd_name ) {
 Cmd_CommandCompletion
 ============
 */
-void	Cmd_CommandCompletion( void(*callback)(const char *s) ) {
+void	Cmd_CommandCompletion( void(*callback)(const char *s, const char* content) ) {
 	cmd_function_t	*cmd;
 	
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next) {
-		callback( cmd->name );
+		callback( cmd->name, NULL );
 	}
 }
 

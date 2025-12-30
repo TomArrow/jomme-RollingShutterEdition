@@ -151,7 +151,7 @@ void Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize 
 Cvar_CommandCompletion
 ============
 */
-void	Cvar_CommandCompletion( void(*callback)(const char *s) ) {
+void	Cvar_CommandCompletion( void(*callback)(const char *s, const char* content) ) {
 	cvar_t		*cvar;
 	
 	for ( cvar = cvar_vars ; cvar ; cvar = cvar->next ) {
@@ -160,7 +160,12 @@ void	Cvar_CommandCompletion( void(*callback)(const char *s) ) {
 		{
 			continue;
 		}
-		callback( cvar->name );
+		if (cvar->latchedString) {
+			callback(cvar->name, va("%s (latched:%s)",cvar->string,cvar->latchedString));
+		}
+		else {
+			callback(cvar->name, cvar->string);
+		}
 	}
 }
 
@@ -480,15 +485,18 @@ Handles variable inspection and changing from the console
 */
 qboolean Cvar_Command( void ) {
 	cvar_t			*v;
+	int				c;
 
 	// check variables
 	v = Cvar_FindVar (Cmd_Argv(0));
 	if (!v) {
 		return qfalse;
 	}
+	
+	c = Cmd_Argc();
 
 	// perform a variable print or set
-	if ( Cmd_Argc() == 1 ) 
+	if ( c == 1 ) 
 	{
 /*		if (v->flags & CVAR_INTERNAL) // don't display
 		{
@@ -513,7 +521,26 @@ qboolean Cvar_Command( void ) {
 	}
 	else
 	{
-		Cvar_Set2 (v->name, value, qfalse);// set the value if forcing isn't required
+		/*
+		int		i, l, len;
+		char	combined[MAX_STRING_TOKENS];
+
+		combined[0] = 0;
+		l = 0;
+		for (i = 1; i < c; i++) {
+			len = strlen(Cmd_Argv(i) + 1);
+			if (l + len >= MAX_STRING_TOKENS - 2) {
+				break;
+			}
+			strcat(combined, Cmd_Argv(i));
+			if (i != c - 1) {
+				strcat(combined, " ");
+			}
+			l += len;
+		}
+		Cvar_Set2(v->name, combined, qfalse);// set the value if forcing isn't required
+		*/
+		Cvar_Set2 (v->name, Cmd_ArgsFrom(1), qfalse);// set the value if forcing isn't required
 	}
 	
 	return qtrue;

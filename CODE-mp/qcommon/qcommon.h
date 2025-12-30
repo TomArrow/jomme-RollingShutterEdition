@@ -415,7 +415,7 @@ void	Cmd_AddCommand( const char *cmd_name, xcommand_t function );
 
 void	Cmd_RemoveCommand( const char *cmd_name );
 
-void	Cmd_CommandCompletion( void(*callback)(const char *s) );
+void	Cmd_CommandCompletion( void(*callback)(const char *s, const char* content) );
 // callback with each valid string
 
 int		Cmd_Argc (void);
@@ -493,7 +493,7 @@ char	*Cvar_VariableString( const char *var_name );
 void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 // returns an empty string if not defined
 
-void	Cvar_CommandCompletion( void(*callback)(const char *s) );
+void	Cvar_CommandCompletion( void(*callback)(const char *s, const char* content) );
 // callback with each valid string
 
 void 	Cvar_Reset( const char *var_name );

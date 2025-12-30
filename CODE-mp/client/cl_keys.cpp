@@ -668,7 +668,7 @@ FindMatches
 
 ===============
 */
-static void FindMatches( const char *s ) {
+static void FindMatches( const char *s, const char* content ) {
 	int		i;
 
 	if ( Q_stricmpn( s, completionString, strlen( completionString ) ) ) {
@@ -699,9 +699,14 @@ PrintMatches
 
 ===============
 */
-static void PrintMatches( const char *s ) {
+static void PrintMatches( const char *s, const char* content) {
 	if ( !Q_stricmpn( s, shortestMatch, strlen( shortestMatch ) ) ) {
-		Com_Printf( "    %s\n", s );
+		if (content) {
+			Com_Printf("    %-50s			\"%s\"\n", s, content);
+		}
+		else {
+			Com_Printf("    %s\n", s);
+		}
 	}
 }
 
