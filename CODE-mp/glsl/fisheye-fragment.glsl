@@ -233,6 +233,8 @@ uniform float dLightIntensityUniform;
 uniform float dLightSpecIntensityUniform;
 uniform float dLightSpecGammaUniform;
 uniform float dLightSpecBaseReflectivityUniform; // for schlick
+uniform float dLightSpecDistanceDecayUniform; // distance between light source and reflecting pixel
+uniform float dLightSpecDistanceMinUniform; // no decay up to this distance
 uniform float dLightAddPowUniform;
 uniform float dLightAddPostPowMultUniform;
 uniform int parallaxMapLayersUniform;
@@ -1755,7 +1757,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 
 	if(isSaberUniform == 0){ // Don't cast light onto saberblades
-		
+	
+		float specDistanceDecayExpMult = -1.0f/dLightSpecDistanceDecayUniform;
+	
 		// cheap lights. no shadows.
 		for(int i=0;i<cheapLightsCountUniform;i++){
 			vec3 dlightOrigin = cheaplights[i].origin.xyz;
@@ -1790,6 +1794,8 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 				
 			// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
 			specIntensity *= specIntensitySchlickMult;
+
+			specIntensity *= exp2(specDistanceDecayExpMult*max(0,dist-dLightSpecDistanceMinUniform)); 
 
 			float totalDist = dist + viewerDistance;
 
@@ -1921,6 +1927,8 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 				
 				// do schlick's approximation of fresnel. steep angles looking onto surface: more reflective
 				specIntensity *= specIntensitySchlickMult;
+
+				specIntensity *= exp2(specDistanceDecayExpMult*max(0,dist-dLightSpecDistanceMinUniform)); 
 
 				float totalDist = dist + viewerDistance;
 

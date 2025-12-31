@@ -148,6 +148,8 @@ typedef struct uniformLocations_t {
 	GLint dLightSpecIntensityUniform;
 	GLint dLightSpecGammaUniform;
 	GLint dLightSpecBaseReflectivityUniform;
+	GLint dLightSpecDistanceDecayUniform;
+	GLint dLightSpecDistanceMinUniform;
 	GLint dLightAddPowUniform;
 	GLint dLightAddPostPowMultUniform;
 	GLint dLightsCountUniform; 
@@ -210,6 +212,8 @@ cvar_t *r_fboGLSLDLightsAddPow;
 cvar_t *r_fboGLSLDLightsAddPostPowMult;
 cvar_t *r_fboGLSLDLightsSpecIntensity;
 cvar_t *r_fboGLSLDLightsSpecBaseReflectivity;
+cvar_t *r_fboGLSLDLightsSpecDistanceDecay;
+cvar_t *r_fboGLSLDLightsSpecDistanceMinUniform;
 cvar_t *r_fboGLSLDLightsFastSkipThreshold;
 cvar_t *r_fboGLSLFastPreview;
 cvar_t *r_fboGLSLParallaxMapping;
@@ -437,6 +441,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocationsTess->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
 		qglUniform1f(uniformLocationsTess->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
+		qglUniform1f(uniformLocationsTess->dLightSpecDistanceDecayUniform, r_fboGLSLDLightsSpecDistanceDecay->value);
+		qglUniform1f(uniformLocationsTess->dLightSpecDistanceMinUniform, r_fboGLSLDLightsSpecDistanceMinUniform->value);
 		qglUniform1f(uniformLocationsTess->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
 		qglUniform1f(uniformLocationsTess->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
 		qglUniform1f(uniformLocationsTess->dLightAddPowUniform, r_fboGLSLDLightsAddPow->value);
@@ -541,6 +547,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
 		qglUniform1f(uniformLocations->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
 		qglUniform1f(uniformLocations->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
+		qglUniform1f(uniformLocations->dLightSpecDistanceDecayUniform, r_fboGLSLDLightsSpecDistanceDecay->value);
+		qglUniform1f(uniformLocations->dLightSpecDistanceMinUniform, r_fboGLSLDLightsSpecDistanceMinUniform->value);
 		qglUniform1f(uniformLocations->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
 		qglUniform1f(uniformLocations->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
 		qglUniform1f(uniformLocations->dLightAddPowUniform, r_fboGLSLDLightsAddPow->value);
@@ -1545,6 +1553,8 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->dLightSpecGammaUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecGammaUniform");
 		locs->dLightSpecIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecIntensityUniform");
 		locs->dLightSpecBaseReflectivityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecBaseReflectivityUniform");
+		locs->dLightSpecDistanceDecayUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecDistanceDecayUniform");
+		locs->dLightSpecDistanceMinUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecDistanceMinUniform");
 		locs->dLightIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightIntensityUniform");
 		locs->dLightsCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightsCountUniform");
 		locs->dLightFastSkipThresholdUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastSkipThresholdUniform");
@@ -1677,6 +1687,8 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsSpecIntensity = ri.Cvar_Get( "r_fboGLSLDLightsSpecIntensity", "5.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsSpecBaseReflectivity = ri.Cvar_Get( "r_fboGLSLDLightsSpecBaseReflectivity", "0.1", CVAR_ARCHIVE);
+	r_fboGLSLDLightsSpecDistanceDecay = ri.Cvar_Get( "r_fboGLSLDLightsSpecDistanceDecay", "300.0", CVAR_ARCHIVE);
+	r_fboGLSLDLightsSpecDistanceMinUniform = ri.Cvar_Get( "r_fboGLSLDLightsSpecDistanceMin", "200.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsIntensity = ri.Cvar_Get( "r_fboGLSLDLightsIntensity", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsSpecGamma = ri.Cvar_Get( "r_fboGLSLDLightsSpecGamma", "5.0", CVAR_ARCHIVE);
 	r_fboGLSLDLightsAddPow = ri.Cvar_Get( "r_fboGLSLDLightsAddPow", "0.7", CVAR_ARCHIVE);
