@@ -1781,7 +1781,7 @@ void CG_MissileHitWall(int weapon, int clientNum, vec3_t origin, vec3_t dir, imp
 	vec3_t lightColor = { flrand(0.9765f,1.0f), flrand(0.3333f,0.6039f), flrand(0.02353f,0.1686f) };
 	vec3_t lightColorEnd = { lightColor[0] * 0.7f,lightColor[0] * 0.5f,lightColor[0] * 0.3f };
 
-	CG_FX_AddLight(origin, Q_irand(80, 21), 80, 0, lightColor, lightColorEnd, 0, Q_irand(400, 300), FX_SIZE_LINEAR);
+	CG_FX_AddLight(origin, Q_irand(80, 21), 20, 0, lightColor, lightColorEnd, 0, Q_irand(400, 300), FX_SIZE_LINEAR);
 
 	switch( weapon )
 	{
@@ -1877,7 +1877,7 @@ void CG_MissileHitPlayer(int weapon, vec3_t origin, vec3_t dir, int entityNum, q
 	vec3_t lightColor = { flrand(0.9765f,1.0f), flrand(0.3333f,0.6039f), flrand(0.02353f,0.1686f) };
 	vec3_t lightColorEnd = { lightColor[0]*0.7f,lightColor[0] * 0.5f,lightColor[0] * 0.3f };
 
-	CG_FX_AddLight(origin, Q_irand(80, 21), 80, 0, lightColor, lightColorEnd, 0, Q_irand(400, 300), FX_SIZE_LINEAR);
+	CG_FX_AddLight(origin, Q_irand(80, 21), 20, 0, lightColor, lightColorEnd, 0, Q_irand(400, 300), FX_SIZE_LINEAR);
 
 	/*
 	// NOTENOTE Non-portable code from single player

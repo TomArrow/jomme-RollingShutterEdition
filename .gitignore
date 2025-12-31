@@ -26,6 +26,10 @@
 !/build/mme/sound/*
 !/build/mme/sound/**
 !/build/mme/sound/**/*
+!/build/mme/textures
+!/build/mme/textures/*
+!/build/mme/textures/**
+!/build/mme/textures/**/*
 
 #################
 ## Eclipse
