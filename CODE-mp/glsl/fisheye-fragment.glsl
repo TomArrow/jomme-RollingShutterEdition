@@ -252,6 +252,9 @@ uniform float noiseFuckeryHDRIntensityUniform;
 uniform float noiseFuckeryLightmapIntensityUniform; 
 uniform vec3 viewOriginUniform; 
 
+uniform float myFogUniform; 
+uniform vec3 myFogColorUniform; 
+
 varying vec4 eyeSpaceCoordsGeom;
 varying vec4 pureVertexCoordsGeom;
 
@@ -1433,7 +1436,7 @@ const mat3 HDRtoSRGB = mat3(1.660317619104158771,	-0.58757266606617910577,	-0.07
 
 const vec3 footadjust = vec3(0.0f,0.0f,-4.0f);
 
-bool main_real(inout vec4 outFragColor)
+bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 {
 	//gl_FragColor.xyz = vertexNormal;
 	//gl_FragColor.w = 1.0f;
@@ -1543,6 +1546,12 @@ bool main_real(inout vec4 outFragColor)
 		|| alphaFuncUniform == ALPHA_LESS && effectiveAlpha >= alphaFuncValueUniform
 		|| alphaFuncUniform == ALPHA_GEQUAL && effectiveAlpha < alphaFuncValueUniform
 		){
+			
+			bool isDecal = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			if(isDecal){
+				outFragColor.xyz = vec3(0.5f);// decal. WEIRD
+			}
+			isinvisible = true;
 			return true; // ok? why do light calc for shit that isnt even visible
 		}
 	}
@@ -2212,7 +2221,8 @@ bool main_real(inout vec4 outFragColor)
 
 void main(void){
 	vec4 outColor =vec4(1.0f);
-	if(main_real(outColor)){
+	bool isInvisible = false;
+	if(main_real(outColor, isInvisible)){
 		//gl_FragColor.xyz = outColor.xyz;
 		
 		if(shaderDebugUniform == 1){
@@ -2220,10 +2230,34 @@ void main(void){
 		}
 
 		if(thermalVisionUniform == 4){
-			float intensity = dot(rgbToGray*0.66f,outColor.xyz);
+			float intensity = dot(-rgbToGray*0.66f,outColor.xyz);
 			float threshvalue = intensity > 0.19f ? 0.3f : 0.0f; //  0.877f srgb
 			outColor.xyz = vec3(0.0f,intensity,threshvalue);
 		} 
+		
+		if(myFogUniform != 0.0f && !isInvisible){
+			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE_MINUS_SRC_COLOR) > 0;
+			//bool mult = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 || (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			bool isDecal = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0 && alphaFuncUniform > 0;
+			//float originalIntensity = exp(-myFogUniform*length(eyeSpaceCoordsGeom.xyz));
+			float originalIntensity = exp(-myFogUniform*0.001f*length(eyeSpaceCoordsGeom.xyz));
+			vec3 mixvals = vec3(originalIntensity);
+			vec3 mixval = myFogColorUniform;
+			if(additive || weirdAdditive){
+				mixval *= outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+			}
+			if(isDecal){
+				outColor.xyz = vec3(0.5f)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+			}
+			outColor.xyz = mix(mixval,outColor.xyz,mixvals);
+			if(isDecal){
+				outColor.xyz = vec3(0.5f)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+			}
+			//if(mult){
+				//outColor.x = 1000;
+			//}
+		}
 		
 		gl_FragColor = outColor;
 	}// else{

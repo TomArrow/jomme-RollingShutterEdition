@@ -135,6 +135,9 @@ typedef struct uniformLocations_t {
 	GLint cloudPowerUniform;
 	GLint cloudIntensityCompensateUniform;
 
+	GLint myFogUniform;
+	GLint myFogColorUniform;
+
 	GLint dLightFastUniform;
 	GLint dLightJitterUniform;
 	GLint dLightVoxelShadowsUniform;
@@ -220,6 +223,8 @@ cvar_t *r_fboGLSLCloudShadowScale;
 cvar_t *r_fboGLSLCloudShadowTimeScale;
 cvar_t *r_fboGLSLCloudShadowPower;
 cvar_t *r_fboGLSLCloudIntensityCompensate;
+cvar_t *r_fboGLSLFog;
+cvar_t *r_fboGLSLFogColor;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeTessellate;
 cvar_t *r_fboExposure;
@@ -420,6 +425,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
 		qglUniform1f(uniformLocationsTess->cloudIntensityCompensateUniform, intensityCompensateFactor);
 
+		qglUniform1f(uniformLocationsTess->myFogUniform, r_fboGLSLFog->value);
+		qglUniform3fv(uniformLocationsTess->myFogColorUniform, 1, tr.fboGLSLFogColor);
+
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
@@ -520,6 +528,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
 		qglUniform1f(uniformLocations->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
 		qglUniform1f(uniformLocations->cloudIntensityCompensateUniform, intensityCompensateFactor);
+
+		qglUniform1f(uniformLocations->myFogUniform, r_fboGLSLFog->value);
+		qglUniform3fv(uniformLocations->myFogColorUniform, 1, tr.fboGLSLFogColor);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -1523,6 +1534,9 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->cloudPowerUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudPowerUniform");
 		locs->cloudIntensityCompensateUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudIntensityCompensateUniform");
 
+		locs->myFogUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "myFogUniform");
+		locs->myFogColorUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "myFogColorUniform");
+
 		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastUniform");
 		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightJitterUniform");
 		locs->dLightVoxelShadowsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowsUniform");
@@ -1655,6 +1669,9 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLCloudShadowTimeScale = ri.Cvar_Get( "r_fboGLSLCloudShadowTimeScale", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLCloudShadowPower = ri.Cvar_Get( "r_fboGLSLCloudShadowPower", "0.7", CVAR_ARCHIVE);
 	r_fboGLSLCloudIntensityCompensate = ri.Cvar_Get( "r_fboGLSLCloudIntensityCompensate", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLFog = ri.Cvar_Get( "r_fboGLSLFog", "0.0", CVAR_ARCHIVE);
+	r_fboGLSLFogColor = ri.Cvar_Get( "r_fboGLSLFogColor", "0.5 0.5 0.5", CVAR_ARCHIVE);
+	r_fboGLSLFogColor->modified = qtrue;
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );

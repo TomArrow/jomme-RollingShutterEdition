@@ -1275,7 +1275,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 	// Call templatized mipmap.
 	switch (picWrap->bpc) {
 	case BPC_32FLOAT:
-		if (r_fboGLSLParallaxMapping->integer) {
+		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer) {
 			float* data = (float*)picWrap->ptr;
 			for (int i = 0; i < (image->height*image->width); i++, data += 4) {
 				averageBrightnessTotal += data[0];
@@ -1297,7 +1297,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			&image->uploadHeight,picWrap->bpc);
 		break;
 	case BPC_32BIT:
-		if (r_fboGLSLParallaxMapping->integer) {
+		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer) {
 			unsigned int* data = (unsigned int*)picWrap->ptr;
 			for (int i = 0; i < (image->height * image->width); i++, data += 4) {
 				averageBrightnessTotal += (double)data[0]/(double)UINT_MAX;
@@ -1319,7 +1319,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			&image->uploadHeight, picWrap->bpc);
 		break;
 	case BPC_16BIT:
-		if (r_fboGLSLParallaxMapping->integer) {
+		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer) {
 			unsigned short* data = (unsigned short*)picWrap->ptr;
 			for (int i = 0; i < (image->height * image->width); i++, data += 4) {
 				averageBrightnessTotal += (double)data[0] / (double)UINT16_MAX;
@@ -1342,7 +1342,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 		break;
 	case BPC_8BIT:
 	default:
-		if (r_fboGLSLParallaxMapping->integer) {
+		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer) {
 			byte* data = (byte*)picWrap->ptr;
 			for (int i = 0; i < (image->height * image->width); i++, data += 4) {
 				averageBrightnessTotal += (double)data[0] / (double)255;

@@ -653,6 +653,27 @@ qboolean COM_ParseVec4( const char **buffer, vec4_t *c)
 }
 
 /*
+===============
+COM_ParseVec3
+===============
+*/
+qboolean COM_ParseVec3( const char **buffer, vec3_t *c) 
+{
+	int i;
+	float f;
+
+	for (i = 0; i < 3; i++) 
+	{
+		if (COM_ParseFloat(buffer, &f)) 
+		{
+			return qtrue;
+		}
+		(*c)[i] = f;
+	}
+	return qfalse;
+}
+
+/*
 ==================
 COM_MatchToken
 ==================

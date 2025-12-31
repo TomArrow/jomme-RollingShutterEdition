@@ -665,6 +665,13 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		}
 		mme_skyColor->modified = qfalse;
 	}
+	if (r_fboGLSLFogColor && r_fboGLSLFogColor->modified) {
+		char* fogColorTextPointer = r_fboGLSLFogColor->string;
+		if (COM_ParseVec3((const char**)&fogColorTextPointer, &tr.fboGLSLFogColor)) {
+			VectorSet(tr.fboGLSLFogColor,0.1f,0.1f,0.1f);
+		}
+		r_fboGLSLFogColor->modified = qfalse;
+	}
 	if (mme_skyTint->modified) {
 		tr.mmeSkyTintIsSet = qfalse;
 		if (Q_stricmp(mme_skyTint->string, "0")) {

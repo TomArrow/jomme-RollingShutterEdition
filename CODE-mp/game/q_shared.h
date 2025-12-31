@@ -1320,6 +1320,7 @@ void	COM_ParseWarning( char *format, ... );
 qboolean COM_ParseString( const char **data, const char **s );
 qboolean COM_ParseInt( const char **data, int *i );
 qboolean COM_ParseFloat( const char **data, float *f );
+qboolean COM_ParseVec3( const char **buffer, vec3_t *c);
 qboolean COM_ParseVec4( const char **buffer, vec4_t *c);
 //int		COM_ParseInfos( char *buf, int max, char infos[][MAX_INFO_STRING] );
 

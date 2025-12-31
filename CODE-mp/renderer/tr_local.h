@@ -1338,6 +1338,8 @@ typedef struct {
 	int						mmeMusicDeformIndex;
 	int						mmeMusicDeformSampleRate;
 
+	vec3_t					fboGLSLFogColor;
+
 	int						numSkins;
 	skin_t					*skins[MAX_SKINS];
 
@@ -1469,6 +1471,8 @@ extern cvar_t	*r_fboGLSLCloudShadowScale;
 extern cvar_t	*r_fboGLSLCloudShadowTimeScale;
 extern cvar_t	*r_fboGLSLCloudShadowPower;
 extern cvar_t	*r_fboGLSLCloudIntensityCompensate;
+extern cvar_t	*r_fboGLSLFog;
+extern cvar_t	*r_fboGLSLFogColor;
 extern cvar_t	*r_fboGLSLFastPreview;
 extern cvar_t	*r_fboFishEye;
 extern cvar_t	*r_ext_compiled_vertex_array;

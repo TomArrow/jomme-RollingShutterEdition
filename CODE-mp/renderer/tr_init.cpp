@@ -1234,7 +1234,9 @@ void R_Init( void ) {
 	Com_Memset( &tess, 0, sizeof( tess ) );
 #endif
 
-
+	if (r_fboGLSLFogColor) {
+		r_fboGLSLFogColor->modified = qtrue; // cringe xd
+	}
 
 	// During init, enable debug output
 	//qglEnable(GL_DEBUG_OUTPUT); //Nope won't work. Needs opengl 4.3.

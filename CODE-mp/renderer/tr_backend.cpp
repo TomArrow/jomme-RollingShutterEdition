@@ -75,7 +75,7 @@ void GL_Bind( image_t *image ) {
 		image->frameUsed = tr.frameCount;
 		glState.currenttextures[glState.currenttmu] = texnum;
 		qglBindTexture (GL_TEXTURE_2D, texnum);
-		if (r_fboGLSLParallaxMapping->integer && glState.currenttmu == 0) {
+		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer && glState.currenttmu == 0) {
 			R_FrameBuffer_SetDynamicUniforms(&averageBrightness);
 		}
 	}
