@@ -707,6 +707,9 @@ vmCvar_t	cg_saberTrailMinSegDist;
 
 vmCvar_t	cg_saberForceOn;
 
+vmCvar_t	cg_saberClashFlare;
+vmCvar_t	cg_saberClashFlareEarly; // dont use it, broken.
+
 vmCvar_t	cg_duelHeadAngles;
 
 vmCvar_t	cg_speedTrail;
@@ -1058,6 +1061,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_saberTrailMaxFPS, "cg_saberTrailMaxFPS", "250", NULL, CVAR_ARCHIVE },
 	{ &cg_saberTrailMinSegDist, "cg_saberTrailMinSegDist", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_saberForceOn, "cg_saberForceOn", "0", NULL, CVAR_TEMP },
+	{ &cg_saberClashFlare, "cg_saberClashFlare", "1", NULL, CVAR_ARCHIVE },
+	{ &cg_saberClashFlareEarly, "cg_saberClashFlareEarly", "0", NULL, CVAR_ARCHIVE },
 
 	{ &cg_duelHeadAngles, "cg_duelHeadAngles", "0", NULL, 0 },
 

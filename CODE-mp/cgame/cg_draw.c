@@ -3148,7 +3148,7 @@ CG_SaberClashFlare
 */
 int g_saberFlashTime = 0;
 vec3_t g_saberFlashPos = {0, 0, 0};
-void CG_SaberClashFlare( void ) {
+void CG_SaberClashFlare( qboolean early ) {
 	float maxTime = 150.0f;
 	float t;
 	vec3_t dif;
@@ -3156,6 +3156,10 @@ void CG_SaberClashFlare( void ) {
 	float x,y;
 	float v, len;
 	trace_t tr;
+
+	if (!cg_saberClashFlare.integer || (!!cg_saberClashFlareEarly.integer) != (!!early) ) {
+		return;
+	}
 
 	t = (cg.time - g_saberFlashTime) + cg.timeFraction;
 	if ( t <= 0 || t >= maxTime ) {
@@ -5212,7 +5216,7 @@ void CG_Draw2D( void ) {
 	}
 
 	if (mov_fragsOnly.integer != 0) {
-		CG_SaberClashFlare();
+		CG_SaberClashFlare(qfalse);
 		if(!cg.renderingThirdPerson && mov_fragsOnly.integer == 2)
 			CG_DrawZoomMask();
 		if (cg.playerPredicted)
@@ -5241,7 +5245,7 @@ void CG_Draw2D( void ) {
 		CG_DrawZoomMask();
 		if (!(cg.playerCent->currentState.eFlags & EF_DEAD))
 			CG_DrawCrosshairNames();
-		CG_SaberClashFlare();
+		CG_SaberClashFlare(qfalse);
 		if (cg_drawStatus.integer)
 			CG_DrawFlagStatus();
 		CG_UpdateFallVector();
@@ -5275,7 +5279,7 @@ void CG_Draw2D( void ) {
 			CG_DrawSpectator();
 		CG_DrawCrosshair(NULL, 0);
 		CG_DrawCrosshairNames();
-		CG_SaberClashFlare();
+		CG_SaberClashFlare(qfalse);
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
 		qboolean isAlive = cam_specEnt.integer == -1 ? cg.snap->ps.stats[STAT_HEALTH] > 0 : !(cg_entities[cam_specEnt.integer].currentState.eFlags & EF_DEAD);
@@ -5327,7 +5331,7 @@ void CG_Draw2D( void ) {
 				else
 					CG_DrawFlagStatus();
 			}
-			CG_SaberClashFlare();
+			CG_SaberClashFlare(qfalse);
 			if (cg_drawStatus.integer)
 				CG_DrawStats();
 

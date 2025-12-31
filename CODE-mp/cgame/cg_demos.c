@@ -20,7 +20,7 @@ extern void CG_Clear2DTintsTimes(void);
 extern void CG_Draw2D( void );
 extern void CG_DrawSpeedGraph3D(/*vec4_t foreColor,
 	vec4_t backColor*/);
-extern void CG_SaberClashFlare( void );
+extern void CG_SaberClashFlare(qboolean early);
 extern float CG_DrawFPS( float y );
 extern void CG_InterpolatePlayerState( qboolean grabAngles );
 
@@ -976,13 +976,14 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 	}
 
 	trap_R_RenderScene( &cg.refdef );
+	CG_SaberClashFlare(qtrue);
 	trap_R_ApplyPostProcessing( captureFrame );
 
 	CG_FillRect(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor);
 	if (demo.viewType == viewChase && cg.playerCent && (cg.playerCent->currentState.number < MAX_CLIENTS))
 		CG_Draw2D();
 	else if (cg_draw2D.integer) {
-		CG_SaberClashFlare();
+		CG_SaberClashFlare(qfalse);
 		if (cg_drawFPS.integer)
 			CG_DrawFPS(0.0f);
 		if (mov_drawChatbox.integer)

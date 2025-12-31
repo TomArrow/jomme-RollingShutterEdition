@@ -2020,6 +2020,8 @@ extern	vmCvar_t		cg_saberTrailMaxFPS;
 extern	vmCvar_t		cg_saberTrailMinSegDist;
 
 extern	vmCvar_t		cg_saberForceOn;
+extern	vmCvar_t		cg_saberClashFlare;
+extern	vmCvar_t		cg_saberClashFlareEarly;
 
 extern	vmCvar_t		cg_duelHeadAngles;
 
