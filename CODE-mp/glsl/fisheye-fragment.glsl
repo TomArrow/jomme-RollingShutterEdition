@@ -2236,13 +2236,7 @@ void main(void){
 		if(shaderDebugUniform == 1){
 			outColor.xyz = vec3(0.05f);
 		}
-
-		if(thermalVisionUniform == 4){
-			float intensity = dot(-rgbToGray*0.66f,outColor.xyz);
-			float threshvalue = intensity > 0.19f ? 0.3f : 0.0f; //  0.877f srgb
-			outColor.xyz = vec3(0.0f,intensity,threshvalue);
-		} 
-		
+				
 		if(myFogUniform != 0.0f && !isInvisible){
 			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
 			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE_MINUS_SRC_COLOR) > 0;
@@ -2266,6 +2260,12 @@ void main(void){
 				//outColor.x = 1000;
 			//}
 		}
+		
+		if(thermalVisionUniform == 4){
+			float intensity = dot(rgbToGray*0.66f,outColor.xyz);
+			float threshvalue = intensity > 0.19f ? 0.3f : 0.0f; //  0.877f srgb
+			outColor.xyz = vec3(0.0f,intensity,threshvalue);
+		} 
 		
 		gl_FragColor = outColor;
 	}// else{
