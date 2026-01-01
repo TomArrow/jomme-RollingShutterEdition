@@ -2841,6 +2841,8 @@ static qboolean CollapseMultitexture( void ) {
 	int abits, bbits;
 	int i;
 	textureBundle_t tmpBundle;
+	colorGen_t cgenFinal = CGEN_BAD;
+	alphaGen_t agenFinal = (alphaGen_t)-1;
 
 	if ( !qglActiveTextureARB ) {
 		return qfalse;
@@ -2857,7 +2859,17 @@ static qboolean CollapseMultitexture( void ) {
 	// make sure that both stages have identical state other than blend modes
 	if ( ( abits & ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS | GLS_DEPTHMASK_TRUE ) ) !=
 		( bbits & ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS | GLS_DEPTHMASK_TRUE ) ) ) {
-		return qfalse;
+		// let's check for a special case (alpha tested lightmapped textures like foliage)
+		if ( (abits & GLS_DEPTHMASK_TRUE) && (bbits & GLS_DEPTHFUNC_EQUAL)
+			&& 
+			(abits & ~(GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS | GLS_DEPTHMASK_TRUE | GLS_ATEST_BITS)) ==
+			(bbits & ~(GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS | GLS_DEPTHMASK_TRUE | GLS_DEPTHFUNC_EQUAL))) {
+			// let's check for a special case (alpha tested lightmapped textures like foliage)
+			Com_Printf("Shader %s special collapse exception applied: Depthwrite(0) + depthfunc equal(1)",shader.name);
+		}
+		else {
+			return qfalse;
+		}
 	}
 
 	abits &= ( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
@@ -2887,7 +2899,39 @@ static qboolean CollapseMultitexture( void ) {
 	// make sure waveforms have identical parameters
 	if ( ( stages[0].rgbGen != stages[1].rgbGen ) ||
 		( stages[0].alphaGen != stages[1].alphaGen ) )  {
-		return qfalse;
+		qboolean fail = qfalse;
+
+		if (collapse[i].multitextureEnv != GL_MODULATE) {
+			fail = qtrue;
+		}
+
+		if (!fail && stages[0].alphaGen != stages[1].alphaGen) {
+			if (stages[0].alphaGen == AGEN_SKIP || stages[1].alphaGen == AGEN_SKIP) {
+				agenFinal = stages[0].alphaGen == AGEN_SKIP ? stages[1].alphaGen : (alphaGen_t)-1;
+				Com_Printf("Shader %s special collapse exception applied: agen mismatch but one is AGEN_SKIP with GL_MODULATE", shader.name);
+			}
+			else {
+				fail = qtrue;
+			}
+		}
+
+		if (!fail && stages[0].rgbGen != stages[1].rgbGen) {
+			if (stages[0].rgbGen == CGEN_IDENTITY || stages[1].rgbGen == CGEN_IDENTITY) {
+				cgenFinal = stages[0].rgbGen == CGEN_IDENTITY ? stages[1].rgbGen : CGEN_BAD;
+				Com_Printf("Shader %s special collapse exception applied: rgbgen mismatch but one is CGEN_IDENTITY with GL_MODULATE", shader.name);
+			}
+			else if (stages[0].rgbGen == CGEN_VERTEX && stages[1].rgbGen == CGEN_EXACT_VERTEX || stages[1].rgbGen == CGEN_VERTEX && stages[0].rgbGen == CGEN_EXACT_VERTEX) { // this feels a bit dirty... i want this for uh, normal vertex stage + lightmap stage converted to vertex stage. bit dirty and all. fucc. better way to do this?
+				cgenFinal = CGEN_VERTEX;
+				Com_Printf("Shader %s special collapse exception applied: rgbgen mismatch but one is CGEN_VERTEX and other is CGEN_EXACT_VERTEX with GL_MODULATE", shader.name);
+			}
+			else {
+				fail = qtrue;
+			}
+		}
+
+		if (fail) {
+			return qfalse;
+		}
 	}
 
 	// an add collapse can only have identity colors
@@ -2941,6 +2985,12 @@ static qboolean CollapseMultitexture( void ) {
 	stages[0].stateBits &= ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
 	stages[0].stateBits |= collapse[i].multitextureBlend;
 	stages[0].multitextureEnv = collapse[i].multitextureEnv;
+	if (cgenFinal) {
+		stages[0].rgbGen = cgenFinal;
+	}
+	if (agenFinal != (alphaGen_t)-1) {
+		stages[0].alphaGen = agenFinal;
+	}
 
 	//
 	// move down subsequent shaders

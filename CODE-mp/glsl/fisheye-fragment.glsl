@@ -2247,6 +2247,7 @@ void main(void){
 		if(myFogUniform != 0.0f && !isInvisible){
 			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
 			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+			bool alphaAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_SRC_ALPHA && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
 			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;
 			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;
 			bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
@@ -2256,21 +2257,39 @@ void main(void){
 			//if(additive || weirdAdditive){
 			//	mixval *= outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
 			//}
-			if(isDecal){
-				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-				originalIntensity = 1.0f-originalIntensity;
-				originalIntensity = sqrt(originalIntensity);
-				originalIntensity = 1.0f-originalIntensity;
-			}
+			//if(isDecal){
+				//outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+				
+				//originalIntensity = 1.0f-originalIntensity;
+				//originalIntensity = sqrt(originalIntensity);
+				//originalIntensity = 1.0f-originalIntensity;
+				//originalIntensity *= originalIntensity;
+				//if(mult1 != mult2){
+				//} else{
+					//mixval *= outColor.xyz;
+				//}
+				//mixval = vec3(decalSub);
+			//}
 			vec3 mixvals = vec3(originalIntensity);
-			if(additive || weirdAdditive){
+			if(isDecal){
+				float f = 1.0f-originalIntensity;
+				// this is the non-fogged underlying color we assume of the texture below the decal.
+				// the more accurate this guess is, the more accurate the fog rendition will be
+				// best we can do here is to just use some value that gives decent results.
+				vec3 s = vec3(0.1f); 
+				float t = mult1 != mult2 ? 1.0f : 2.0f;
+				outColor.xyz = (f *mixval - (f - 1.0f) *outColor.xyz* s* t)/(t* (-f*s + f*mixval + s));
+			}
+			else if(additive || weirdAdditive){
 				outColor.xyz -= (1.0f-mixvals)*outColor.xyz;
+			} else if(alphaAdditive){
+				outColor.w -= outColor.w -  (1.0f-originalIntensity)*outColor.w;
 			} else {
 				outColor.xyz = mix(mixval,outColor.xyz,mixvals);
 			}
-			if(isDecal){
-				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-			}
+			//if(isDecal){
+				//outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+			//}
 		}
 		
 		if(thermalVisionUniform == 4){
