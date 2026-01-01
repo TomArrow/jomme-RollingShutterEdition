@@ -1549,9 +1549,12 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		|| alphaFuncUniform == ALPHA_GEQUAL && effectiveAlpha < alphaFuncValueUniform
 		){
 			
-			bool isDecal = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
+			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			bool isDecal = (mult1 || mult2) && alphaFuncUniform > 0;
+			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
 			if(isDecal){
-				outFragColor.xyz = vec3(0.5f);// decal. WEIRD
+				outFragColor.xyz = vec3(decalSub);// decal. WEIRD
 			}
 			isinvisible = true;
 			return true; // ok? why do light calc for shit that isnt even visible
@@ -2241,7 +2244,10 @@ void main(void){
 			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
 			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE_MINUS_SRC_COLOR) > 0;
 			//bool mult = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 || (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
-			bool isDecal = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0 && alphaFuncUniform > 0;
+			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
+			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			bool isDecal = (mult1 || mult2) && alphaFuncUniform > 0;
+			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
 			//float originalIntensity = exp(-myFogUniform*length(eyeSpaceCoordsGeom.xyz));
 			float originalIntensity = exp(-myFogUniform*0.001f*length(eyeSpaceCoordsGeom.xyz));
 			vec3 mixvals = vec3(originalIntensity);
@@ -2250,11 +2256,11 @@ void main(void){
 				mixval *= outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
 			}
 			if(isDecal){
-				outColor.xyz = vec3(0.5f)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
 			}
 			outColor.xyz = mix(mixval,outColor.xyz,mixvals);
 			if(isDecal){
-				outColor.xyz = vec3(0.5f)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
 			}
 			//if(mult){
 				//outColor.x = 1000;
