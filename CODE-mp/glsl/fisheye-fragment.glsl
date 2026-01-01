@@ -360,8 +360,8 @@ const vec3 heatLUT[21] = {
 const vec3 veryFarColor = vec3(76,-12,-32);
 const vec3 farColor = vec3(65,-11,-47);
 void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
-	bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
-	bool mult = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 || (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+	bool additive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE;
+	bool mult = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR || (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;
     bool additiveToAlpha = thermalVisionUniform == 3 && additive;
 	bool legacy = thermalVisionUniform == 2;
 	vec3 colorIn = colorInOut.xyz;
@@ -1549,9 +1549,13 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		|| alphaFuncUniform == ALPHA_GEQUAL && effectiveAlpha < alphaFuncValueUniform
 		){
 			
-			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
-			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
-			bool isDecal = (mult1 || mult2) && alphaFuncUniform > 0;
+			//bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
+			//bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			//bool isDecal = (mult1 || mult2) && alphaFuncUniform > 0;
+			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;// (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
+			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;//(rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
+			
 			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
 			if(isDecal){
 				outFragColor.xyz = vec3(decalSub);// decal. WEIRD
@@ -2241,30 +2245,32 @@ void main(void){
 		}
 				
 		if(myFogUniform != 0.0f && !isInvisible){
-			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
-			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE_MINUS_SRC_COLOR) > 0;
-			//bool mult = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0 || (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
-			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
-			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
-			bool isDecal = (mult1 || mult2) && alphaFuncUniform > 0;
+			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;
+			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;
+			bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
 			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
-			//float originalIntensity = exp(-myFogUniform*length(eyeSpaceCoordsGeom.xyz));
 			float originalIntensity = exp(-myFogUniform*0.001f*length(eyeSpaceCoordsGeom.xyz));
-			vec3 mixvals = vec3(originalIntensity);
 			vec3 mixval = myFogColorUniform;
-			if(additive || weirdAdditive){
-				mixval *= outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-			}
-			if(isDecal){
-				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-			}
-			outColor.xyz = mix(mixval,outColor.xyz,mixvals);
-			if(isDecal){
-				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-			}
-			//if(mult){
-				//outColor.x = 1000;
+			//if(additive || weirdAdditive){
+			//	mixval *= outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
 			//}
+			if(isDecal){
+				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+				originalIntensity = 1.0f-originalIntensity;
+				originalIntensity = sqrt(originalIntensity);
+				originalIntensity = 1.0f-originalIntensity;
+			}
+			vec3 mixvals = vec3(originalIntensity);
+			if(additive || weirdAdditive){
+				outColor.xyz -= (1.0f-mixvals)*outColor.xyz;
+			} else {
+				outColor.xyz = mix(mixval,outColor.xyz,mixvals);
+			}
+			if(isDecal){
+				outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
+			}
 		}
 		
 		if(thermalVisionUniform == 4){
