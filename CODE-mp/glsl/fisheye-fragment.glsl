@@ -2254,22 +2254,6 @@ void main(void){
 			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
 			float originalIntensity = exp(-myFogUniform*0.001f*length(eyeSpaceCoordsGeom.xyz));
 			vec3 mixval = myFogColorUniform;
-			//if(additive || weirdAdditive){
-			//	mixval *= outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-			//}
-			//if(isDecal){
-				//outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-				
-				//originalIntensity = 1.0f-originalIntensity;
-				//originalIntensity = sqrt(originalIntensity);
-				//originalIntensity = 1.0f-originalIntensity;
-				//originalIntensity *= originalIntensity;
-				//if(mult1 != mult2){
-				//} else{
-					//mixval *= outColor.xyz;
-				//}
-				//mixval = vec3(decalSub);
-			//}
 			vec3 mixvals = vec3(originalIntensity);
 			if(isDecal){
 				float f = 1.0f-originalIntensity;
@@ -2287,9 +2271,6 @@ void main(void){
 			} else {
 				outColor.xyz = mix(mixval,outColor.xyz,mixvals);
 			}
-			//if(isDecal){
-				//outColor.xyz = vec3(decalSub)-outColor.xyz; // don't ask me why tf this would work at all, all of these workarounds are cringe af
-			//}
 		}
 		
 		if(thermalVisionUniform == 4){
