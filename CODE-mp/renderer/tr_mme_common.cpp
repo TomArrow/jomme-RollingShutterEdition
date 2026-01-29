@@ -143,6 +143,12 @@ void R_MME_GetDepth( byte *output ) {
 	ri.Hunk_FreeTempMemory( temp );
 }
 
+int R_MME_GetExtraPixelCount() {
+	if (mme_videoMetaRows->integer > 0) {
+		return mme_videoMetaRows->integer * glConfig.vidWidth;
+	}
+}
+
 void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *inBuf, qboolean audio, int aSize, byte *aBuf ) {
 	mmeShotFormat_t format;
 	char *extension;
@@ -166,6 +172,26 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 		AEPlayerPosition playerPos;
 		VectorCopy(tr.refdef.playerPositions[i], playerPos.origin);
 		AEPlayerPositions[i].push_back(playerPos);
+	}
+
+	if (mme_videoMetaRows->integer > 0) {
+		// write that extra data
+		int multiplier = 1;
+		qboolean bgr = qfalse;
+		switch (shot->type) {
+		case mmeShotTypeBGR:
+			bgr = qtrue;
+		case mmeShotTypeRGB:
+			multiplier = 3;
+			break;
+		case mmeShotTypeRGBA:
+			multiplier = 4;
+			break;
+		case mmeShotTypeGray:
+			multiplier = 1;
+			break;
+		}
+
 	}
 	
 	format = shot->format;

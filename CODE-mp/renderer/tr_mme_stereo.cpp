@@ -28,6 +28,7 @@ static struct {
 
 static struct {
 	int pixelCount;
+	int extraPixelCount;
 } mainData;
 
 static void R_MME_MakeBlurBlock( mmeBlurBlock_t *block, int size, mmeBlurControl_t* control ) {
@@ -54,11 +55,12 @@ static void R_MME_MakeBlurBlock( mmeBlurBlock_t *block, int size, mmeBlurControl
 }
 
 static void R_MME_CheckCvars( void ) {
-	int pixelCount, blurTotal, passTotal;
+	int pixelCount, blurTotal, passTotal, extraPixelCount;
 	mmeBlurControl_t* blurControl = &blurData.control;
 	mmeBlurControl_t* passControl = &passData.control;
 
 	pixelCount = glConfig.vidHeight * glConfig.vidWidth;
+	extraPixelCount = R_MME_GetExtraPixelCount();
 
 	if (mme_blurFrames->integer > BLURMAX) {
 		ri.Cvar_Set( "mme_blurFrames", va( "%d", BLURMAX) );
@@ -81,10 +83,11 @@ static void R_MME_CheckCvars( void ) {
 	blurTotal = mme_blurFrames->integer + mme_blurOverlap->integer ;
 	passTotal = mme_dofFrames->integer;
 
-	if ( (mme_blurType->modified || passTotal != passControl->totalFrames ||  blurTotal != blurControl->totalFrames || pixelCount != mainData.pixelCount || blurControl->overlapFrames != mme_blurOverlap->integer) && !allocFailed ) {
+	if ( (mme_blurType->modified || passTotal != passControl->totalFrames ||  blurTotal != blurControl->totalFrames || pixelCount != mainData.pixelCount || extraPixelCount != mainData.extraPixelCount || blurControl->overlapFrames != mme_blurOverlap->integer) && !allocFailed ) {
 		workUsed = 0;
 		
 		mainData.pixelCount = pixelCount;
+		mainData.extraPixelCount = extraPixelCount;
 
 		blurCreate( blurControl, mme_blurType->string, blurTotal );
 		blurControl->totalFrames = blurTotal;
@@ -92,9 +95,9 @@ static void R_MME_CheckCvars( void ) {
 		blurControl->overlapFrames = mme_blurOverlap->integer; 
 		blurControl->overlapIndex = 0;
 
-		R_MME_MakeBlurBlock( &blurData.shot, pixelCount * 3, blurControl );
+		R_MME_MakeBlurBlock( &blurData.shot, pixelCount * 3 + mainData.extraPixelCount * 3, blurControl );
 //		R_MME_MakeBlurBlock( &blurData.stencil, pixelCount * 1, blurControl );
-		R_MME_MakeBlurBlock( &blurData.depth, pixelCount * 1, blurControl );
+		R_MME_MakeBlurBlock( &blurData.depth, pixelCount * 1 + mainData.extraPixelCount * 1, blurControl );
 		
 		R_MME_JitterTable( blurData.jitter[0], blurTotal );
 
@@ -104,7 +107,7 @@ static void R_MME_CheckCvars( void ) {
 		passControl->totalIndex = 0;
 		passControl->overlapFrames = 0;
 		passControl->overlapIndex = 0;
-		R_MME_MakeBlurBlock( &passData.dof, pixelCount * 3, passControl );
+		R_MME_MakeBlurBlock( &passData.dof, pixelCount * 3 + mainData.extraPixelCount * 3, passControl );
 		R_MME_JitterTable( passData.jitter[0], passTotal );
 	}
 	mme_blurOverlap->modified = qfalse;
@@ -318,7 +321,7 @@ qboolean R_MME_TakeShotStereo( void ) {
 			// Big test for an rgba shot
 			if ( mme_saveShot->integer == 1 && shotData.main.type == mmeShotTypeRGBA ) {
 				int i;
-				byte *alphaShot = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 4);
+				byte *alphaShot = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 4 + mainData.extraPixelCount * 4);
 				byte *rgbData = (byte *)(blurShot->accum );
 				if ( mme_saveDepth->integer == 1 ) {
 					byte *depthData = (byte *)( blurDepth->accum );
@@ -353,7 +356,7 @@ qboolean R_MME_TakeShotStereo( void ) {
 		}
 	} 
 	if ( mme_saveShot->integer > 1 || (!blurControl->totalFrames && mme_saveShot->integer )) {
-		byte *shotBuf = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 5 );
+		byte *shotBuf = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 5 + mainData.extraPixelCount * 5);
 		R_MME_MultiShot( shotBuf );
 		
 		if ( doGamma ) 
@@ -386,7 +389,7 @@ qboolean R_MME_TakeShotStereo( void ) {
 			ri.Hunk_FreeTempMemory( stencilShot );
 		}
 */		if ( mme_saveDepth->integer > 1 || ( !blurControl->totalFrames && mme_saveDepth->integer) ) {
-			byte *depthShot = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 1);
+			byte *depthShot = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 1 + mainData.extraPixelCount * 1);
 			R_MME_GetDepth( depthShot );
 			R_MME_SaveShot( &shotData.depth, glConfig.vidWidth, glConfig.vidHeight, shotData.fps, depthShot, qfalse, 0, 0 );
 			ri.Hunk_FreeTempMemory( depthShot );

@@ -84,6 +84,9 @@
     <Filter Include="hypersonic-rle">
       <UniqueIdentifier>{fff16e4b-5b81-4883-a452-79527bd27784}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Renderer\videometa">
+      <UniqueIdentifier>{a2e95d12-f2bc-4919-9098-aecf9ffb8f76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client\0_SH_Leak.cpp">
@@ -821,6 +824,9 @@
     <ClCompile Include="qcommon\matcomp.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="videometa\VideoMetaHelper.cpp">
+      <Filter>Renderer\videometa</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client\client.h">
@@ -1338,6 +1344,9 @@
     </ClInclude>
     <ClInclude Include="qcommon\matcomp.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="videometa\VideoMetaHelper.h">
+      <Filter>Renderer\videometa</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

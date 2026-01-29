@@ -639,6 +639,7 @@
     <ClCompile Include="server\sv_net_chan.cpp" />
     <ClCompile Include="server\sv_snapshot.cpp" />
     <ClCompile Include="server\sv_world.cpp" />
+    <ClCompile Include="videometa\VideoMetaHelper.cpp" />
     <ClCompile Include="win32\win_gamma.cpp" />
     <ClCompile Include="win32\win_glimp.cpp" />
     <ClCompile Include="win32\win_input.cpp" />
@@ -820,6 +821,7 @@
     <ClInclude Include="strings\str_server.h" />
     <ClInclude Include="ui\keycodes.h" />
     <ClInclude Include="ui\ui_public.h" />
+    <ClInclude Include="videometa\VideoMetaHelper.h" />
     <ClInclude Include="win32\glw_win.h" />
     <ClInclude Include="win32\resource.h" />
     <ClInclude Include="win32\win_local.h" />

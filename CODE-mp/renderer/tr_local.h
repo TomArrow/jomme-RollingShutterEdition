@@ -1621,6 +1621,8 @@ extern cvar_t	*mme_rollingShutterBlur;
 extern cvar_t	*mme_rollingShutterPixels;
 extern cvar_t	*mme_rollingShutterMultiplier;
 extern cvar_t	*mme_mvShaderLoadOrder;
+extern cvar_t	*mme_videoMetaRows;
+
 extern cvar_t	*mme_voxelShadowLightQuickJitterMethod;
 extern cvar_t	*mme_quickDlightJitter;
 
