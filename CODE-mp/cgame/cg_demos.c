@@ -2,6 +2,7 @@
 
 #include "cg_demos.h"
 #include "cg_lights.h"
+#include "../ui/ui_shared.h"
 #include "../game/bg_saga.h"
 
 #ifdef RELDEBUG
@@ -527,6 +528,7 @@ void demoProcessSnapShots(qboolean hadSkip) {
 	} while (1);
 }
 
+extern displayContextDef_t cgDC;
 void CG_CalculateSpeed(centity_t* cent);
 void CG_StrafeHelper(centity_t* cent);
 void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
@@ -983,6 +985,13 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 		VectorScale(cg.refdef.playerMeta[i].lightDirect, ooneDividedBy255, cg.refdef.playerMeta[i].lightDirect);
 	}
 	cg.refdef.psClientNum = cg.snap ? cg.snap->ps.clientNum : 0;
+	if (cg.centerPrintTime) {
+		memcpy(cg.refdef.centerPrint, cg.centerPrint, sizeof(cg.centerPrint));
+	}
+	else {
+		cg.refdef.centerPrint[0] = 0;
+	}
+	cg.refdef.centerPrintFont = cgDC.Assets.qhBigFont;
 
 	trap_R_RenderScene( &cg.refdef );
 	CG_SaberClashFlare(qtrue);

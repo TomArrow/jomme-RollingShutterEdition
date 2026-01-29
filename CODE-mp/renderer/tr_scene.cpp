@@ -680,6 +680,8 @@ void RE_RenderScene( const refdef_t *fd ) {
 	//Com_Memcpy(tr.refdef.playerPositions,fd->playerPositions,sizeof(tr.refdef.playerPositions)); // Player paths
 	Com_Memcpy(tr.refdef.playerMeta,fd->playerMeta,sizeof(tr.refdef.playerMeta)); // Player paths
 	tr.refdef.psClientNum = fd->psClientNum;
+	memcpy(tr.refdef.centerPrint, fd->centerPrint, sizeof(fd->centerPrint));
+	tr.refdef.centerPrintFont = fd->centerPrintFont;
 
 	tr.refdef.time = fd->time;
 	if (!timeFractionSet)

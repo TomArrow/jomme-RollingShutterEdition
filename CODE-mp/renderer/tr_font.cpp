@@ -836,13 +836,15 @@ CFontInfo* RE_Font_GetSharpestVariant(CFontInfo* font, float* scale, float xadju
 
 enum fontDrawType_t {
 	FONTDRAW2D,
-	FONTDRAW3D
+	FONTDRAW3D,
+	FONTDRAWBUFFER,
 };
 struct fontDrawPosition_t {
 	fontDrawType_t type;
 	float x, y;
 	vec3_t position3D;
 	vec3_t axis3D[3];
+	std::vector<centerPrintLetterMeta_t>* buffer;
 };
 #ifdef RELDEBUG
 //#pragma optimize("", off)
@@ -892,6 +894,29 @@ void RE_Font_DrawGlyph3D(const fontDrawPosition_t* drawPosition,const glyphInfo_
 	RE_AddPolyToScene(hShader,4,polys,1);
 }
 
+
+qboolean drawingBgText = qfalse;	// MUST default to this
+centerPrintLetterMeta_t* RE_Font_GetBufferLetter(std::vector<centerPrintLetterMeta_t>* buffer, int charIndex) {
+	if (buffer) {
+		centerPrintLetterMeta_t* letter = NULL;
+		while (charIndex >= buffer->size()) {
+			buffer->emplace_back();
+			buffer->back().letter = '*';
+			Vector4Set(buffer->back().color, 1.0f, 1.0f, 1.0f, 1.0f);
+			Vector4Set(buffer->back().bgColor, 0.15f, 0.15f, 0.15f, 1.0f);
+		}
+		letter = &(*buffer)[charIndex];
+		if (drawingBgText) {
+			Vector4Copy(currentFontColor, letter->bgColor);
+		}
+		else {
+			Vector4Copy(currentFontColor, letter->color);
+		}
+		return letter;
+	}
+	return NULL;
+}
+
 // iCharLimit is -1 for "all of string", else MBCS char count...
 //
 qboolean gbInShadow = qfalse;	// MUST default to this
@@ -900,9 +925,11 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 	float				/*x, y,*/ offset;
 	int					colour;
 	const glyphInfo_t	*pLetter;
+	char				currentLetter = ' ';
 	qhandle_t			hShader;
 	qboolean			qbThisCharCountsAsLetter;	// logic for this bool must be kept same in this function and RE_Font_StrLenChars()
 	vec4_t				rgba;
+	int					charIndex = 0;
 
 	if (rgbaArg) {
 		Vector4Copy(rgbaArg, rgba);
@@ -967,7 +994,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 
 		offset = curfont->GetPointSize() * fScale * 0.075f;
 		
-		gbInShadow = qtrue;
+		drawingBgText = gbInShadow = qtrue;
 		fontDrawPosition_t shadowDrawPos = drawPosition;
 		switch (shadowDrawPos.type)
 		{
@@ -984,7 +1011,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 		}
 		//RE_Font_DrawString(ox + offset * fontRatioFix, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
 		RE_Font_DrawStringReal(shadowDrawPos, psText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
-		gbInShadow = qfalse;
+		drawingBgText = gbInShadow = qfalse;
 	} else if ((demo15detected || mme_forceDM15Optics->integer > 1) && iFontHandle & STYLE_DROPSHADOW) {
 		int i = 0, r = 0;
 		static char dropShadowText[1024];
@@ -1029,8 +1056,10 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 				shadowDrawPos.y += offset;
 				break;
 		}
+		drawingBgText = qtrue;
 		//RE_Font_DrawString(ox + offset * fontRatioFix, oy + offset, dropShadowText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
 		RE_Font_DrawStringReal(shadowDrawPos, dropShadowText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
+		drawingBgText = qfalse;
 	}
 
 
@@ -1041,7 +1070,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 		//v4DKGREY2[3] = R_sRGBToLinear(v4DKGREY2[3]);
 	}
 
-	if (drawPosition.type == FONTDRAW3D) {
+	if (drawPosition.type == FONTDRAW3D || drawPosition.type == FONTDRAWBUFFER) {
 		Vector4Copy(rgba, currentFontColor);
 	}
 	else {
@@ -1078,7 +1107,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 						color[2] = R_sRGBToLinear(color[2]);
 						//color[3] = R_sRGBToLinear(color[3]);
 					}
-					if (drawPosition.type == FONTDRAW3D) {
+					if (drawPosition.type == FONTDRAW3D || drawPosition.type == FONTDRAWBUFFER) {
 						Vector4Copy(color, currentFontColor);
 					}
 					else {
@@ -1099,7 +1128,7 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 						color[2] = R_sRGBToLinear(color[2]);
 						//color[3] = R_sRGBToLinear(color[3]);
 					}
-					if (drawPosition.type == FONTDRAW3D) {
+					if (drawPosition.type == FONTDRAW3D || drawPosition.type == FONTDRAWBUFFER) {
 						Vector4Copy(color, currentFontColor);
 					}
 					else {
@@ -1141,7 +1170,13 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 			//x = ox;
 			xOffset = 0;
 			//oy += curfont->GetPointSize() * fScale;
-			yOffset += curfont->GetPointSize() * fScale;
+			yOffset += curfont->GetPointSize() * fScale; 
+			if (dynPos.type == FONTDRAWBUFFER) { // Classical 2D drawing type
+				centerPrintLetterMeta_t* letter = RE_Font_GetBufferLetter(dynPos.buffer, charIndex++);
+				if (letter) {
+					letter->letter = '\n';
+				}
+			}
 //			if (Language_IsAsian())
 //			{
 //				oy += 4;	// this only comes into effect when playing in asian (for SP, though I'm going to keep it in MP probbly) "A long time ago in a galaxy" etc, all other text is line-broken in feeder functions
@@ -1152,6 +1187,13 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 		case 32:						// Space
 			qbThisCharCountsAsLetter = qtrue;
 			pLetter = curfont->GetLetter(' ');
+			currentLetter = ' '; 
+			if (dynPos.type == FONTDRAWBUFFER) { // Classical 2D drawing type
+				centerPrintLetterMeta_t* letter = RE_Font_GetBufferLetter(dynPos.buffer, charIndex++);
+				if (letter) {
+					letter->letter = currentLetter;
+				}
+			}
 			//x += pLetter->horizAdvance * fScale * fontRatioFix;
 			xOffset += pLetter->horizAdvance * fScale * fontRatioFix;
 			break;
@@ -1159,9 +1201,11 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 		default:
 			qbThisCharCountsAsLetter = qtrue;
 			pLetter = curfont->GetLetter( uiLetter, &hShader, (qboolean)(drawPosition.type == FONTDRAW3D) );			// Description of pLetter
+			currentLetter = uiLetter;
 			if(!pLetter->width)
 			{
 				pLetter = curfont->GetLetter('.');
+				currentLetter = '.';
 			}
 
 			// for some reason in JK2MP we DO need these Round() calls, but in SP they cause it to go wrong... ???
@@ -1186,7 +1230,13 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 					break;
 			}
 
-			if(dynPos.type == FONTDRAW2D){ // Classical 2D drawing type
+			if(dynPos.type == FONTDRAWBUFFER){ // Classical 2D drawing type
+				centerPrintLetterMeta_t* letter = RE_Font_GetBufferLetter(dynPos.buffer, charIndex++);
+				if (letter) {
+					letter->letter = currentLetter;
+				}
+			}
+			else if(dynPos.type == FONTDRAW2D){ // Classical 2D drawing type
 
 				RE_StretchPic(dynPos.x, // float x
 					dynPos.y,	// float y
@@ -1234,6 +1284,15 @@ void RE_Font_DrawString_3D(vec_t* origin, vec_t* axis, const char* psText, const
 	VectorCopy(origin,drawPos3D.position3D);
 	Com_Memcpy(drawPos3D.axis3D, axis, sizeof(float) * 9);
 	RE_Font_DrawStringReal(drawPos3D,psText,rgba,iFontHandle,iCharLimit,fScale);
+}
+void RE_Font_DrawString_Buffer(std::vector<centerPrintLetterMeta_t>* buffer, int iFontHandle, const char* psText, const float* rgba) {
+	if (!buffer) return;
+	fontDrawPosition_t drawPosBuffer;
+	drawPosBuffer.type = FONTDRAWBUFFER;
+	drawPosBuffer.x = 0;
+	drawPosBuffer.y = 0;
+	drawPosBuffer.buffer = buffer;
+	RE_Font_DrawStringReal(drawPosBuffer,psText,rgba,iFontHandle,-1,1.0f);
 }
 #ifdef RELDEBUG
 //#pragma optimize("", on)

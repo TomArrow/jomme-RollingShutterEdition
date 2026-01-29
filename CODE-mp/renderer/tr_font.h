@@ -5,6 +5,7 @@
 #ifndef TR_FONT_H
 #define TR_FONT_H
 
+#include "videometa/VideoMetaHelperShared.h"
 
 
 #define GLYPH_MAX_KOREAN_SHADERS 3
@@ -86,6 +87,7 @@ int RE_Font_StrLenChars(const char *psText);
 int RE_Font_HeightPixels(const int iFontHandle, const float fScale = 1.0f);
 void RE_Font_DrawString(float ox, float oy, const char *psText, const float *rgba, const int iFontHandle, int iCharLimit, const float fScale = 1.0f);
 void RE_Font_DrawString_3D(vec_t* origin, vec_t* axis, const char* psText, const float* rgba, int iFontHandle, int iCharLimit, float fScale);
+void RE_Font_DrawString_Buffer(std::vector<centerPrintLetterMeta_t>* buffer, int iFontHandle, const char* psText, const float* rgba);
 qboolean Language_IsAsian(void);
 qboolean Language_UsesSpaces(void);
 unsigned int AnyLanguage_ReadCharFromString( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation/* = NULL*/ );

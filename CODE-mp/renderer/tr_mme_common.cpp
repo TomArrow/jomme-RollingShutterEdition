@@ -1,4 +1,5 @@
 #include "tr_mme.h"
+#include "tr_font.h"
 #include <vector>
 #include "videometa/VideoMetaHelper.h"
 
@@ -203,6 +204,10 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 			multiplier = 1;
 			break;
 		}
+
+		// centerprint stuff
+		RE_Font_DrawString_Buffer(&videoMeta.centerPrint, tr.refdef.centerPrintFont, tr.refdef.centerPrint, colorWhite);
+
 
 		size_t stride = width * multiplier;
 		// just a temporary buffer for the data

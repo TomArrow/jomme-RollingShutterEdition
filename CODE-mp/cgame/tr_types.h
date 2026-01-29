@@ -290,6 +290,8 @@ typedef struct {
 	//vec3_t		playerPositions[MAX_CLIENTS]; // For AE path exports
 	playerMeta_t	playerMeta[MAX_CLIENTS]; // For AE path exports and Video Meta
 	int			psClientNum;
+	char		centerPrint[1024];
+	qhandle_t	centerPrintFont;
 } refdef_t;
 
 

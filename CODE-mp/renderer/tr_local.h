@@ -693,6 +693,8 @@ typedef struct {
 
 	playerMeta_t	playerMeta[MAX_CLIENTS]; // For AE path exports and Video Meta
 	int				psClientNum;
+	char			centerPrint[1024];
+	qhandle_t		centerPrintFont;
 } trRefdef_t;
 
 

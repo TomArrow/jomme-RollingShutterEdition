@@ -359,9 +359,9 @@ size_t VideoMetaHelper::pushRGB(const float* c3in) {
 	}
 	float c3[3];
 	srgbLinearToHDRPQ(c3in, c3);
-	_bufferPtr[0] = std::clamp((unsigned char)(c3[0] * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[1] = std::clamp((unsigned char)(c3[1] * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[2] = std::clamp((unsigned char)(c3[2] * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[0] = std::clamp((int)(c3[0] * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[1] = std::clamp((int)(c3[1] * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[2] = std::clamp((int)(c3[2] * 255.0f + 0.5f), (int)0, (int)255);
 	commitRGB();
 	return 1;
 }
@@ -373,9 +373,9 @@ size_t VideoMetaHelper::pushRGBMult(const float* c3in) {
 	srgbLinearToHDRPQ(c3in, c3);
 	float mult = std::max(std::max(c3[0], c3[1]), c3[2]);
 	float multInv = mult;
-	_bufferPtr[0] = std::clamp((unsigned char)(c3[0] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[1] = std::clamp((unsigned char)(c3[1] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[2] = std::clamp((unsigned char)(c3[2] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[0] = std::clamp((int)(c3[0] * multInv * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[1] = std::clamp((int)(c3[1] * multInv * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[2] = std::clamp((int)(c3[2] * multInv * 255.0f + 0.5f), (int)0, (int)255);
 	commitRGB();
 	encodenum16fp6(fp16_ieee_from_fp32_value(mult), _bufferPtr);
 	commitRGB();
@@ -390,9 +390,9 @@ size_t VideoMetaHelper::pushRGBMultOver1(const float* c3in) {
 	srgbLinearToHDRPQ(c3in, c3);
 	float mult = std::max(1.0f,std::max(std::max(c3[0], c3[1]), c3[2]));
 	float multInv = mult;
-	_bufferPtr[0] = std::clamp((unsigned char)(c3[0] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[1] = std::clamp((unsigned char)(c3[1] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[2] = std::clamp((unsigned char)(c3[2] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[0] = std::clamp((int)(c3[0] * multInv * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[1] = std::clamp((int)(c3[1] * multInv * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[2] = std::clamp((int)(c3[2] * multInv * 255.0f + 0.5f), (int)0, (int)255);
 	commitRGB();
 	encodenum16fp6(fp16_ieee_from_fp32_value(mult), _bufferPtr);
 	commitRGB();
@@ -405,9 +405,9 @@ size_t VideoMetaHelper::pushRGBA(const float* c4in) {
 	float c4[4];
 	srgbLinearToHDRPQ(c4in, c4);
 	c4[3] = c4in[3];
-	_bufferPtr[0] = std::clamp((unsigned char)(c4[0] * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[1] = std::clamp((unsigned char)(c4[1] * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[2] = std::clamp((unsigned char)(c4[2] * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[0] = std::clamp((int)(c4[0] * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[1] = std::clamp((int)(c4[1] * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[2] = std::clamp((int)(c4[2] * 255.0f + 0.5f), (int)0, (int)255);
 	commitRGB();
 	encodenum16fp6(fp16_ieee_from_fp32_value(c4[3]), _bufferPtr);
 	commitRGB();
@@ -425,9 +425,9 @@ size_t VideoMetaHelper::pushRGBAMult(const float* c4in) {
 		mult = 1.0f;
 	}
 	float multInv = 1.0f/mult;
-	_bufferPtr[0] = std::clamp((unsigned char)(c4[0] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[1] = std::clamp((unsigned char)(c4[1] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
-	_bufferPtr[2] = std::clamp((unsigned char)(c4[2] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[0] = std::clamp((int)(c4[0] * multInv * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[1] = std::clamp((int)(c4[1] * multInv * 255.0f + 0.5f), (int)0, (int)255);
+	_bufferPtr[2] = std::clamp((int)(c4[2] * multInv * 255.0f + 0.5f), (int)0, (int)255);
 	commitRGB();
 	encodenum16fp6(fp16_ieee_from_fp32_value(mult), _bufferPtr);
 	commitRGB();
