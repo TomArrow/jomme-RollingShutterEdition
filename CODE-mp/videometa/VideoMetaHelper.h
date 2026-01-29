@@ -1,26 +1,14 @@
 #pragma once
 
+#ifndef VIDEOMETAHELPER_H
+#define VIDEOMETAHELPER_H
+
+
 #include <vector>
 #include <bitset>
 #include "fp16/fp16/fp16.h"
+#include "VideoMetaHelperShared.h"
 
-typedef struct {
-	float		color[4];
-	char		letter;
-} consoleLetterMeta_t;
-
-typedef struct {
-	float		color[4];
-	float		bgColor[4];
-	char		letter;
-} centerPrintLetterMeta_t;
-
-typedef struct playerMeta_s {
-	float					light[3];
-	float					pos[3];
-	float					vel[3];
-	float					ang[3];
-} playerMeta_t;
 
 
 class ConsoleLine_t {
@@ -44,7 +32,8 @@ public:
 		float					fishEyeNormalBlend = 0;
 	} camera;
 
-	playerMeta_t				playerMeta[32];
+	unsigned char				psClientNum=0;
+	playerMeta_t				playerMeta[32] = { 0 };
 	std::vector<ConsoleLine_t>	consoleLines;
 	std::vector<centerPrintLetterMeta_t>	centerPrint;
 };
@@ -72,6 +61,8 @@ class VideoMetaHelper {
 	const float		_oneDividedBy255 = 1.0f / 255.0f;
 public:
 
+	static void srgbLinearToHDRPQ(const float in[3], float out[3]);
+	static void hdrPQtoSRGBLinear(const float in[3], float out[3]);
 
 	// TODO turn the check into some kind of parity that can actually fix shit?
 	static void encodenum16fp6(const unsigned short a, unsigned char b[3]);
@@ -87,6 +78,7 @@ public:
 	size_t pushShort(const unsigned short s);
 	size_t pushRGB(const float* c3);
 	size_t pushRGBMult(const float* c3);
+	size_t pushRGBMultOver1(const float* c3);
 	size_t pushRGBA(const float* c4);
 	size_t pushRGBAMult(const float* c4);
 	size_t pushFloat(const float f);
@@ -118,6 +110,13 @@ public:
 		_rgboffsets[1] = rgboffsets[1];
 		_rgboffsets[2] = rgboffsets[2];
 		_rgbsLeft = _width * _height;
+		if (_multiplier < 3)
+		{
+			// we interpret the grey/2-color stuff as rgb, fuck it. what else can we do? 2-byte might still get fkd by rgbrearrange. do 2-byte formats even exist?
+			_bytesPerRow = _width * _multiplier / 3 * 3; // make it align to triplets
+			_rgbsLeft = _width * _multiplier / 3 * _height; // bytecount divided by 3 (rounded down cuz trailing ones gonna be useless due to stride possible > _bytesPerRow), multiplied with count of lines
+			_multiplier = 3;
+		}
 		if (_rgboffsets[0] != 0 || _rgboffsets[1] != 1 || _rgboffsets[2] != 2) {
 			_needsRGBRearrange = true;
 		}
@@ -136,6 +135,13 @@ public:
 		_rgboffsets[1] = rgboffsets[1];
 		_rgboffsets[2] = rgboffsets[2];
 		_rgbsLeft = _width * _height;
+		if (_multiplier < 3)
+		{
+			// we interpret the grey/2-color stuff as rgb, fuck it. what else can we do? 2-byte might still get fkd by rgbrearrange. do 2-byte formats even exist?
+			_bytesPerRow = _width * _multiplier / 3 * 3; // make it align to triplets
+			_rgbsLeft = _width * _multiplier / 3 * _height; // bytecount divided by 3 (rounded down cuz trailing ones gonna be useless due to stride possible > _bytesPerRow), multiplied with count of lines
+			_multiplier = 3;
+		}
 		if (_rgboffsets[0] != 0 || _rgboffsets[1] != 1 || _rgboffsets[2] != 2) {
 			_needsRGBRearrange = true;
 		}
@@ -145,4 +151,9 @@ public:
 	size_t writeMeta(VideoMeta_t& meta);
 	VideoMeta_t parseMeta();
 
+	bool pullPlayerInfo(playerMeta_t& playerMeta);
+	bool pushPlayerInfo(playerMeta_t& playerMeta);
+
 };
+
+#endif

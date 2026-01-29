@@ -14,6 +14,27 @@
 //bool VideoMetaHelper::checkSpaceRGB(size_t count) {
 //}
 
+bool VideoMetaHelper::pushPlayerInfo(playerMeta_t& playerMeta) {
+	bool success = true;
+	success = success && pushRGBMultOver1(playerMeta.light);
+	success = success && pushRGBMultOver1(playerMeta.lightDirect);
+	success = success && pushFloat(playerMeta.lightDir[0]);
+	success = success && pushFloat(playerMeta.lightDir[1]);
+	success = success && pushFloat(playerMeta.lightDir[2]);
+	success = success && pushFloat(playerMeta.pos[0]);
+	success = success && pushFloat(playerMeta.pos[1]);
+	success = success && pushFloat(playerMeta.pos[2]);
+	success = success && pushFloat(playerMeta.headPos[0]);
+	success = success && pushFloat(playerMeta.headPos[1]);
+	success = success && pushFloat(playerMeta.headPos[2]);
+	success = success && pushFloat(playerMeta.ang[0]);
+	success = success && pushFloat(playerMeta.ang[1]);
+	success = success && pushFloat(playerMeta.ang[2]);
+	success = success && pushFloat(playerMeta.vel[0]);
+	success = success && pushFloat(playerMeta.vel[1]);
+	success = success && pushFloat(playerMeta.vel[2]);
+	return success;
+}
 size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 	bool success = true;
 	success = success && pushMarker(VIDT_marker);
@@ -37,19 +58,10 @@ size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 	success = success && pushFloat(meta.camera.fishEyeNormalBlend);
 
 	success = success && pushMarker(PLIN_marker);
+	success = success && pushByte(meta.psClientNum);
+	success = success && pushPlayerInfo(meta.playerMeta[meta.psClientNum]); // push the main ps one first for easier access in video editing. its gonna be doubled, yes
 	for (int i = 0; i < 32; i++) {
-		success = success && pushFloat(meta.playerMeta[i].light[0]);
-		success = success && pushFloat(meta.playerMeta[i].light[1]);
-		success = success && pushFloat(meta.playerMeta[i].light[2]);
-		success = success && pushFloat(meta.playerMeta[i].pos[0]);
-		success = success && pushFloat(meta.playerMeta[i].pos[1]);
-		success = success && pushFloat(meta.playerMeta[i].pos[2]);
-		success = success && pushFloat(meta.playerMeta[i].ang[0]);
-		success = success && pushFloat(meta.playerMeta[i].ang[1]);
-		success = success && pushFloat(meta.playerMeta[i].ang[2]);
-		success = success && pushFloat(meta.playerMeta[i].vel[0]);
-		success = success && pushFloat(meta.playerMeta[i].vel[1]);
-		success = success && pushFloat(meta.playerMeta[i].vel[2]);
+		success = success && pushPlayerInfo(meta.playerMeta[i]);
 	}
 
 	if (meta.consoleLines.size()) {
@@ -88,6 +100,29 @@ size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 	return success ? 1 : 0;
 }
 
+
+bool VideoMetaHelper::pullPlayerInfo(playerMeta_t& playerMeta) {
+	bool success = true;
+	success = success && pullRGBMult(playerMeta.light);
+	success = success && pullRGBMult(playerMeta.lightDirect);
+	success = success && pullFloat(&playerMeta.lightDir[0]);
+	success = success && pullFloat(&playerMeta.lightDir[1]);
+	success = success && pullFloat(&playerMeta.lightDir[2]);
+	success = success && pullFloat(&playerMeta.pos[0]);
+	success = success && pullFloat(&playerMeta.pos[1]);
+	success = success && pullFloat(&playerMeta.pos[2]);
+	success = success && pullFloat(&playerMeta.headPos[0]);
+	success = success && pullFloat(&playerMeta.headPos[1]);
+	success = success && pullFloat(&playerMeta.headPos[2]);
+	success = success && pullFloat(&playerMeta.ang[0]);
+	success = success && pullFloat(&playerMeta.ang[1]);
+	success = success && pullFloat(&playerMeta.ang[2]);
+	success = success && pullFloat(&playerMeta.vel[0]);
+	success = success && pullFloat(&playerMeta.vel[1]);
+	success = success && pullFloat(&playerMeta.vel[2]);
+	return success;
+}
+
 VideoMeta_t VideoMetaHelper::parseMeta(){
 	VideoMeta_t meta;
 	unsigned char readBuf[4];
@@ -120,19 +155,10 @@ VideoMeta_t VideoMetaHelper::parseMeta(){
 		else if (!memcmp(readBuf, PLIN_marker,4)) {
 
 			bool success = true;
+			success = success && pullByte(&meta.psClientNum); // one is double. cuz its the main playerstate one. just put it in a random one who cares
+			success = success && pullPlayerInfo(meta.playerMeta[meta.psClientNum >= 0 && meta.psClientNum < 32 ? meta.psClientNum : 0]); // one is double. cuz its the main playerstate one. just put it in a random one who cares
 			for (int i = 0; i < 32; i++) {
-				success = success && pullFloat(&meta.playerMeta[i].light[0]);
-				success = success && pullFloat(&meta.playerMeta[i].light[1]);
-				success = success && pullFloat(&meta.playerMeta[i].light[2]);
-				success = success && pullFloat(&meta.playerMeta[i].pos[0]);
-				success = success && pullFloat(&meta.playerMeta[i].pos[1]);
-				success = success && pullFloat(&meta.playerMeta[i].pos[2]);
-				success = success && pullFloat(&meta.playerMeta[i].ang[0]);
-				success = success && pullFloat(&meta.playerMeta[i].ang[1]);
-				success = success && pullFloat(&meta.playerMeta[i].ang[2]);
-				success = success && pullFloat(&meta.playerMeta[i].vel[0]);
-				success = success && pullFloat(&meta.playerMeta[i].vel[1]);
-				success = success && pullFloat(&meta.playerMeta[i].vel[2]);
+				success = success && pullPlayerInfo(meta.playerMeta[i]);
 			}
 			if (!success) {
 				return meta;
@@ -222,6 +248,51 @@ size_t VideoMetaHelper::forwardLine() {
 	}
 }
 
+
+
+const float m1 = 1305.0f / 8192.0f;
+const float m1inv = 8192.0f / 1305.0f;
+const float m2 = 2523.0f / 32.0f;
+const float m2inv = 32.0f / 2523.0f;
+const float c1 = 107.0f / 128.0f;
+const float c2 = 2413.0f / 128.0f;
+const float c3 = 2392.0f / 128.0f;
+
+void VideoMetaHelper::srgbLinearToHDRPQ(const float in[3], float out[3]) {
+	out[0] = in[0] * 0.627441372057979 + in[1] * 0.329297459521910 + in[2] * 0.043351458394495;
+	out[1] = in[0] * 0.069027617147078 + in[1] * 0.919580666887028 + in[2] * 0.011361422575401;
+	out[2] = in[0] * 0.016364235071681 + in[1] * 0.088017162471727 + in[2] * 0.895564972725983;
+
+	// 1.0f in the source would mean 10,000 nits. 
+	// Let's assume 400 nits for a typical gaming monitor (so the target for 1.0f from source buffer)
+	// 400/10000 = 0.04f	
+	out[0] = 0.04f * out[0];
+	out[1] = 0.04f * out[1];
+	out[2] = 0.04f * out[2];
+
+	out[0] = powf((c1 + c2 * powf(out[0], m1)) / (1.0f + c3 * powf(out[0], m1)), m2);
+	out[1] = powf((c1 + c2 * powf(out[1], m1)) / (1.0f + c3 * powf(out[1], m1)), m2);
+	out[2] = powf((c1 + c2 * powf(out[2], m1)) / (1.0f + c3 * powf(out[2], m1)), m2);
+}
+void VideoMetaHelper::hdrPQtoSRGBLinear(const float in[3], float out[3]) {
+
+	out[0] = powf((powf(in[0], m2inv) - c1) / (c2 - c3 * powf(in[0], m2inv)), m1inv);
+	out[1] = powf((powf(in[1], m2inv) - c1) / (c2 - c3 * powf(in[1], m2inv)), m1inv);
+	out[2] = powf((powf(in[2], m2inv) - c1) / (c2 - c3 * powf(in[2], m2inv)), m1inv);
+
+	// 1.0f in the source would mean 10,000 nits. 
+	// Let's assume 400 nits for a typical gaming monitor (so the target for 1.0f from source buffer)
+	// 400/10000 = 0.04f	
+	// and inverse: 10000/400 = 25.0f
+	out[0] = 25.0f * out[0];
+	out[1] = 25.0f * out[1];
+	out[2] = 25.0f * out[2]; 
+
+	out[0] = out[0] * 1.6603176191042 + out[1] * -0.58757266606618 + out[2] * -0.072916573137668;
+	out[1] = out[0] * -0.12440670211719 + out[1] * 1.1328007408693 + out[2] * -0.0083489374502385;
+	out[2] = out[0] * -0.018111363657382 + out[1] * -0.100596531096745 + out[2] * 1.1187664817637;
+}
+
 // TODO turn the check into some kind of parity that can actually fix shit?
 void VideoMetaHelper::encodenum16fp6(const unsigned short a, unsigned char b[3])
 {
@@ -281,20 +352,25 @@ size_t VideoMetaHelper::pushShort(const unsigned short s) {
 	commitRGB();
 	return 1;
 }
-size_t VideoMetaHelper::pushRGB(const float* c3) {
+// TODO use sRGB for colors. wait. or just hdr?
+size_t VideoMetaHelper::pushRGB(const float* c3in) {
 	if (!CHECKRGB(1)) {
 		return 0;
 	}
+	float c3[3];
+	srgbLinearToHDRPQ(c3in, c3);
 	_bufferPtr[0] = std::clamp((unsigned char)(c3[0] * 255.0f), (unsigned char)0, (unsigned char)255);
 	_bufferPtr[1] = std::clamp((unsigned char)(c3[1] * 255.0f), (unsigned char)0, (unsigned char)255);
 	_bufferPtr[2] = std::clamp((unsigned char)(c3[2] * 255.0f), (unsigned char)0, (unsigned char)255);
 	commitRGB();
 	return 1;
 }
-size_t VideoMetaHelper::pushRGBMult(const float* c3) {
+size_t VideoMetaHelper::pushRGBMult(const float* c3in) {
 	if (!CHECKRGB(2)) {
 		return 0;
 	}
+	float c3[3];
+	srgbLinearToHDRPQ(c3in, c3);
 	float mult = std::max(std::max(c3[0], c3[1]), c3[2]);
 	float multInv = mult;
 	_bufferPtr[0] = std::clamp((unsigned char)(c3[0] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
@@ -305,10 +381,30 @@ size_t VideoMetaHelper::pushRGBMult(const float* c3) {
 	commitRGB();
 	return 2;
 }
-size_t VideoMetaHelper::pushRGBA(const float* c4) {
+// only applies the multiplier if the original value is over 1. so we caan more easily read sub-1 values
+size_t VideoMetaHelper::pushRGBMultOver1(const float* c3in) {
 	if (!CHECKRGB(2)) {
 		return 0;
 	}
+	float c3[3];
+	srgbLinearToHDRPQ(c3in, c3);
+	float mult = std::max(1.0f,std::max(std::max(c3[0], c3[1]), c3[2]));
+	float multInv = mult;
+	_bufferPtr[0] = std::clamp((unsigned char)(c3[0] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[1] = std::clamp((unsigned char)(c3[1] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
+	_bufferPtr[2] = std::clamp((unsigned char)(c3[2] * multInv * 255.0f), (unsigned char)0, (unsigned char)255);
+	commitRGB();
+	encodenum16fp6(fp16_ieee_from_fp32_value(mult), _bufferPtr);
+	commitRGB();
+	return 2;
+}
+size_t VideoMetaHelper::pushRGBA(const float* c4in) {
+	if (!CHECKRGB(2)) {
+		return 0;
+	}
+	float c4[4];
+	srgbLinearToHDRPQ(c4in, c4);
+	c4[3] = c4in[3];
 	_bufferPtr[0] = std::clamp((unsigned char)(c4[0] * 255.0f), (unsigned char)0, (unsigned char)255);
 	_bufferPtr[1] = std::clamp((unsigned char)(c4[1] * 255.0f), (unsigned char)0, (unsigned char)255);
 	_bufferPtr[2] = std::clamp((unsigned char)(c4[2] * 255.0f), (unsigned char)0, (unsigned char)255);
@@ -317,10 +413,13 @@ size_t VideoMetaHelper::pushRGBA(const float* c4) {
 	commitRGB();
 	return 2;
 }
-size_t VideoMetaHelper::pushRGBAMult(const float* c4) {
+size_t VideoMetaHelper::pushRGBAMult(const float* c4in) {
 	if (!CHECKRGB(3)) {
 		return 0;
 	}
+	float c4[4];
+	srgbLinearToHDRPQ(c4in, c4);
+	c4[3] = c4in[3];
 	float mult = std::max(std::max(c4[0], c4[1]), c4[2]);
 	if (!mult) {
 		mult = 1.0f;
@@ -401,21 +500,24 @@ size_t VideoMetaHelper::pullShort(unsigned short* s) {
 	decodenum16fp6(rgb,s);
 	return 1;
 }
-size_t VideoMetaHelper::pullRGB(float* c3) {
+size_t VideoMetaHelper::pullRGB(float* c3out) {
 	if (!CHECKRGB(1)) {
 		return 0;
 	}
+	float c3[3];
 	unsigned char rgb[3];
 	getRGB(rgb);
 	c3[0] = (float)rgb[0] * _oneDividedBy255;
 	c3[1] = (float)rgb[1] * _oneDividedBy255;
 	c3[2] = (float)rgb[2] * _oneDividedBy255;
+	hdrPQtoSRGBLinear(c3, c3out);
 	return 1;
 }
-size_t VideoMetaHelper::pullRGBMult(float* c3) {
+size_t VideoMetaHelper::pullRGBMult(float* c3out) {
 	if (!CHECKRGB(2)) {
 		return 0;
 	}
+	float c3[3];
 	unsigned char rgb[3];
 	getRGB(rgb);
 	c3[0] = (float)rgb[0] * _oneDividedBy255;
@@ -428,12 +530,14 @@ size_t VideoMetaHelper::pullRGBMult(float* c3) {
 	c3[0] *= multiplier;
 	c3[1] *= multiplier;
 	c3[2] *= multiplier;
+	hdrPQtoSRGBLinear(c3, c3out);
 	return 2;
 }
-size_t VideoMetaHelper::pullRGBA(float* c4) {
+size_t VideoMetaHelper::pullRGBA(float* c4out) {
 	if (!CHECKRGB(2)) {
 		return 0;
 	}
+	float c4[4];
 	unsigned char rgb[3];
 	getRGB(rgb);
 	c4[0] = (float)rgb[0] * _oneDividedBy255;
@@ -443,13 +547,15 @@ size_t VideoMetaHelper::pullRGBA(float* c4) {
 	unsigned short us;
 	decodenum16fp6(rgb, &us);
 	float alpha = fp16_ieee_to_fp32_value(us);
-	c4[3] = alpha;
+	c4out[3] = alpha;
+	hdrPQtoSRGBLinear(c4, c4out);
 	return 2;
 }
-size_t VideoMetaHelper::pullRGBAMult(float* c4) {
+size_t VideoMetaHelper::pullRGBAMult(float* c4out) {
 	if (!CHECKRGB(3)) {
 		return 0;
 	}
+	float c4[4];
 	unsigned char rgb[3];
 	getRGB(rgb);
 	c4[0] = (float)rgb[0] * _oneDividedBy255;
@@ -467,7 +573,8 @@ size_t VideoMetaHelper::pullRGBAMult(float* c4) {
 	getRGB(rgb);
 	decodenum16fp6(rgb, &us);
 	float alpha = fp16_ieee_to_fp32_value(us);
-	c4[3] = alpha;
+	c4out[3] = alpha;
+	hdrPQtoSRGBLinear(c4, c4out);
 	return 3;
 }
 size_t VideoMetaHelper::pullFloat(float* f) {

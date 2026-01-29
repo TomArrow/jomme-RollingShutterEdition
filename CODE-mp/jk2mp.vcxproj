@@ -822,6 +822,7 @@
     <ClInclude Include="ui\keycodes.h" />
     <ClInclude Include="ui\ui_public.h" />
     <ClInclude Include="videometa\VideoMetaHelper.h" />
+    <ClInclude Include="videometa\VideoMetaHelperShared.h" />
     <ClInclude Include="win32\glw_win.h" />
     <ClInclude Include="win32\resource.h" />
     <ClInclude Include="win32\win_local.h" />

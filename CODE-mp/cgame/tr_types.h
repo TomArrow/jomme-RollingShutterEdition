@@ -5,6 +5,8 @@
 #ifndef __TR_TYPES_H
 #define __TR_TYPES_H
 
+#include "videometa/VideoMetaHelperShared.h"
+
 
 #define	MAX_DLIGHTS		32			// can't be increased, because bit flags are used on surfaces
 #define	MAX_DLIGHTS_TO_SORT		512			// this is how many lights we start out with. then we sort by distance to keep 32.
@@ -285,7 +287,9 @@ typedef struct {
 	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
 
 	vec3_t		viewAngles; // Copy of refdefViewAngles so we can save AE path. (purely for MME, this isn't the main view angles variable)
-	vec3_t		playerPositions[MAX_CLIENTS]; // For AE path exports
+	//vec3_t		playerPositions[MAX_CLIENTS]; // For AE path exports
+	playerMeta_t	playerMeta[MAX_CLIENTS]; // For AE path exports and Video Meta
+	int			psClientNum;
 } refdef_t;
 
 

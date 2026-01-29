@@ -689,8 +689,10 @@ typedef struct {
 	float		timeFraction;
 
 	vec3_t		viewAngles; // for MME so we can export AE cam paths
-	vec3_t		playerPositions[MAX_CLIENTS];
+	//vec3_t		playerPositions[MAX_CLIENTS];
 
+	playerMeta_t	playerMeta[MAX_CLIENTS]; // For AE path exports and Video Meta
+	int				psClientNum;
 } trRefdef_t;
 
 

@@ -180,8 +180,8 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 			AEPlayerPositions.push_back(std::vector<AEPlayerPosition>());
 		}
 		AEPlayerPosition playerPos;
-		VectorCopy(tr.refdef.playerPositions[i], playerPos.origin);
-		VectorCopy(tr.refdef.playerPositions[i], videoMeta.playerMeta[i].pos);
+		VectorCopy(tr.refdef.playerMeta[i].pos, playerPos.origin);
+		memcpy(&videoMeta.playerMeta[i], &tr.refdef.playerMeta[i],sizeof(tr.refdef.playerMeta[i]));
 		AEPlayerPositions[i].push_back(playerPos);
 	}
 

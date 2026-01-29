@@ -1348,6 +1348,9 @@
     <ClInclude Include="videometa\VideoMetaHelper.h">
       <Filter>Renderer\videometa</Filter>
     </ClInclude>
+    <ClInclude Include="videometa\VideoMetaHelperShared.h">
+      <Filter>Renderer\videometa</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="win32\qe3.ico">

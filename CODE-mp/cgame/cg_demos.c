@@ -963,6 +963,8 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 
 	VectorCopy(cg.refdefViewAngles,cg.refdef.viewAngles); // For MME so we can export AE cam paths
 	for (int i = 0; i < MAX_CLIENTS; i++) { // For MME so we can export paths for all players
+
+		const float		ooneDividedBy255 = 1.0f / 255.0f;
 		centity_t* cent = &cg_entities[i];
 		clientInfo_t* ci = cgs.clientinfo + i;
 		if (ci->bolt_head) {
@@ -970,10 +972,17 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 			if (trap_G2API_GetBoltMatrix(cent->ghoul2, 0, ci->bolt_head, &boneMatrix, cent->turAngles, cent->lerpOrigin, cg.time, cgs.gameModels, cent->modelScale)) {
 				vec3_t betterOrigin;
 				trap_G2API_GiveMeVectorFromMatrix(&boneMatrix, ORIGIN, betterOrigin);
-				VectorCopy(betterOrigin, cg.refdef.playerPositions[i]);
+				VectorCopy(betterOrigin, cg.refdef.playerMeta[i].headPos);
 			}
 		}
+		VectorCopy(cent->lerpOrigin, cg.refdef.playerMeta[i].pos);
+		VectorCopy(cent->lerpAngles, cg.refdef.playerMeta[i].ang);
+		VectorCopy(cent->currentState.pos.trDelta, cg.refdef.playerMeta[i].vel);
+		trap_R_LightForPoint(cent->lerpOrigin, cg.refdef.playerMeta[i].light, cg.refdef.playerMeta[i].lightDirect, cg.refdef.playerMeta[i].lightDir);
+		VectorScale(cg.refdef.playerMeta[i].light, ooneDividedBy255, cg.refdef.playerMeta[i].light);
+		VectorScale(cg.refdef.playerMeta[i].lightDirect, ooneDividedBy255, cg.refdef.playerMeta[i].lightDirect);
 	}
+	cg.refdef.psClientNum = cg.snap ? cg.snap->ps.clientNum : 0;
 
 	trap_R_RenderScene( &cg.refdef );
 	CG_SaberClashFlare(qtrue);
