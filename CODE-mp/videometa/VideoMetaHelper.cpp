@@ -26,6 +26,11 @@ size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 	success = success && pushFloat(meta.camera.ang[0]);
 	success = success && pushFloat(meta.camera.ang[1]);
 	success = success && pushFloat(meta.camera.ang[2]);
+	for (int a = 0; a < 3; a++) {
+		success = success && pushFloat(meta.camera.viewAxis[a][0]);
+		success = success && pushFloat(meta.camera.viewAxis[a][1]);
+		success = success && pushFloat(meta.camera.viewAxis[a][2]);
+	}
 	success = success && pushShort(meta.camera.blendFrames);
 	success = success && pushFloat(meta.camera.fov);
 	success = success && pushByte(meta.camera.fisheyeMode);
@@ -99,6 +104,11 @@ VideoMeta_t VideoMetaHelper::parseMeta(){
 			success = success && pullFloat(&meta.camera.ang[0]);
 			success = success && pullFloat(&meta.camera.ang[1]);
 			success = success && pullFloat(&meta.camera.ang[2]);
+			for (int a = 0; a < 3; a++) {
+				success = success && pullFloat(&meta.camera.viewAxis[a][0]);
+				success = success && pullFloat(&meta.camera.viewAxis[a][1]);
+				success = success && pullFloat(&meta.camera.viewAxis[a][2]);
+			}
 			success = success && pullShort(&meta.camera.blendFrames);
 			success = success && pullFloat(&meta.camera.fov);
 			success = success && pullByte(&meta.camera.fisheyeMode);

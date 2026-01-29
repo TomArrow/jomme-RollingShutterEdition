@@ -37,6 +37,7 @@ public:
 	struct {
 		float					pos[3] = { 0,0,0 };
 		float					ang[3] = { 0,0,0 };
+		float					viewAxis[3][3] = { 0 };
 		unsigned short			blendFrames = 0;
 		float					fov = 0;
 		unsigned char			fisheyeMode = 0;
@@ -105,8 +106,8 @@ public:
 	size_t pullMarker(unsigned char b[4]);
 
 	// write or read
-	VideoMetaHelper(char* buf, size_t width, size_t height, size_t stride, unsigned char multiplier, unsigned char rgboffsets[3], bool write=true) {
-		_bufferPtr = _buffer = (unsigned char*)buf;
+	VideoMetaHelper(unsigned char* buf, size_t width, size_t height, size_t stride, unsigned char multiplier, size_t rgboffsets[3], bool write=true) {
+		_bufferPtr = _buffer = buf;
 		_write = write;
 		_width = width;
 		_stride = stride;
@@ -123,9 +124,9 @@ public:
 		_totalBytes = height * stride;
 	}
 	// use this constructor for automatically finding the start to begin reading. read only.
-	VideoMetaHelper(char* buf, size_t width, size_t height, size_t totalHeight, size_t stride, size_t multiplier, size_t rgboffsets[4]) {
+	VideoMetaHelper(unsigned char* buf, size_t width, size_t height, size_t totalHeight, size_t stride, size_t multiplier, size_t rgboffsets[4]) {
 		// TODO seek.
-		_bufferPtr = _buffer = (unsigned char*)buf;
+		_bufferPtr = _buffer = buf;
 		_write = false;
 		_width = width;
 		_stride = stride;

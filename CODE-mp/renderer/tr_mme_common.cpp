@@ -1,5 +1,6 @@
 #include "tr_mme.h"
 #include <vector>
+#include "videometa/VideoMetaHelper.h"
 
 #ifdef JEDIACADEMY_GLOW
 //extern GLuint pboIds[2];
@@ -155,6 +156,7 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 	char *outBuf;
 	int outSize;
 	char fileName[MAX_OSPATH];
+	VideoMeta_t videoMeta;
 
 	AECamPosition camPosition;
 	camPosition.fov = tr.refdef.fov_x;
@@ -165,17 +167,27 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 	VectorCopy(tr.refdef.viewaxis[2], camPosition.viewAxis[2]);
 	AECamPositions.push_back(camPosition);
 
+	videoMeta.camera.fov = tr.refdef.fov_x;
+	VectorCopy(tr.refdef.vieworg, videoMeta.camera.pos);
+	VectorCopy(tr.refdef.viewAngles, videoMeta.camera.ang);
+	VectorCopy(tr.refdef.viewaxis[0], videoMeta.camera.viewAxis[0]);
+	VectorCopy(tr.refdef.viewaxis[1], videoMeta.camera.viewAxis[1]);
+	VectorCopy(tr.refdef.viewaxis[2], videoMeta.camera.viewAxis[2]);
+	
+
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (AEPlayerPositions.size() <= i) {
 			AEPlayerPositions.push_back(std::vector<AEPlayerPosition>());
 		}
 		AEPlayerPosition playerPos;
 		VectorCopy(tr.refdef.playerPositions[i], playerPos.origin);
+		VectorCopy(tr.refdef.playerPositions[i], videoMeta.playerMeta[i].pos);
 		AEPlayerPositions[i].push_back(playerPos);
 	}
 
 	if (mme_videoMetaRows->integer > 0) {
 		// write that extra data
+		size_t rgbOffsets[4] = {0,1,2,};
 		int multiplier = 1;
 		qboolean bgr = qfalse;
 		switch (shot->type) {
@@ -191,6 +203,32 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 			multiplier = 1;
 			break;
 		}
+
+		size_t stride = width * multiplier;
+		// just a temporary buffer for the data
+		size_t metaRows = mme_videoMetaRows->integer;
+		outSize = width * metaRows * multiplier;
+		outBuf = (char*)ri.Hunk_AllocateTempMemory(outSize);
+		memset(outBuf, 0, outSize);
+		//VideoMetaHelper metaHelper(inBuf+ mme_videoMetaRows->integer *multiplier*width,(size_t)width, (size_t)mme_videoMetaRows->integer, (size_t)multiplier * width,(unsigned char)multiplier, rgbOffsets,true);
+		VideoMetaHelper metaHelper((unsigned char*)outBuf,(size_t)width, metaRows, stride,(unsigned char)multiplier, rgbOffsets,true);
+		metaHelper.writeMeta(videoMeta);
+#if _DEBUG
+		VideoMetaHelper metaDecoder((unsigned char*)outBuf,(size_t)width, metaRows, stride,(unsigned char)multiplier, rgbOffsets,true);
+		VideoMeta_t verifyMeta = metaDecoder.parseMeta();
+#endif
+		// our image buffer is inverted, so move everything up
+		for (int y = height - 1; y >= 0; y--) {
+			memcpy(inBuf + (y + metaRows) * stride, inBuf + y * stride, stride);
+		}
+		// copy over the inverted meta buffer.
+		for (int y = 0; y < mme_videoMetaRows->integer; y++) {
+			memcpy(inBuf + (metaRows - 1 - y) * stride, outBuf + y * stride, stride);
+		}
+
+		ri.Hunk_FreeTempMemory(outBuf);
+
+		height += mme_videoMetaRows->integer;
 
 	}
 	
