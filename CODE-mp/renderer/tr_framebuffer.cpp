@@ -230,6 +230,7 @@ cvar_t *r_fboGLSLCloudIntensityCompensate;
 cvar_t *r_fboGLSLFog;
 cvar_t *r_fboGLSLFogColor;
 cvar_t *r_fboFishEye;
+cvar_t *r_fboFishEyeNormalBlend; // doesnt do anything rn
 cvar_t *r_fboFishEyeTessellate;
 cvar_t *r_fboExposure;
 cvar_t *r_fboCompensateSkyTint;
@@ -1697,6 +1698,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLFastPreview = ri.Cvar_Get( "r_fboGLSLFastPreview", "1", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboFishEye = ri.Cvar_Get( "r_fboFishEye", "0", CVAR_ARCHIVE);
+	r_fboFishEyeNormalBlend = ri.Cvar_Get( "r_fboFishEyeNormalBlend", "0.0", CVAR_ARCHIVE);
 	r_fboFishEyeTessellate = ri.Cvar_Get( "r_fboFishEyeTessellate", "1", CVAR_ARCHIVE);
 	r_fboDepthBits = ri.Cvar_Get( "r_fboDepthBits", "32f", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboDepthPacked = ri.Cvar_Get( "r_fboDepthPacked", "1", CVAR_ARCHIVE | CVAR_LATCH);

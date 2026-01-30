@@ -1479,6 +1479,7 @@ extern cvar_t	*r_fboGLSLFog;
 extern cvar_t	*r_fboGLSLFogColor;
 extern cvar_t	*r_fboGLSLFastPreview;
 extern cvar_t	*r_fboFishEye;
+extern cvar_t	*r_fboFishEyeNormalBlend;
 extern cvar_t	*r_ext_compiled_vertex_array;
 extern cvar_t	*r_ext_texture_env_add;
 extern cvar_t	*r_ext_texture_filter_anisotropic;

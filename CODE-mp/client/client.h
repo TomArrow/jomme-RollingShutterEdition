@@ -8,6 +8,8 @@
 #include "snd_public.h"
 #include "../cgame/cg_public.h"
 #include "../game/bg_public.h"
+#define VIDEOMETAHELPERSHARED_WITHCPP
+#include "videometa/VideoMetaHelperShared.h"
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 
@@ -315,10 +317,12 @@ typedef struct {
 #define	CON_TEXTSIZE	131072 // increased from jk2mv
 #define	NUM_CON_TIMES	32
 
-typedef struct {
-	vec4_t color;
-	char letter;
-} consoleLetter_t;
+//typedef struct {
+//	vec4_t color;
+//	char letter;
+//} consoleLetter_t;
+
+#define consoleLetter_t consoleLetterMeta_t
 
 typedef struct {
 	qboolean	initialized;
@@ -522,7 +526,7 @@ void Con_CheckResize (void);
 void Con_Init (void);
 void Con_Clear_f (void);
 void Con_ToggleConsole_f (void);
-void Con_DrawNotify (void);
+void Con_DrawNotify (std::vector<ConsoleLine_t>* linesBuffer = NULL);
 void Con_ClearNotify (void);
 void Con_RunConsole (void);
 void Con_DrawConsole (void);

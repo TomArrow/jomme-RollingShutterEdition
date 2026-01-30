@@ -5,6 +5,7 @@
 #include "../qcommon/strip.h"
 #include "../qcommon/game_version.h"
 
+#include <vector>
 
 int g_console_field_width = 78;
 
@@ -527,7 +528,9 @@ void Con_DrawInput (void) {
 }
 
 
+void Con_ConsoleToBuffer() {
 
+}
 
 /*
 ================
@@ -536,7 +539,7 @@ Con_DrawNotify
 Draws the last few lines of output transparently over the game top
 ================
 */
-void Con_DrawNotify (void)
+void Con_DrawNotify (std::vector<ConsoleLine_t>* linesBuffer)
 {
 	int		x, v;
 	//short	*text;
@@ -546,10 +549,16 @@ void Con_DrawNotify (void)
 	int		skip;
 	//int		currentColor;
 	vec4_t		currentColor;
+	vec4_t		currentColorBuffer;
 
 	//currentColor = 7;
 	Vector4Copy(g_color_table[7],currentColor);
-	re.SetColor(currentColor);
+	if (linesBuffer) {
+		//Vector4Copy(currentColor, currentColorBuffer);
+	}
+	else {
+		re.SetColor(currentColor);
+	}
 
 	v = 0;
 	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
@@ -566,11 +575,37 @@ void Con_DrawNotify (void)
 			con.gameTimes[i % NUM_CON_TIMES] = 0;
 			continue;
 		}
-		if (time >= con_notifytime->value*1000 && gameTime >= con_notifytime->value * 1000)
+		if (!linesBuffer && time >= con_notifytime->value*1000 && gameTime >= con_notifytime->value * 1000)
 			continue;
 		text = con.text + (i % con.totallines)*con.linewidth;
 
-		if (cl.snap.ps.pm_type != PM_INTERMISSION && cls.keyCatchers & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
+		if (!linesBuffer && cl.snap.ps.pm_type != PM_INTERMISSION && cls.keyCatchers & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
+			continue;
+		}
+
+		if (linesBuffer) {
+			ConsoleLine_t line;
+			line.ageMilliseconds = cls.gameTime - gameTime;
+			bool endFound = false;
+			for (x = con.linewidth - 1; x >= 0; x--) {
+				if ((text[x].letter == '\0' || text[x].letter == ' ') && !endFound) {
+					continue;
+				}
+				else if(!endFound) {
+					endFound = true;
+					if (line.letters.size() <= x) {
+						line.letters.resize(x + 1);
+					}
+				}
+
+				line.letters[x] = text[x];
+				if (r_gammaSrgbLightvalues->integer) {
+					line.letters[x].color[0] = R_sRGBToLinear(text[x].color[0]);
+					line.letters[x].color[1] = R_sRGBToLinear(text[x].color[1]);
+					line.letters[x].color[2] = R_sRGBToLinear(text[x].color[2]);
+				}
+			}
+			linesBuffer->push_back(std::move(line));
 			continue;
 		}
 
@@ -640,10 +675,20 @@ void Con_DrawNotify (void)
 						tmp[1] = R_sRGBToLinear( currentColor[1]);
 						tmp[2] = R_sRGBToLinear( currentColor[2]);
 						tmp[3] = currentColor[3];
-						re.SetColor(tmp);
+						if (linesBuffer) {
+							//Vector4Copy(tmp, currentColorBuffer);
+						}
+						else {
+							re.SetColor(tmp);
+						}
 					}
 					else {
-						re.SetColor(currentColor);
+						if (linesBuffer) {
+							//Vector4Copy(currentColor, currentColorBuffer);
+						}
+						else {
+							re.SetColor(currentColor);
+						}
 					}
 				}
 				if (!cl_conXOffset)
@@ -658,7 +703,13 @@ void Con_DrawNotify (void)
 		}
 	}
 
-	re.SetColor( NULL );
+	if (linesBuffer) {
+		return;
+		//Vector4Copy(NULL, currentColorBuffer);
+	}
+	else {
+		re.SetColor(NULL);
+	}
 
 	if (cls.keyCatchers & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
 		return;

@@ -151,6 +151,7 @@ int R_MME_GetExtraPixelCount() {
 	}
 }
 
+void Con_DrawNotify(std::vector<ConsoleLine_t>* linesBuffer = NULL);
 void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *inBuf, qboolean audio, int aSize, byte *aBuf ) {
 	mmeShotFormat_t format;
 	char *extension;
@@ -208,6 +209,15 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 		// centerprint stuff
 		RE_Font_DrawString_Buffer(&videoMeta.centerPrint, tr.refdef.centerPrintFont, tr.refdef.centerPrint, colorWhite);
 
+		Con_DrawNotify(&videoMeta.consoleLines);
+
+		jitterSegmentAdvanceInfo_t jsInfo;
+		R_MME_GetCGameJitterInfo(&jsInfo);
+
+		videoMeta.camera.blendFrames = jsInfo.totalFrames;
+		videoMeta.camera.fisheyeMode = (r_fboGLSL->integer && ENABLEGLSL) ? r_fboFishEye->integer : 0;
+		videoMeta.camera.fishEyeNormalBlend = (r_fboGLSL->integer && ENABLEGLSL) ? r_fboFishEyeNormalBlend->value : 0;
+		videoMeta.psClientNum = tr.refdef.psClientNum;
 
 		size_t stride = width * multiplier;
 		// just a temporary buffer for the data

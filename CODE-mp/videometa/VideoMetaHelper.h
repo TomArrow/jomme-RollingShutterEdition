@@ -7,15 +7,12 @@
 #include <vector>
 #include <bitset>
 #include "fp16/fp16/fp16.h"
+#define VIDEOMETAHELPERSHARED_WITHCPP
 #include "VideoMetaHelperShared.h"
 
 
 
-class ConsoleLine_t {
-public:
-	int									ageMilliseconds;
-	std::vector<consoleLetterMeta_t>	letters;
-};
+
 
 class VideoMeta_t {
 public:
