@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 #include <Windows.h>
+#include <limits>
+#include <iomanip>
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -26,6 +28,7 @@ extern "C" __declspec(dllexport) char* __cdecl  parseVideoMetaToString(unsigned 
     VideoMeta_t meta =  helper.parseMeta();
 
     std::stringstream ss;
+    ss << std::setprecision(std::numeric_limits<float>::max_digits10);
     ss << "{";
 
     // debug
