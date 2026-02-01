@@ -158,7 +158,8 @@ public:
 
 	bool pullPlayerInfo(playerMeta_t& playerMeta);
 	bool pushPlayerInfo(playerMeta_t& playerMeta);
-
+	void printMetaToStream(VideoMeta_t& meta,std::ostream& ss);
+	void pushJSONChar(char c, std::ostream& ss);
 };
 
 #endif

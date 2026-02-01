@@ -1,6 +1,7 @@
 
 #include "VideoMetaHelper.h"
 #include <algorithm>
+#include <iomanip>
 
 #define BITCOMPRESS(num,phase) (((((((num)<<phase)&37449) * 0x700007U) & 0x3000c00cU) * 0x1010101U) >> 24)
 #define BITEXPAND(num,phase) (((((((num)&63ULL)*0x41041041041ULL)&0x804010080201ULL)*0x100010001ULL)>>32ULL)>>phase)
@@ -43,6 +44,172 @@ bool VideoMetaHelper::pushPlayerInfo(playerMeta_t& playerMeta) {
 	success = success && pushFloat(playerMeta.vel[1]);
 	success = success && pushFloat(playerMeta.vel[2]);
 	return success;
+}
+
+
+void VideoMetaHelper::pushJSONChar(char c, std::ostream& ss) {
+	switch (c) {
+	case '\0':
+		ss << "\\0";
+		break;
+	case '\n':
+		ss << "\\n";
+		break;
+	case '\r':
+		ss << "\\r";
+		break;
+	case '\t':
+		ss << "\\t";
+		break;
+	case '\b':
+		ss << "\\b";
+		break;
+	case '\f':
+		ss << "\\f";
+		break;
+	case '\\':
+		ss << "\\\\";
+		break;
+	case '"':
+		ss << "\\\"";
+		break;
+	default:
+		if (c >= '\x00' && c <= '\x1f') {
+			ss << "\\u" << std::hex << std::setfill('0') << std::setw(4) << (int)c << std::dec << std::setfill(' ');
+		}
+		else {
+			ss << c;
+		}
+		break;
+	}
+}
+
+void VideoMetaHelper::printMetaToStream(VideoMeta_t& meta, std::ostream& ss)
+{
+
+
+
+	ss << std::setprecision(std::numeric_limits<float>::max_digits10);
+	ss << "{\n";
+
+	// debug
+	ss << "\"inValues\":{\n";
+	ss << "\"width\":" << _width << ",\n";
+	ss << "\"height\":" << _height << ",\n";
+	ss << "\"totalHeight\":" << _height << ",\n";
+	ss << "\"stride\":" << _stride << ",\n";
+	ss << "\"multiplier\":" << (int)_multiplier << ",\n";
+	ss << "\"rgbOffsets\":[" << (int)_rgboffsets[0] << "," << (int)_rgboffsets[1] << "," << (int)_rgboffsets[2] << "]\n";
+	ss << "},\n";
+
+	ss << "\"version\":[" << (int)meta.VIDT_version[0] << "," << (int)meta.VIDT_version[1] << "," << (int)meta.VIDT_version[2] << "," << (int)meta.VIDT_version[3] << "],\n";
+
+	// camera
+	ss << "\"camera\":{\n";
+	ss << "\"pos\":[" << meta.camera.pos[0] << "," << meta.camera.pos[1] << "," << meta.camera.pos[2] << "],\n";
+	ss << "\"ang\":[" << meta.camera.ang[0] << "," << meta.camera.ang[1] << "," << meta.camera.ang[2] << "],\n";
+	ss << "\"viewAxes\":[\n";
+	ss << "[" << meta.camera.viewAxis[0][0] << "," << meta.camera.viewAxis[0][1] << "," << meta.camera.viewAxis[0][2] << "],\n";
+	ss << "[" << meta.camera.viewAxis[1][0] << "," << meta.camera.viewAxis[1][1] << "," << meta.camera.viewAxis[1][2] << "],\n";
+	ss << "[" << meta.camera.viewAxis[2][0] << "," << meta.camera.viewAxis[2][1] << "," << meta.camera.viewAxis[2][2] << "]\n";
+	ss << "],\n";
+	ss << "\"blendFrames\":" << meta.camera.blendFrames << ",\n";
+	ss << "\"fov\":" << meta.camera.fov << ",\n";
+	ss << "\"fisheyeMode\":" << (int)meta.camera.fisheyeMode << ",\n";
+	ss << "\"fishEyeNormalBlend\":" << meta.camera.fishEyeNormalBlend << "\n";
+	ss << "},\n";
+
+
+	// players
+	ss << "\"psClientNum\":" << (int)meta.psClientNum << ",\n";
+	ss << "\"playerMeta\":[\n";
+	for (int i = -1; i < 32; i++) {
+		int c = i == -1 ? (meta.psClientNum >= 0 && meta.psClientNum < 32 ? meta.psClientNum : 0) : i;
+		playerMeta_t& pM = meta.playerMeta[c];
+		ss << "{\n";
+		ss << "\"light\":[" << pM.light[0] << "," << pM.light[1] << "," << pM.light[2] << "],\n";
+		ss << "\"lightDirect\":[" << pM.lightDirect[0] << "," << pM.lightDirect[1] << "," << pM.lightDirect[2] << "],\n";
+		ss << "\"lightDir\":[" << pM.lightDir[0] << "," << pM.lightDir[1] << "," << pM.lightDir[2] << "],\n";
+		ss << "\"pos\":[" << pM.pos[0] << "," << pM.pos[1] << "," << pM.pos[2] << "],\n";
+		ss << "\"headPos\":[" << pM.headPos[0] << "," << pM.headPos[1] << "," << pM.headPos[2] << "],\n";
+		ss << "\"vel\":[" << pM.vel[0] << "," << pM.vel[1] << "," << pM.vel[2] << "],\n";
+		ss << "\"ang\":[" << pM.ang[0] << "," << pM.ang[1] << "," << pM.ang[2] << "]\n";
+		if (i == 31) {
+			ss << "}\n";
+		}
+		else {
+			ss << "},\n";
+		}
+	}
+	ss << "],\n";
+
+	// console lines
+	ss << "\"consoleLines\":[\n";
+	for (int i = 0; i < meta.consoleLines.size(); i++) {
+		ConsoleLine_t& line = meta.consoleLines[i];
+		ss << "{\n";
+		ss << "\"ageMilliseconds\":" << line.ageMilliseconds << ",\n";
+		ss << "\"plaintext\":\"";
+		for (int j = 0; j < line.letters.size(); j++) {
+			consoleLetterMeta_t& letter = line.letters[j];
+			pushJSONChar(letter.letter, ss);
+		}
+		ss << "\",\n";
+		ss << "\"letters\":[\n";
+		for (int j = 0; j < line.letters.size(); j++) {
+			consoleLetterMeta_t& letter = line.letters[j];
+			ss << "{";
+			ss << "\"letter\":\"";
+			pushJSONChar(letter.letter, ss);
+			ss << "\",";
+			ss << "\"color\":[" << letter.color[0] << "," << letter.color[1] << "," << letter.color[2] << "," << letter.color[3] << "]";
+			if (j == line.letters.size() - 1) {
+				ss << "}\n";
+			}
+			else {
+				ss << "},\n";
+			}
+		}
+		ss << "]\n";
+		if (i == meta.consoleLines.size() - 1) {
+			ss << "}\n";
+		}
+		else {
+			ss << "},\n";
+		}
+	}
+	ss << "],\n";
+
+	// centerprint
+	ss << "\"centerPrint\":{\n";
+	ss << "\"plaintext\":\"";
+	for (int j = 0; j < meta.centerPrint.size(); j++) {
+		centerPrintLetterMeta_t& letter = meta.centerPrint[j];
+		pushJSONChar(letter.letter, ss);
+	}
+	ss << "\",\n";
+	ss << "\"letters\":[\n";
+	for (int j = 0; j < meta.centerPrint.size(); j++) {
+		centerPrintLetterMeta_t& letter = meta.centerPrint[j];
+		ss << "{";
+		ss << "\"letter\":\"";
+		pushJSONChar(letter.letter, ss);
+		ss << "\",";
+		ss << "\"color\":[" << letter.color[0] << "," << letter.color[1] << "," << letter.color[2] << "," << letter.color[3] << "],";
+		ss << "\"bgColor\":[" << letter.bgColor[0] << "," << letter.bgColor[1] << "," << letter.bgColor[2] << "," << letter.bgColor[3] << "]";
+		if (j == meta.centerPrint.size() - 1) {
+			ss << "}\n";
+		}
+		else {
+			ss << "},\n";
+		}
+	}
+	ss << "]\n";
+	ss << "}\n";
+
+
+	// end
+	ss << "}\n";
 }
 size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 	_versionHasFullFloat = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 2);
