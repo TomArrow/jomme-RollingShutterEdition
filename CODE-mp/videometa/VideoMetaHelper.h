@@ -56,6 +56,9 @@ class VideoMetaHelper {
 	size_t			_rgbsLeft = 0;
 	bool			_needsRGBRearrange = false;
 	const float		_oneDividedBy255 = 1.0f / 255.0f;
+	
+	// Versioning
+	bool			_versionHasFullFloat = false;
 public:
 
 	static void srgbLinearToHDRPQ(const float in[3], float out[3]);
@@ -64,6 +67,8 @@ public:
 	// TODO turn the check into some kind of parity that can actually fix shit?
 	static void encodenum16fp6(const unsigned short a, unsigned char b[3]);
 	static bool decodenum16fp6(unsigned char bA[3], unsigned short* a);
+	static void encodenum32fp(const unsigned int a, unsigned char b[6]);
+	static bool decodenum32fp(unsigned char bA[6], unsigned int* a);
 	static void encodenum(const unsigned char a, unsigned char b[3]);
 	static bool decodenum(unsigned char bA[3], unsigned char* a);
 
@@ -78,7 +83,8 @@ public:
 	size_t pushRGBMultOver1(const float* c3);
 	size_t pushRGBA(const float* c4);
 	size_t pushRGBAMult(const float* c4);
-	size_t pushFloat(const float f);
+	size_t pushFloat(const float f, bool fp32=false);
+	size_t pushFloat32(const float f);
 	size_t pushMarker(const unsigned char b[4]);
 	size_t pushNewLine();
 	size_t forwardLine();
@@ -91,7 +97,8 @@ public:
 	size_t pullRGBMult(float* c3);
 	size_t pullRGBA(float* c4);
 	size_t pullRGBAMult(float* c4);
-	size_t pullFloat(float* f);
+	size_t pullFloat(float* f, bool fp32 = false);
+	size_t pullFloat32(float* f);
 	size_t pullMarker(unsigned char b[4]);
 
 	// write or read
@@ -120,7 +127,7 @@ public:
 		_totalBytes = height * stride;
 	}
 	// use this constructor for automatically finding the start to begin reading. read only.
-	VideoMetaHelper(unsigned char* buf, size_t width, size_t height, size_t totalHeight, size_t stride, size_t multiplier, size_t rgboffsets[4]) {
+	VideoMetaHelper(unsigned char* buf, size_t width, size_t height, size_t totalHeight, size_t stride, size_t multiplier, size_t rgboffsets[3]) {
 		// TODO seek.
 		_bufferPtr = _buffer = buf;
 		_write = false;
@@ -128,6 +135,7 @@ public:
 		_stride = stride;
 		_height = height;
 		_multiplier = multiplier;
+		_bytesPerRow = _width * _multiplier;
 		_rgboffsets[0] = rgboffsets[0];
 		_rgboffsets[1] = rgboffsets[1];
 		_rgboffsets[2] = rgboffsets[2];

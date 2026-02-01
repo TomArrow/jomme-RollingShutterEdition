@@ -4,11 +4,20 @@
 
 #define BITCOMPRESS(num,phase) (((((((num)<<phase)&37449) * 0x700007U) & 0x3000c00cU) * 0x1010101U) >> 24)
 #define BITEXPAND(num,phase) (((((((num)&63ULL)*0x41041041041ULL)&0x804010080201ULL)*0x100010001ULL)>>32ULL)>>phase)
+
+#define BITCOMPRESS32(num,phase) ((((((((num)<<phase)&0x82082082ULL) >> 1ULL) * 0x3f00000003fULL) & 0x4000000080201804ULL) * 0x101010101010101ULL) >> 56ULL)
+#define BITEXPAND32(num,phase) (((((((num)&63ULL)*0x401004000200802ULL)&0x8008008002002002ULL)*0x100000001ULL)>>32ULL)>>phase)
+
+
 #define CHECKSPACE(a) ((_stride*_height-_currentOffset)>=(a))
 #define FORWARD(a) _currentOffset += (a); _bufferPtr += (a);
 //#define CHECKRGB(a) ((_stride*_height-_currentOffset)>=(_multiplier*(a)))
 #define CHECKRGB(a) (_rgbsLeft >= (a))
 #define FORWARDRGB(a) _currentOffset += (a)*_multiplier; _bufferPtr += (a)*_multiplier; _rgbsLeft -= a;
+
+
+#define COMPAREINDEX(v,a,i,n) ((a) < (v)[(i)] || ((a) == (v)[(i)] && (n)))
+#define VERSIONATLEAST(v,a,b,c,d) (COMPAREINDEX((v),(a), 0, COMPAREINDEX((v),(b), 1, COMPAREINDEX((v),(c), 2, ((d) <= (v)[3])))))
 
 
 //bool VideoMetaHelper::checkSpaceRGB(size_t count) {
@@ -21,41 +30,42 @@ bool VideoMetaHelper::pushPlayerInfo(playerMeta_t& playerMeta) {
 	success = success && pushFloat(playerMeta.lightDir[0]);
 	success = success && pushFloat(playerMeta.lightDir[1]);
 	success = success && pushFloat(playerMeta.lightDir[2]);
-	success = success && pushFloat(playerMeta.pos[0]);
-	success = success && pushFloat(playerMeta.pos[1]);
-	success = success && pushFloat(playerMeta.pos[2]);
-	success = success && pushFloat(playerMeta.headPos[0]);
-	success = success && pushFloat(playerMeta.headPos[1]);
-	success = success && pushFloat(playerMeta.headPos[2]);
-	success = success && pushFloat(playerMeta.ang[0]);
-	success = success && pushFloat(playerMeta.ang[1]);
-	success = success && pushFloat(playerMeta.ang[2]);
+	success = success && pushFloat(playerMeta.pos[0], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.pos[1], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.pos[2], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.headPos[0], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.headPos[1], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.headPos[2], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.ang[0], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.ang[1], _versionHasFullFloat);
+	success = success && pushFloat(playerMeta.ang[2], _versionHasFullFloat);
 	success = success && pushFloat(playerMeta.vel[0]);
 	success = success && pushFloat(playerMeta.vel[1]);
 	success = success && pushFloat(playerMeta.vel[2]);
 	return success;
 }
 size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
+	_versionHasFullFloat = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 2);
 	bool success = true;
 	success = success && pushMarker(VIDT_marker);
 	success = success && pushMarker(meta.VIDT_version);
 
 	success = success && pushMarker(CMRA_marker);
-	success = success && pushFloat(meta.camera.pos[0]);
-	success = success && pushFloat(meta.camera.pos[1]);
-	success = success && pushFloat(meta.camera.pos[2]);
-	success = success && pushFloat(meta.camera.ang[0]);
-	success = success && pushFloat(meta.camera.ang[1]);
-	success = success && pushFloat(meta.camera.ang[2]);
+	success = success && pushFloat(meta.camera.pos[0], _versionHasFullFloat);
+	success = success && pushFloat(meta.camera.pos[1], _versionHasFullFloat);
+	success = success && pushFloat(meta.camera.pos[2], _versionHasFullFloat);
+	success = success && pushFloat(meta.camera.ang[0], _versionHasFullFloat);
+	success = success && pushFloat(meta.camera.ang[1], _versionHasFullFloat);
+	success = success && pushFloat(meta.camera.ang[2], _versionHasFullFloat);
 	for (int a = 0; a < 3; a++) {
-		success = success && pushFloat(meta.camera.viewAxis[a][0]);
-		success = success && pushFloat(meta.camera.viewAxis[a][1]);
-		success = success && pushFloat(meta.camera.viewAxis[a][2]);
+		success = success && pushFloat(meta.camera.viewAxis[a][0], _versionHasFullFloat);
+		success = success && pushFloat(meta.camera.viewAxis[a][1], _versionHasFullFloat);
+		success = success && pushFloat(meta.camera.viewAxis[a][2], _versionHasFullFloat);
 	}
 	success = success && pushShort(meta.camera.blendFrames);
-	success = success && pushFloat(meta.camera.fov);
+	success = success && pushFloat(meta.camera.fov, _versionHasFullFloat);
 	success = success && pushByte(meta.camera.fisheyeMode);
-	success = success && pushFloat(meta.camera.fishEyeNormalBlend);
+	success = success && pushFloat(meta.camera.fishEyeNormalBlend, _versionHasFullFloat);
 
 	success = success && pushMarker(PLIN_marker);
 	success = success && pushByte(meta.psClientNum);
@@ -108,15 +118,15 @@ bool VideoMetaHelper::pullPlayerInfo(playerMeta_t& playerMeta) {
 	success = success && pullFloat(&playerMeta.lightDir[0]);
 	success = success && pullFloat(&playerMeta.lightDir[1]);
 	success = success && pullFloat(&playerMeta.lightDir[2]);
-	success = success && pullFloat(&playerMeta.pos[0]);
-	success = success && pullFloat(&playerMeta.pos[1]);
-	success = success && pullFloat(&playerMeta.pos[2]);
-	success = success && pullFloat(&playerMeta.headPos[0]);
-	success = success && pullFloat(&playerMeta.headPos[1]);
-	success = success && pullFloat(&playerMeta.headPos[2]);
-	success = success && pullFloat(&playerMeta.ang[0]);
-	success = success && pullFloat(&playerMeta.ang[1]);
-	success = success && pullFloat(&playerMeta.ang[2]);
+	success = success && pullFloat(&playerMeta.pos[0], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.pos[1], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.pos[2], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.headPos[0], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.headPos[1], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.headPos[2], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.ang[0], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.ang[1], _versionHasFullFloat);
+	success = success && pullFloat(&playerMeta.ang[2], _versionHasFullFloat);
 	success = success && pullFloat(&playerMeta.vel[0]);
 	success = success && pullFloat(&playerMeta.vel[1]);
 	success = success && pullFloat(&playerMeta.vel[2]);
@@ -131,23 +141,24 @@ VideoMeta_t VideoMetaHelper::parseMeta(){
 			if (!pullMarker(meta.VIDT_version)) {
 				return meta;
 			}
+			_versionHasFullFloat = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 2);
 		}
 		else if (!memcmp(readBuf, CMRA_marker,4)) {
-			bool success = pullFloat(&meta.camera.pos[0]);
-			success = success && pullFloat(&meta.camera.pos[1]);
-			success = success && pullFloat(&meta.camera.pos[2]);
-			success = success && pullFloat(&meta.camera.ang[0]);
-			success = success && pullFloat(&meta.camera.ang[1]);
-			success = success && pullFloat(&meta.camera.ang[2]);
+			bool success = pullFloat(&meta.camera.pos[0], _versionHasFullFloat);
+			success = success && pullFloat(&meta.camera.pos[1], _versionHasFullFloat);
+			success = success && pullFloat(&meta.camera.pos[2], _versionHasFullFloat);
+			success = success && pullFloat(&meta.camera.ang[0], _versionHasFullFloat);
+			success = success && pullFloat(&meta.camera.ang[1], _versionHasFullFloat);
+			success = success && pullFloat(&meta.camera.ang[2], _versionHasFullFloat);
 			for (int a = 0; a < 3; a++) {
-				success = success && pullFloat(&meta.camera.viewAxis[a][0]);
-				success = success && pullFloat(&meta.camera.viewAxis[a][1]);
-				success = success && pullFloat(&meta.camera.viewAxis[a][2]);
+				success = success && pullFloat(&meta.camera.viewAxis[a][0], _versionHasFullFloat);
+				success = success && pullFloat(&meta.camera.viewAxis[a][1], _versionHasFullFloat);
+				success = success && pullFloat(&meta.camera.viewAxis[a][2], _versionHasFullFloat);
 			}
 			success = success && pullShort(&meta.camera.blendFrames);
-			success = success && pullFloat(&meta.camera.fov);
+			success = success && pullFloat(&meta.camera.fov, _versionHasFullFloat);
 			success = success && pullByte(&meta.camera.fisheyeMode);
-			success = success && pullFloat(&meta.camera.fishEyeNormalBlend);
+			success = success && pullFloat(&meta.camera.fishEyeNormalBlend, _versionHasFullFloat);
 			if (!success) {
 				return meta;
 			}
@@ -312,6 +323,30 @@ bool VideoMetaHelper::decodenum16fp6(unsigned char bA[3], unsigned short* a)
 	return true;
 }
 
+void VideoMetaHelper::encodenum32fp(const unsigned int a, unsigned char b[6])
+{
+	b[0] = (BITCOMPRESS32(a, 0) & 248) + 3 + (a & 1);
+	b[1] = (BITCOMPRESS32(a, 2)) + 3 + (a & 1);
+	b[2] = (BITCOMPRESS32(a, 4)) + 3 + (a & 1);
+
+	b[3] = (BITCOMPRESS32(a, 1) & 248) + 3 + ((a & 2) >> 1);
+	b[4] = (BITCOMPRESS32(a, 3)) + 3 + ((a & 2) >> 1);
+	b[5] = (BITCOMPRESS32(a, 5)) + 3 + ((a & 2) >> 1);
+}
+
+bool VideoMetaHelper::decodenum32fp(unsigned char bA[6], unsigned int* a)
+{
+	unsigned int b[6] = {
+		(unsigned int)((bA[0] >> 3) << 1),(unsigned int)((bA[1] >> 3) << 1),(unsigned int)((bA[2] >> 3) << 1),
+		(unsigned int)((bA[3] >> 3) << 1),(unsigned int)((bA[4] >> 3) << 1),(unsigned int)((bA[5] >> 3) << 1)
+	};
+	*a = BITEXPAND32(b[0], 0) | BITEXPAND32(b[1], 2) | BITEXPAND32(b[2], 4)
+		| BITEXPAND32(b[3], 1) | BITEXPAND32(b[4], 3) | BITEXPAND32(b[5], 5)
+		| (1 ^ (1 & ((bA[0] & bA[1]) | (bA[0] & bA[2]) | (bA[1] & bA[2]))))
+		| (((1 ^ (1 & ((bA[3] & bA[4]) | (bA[3] & bA[5]) | (bA[4] & bA[5]))))) << 1);
+	return true;
+}
+
 void VideoMetaHelper::encodenum(const unsigned char a, unsigned char b[3])
 {
 
@@ -435,13 +470,32 @@ size_t VideoMetaHelper::pushRGBAMult(const float* c4in) {
 	commitRGB();
 	return 3;
 }
-size_t VideoMetaHelper::pushFloat(const float f) {
+size_t VideoMetaHelper::pushFloat(const float f, bool fp32) {
+	if (fp32) {
+		return pushFloat32(f);
+	}
 	if (!CHECKRGB(1)) {
 		return 0;
 	}
 	encodenum16fp6(fp16_ieee_from_fp32_value(f), _bufferPtr);
 	commitRGB();
 	return 1;
+}
+size_t VideoMetaHelper::pushFloat32(const float f) {
+	if (!CHECKRGB(2)) {
+		return 0;
+	}
+	unsigned char tmp[6];
+	encodenum32fp(*(unsigned int*)&f, tmp);
+	_bufferPtr[0] = tmp[0];
+	_bufferPtr[1] = tmp[1];
+	_bufferPtr[2] = tmp[2];
+	commitRGB();
+	_bufferPtr[0] = tmp[3];
+	_bufferPtr[1] = tmp[4];
+	_bufferPtr[2] = tmp[5];
+	commitRGB();
+	return 2;
 }
 
 size_t VideoMetaHelper::pushMarker(const unsigned char b[4]) {
@@ -577,7 +631,10 @@ size_t VideoMetaHelper::pullRGBAMult(float* c4out) {
 	hdrPQtoSRGBLinear(c4, c4out);
 	return 3;
 }
-size_t VideoMetaHelper::pullFloat(float* f) {
+size_t VideoMetaHelper::pullFloat(float* f, bool fp32) {
+	if (fp32) {
+		return pullFloat32(f);
+	}
 	if (!CHECKRGB(1)) {
 		return 0;
 	}
@@ -587,6 +644,18 @@ size_t VideoMetaHelper::pullFloat(float* f) {
 	decodenum16fp6(rgb, &us);
 	*f = fp16_ieee_to_fp32_value(us);
 	return 1;
+}
+size_t VideoMetaHelper::pullFloat32(float* f) {
+	if (!CHECKRGB(2)) {
+		return 0;
+	}
+	unsigned char rgb[6];
+	getRGB(rgb);
+	getRGB(rgb+3);
+	unsigned int ui;
+	decodenum32fp(rgb, &ui);
+	*f = *(float*)&ui;
+	return 2;
 }
 
 size_t VideoMetaHelper::pullMarker(unsigned char b[4]) {

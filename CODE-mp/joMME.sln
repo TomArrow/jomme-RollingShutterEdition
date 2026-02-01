@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ui", "ui\ui.vcxproj", "{EA8
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game", "game\game.vcxproj", "{2D2E0D86-B056-478E-BEA5-C7A0D18DE570}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "videoMetaLib", "..\videoMetaLib\videoMetaLib.vcxproj", "{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -69,6 +71,18 @@ Global
 		{2D2E0D86-B056-478E-BEA5-C7A0D18DE570}.ReleaseWithDebug|Win32.Build.0 = ReleaseWithDebug|Win32
 		{2D2E0D86-B056-478E-BEA5-C7A0D18DE570}.ReleaseWithDebug|x64.ActiveCfg = ReleaseWithDebug|x64
 		{2D2E0D86-B056-478E-BEA5-C7A0D18DE570}.ReleaseWithDebug|x64.Build.0 = ReleaseWithDebug|x64
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Debug|Win32.Build.0 = Debug|Win32
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Debug|x64.ActiveCfg = Debug|x64
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Debug|x64.Build.0 = Debug|x64
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Release|Win32.ActiveCfg = Release|Win32
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Release|Win32.Build.0 = Release|Win32
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Release|x64.ActiveCfg = Release|x64
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.Release|x64.Build.0 = Release|x64
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.ReleaseWithDebug|x64.ActiveCfg = Release|x64
+		{5F9272E5-1A6A-4E68-9CB1-E64E851DD219}.ReleaseWithDebug|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

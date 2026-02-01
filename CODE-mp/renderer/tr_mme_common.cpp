@@ -189,11 +189,13 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 
 	if (mme_videoMetaRows->integer > 0) {
 		// write that extra data
-		size_t rgbOffsets[4] = {0,1,2,};
+		size_t rgbOffsets[4] = {0,1,2,3};
 		int multiplier = 1;
 		qboolean bgr = qfalse;
 		switch (shot->type) {
 		case mmeShotTypeBGR:
+			rgbOffsets[0] = 2;
+			rgbOffsets[2] = 0;
 			bgr = qtrue;
 		case mmeShotTypeRGB:
 			multiplier = 3;
@@ -237,7 +239,7 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 			memcpy(inBuf + (y + metaRows) * stride, inBuf + y * stride, stride);
 		}
 		// copy over the inverted meta buffer.
-		for (int y = 0; y < mme_videoMetaRows->integer; y++) {
+		for (int y = 0; y < metaRows; y++) {
 			memcpy(inBuf + (metaRows - 1 - y) * stride, outBuf + y * stride, stride);
 		}
 
