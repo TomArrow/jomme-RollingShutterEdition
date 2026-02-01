@@ -287,9 +287,11 @@ void VideoMetaHelper::srgbLinearToHDRPQ(const float in[3], float out[3]) {
 }
 void VideoMetaHelper::hdrPQtoSRGBLinear(const float in[3], float out[3]) {
 
-	out[0] = powf((powf(in[0], m2inv) - c1) / (c2 - c3 * powf(in[0], m2inv)), m1inv);
-	out[1] = powf((powf(in[1], m2inv) - c1) / (c2 - c3 * powf(in[1], m2inv)), m1inv);
-	out[2] = powf((powf(in[2], m2inv) - c1) / (c2 - c3 * powf(in[2], m2inv)), m1inv);
+	// the check for 0 is important, otherwise we end up with a negative exponent for some reason...
+	// TODO technically i should check against the smallest value that produces NaN but lazy. And we only input scaled 8 bit numbers anyway
+	out[0] = in[0] == 0 ? 0 : powf((powf(in[0], m2inv) - c1) / (c2 - c3 * powf(in[0], m2inv)), m1inv);
+	out[1] = in[1] == 0 ? 0 : powf((powf(in[1], m2inv) - c1) / (c2 - c3 * powf(in[1], m2inv)), m1inv);
+	out[2] = in[2] == 0 ? 0 : powf((powf(in[2], m2inv) - c1) / (c2 - c3 * powf(in[2], m2inv)), m1inv);
 
 	// 1.0f in the source would mean 10,000 nits. 
 	// Let's assume 400 nits for a typical gaming monitor (so the target for 1.0f from source buffer)

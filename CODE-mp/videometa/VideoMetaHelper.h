@@ -17,7 +17,7 @@
 class VideoMeta_t {
 public:
 	// VIDT
-	unsigned char				VIDT_version[4] = { 0,0,0,1 };
+	unsigned char				VIDT_version[4] = { 0,0,0,2 };
 
 	struct {
 		float					pos[3] = { 0,0,0 };
