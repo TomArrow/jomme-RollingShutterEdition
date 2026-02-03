@@ -585,7 +585,7 @@ void Con_DrawNotify (std::vector<ConsoleLine_t>* linesBuffer)
 
 		if (linesBuffer) {
 			ConsoleLine_t line;
-			line.ageMilliseconds = cls.gameTime - gameTime;
+			line.ageMilliseconds = gameTime;
 			bool endFound = false;
 			for (x = con.linewidth - 1; x >= 0; x--) {
 				if ((text[x].letter == '\0' || text[x].letter == ' ') && !endFound) {
