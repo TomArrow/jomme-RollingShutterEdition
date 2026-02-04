@@ -503,7 +503,7 @@ qboolean Cvar_Command( void ) {
 			return qtrue;
 		}
 */
-		Com_Printf ("\"%s\" is:\"%s" S_COLOR_WHITE "\" default:\"%s" S_COLOR_WHITE "\"\n", v->name, v->string, v->resetString );
+		Com_Printf ("\"%s\" is:\"%s" S_COLOR_RESET "\" default:\"%s" S_COLOR_RESET "\"\n", v->name, v->string, v->resetString );
 		if ( v->latchedString ) {
 			Com_Printf( "latched: \"%s\"\n", v->latchedString );
 		}

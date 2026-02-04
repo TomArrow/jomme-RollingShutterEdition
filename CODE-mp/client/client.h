@@ -322,7 +322,7 @@ typedef struct {
 //	char letter;
 //} consoleLetter_t;
 
-#define consoleLetter_t consoleLetterMeta_t
+#define consoleLetter_t centerPrintLetterMeta_t
 
 typedef struct {
 	qboolean	initialized;

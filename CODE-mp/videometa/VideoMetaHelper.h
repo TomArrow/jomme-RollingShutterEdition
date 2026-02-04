@@ -13,11 +13,16 @@
 
 
 
+#define CHECKSPACE(a) ((_stride*_height-_currentOffset)>=(a))
+#define FORWARD(a) _currentOffset += (a); _bufferPtr += (a);
+//#define CHECKRGB(a) ((_stride*_height-_currentOffset)>=(_multiplier*(a)))
+#define CHECKRGB(a) (_rgbsLeft >= (a))
+#define FORWARDRGB(a) _currentOffset += (a)*_multiplier; _bufferPtr += (a)*_multiplier; _rgbsLeft -= a;
 
 class VideoMeta_t {
 public:
 	// VIDT
-	unsigned char				VIDT_version[4] = { 0,0,0,2 };
+	unsigned char				VIDT_version[4] = { 0,0,0,3 };
 
 	struct {
 		float					pos[3] = { 0,0,0 };
@@ -59,6 +64,7 @@ class VideoMetaHelper {
 	
 	// Versioning
 	bool			_versionHasFullFloat = false;
+	bool			_versionHasConsoleBGColor = false;
 public:
 
 	static void srgbLinearToHDRPQ(const float in[3], float out[3]);
@@ -127,13 +133,13 @@ public:
 		_totalBytes = height * stride;
 	}
 	// use this constructor for automatically finding the start to begin reading. read only.
-	VideoMetaHelper(unsigned char* buf, size_t width, size_t height, size_t totalHeight, size_t stride, size_t multiplier, size_t rgboffsets[3]) {
+	VideoMetaHelper(unsigned char* buf, size_t width, size_t height, size_t totalHeight, size_t stride, size_t multiplier, size_t rgboffsets[3]) { // height param actually irrelevant
 		// TODO seek.
 		_bufferPtr = _buffer = buf;
 		_write = false;
 		_width = width;
 		_stride = stride;
-		_height = height;
+		_height = totalHeight;
 		_multiplier = multiplier;
 		_bytesPerRow = _width * _multiplier;
 		_rgboffsets[0] = rgboffsets[0];
@@ -150,7 +156,27 @@ public:
 		if (_rgboffsets[0] != 0 || _rgboffsets[1] != 1 || _rgboffsets[2] != 2) {
 			_needsRGBRearrange = true;
 		}
-		_totalBytes = height * stride;
+		_totalBytes = totalHeight * stride;
+
+		// find the start
+		unsigned char readBuf[4];
+		pullMarker(readBuf);
+		if (!memcmp(readBuf, VIDT_marker, 4)) {
+			FORWARDRGB(-4);
+		}
+		else {
+			bool startFound = false;
+			do {
+				if (!forwardLine()) {
+					break;
+				}
+				pullMarker(readBuf);
+				if (!memcmp(readBuf, VIDT_marker, 4)) {
+					startFound = true;
+					FORWARDRGB(-4);
+				}
+			} while (!startFound);
+		}
 	}
 
 	size_t writeMeta(VideoMeta_t& meta);

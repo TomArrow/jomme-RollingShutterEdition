@@ -1587,7 +1587,7 @@ static void CG_ShowOverride( const char *configString, const char *overrideStrin
 		entry = entryList[n];
 		v = Info_ValueForKey( configString, entryList[n] );
 		if ( v[0] ) {
-			Com_Printf(S_COLOR_WHITE " %s ", entryList[n] );
+			Com_Printf(S_COLOR_RESET " %s ", entryList[n] );
 			Com_Printf( v );
 			continue;
 		}

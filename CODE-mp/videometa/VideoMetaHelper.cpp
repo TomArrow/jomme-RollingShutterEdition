@@ -10,11 +10,6 @@
 #define BITEXPAND32(num,phase) (((((((num)&63ULL)*0x401004000200802ULL)&0x8008008002002002ULL)*0x100000001ULL)>>32ULL)>>phase)
 
 
-#define CHECKSPACE(a) ((_stride*_height-_currentOffset)>=(a))
-#define FORWARD(a) _currentOffset += (a); _bufferPtr += (a);
-//#define CHECKRGB(a) ((_stride*_height-_currentOffset)>=(_multiplier*(a)))
-#define CHECKRGB(a) (_rgbsLeft >= (a))
-#define FORWARDRGB(a) _currentOffset += (a)*_multiplier; _bufferPtr += (a)*_multiplier; _rgbsLeft -= a;
 
 
 #define COMPAREINDEX(v,a,i,n) ((a) < (v)[(i)] || ((a) == (v)[(i)] && (n)))
@@ -163,6 +158,9 @@ void VideoMetaHelper::printMetaToStream(VideoMeta_t& meta, std::ostream& ss)
 			pushJSONChar(letter.letter, ss);
 			ss << "\",";
 			ss << "\"color\":[" << letter.color[0] << "," << letter.color[1] << "," << letter.color[2] << "," << letter.color[3] << "]";
+			if (_versionHasConsoleBGColor) {
+				ss << ",\"bgColor\":[" << letter.bgColor[0] << "," << letter.bgColor[1] << "," << letter.bgColor[2] << "," << letter.bgColor[3] << "]";
+			}
 			if (j == line.letters.size() - 1) {
 				ss << "}\n";
 			}
@@ -213,6 +211,7 @@ void VideoMetaHelper::printMetaToStream(VideoMeta_t& meta, std::ostream& ss)
 }
 size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 	_versionHasFullFloat = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 2);
+	_versionHasConsoleBGColor = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 3);
 	bool success = true;
 	success = success && pushMarker(VIDT_marker);
 	success = success && pushMarker(meta.VIDT_version);
@@ -251,6 +250,9 @@ size_t VideoMetaHelper::writeMeta(VideoMeta_t& meta){
 			success = success && pushShort(std::clamp(it->ageMilliseconds,(int)0,(int)UINT16_MAX));
 			for (int i = 0; i < letterCount; i++) {
 				success = success && pushRGBA(it->letters[i].color);
+				if (_versionHasConsoleBGColor) {
+					success = success && pushRGBA(it->letters[i].bgColor);
+				}
 				success = success && pushByte(it->letters[i].letter);
 			}
 		}
@@ -309,6 +311,7 @@ VideoMeta_t VideoMetaHelper::parseMeta(){
 				return meta;
 			}
 			_versionHasFullFloat = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 2);
+			_versionHasConsoleBGColor = VERSIONATLEAST(meta.VIDT_version, 0, 0, 0, 3);
 		}
 		else if (!memcmp(readBuf, CMRA_marker,4)) {
 			bool success = pullFloat(&meta.camera.pos[0], _versionHasFullFloat);
@@ -359,6 +362,9 @@ VideoMeta_t VideoMetaHelper::parseMeta(){
 				for (int i = 0; i < charCount && success; i++) {
 					consoleLetterMeta_t newLetter;
 					success = success && pullRGBA(newLetter.color);
+					if (_versionHasConsoleBGColor) {
+						success = success && pullRGBA(newLetter.bgColor);
+					}
 					success = success && pullByte((unsigned char*)&newLetter.letter);
 					newLine.letters.push_back(std::move(newLetter));
 				}
@@ -418,6 +424,10 @@ size_t VideoMetaHelper::forwardLine() {
 	size_t lineOffset = _currentOffset % _stride;
 	size_t diff = _stride - lineOffset;
 	if (CHECKSPACE(diff)) {
+		if (lineOffset < _bytesPerRow) {
+			size_t skippedRGBs = (_bytesPerRow - lineOffset) / _multiplier;
+			_rgbsLeft -= skippedRGBs;
+		}
 		FORWARD(diff);
 		return diff;
 	}

@@ -461,7 +461,7 @@ void CG_StrafeHelper_f(void) {
 		}
 		trap_Cvar_Update(&cg_strafeHelper);
 
-		Com_Printf("%s %s^7\n", strafeTweaks[index].string, ((cg_strafeHelper.integer & (1 << index))
+		Com_Printf("%s %s"S_COLOR_RESET"\n", strafeTweaks[index].string, ((cg_strafeHelper.integer & (1 << index))
 			? "^2Enabled" : "^1Disabled"));
 	}
 }
@@ -527,7 +527,7 @@ void cg_speedometer_f(void)
 		}
 		trap_Cvar_Update(&cg_speedometer);
 
-		Com_Printf("%s %s^7\n", speedometerSettings[index2].string, ((cg_speedometer.integer & (1 << index2))
+		Com_Printf("%s %s"S_COLOR_RESET"\n", speedometerSettings[index2].string, ((cg_speedometer.integer & (1 << index2))
 			? "^2Enabled" : "^1Disabled"));
 	}
 }
@@ -688,28 +688,28 @@ void CG_ClientList_f(void)
 		{
 		case TEAM_FREE:
 			if (cgs.isCTFMod && cgs.CTF3ModeActive) {
-				CG_Printf("%2d " S_COLOR_YELLOW "Y   " S_COLOR_WHITE "%s" S_COLOR_WHITE "%s\n", i,
+				CG_Printf("%2d " S_COLOR_YELLOW "Y   " S_COLOR_RESET "%s" S_COLOR_WHITE "%s\n", i,
 					ci->name, (ci->botSkill != 0) ? " (bot)" : "");
 			}
 			else {
-				CG_Printf("%2d " S_COLOR_YELLOW "F   " S_COLOR_WHITE "%s" S_COLOR_WHITE "%s\n", i,
+				CG_Printf("%2d " S_COLOR_YELLOW "F   " S_COLOR_RESET "%s" S_COLOR_WHITE "%s\n", i,
 					ci->name, (ci->botSkill != 0) ? " (bot)" : "");
 			}
 			break;
 
 		case TEAM_RED:
-			CG_Printf("%2d " S_COLOR_RED "R   " S_COLOR_WHITE "%s" S_COLOR_WHITE "%s\n", i,
+			CG_Printf("%2d " S_COLOR_RED "R   " S_COLOR_RESET "%s" S_COLOR_WHITE "%s\n", i,
 				ci->name, (ci->botSkill != 0) ? " (bot)" : "");
 			break;
 
 		case TEAM_BLUE:
-			CG_Printf("%2d " S_COLOR_BLUE "B   " S_COLOR_WHITE "%s" S_COLOR_WHITE "%s\n", i,
+			CG_Printf("%2d " S_COLOR_BLUE "B   " S_COLOR_RESET "%s" S_COLOR_WHITE "%s\n", i,
 				ci->name, (ci->botSkill != 0) ? " (bot)" : "");
 			break;
 
 		default:
 		case TEAM_SPECTATOR:
-			CG_Printf("%2d " S_COLOR_YELLOW "S   " S_COLOR_WHITE "%s" S_COLOR_WHITE "%s\n", i,
+			CG_Printf("%2d " S_COLOR_YELLOW "S   " S_COLOR_RESET "%s" S_COLOR_WHITE "%s\n", i,
 				ci->name, (ci->botSkill != 0) ? " (bot)" : "");
 			break;
 		}

@@ -1894,6 +1894,10 @@ static void CL_CheckSVStripEdRef(char *buf, const char *str)
 					}
 					stripRef[r] = 0;
 
+					if (b < MAX_STRIPED_SV_STRING - 3) { // reset the color
+						buf[b++] = '^';
+						buf[b++] = '\xff';
+					}
 					buf[b] = 0;
 					Q_strcat(buf, MAX_STRIPED_SV_STRING, SP_GetStringTextString(va("SVINGAME_%s", stripRef)));
 					b = strlen(buf);

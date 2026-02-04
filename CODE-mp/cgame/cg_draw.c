@@ -3625,7 +3625,7 @@ static void CG_DrawCrosshairNames( void ) {
 		return;
 	}
 
-	name = va("^7%s", cgs.clientinfo[ cg.crosshairClientNum ].name);
+	name = va(S_COLOR_RESET"%s", cgs.clientinfo[ cg.crosshairClientNum ].name);
 
 	if (cgs.gametype >= GT_TEAM) {
 		if (cgs.clientinfo[cg.crosshairClientNum].team == TEAM_RED) {

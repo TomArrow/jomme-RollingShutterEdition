@@ -115,7 +115,7 @@ static void CG_Obituary( entityState_t *ent ) {
 	}
 //	Q_strncpyz( targetName, Info_ValueForKey( targetInfo, "n" ), sizeof(targetName) - 2);
 	Q_strncpyz( targetName, ci->name, sizeof(targetName) - 2);
-	strcat( targetName, S_COLOR_WHITE );
+	strcat( targetName, S_COLOR_RESET);
 
 	// check for single client messages
 
@@ -304,7 +304,7 @@ clientkilled:
 	} else {
 //		Q_strncpyz( attackerName, Info_ValueForKey( attackerInfo, "n" ), sizeof(attackerName) - 2);
 		Q_strncpyz( attackerName, cia->name, sizeof(attackerName) - 2);
-		strcat( attackerName, S_COLOR_WHITE );
+		strcat( attackerName, S_COLOR_RESET);
 		// check for kill messages about the current clientNum
 		if (cg.playerCent && target == cg.playerCent->currentState.number) {
 			Q_strncpyz( cg.killerName, attackerName, sizeof( cg.killerName ) );
@@ -956,7 +956,7 @@ void CG_PrintCTFMessage(clientInfo_t *ci, const char *teamName, int ctfMessage) 
 			int strLen = 0;
 			int i = 0;
 			if (ci) {
-				Com_sprintf(printMsg, sizeof(printMsg), "%s^7 ", ci->name);
+				Com_sprintf(printMsg, sizeof(printMsg), "%s"S_COLOR_RESET" ", ci->name);
 				strLen = strlen(printMsg);
 			}
 			while (stripEdString[i] && i < 512) {
@@ -977,7 +977,7 @@ void CG_PrintCTFMessage(clientInfo_t *ci, const char *teamName, int ctfMessage) 
 	}
 
 	if (ci) {
-		Com_sprintf(printMsg, sizeof(printMsg), "%s^7 %s", ci->name, stripEdString);
+		Com_sprintf(printMsg, sizeof(printMsg), "%s"S_COLOR_RESET" %s", ci->name, stripEdString);
 	} else {
 		Com_sprintf(printMsg, sizeof(printMsg), "%s", stripEdString);
 	}

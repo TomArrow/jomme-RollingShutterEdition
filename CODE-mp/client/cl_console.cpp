@@ -376,7 +376,7 @@ const char* CL_ConsolePrintTimeStamp(const char* txt) {
 			time(&rawtime);
 			strftime(timeStr, sizeof(timeStr), "[%H:%M:%S]", localtime(&rawtime));
 		}
-		return va(S_COLOR_WHITE"%s %s", timeStr, txt);
+		return va(S_COLOR_RESET "%s %s", timeStr, txt);
 	}
 	return txt;
 }
@@ -384,7 +384,9 @@ void CL_ConsolePrint( char *txt ) {
 	int		y;
 	int		c, l;
 	int		color;
+	int		colorIndex = 0;
 	vec4_t	colorVec;
+	vec4_t	bgColorVec = {0.15f,0.15f,0.15f,0.0f};
 	qboolean skipnotify = qfalse;		// NERVE - SMF
 	int prev;							// NERVE - SMF
 
@@ -415,19 +417,41 @@ void CL_ConsolePrint( char *txt ) {
 		if (Q_IsColorStringHex((unsigned char*)txt)) {
 			int skipCount = 0;
 			Q_parseColorHex(txt + 1, colorVec, &skipCount);
+			if (colorIndex % 2) {
+				Vector4Copy(colorVec, bgColorVec);
+			}
 			txt += 1 + skipCount;
+			colorIndex++;
+			continue;
+		}
+		else if (Q_IsColorStringReset((unsigned char*)txt)) { // proper reset for prints. to make things a bit cleaner
+			Vector4Set(colorVec,1.0f,1.0f,1.0f,1.0f);
+			Vector4Set(bgColorVec,0.15f,0.15f,0.15f,0.0f);
+			colorIndex = 0;
+			txt += 2;
 			continue;
 		}
 		else if ( (demo15detected || mme_forceDM15Optics->integer > 1) && ntModDetected && Q_IsColorStringNT( (unsigned char*) txt ) ) {
 			color = ColorIndexNT( *(txt+1) );
 			Vector4Copy(g_color_table_nt[color], colorVec);
+			if (colorIndex % 2) {
+				Vector4Copy(colorVec, bgColorVec);
+			}
 			txt += 2;
+			colorIndex++;
 			continue;
 		} else if ( Q_IsColorString( (unsigned char*) txt ) || Q_IsColorString_1_02((unsigned char*)txt) || Q_IsColorString_Extended((unsigned char*)txt)) {
 			color = ColorIndex( *(txt+1) );
 			Vector4Copy(g_color_table[color], colorVec);
+			if (colorIndex % 2) {
+				Vector4Copy(colorVec, bgColorVec);
+			}
 			txt += 2;
+			colorIndex++;
 			continue;
+		}
+		else {
+			colorIndex = 0;
 		}
 
 		// count word length
@@ -459,6 +483,7 @@ void CL_ConsolePrint( char *txt ) {
 			y = con.current % con.totallines;
 			//con.text[y*con.linewidth+con.x] = (short) ((color << 8) | c);
 			Vector4Copy(colorVec, con.text[y*con.linewidth+con.x].color);
+			Vector4Copy(bgColorVec, con.text[y*con.linewidth+con.x].bgColor);
 			con.text[y * con.linewidth + con.x].letter = c;
 			con.x++;
 			if (con.x >= con.linewidth) {
@@ -603,6 +628,9 @@ void Con_DrawNotify (std::vector<ConsoleLine_t>* linesBuffer)
 					line.letters[x].color[0] = R_sRGBToLinear(text[x].color[0]);
 					line.letters[x].color[1] = R_sRGBToLinear(text[x].color[1]);
 					line.letters[x].color[2] = R_sRGBToLinear(text[x].color[2]);
+					line.letters[x].bgColor[0] = R_sRGBToLinear(text[x].bgColor[0]);
+					line.letters[x].bgColor[1] = R_sRGBToLinear(text[x].bgColor[1]);
+					line.letters[x].bgColor[2] = R_sRGBToLinear(text[x].bgColor[2]);
 				}
 			}
 			linesBuffer->push_back(std::move(line));

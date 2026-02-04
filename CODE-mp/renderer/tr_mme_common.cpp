@@ -209,7 +209,7 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 		}
 
 		// centerprint stuff
-		RE_Font_DrawString_Buffer(&videoMeta.centerPrint, tr.refdef.centerPrintFont, tr.refdef.centerPrint, colorWhite);
+		RE_Font_DrawString_Buffer(&videoMeta.centerPrint, tr.refdef.centerPrintFont | STYLE_DROPSHADOW, tr.refdef.centerPrint, colorWhite);
 
 		Con_DrawNotify(&videoMeta.consoleLines);
 

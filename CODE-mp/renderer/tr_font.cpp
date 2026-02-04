@@ -903,7 +903,13 @@ centerPrintLetterMeta_t* RE_Font_GetBufferLetter(std::vector<centerPrintLetterMe
 			buffer->emplace_back();
 			buffer->back().letter = '*';
 			Vector4Set(buffer->back().color, 1.0f, 1.0f, 1.0f, 1.0f);
-			Vector4Set(buffer->back().bgColor, 0.15f, 0.15f, 0.15f, 1.0f);
+			static const float greyLinear = R_sRGBToLinear(0.15f);
+			if (r_gammaSrgbLightvalues->integer) {
+				Vector4Set(buffer->back().bgColor, greyLinear, greyLinear, greyLinear, 0.0f);
+			}
+			else {
+				Vector4Set(buffer->back().bgColor, 0.15f, 0.15f, 0.15f, 0.0f);
+			}
 		}
 		letter = &(*buffer)[charIndex];
 		if (drawingBgText) {
@@ -984,6 +990,12 @@ void RE_Font_DrawStringReal(fontDrawPosition_t drawPosition, const char *psText,
 	
 	// Draw a dropshadow if required
 	vec4_t v4DKGREY2 = { 0.15f, 0.15f, 0.15f, rgba ? rgba[3] : 1.0f };
+	if (r_gammaSrgbLightvalues->integer) {
+
+		static const vec3_t v4DKGREY2Linear = { R_sRGBToLinear(0.15f), R_sRGBToLinear(0.15f), R_sRGBToLinear(0.15f) };
+		VectorCopy(v4DKGREY2Linear, v4DKGREY2);
+	}
+
 	/*if (r_gammaSrgbLightvalues->integer) { // No need to do this here, I do it to the rgba argument now anyway.
 		v4DKGREY2[0] = R_sRGBToLinear(v4DKGREY2[0]);
 		v4DKGREY2[1] = R_sRGBToLinear(v4DKGREY2[1]);

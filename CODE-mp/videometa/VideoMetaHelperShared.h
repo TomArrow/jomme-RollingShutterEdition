@@ -3,16 +3,19 @@
 #ifndef VIDEOMETAHELPERSHARED_H
 #define VIDEOMETAHELPERSHARED_H
 
-typedef struct {
-	float		color[4];
-	char		letter;
-} consoleLetterMeta_t;
+//typedef struct {
+//	float		color[4];
+//	char		letter;
+//} consoleLetterMeta_t;
+
 
 typedef struct {
 	float		color[4];
 	float		bgColor[4];
 	char		letter;
 } centerPrintLetterMeta_t;
+#define consoleLetterMeta_t centerPrintLetterMeta_t
+
 
 typedef struct playerMeta_s {
 	float					light[3];

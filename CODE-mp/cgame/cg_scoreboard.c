@@ -1148,7 +1148,7 @@ qboolean CG_DrawOldScoreboardEternal(void) {
 	if (cgs.gametype == GT_TOURNAMENT && cgs.duelWinner != -1 &&
 		cg.predictedPlayerState.pm_type == PM_INTERMISSION)
 	{
-		s = va("%s" S_COLOR_WHITE " %s", cgs.clientinfo[cgs.duelWinner].name, CG_GetStripEdString("INGAMETEXT", "DUEL_WINS"));
+		s = va("%s" S_COLOR_RESET " %s", cgs.clientinfo[cgs.duelWinner].name, CG_GetStripEdString("INGAMETEXT", "DUEL_WINS"));
 		/*w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 		x = 0.5f * ( SCREEN_WIDTH - w );
 		y = 40;
@@ -1161,7 +1161,7 @@ qboolean CG_DrawOldScoreboardEternal(void) {
 	else if (cgs.gametype == GT_TOURNAMENT && cgs.duelist1 != -1 && cgs.duelist2 != -1 &&
 		cg.predictedPlayerState.pm_type == PM_INTERMISSION)
 	{
-		s = va("%s" S_COLOR_WHITE " %s %s", cgs.clientinfo[cgs.duelist1].name, CG_GetStripEdString("INGAMETEXT", "SPECHUD_VERSUS"), cgs.clientinfo[cgs.duelist2].name);
+		s = va("%s" S_COLOR_RESET " %s %s", cgs.clientinfo[cgs.duelist1].name, CG_GetStripEdString("INGAMETEXT", "SPECHUD_VERSUS"), cgs.clientinfo[cgs.duelist2].name);
 		/*w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 		x = 0.5f * ( SCREEN_WIDTH - w );
 		y = 40;

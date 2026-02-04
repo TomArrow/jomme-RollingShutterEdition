@@ -1248,7 +1248,12 @@ static void CG_RemoveChatEscapeChar( char *text ) {
 	for ( i = 0; text[i]; i++ ) {
 		if (text[i] == '\x19')
 			continue;
-		text[l++] = text[i];
+		if (i > 0 && text[i-1] == '^' && text[i] == '7' && text[i+1] == '\x19') {//replace white color separator with reset color so console is drrawn nicer
+			text[l++] = '\xff';
+		}
+		else {
+			text[l++] = text[i];
+		}
 	}
 	text[l] = '\0';
 }
@@ -1306,6 +1311,10 @@ void CG_CheckSVStripEdRef(char *buf, const char *str)
 					}
 					stripRef[r] = 0;
 
+					if (b < MAX_STRIPED_SV_STRING - 3) { // reset the color
+						buf[b++] = '^';
+						buf[b++] = '\xff';
+					}
 					buf[b] = 0;
 					Q_strcat(buf, MAX_STRIPED_SV_STRING, CG_GetStripEdString("SVINGAME", stripRef));
 					b = strlen(buf);

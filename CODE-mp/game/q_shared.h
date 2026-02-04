@@ -982,8 +982,20 @@ char* Q_colorToHex(float* color, qboolean ntMod);
 #define Q_IsColorString_1_02(p)	( (p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE ) // 1.02 ColorStrings
 #define Q_IsColorString_Extended(p) Q_IsColorString_1_02(p)
 
+
+#define Q_IsColorStringReset(p)	( (p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) == (unsigned char)'\xff' ) // 1.02 ColorStrings
+
 #define Q_IsColorStringNT(p)	( (p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE && *((p)+1) <= 0x7F && *((p)+1) >= 0x00 )
 #define ColorIndexNT(c)			( (c) & 127 )
+
+/*
+#define Q_IsHex(p) ((p) && ((*(p) >= '0' && *(p) <= '9') || (*(p) >= 'a' && *(p) <= 'f') || (*(p) >= 'A' && *(p) <= 'F')))
+#define Q_IsColorStringHexY(p) ((p)+8) && (p) && *(p)=='Y' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3)) && Q_IsHex((p+4)) && Q_IsHex((p+5)) && Q_IsHex((p+6)) && Q_IsHex((p+7)) && Q_IsHex((p+8))
+#define Q_IsColorStringHexy(p) ((p)+4) && (p) && *(p)=='y' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3)) && Q_IsHex((p+4))
+#define Q_IsColorStringHexX(p) ((p)+6) && (p) && *(p)=='X' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3)) && Q_IsHex((p+4)) && Q_IsHex((p+5)) && Q_IsHex((p+6))
+#define Q_IsColorStringHexx(p) ((p)+3) && (p) && *(p)=='x' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3))
+#define Q_IsColorStringHexRest(p) ( (Q_IsColorStringHexY((p))) || (Q_IsColorStringHexy((p))) || (Q_IsColorStringHexX((p))) || (Q_IsColorStringHexx((p)) ) )
+#define Q_IsColorStringHex(p) ((p) && *(p) == Q_COLOR_ESCAPE && Q_IsColorStringHexRest((p)+1) )*/
 
 #define Q_IsHex(p) ((p) && ((*(p) >= '0' && *(p) <= '9') || (*(p) >= 'a' && *(p) <= 'f') || (*(p) >= 'A' && *(p) <= 'F')))
 #define Q_IsColorStringHexY(p) ((p)+8) && (p) && *(p)=='Y' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3)) && Q_IsHex((p+4)) && Q_IsHex((p+5)) && Q_IsHex((p+6)) && Q_IsHex((p+7)) && Q_IsHex((p+8))
@@ -991,7 +1003,18 @@ char* Q_colorToHex(float* color, qboolean ntMod);
 #define Q_IsColorStringHexX(p) ((p)+6) && (p) && *(p)=='X' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3)) && Q_IsHex((p+4)) && Q_IsHex((p+5)) && Q_IsHex((p+6))
 #define Q_IsColorStringHexx(p) ((p)+3) && (p) && *(p)=='x' && Q_IsHex((p+1)) && Q_IsHex((p+2)) && Q_IsHex((p+3))
 #define Q_IsColorStringHexRest(p) ( (Q_IsColorStringHexY((p))) || (Q_IsColorStringHexy((p))) || (Q_IsColorStringHexX((p))) || (Q_IsColorStringHexx((p)) ) )
-#define Q_IsColorStringHex(p) ((p) && *(p) == Q_COLOR_ESCAPE && Q_IsColorStringHexRest((p)+1) )
+#define Q_IsColorStringHexStrict(p) ((p) && *(p) == Q_COLOR_ESCAPE && Q_IsColorStringHexRest((p)+1) )
+
+#define Q_IsHexLenient(p) ( (p) && *(p) )
+#define Q_IsColorStringHexYLenient(p) ((p)+8) && (p) && *(p)=='Y' && Q_IsHexLenient((p+1)) && Q_IsHexLenient((p+2)) && Q_IsHexLenient((p+3)) && Q_IsHexLenient((p+4)) && Q_IsHexLenient((p+5)) && Q_IsHexLenient((p+6)) && Q_IsHexLenient((p+7)) && Q_IsHexLenient((p+8))
+#define Q_IsColorStringHexyLenient(p) ((p)+4) && (p) && *(p)=='y' && Q_IsHexLenient((p+1)) && Q_IsHexLenient((p+2)) && Q_IsHexLenient((p+3)) && Q_IsHexLenient((p+4))
+#define Q_IsColorStringHexXLenient(p) ((p)+6) && (p) && *(p)=='X' && Q_IsHexLenient((p+1)) && Q_IsHexLenient((p+2)) && Q_IsHexLenient((p+3)) && Q_IsHexLenient((p+4)) && Q_IsHexLenient((p+5)) && Q_IsHexLenient((p+6))
+#define Q_IsColorStringHexxLenient(p) ((p)+3) && (p) && *(p)=='x' && Q_IsHexLenient((p+1)) && Q_IsHexLenient((p+2)) && Q_IsHexLenient((p+3))
+#define Q_IsColorStringHexRestLenient(p) ( (Q_IsColorStringHexYLenient((p))) || (Q_IsColorStringHexyLenient((p))) || (Q_IsColorStringHexXLenient((p))) || (Q_IsColorStringHexxLenient((p)) ) )
+#define Q_IsColorStringHexLenient(p) ((p) && *(p) == Q_COLOR_ESCAPE && Q_IsColorStringHexRestLenient((p)+1) )
+
+//#define Q_IsColorStringHex(p,lenient) ( !(lenient) && Q_IsColorStringHexStrict((p)) || (lenient) && Q_IsColorStringHexLenient((p))   )
+#define Q_IsColorStringHex(p) Q_IsColorStringHexLenient((p))
 
 
 #define COLOR_BLACK		'0'
@@ -1025,6 +1048,7 @@ char* Q_colorToHex(float* color, qboolean ntMod);
 #define S_COLOR_CYAN	"^5"
 #define S_COLOR_MAGENTA	"^6"
 #define S_COLOR_WHITE	"^7"
+#define S_COLOR_RESET	"^\xff"
 
 // Extended Colors
 #define S_COLOR_ORANGE	"^8"
