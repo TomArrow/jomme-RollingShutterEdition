@@ -1075,7 +1075,7 @@ qboolean R_MME_TakeShot( void ) {
 			audioTaken = qtrue;
 
 			//fps = shotData.fps / (blurControl->totalFrames);
-			int outputFps = shotData.fps / (totalFramesCount);
+			float outputFps = shotData.fps / (totalFramesCount);
 			R_MME_SaveShot(&shotData.main, glConfig.vidWidth, glConfig.vidHeight, outputFps, shotBufPerm, audio, sizeSound, inSound);
 
 			//delete shotDataThreadCopy;

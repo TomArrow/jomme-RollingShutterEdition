@@ -1347,6 +1347,8 @@ extern void CG_ChatBox_AddString(char *chatStr); //cg_draw.c
 static void CG_ServerCommand( void ) {
 	const char	*cmd;
 	char		text[MAX_STRIPED_SV_STRING];
+	char		tempChatStr[MAX_STRING_CHARS] = { 0 };
+	char*		r = text, * w = tempChatStr;
 
 	cmd = CG_Argv(0);
 
@@ -1488,6 +1490,26 @@ static void CG_ServerCommand( void ) {
 				Q_strncpyz( text, demo15chat, MAX_SAY_TEXT );
 				demo15trychat = qfalse;
 			}
+
+			// replace "*/." with real percent symbol, and replace two single quotes with double quote
+			// NOTE: this creates real percent symbols in the string, be careful using va(), etc below here!
+			while (*r) {
+				if (*r == '*' && *(r + 1) == '/' && *(r + 2) == '.') {
+					*w = '%';
+					r += 3;
+				}
+				else if (*r == '\'' && *(r + 1) == '\'') {
+					*w = '"';
+					r += 2;
+				}
+				else {
+					*w = *r;
+					r++;
+				}
+				w++;
+			}
+			Q_strncpyz(text, tempChatStr, sizeof(text));
+
 			CG_ChatBox_AddString(text);
 			if (!cg_chatBox.integer)
 				CG_Printf( "%s\n", text );
@@ -1506,6 +1528,26 @@ static void CG_ServerCommand( void ) {
 			Q_strncpyz( text, demo15chat, MAX_SAY_TEXT );
 			demo15trychat = qfalse;
 		}
+
+		// replace "*/." with real percent symbol, and replace two single quotes with double quote
+		// NOTE: this creates real percent symbols in the string, be careful using va(), etc below here!
+		while (*r) {
+			if (*r == '*' && *(r + 1) == '/' && *(r + 2) == '.') {
+				*w = '%';
+				r += 3;
+			}
+			else if (*r == '\'' && *(r + 1) == '\'') {
+				*w = '"';
+				r += 2;
+			}
+			else {
+				*w = *r;
+				r++;
+			}
+			w++;
+		}
+		Q_strncpyz(text, tempChatStr, sizeof(text));
+
 		CG_ChatBox_AddString(text);
 		CG_AddToTeamChat( text );
 		if (!cg_chatBox.integer)
