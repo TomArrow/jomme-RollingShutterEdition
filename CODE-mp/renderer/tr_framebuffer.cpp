@@ -229,6 +229,7 @@ cvar_t *r_fboGLSLCloudShadowPower;
 cvar_t *r_fboGLSLCloudIntensityCompensate;
 cvar_t *r_fboGLSLFog;
 cvar_t *r_fboGLSLFogColor;
+cvar_t *r_fboGLSLPreviewSecondary;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeNormalBlend; // doesnt do anything rn
 cvar_t *r_fboFishEyeTessellate;
@@ -1399,18 +1400,36 @@ frameBufferData_t* R_FrameBufferCreate( int width, int height, int flags, int su
 	}
 	/* Attach the color buffer */
 	
-	if ( samples ) {
-		buffer->color = CreateRenderBuffer( samples, width, height, GL_RGBA, superSample);
-		qglFramebufferRenderbuffer(	GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, buffer->color );
-	} else if ( flags & FB_FLOAT16 ) {
-		buffer->color = CreateTextureBuffer( width, height, RGBA16F_ARB, GL_RGBA, GL_FLOAT, superSample, flags);
-		qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer->color, 0);
-	} else if ( flags & FB_FLOAT32 ) {
-		buffer->color = CreateTextureBuffer( width, height, RGBA32F_ARB, GL_RGBA, GL_FLOAT, superSample, flags);
-		qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer->color, 0);
-	} else {
-		buffer->color = CreateTextureBuffer( width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, superSample,flags);
-		qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer->color, 0);
+	for (int i = 0; i < 2; i++) {
+		GLuint* renderBuffer = &buffer->color;
+		GLenum attachment = GL_COLOR_ATTACHMENT0_EXT;
+		if (i == 1) {
+			if (flags & FB_SECONDARYBUFFER) {
+				renderBuffer = &buffer->secondaryColor; 
+				attachment = GL_COLOR_ATTACHMENT1_EXT;
+			}
+			else {
+				buffer->secondaryColor = 0;
+				break;
+			}
+		}
+
+		if (samples) {
+			*renderBuffer = CreateRenderBuffer(samples, width, height, GL_RGBA, superSample);
+			qglFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, *renderBuffer);
+		}
+		else if (flags & FB_FLOAT16) {
+			*renderBuffer = CreateTextureBuffer(width, height, RGBA16F_ARB, GL_RGBA, GL_FLOAT, superSample, flags);
+			qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, *renderBuffer, 0);
+		}
+		else if (flags & FB_FLOAT32) {
+			*renderBuffer = CreateTextureBuffer(width, height, RGBA32F_ARB, GL_RGBA, GL_FLOAT, superSample, flags);
+			qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, *renderBuffer, 0);
+		}
+		else {
+			*renderBuffer = CreateTextureBuffer(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, superSample, flags);
+			qglFramebufferTexture2D(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, *renderBuffer, 0);
+		}
 	}
 		
 	status = qglCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
@@ -1683,6 +1702,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLFog = ri.Cvar_Get( "r_fboGLSLFog", "0.0", CVAR_ARCHIVE);
 	r_fboGLSLFogColor = ri.Cvar_Get( "r_fboGLSLFogColor", "0.5 0.5 0.5", CVAR_ARCHIVE);
 	r_fboGLSLFogColor->modified = qtrue;
+	r_fboGLSLPreviewSecondary = ri.Cvar_Get( "r_fboGLSLPreviewSecondary", "0", CVAR_TEMP );
 	r_fboGLSLDLights = ri.Cvar_Get( "r_fboGLSLDLights", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsFast = ri.Cvar_Get( "r_fboGLSLDLightsFast", "1", CVAR_ARCHIVE );
 	r_fboGLSLDLightsVoxelShadows = ri.Cvar_Get( "r_fboGLSLDLightsVoxelShadows", "1", CVAR_ARCHIVE );
@@ -1777,8 +1797,7 @@ void R_FrameBuffer_Init( void ) {
 	}
 
 	//create our main frame buffer
-	fbo.main = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
-	fbo.extra = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
+	fbo.main = R_FrameBufferCreate( width, height, flags | FB_SECONDARYBUFFER,superSampleMultiplier );
 	fbo.exposure = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
 	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
@@ -1786,7 +1805,7 @@ void R_FrameBuffer_Init( void ) {
 		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags | FB_MIPMAP | FB_MAGLINEAR | FB_REPEATEDGE, superSampleMultiplier);
 	}
 
-	if (!fbo.main || !fbo.extra) {
+	if (!fbo.main/* || !fbo.extra*/) {
 		// if the main fbuffer failed then we should disable framebuffer 
 		// rendering
 		glMMEConfig.framebufferObject = qfalse;
@@ -2443,7 +2462,29 @@ void R_FrameBuffer_EndFrame( void ) {
 	qglEnable(GL_FRAMEBUFFER_SRGB);
 	R_SetGL2DSize( fbo.screenWidth, fbo.screenHeight );
 
-	R_DrawQuad(sourceBuffer->color, fbo.screenWidth, fbo.screenHeight);
+	switch (r_fboGLSLPreviewSecondary->integer) {
+	default:
+	case 0:
+		R_DrawQuad(sourceBuffer->color, fbo.screenWidth, fbo.screenHeight);
+		break;
+	case 1:
+		qglColor4f(0.01f, 0.01f, 0.01f, 1.0f);
+		R_DrawQuad(fbo.main->secondaryColor, fbo.screenWidth, fbo.screenHeight);
+		break;
+	case 2:
+		qglColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+		R_DrawQuad(fbo.main->depth, fbo.screenWidth, fbo.screenHeight);
+		break;
+	case 3:
+		qglColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+		R_DrawQuad(fbo.main->stencil, fbo.screenWidth, fbo.screenHeight);
+		break;
+	case 4:
+		qglColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+		R_DrawQuad(fbo.main->packed, fbo.screenWidth, fbo.screenHeight);
+		break;
+	}
+
 
 	usedFloat = qfalse;
 	mipMapsAlreadyGeneratedThisFrame = qfalse;

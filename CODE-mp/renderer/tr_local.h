@@ -2444,10 +2444,12 @@ extern bool g_bTextureRectangleHack;
 #define FB_MIPMAP		 		0x40		//Force mipmaps
 #define FB_MAGLINEAR	 		0x80		//Force linear upscaling
 #define FB_REPEATEDGE	 		0x100		//Force linear upscaling
+#define FB_SECONDARYBUFFER 		0x200		//Have a secondary color buffer for depth and stuff
 
 typedef struct {
 	GLuint 	fbo;
 	GLuint	color;					//Color in a texture
+	GLuint	secondaryColor;			//Secondary renderbuffer for camera distance and other things.
 	GLuint	packed;					//Packed depth/stencil texture
 	GLuint	depth;					//depth render buffer
 	GLuint	stencil;				//stencil render buffer
@@ -2509,7 +2511,7 @@ typedef struct {
 typedef struct {
 	frameBufferData_t* multiSample;
 	frameBufferData_t* main;
-	frameBufferData_t* extra; // depth and maybe other stuff
+	//frameBufferData_t* extra; // depth and maybe other stuff
 	frameBufferData_t* exposure;
 	frameBufferData_t* postprocessing;
 	frameBufferData_t* blur;
