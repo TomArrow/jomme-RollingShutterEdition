@@ -1365,6 +1365,10 @@ void APIENTRY unsupportedBlendFunci(GLuint buf, GLenum sfactor, GLenum dfactor)
 {
 	qglBlendFunc( sfactor, dfactor ); // meh lol
 }
+void APIENTRY unsupportedBlendEquationi(GLuint buf, GLenum mode)
+{
+	qglBlendEquation( mode ); // meh lol
+}
 
 /*
 ** GLW_InitExtensions
@@ -1929,6 +1933,9 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 	qglGenerateMipmap = (void (APIENTRY*)(GLenum)) qwglGetProcAddress("glGenerateMipmap");
 	qglClampColor = (void (APIENTRY*)(GLenum,GLenum)) qwglGetProcAddress("glClampColor");
 
+	
+	qglBlendEquation = (void (APIENTRY*)(GLuint)) qwglGetProcAddress("glBlendEquation"); // i should check for correct extensions here separately...
+
 	glMMEConfig.framebufferObject = qfalse;
 	glMMEConfig.shaderSupport = qfalse;
 	if (strstr(glConfig.extensions_string, "GL_EXT_framebuffer_object") &&
@@ -1947,6 +1954,7 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		qglDeleteRenderbuffers = (void (APIENTRY*)(GLsizei, const GLuint*)) qwglGetProcAddress("glDeleteRenderbuffersEXT");
 		qglDrawBuffers = (void (APIENTRY*)(GLsizei,const GLenum *)) qwglGetProcAddress("glDrawBuffers"); // i should check for correct extensions here separately...
 		qglBlendFunci = (void (APIENTRY*)(GLuint,GLenum,GLenum)) qwglGetProcAddress("glBlendFunci"); // i should check for correct extensions here separately...
+		qglBlendEquationi = (void (APIENTRY*)(GLuint, GLenum)) qwglGetProcAddress("glBlendEquationi"); // i should check for correct extensions here separately...
 
 		if (!strstr(glConfig.extensions_string, "GL_ARB_depth_texture")) {
 			ri.Printf(PRINT_WARNING, "WARNING: GL_ARB_depth_texture is missing\n");
@@ -1967,6 +1975,7 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 	}
 	else {
 		qglBlendFunci = unsupportedBlendFunci;
+		qglBlendEquationi = unsupportedBlendEquationi; // actually that wont work either cuz both fetchewd in there. HEHEHE
 	}
 
 	glConfig.depthMapFloat = qfalse;

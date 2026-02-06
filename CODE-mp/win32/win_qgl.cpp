@@ -418,6 +418,8 @@ void (APIENTRY* qglDeleteFramebuffers)(GLsizei, const GLuint*);
 void (APIENTRY* qglDeleteRenderbuffers)(GLsizei, const GLuint*);
 void (APIENTRY* qglDrawBuffers)(GLsizei n, const GLenum* bufs);
 void (APIENTRY* qglBlendFunci)(GLuint buf, GLenum sfactor, GLenum dfactor);
+void (APIENTRY* qglBlendEquation)(GLenum mode);
+void (APIENTRY* qglBlendEquationi)(GLuint buf, GLenum mode);
 
 void (APIENTRY* qglRenderbufferStorageMultisampleEXT) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 void (APIENTRY* qglBlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
@@ -464,6 +466,7 @@ void ( APIENTRY * dllBeginReal )(GLenum mode);
 static void ( APIENTRY * dllBindTexture )(GLenum target, GLuint texture);
 static void ( APIENTRY * dllBitmap )(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap);
 static void ( APIENTRY * dllBlendFunc )(GLenum sfactor, GLenum dfactor);
+static void ( APIENTRY * dllBlendEquation )(GLenum mode);
 static void ( APIENTRY * dllCallList )(GLuint list);
 static void ( APIENTRY * dllCallLists )(GLsizei n, GLenum type, const GLvoid *lists);
 static void ( APIENTRY * dllClear )(GLbitfield mask);
@@ -1000,6 +1003,39 @@ static void APIENTRY logBlendFunc(GLenum sfactor, GLenum dfactor)
 	fprintf( glw_state.log_fp, "glBlendFunc( %s, %s )\n", sf, df );
 	dllBlendFunc( sfactor, dfactor );
 }
+
+static void BlendEquationToName( char *n, GLenum f )
+{
+	switch ( f )
+	{
+	case GL_FUNC_ADD:
+		strcpy( n, "GL_FUNC_ADD" );
+		break;
+	case GL_FUNC_SUBTRACT:
+		strcpy( n, "GL_FUNC_SUBTRACT" );
+		break;
+	case GL_FUNC_REVERSE_SUBTRACT:
+		strcpy( n, "GL_FUNC_REVERSE_SUBTRACT" );
+		break;
+	case GL_MIN:
+		strcpy( n, "GL_MIN" );
+		break;
+	case GL_MAX:
+		strcpy( n, "GL_MAX" );
+		break;
+	default:
+		sprintf( n, "0x%x", f );
+	}
+}
+//static void APIENTRY logBlendEquation(GLenum mode)
+//{
+//	char modename[128];
+//
+//	BlendEquationToName( modename,mode );
+//
+//	fprintf( glw_state.log_fp, "glBlendEquation( %s )\n", modename );
+//	dllBlendEquation( mode );
+//}
 
 //static void APIENTRY logBlendFunci(GLuint buf, GLenum sfactor, GLenum dfactor)
 //{

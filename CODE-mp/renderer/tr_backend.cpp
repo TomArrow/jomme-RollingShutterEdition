@@ -378,6 +378,9 @@ void GL_State( unsigned int stateBits )
 
 			qglEnable( GL_BLEND );
 			qglBlendFunci(0, srcFactor, dstFactor );
+			if (r_fboGLSL->integer && ENABLEGLSL) {
+				qglBlendEquationi(1, GL_MIN); // secondary drawbuffer should keep the closest thing
+			}
 		}
 		else
 		{
@@ -652,6 +655,7 @@ void RB_BeginDrawingView (void) {
 	// we will need to change the projection matrix before drawing
 	// 2D images again
 	backEnd.projection2D = qfalse;
+	R_FrameBuffer_SetProjection2D(qfalse);
 
 	//
 	// set the modelview matrix for the viewer
@@ -1050,6 +1054,7 @@ RB_SetGL2D
 */
 void	RB_SetGL2D (void) {
 	backEnd.projection2D = qtrue;
+	R_FrameBuffer_SetProjection2D(qtrue);
 
 	static float zInvertedIdentity[] = {1,0,0,0,
 										0,1,0,0,

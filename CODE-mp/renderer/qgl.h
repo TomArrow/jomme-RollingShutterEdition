@@ -899,6 +899,8 @@ extern void (APIENTRY* qglDeleteFramebuffers)(GLsizei, const GLuint*);
 extern void (APIENTRY* qglDeleteRenderbuffers)(GLsizei, const GLuint*);
 extern void (APIENTRY* qglDrawBuffers)(GLsizei n, const GLenum* bufs);
 extern void (APIENTRY* qglBlendFunci)(GLuint buf, GLenum sfactor, GLenum dfactor);
+extern void (APIENTRY* qglBlendEquation)(GLenum mode);
+extern void (APIENTRY* qglBlendEquationi)(GLuint buf, GLenum mode);
 
 //Multisampled FBO support
 extern void (APIENTRY* qglRenderbufferStorageMultisampleEXT) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);

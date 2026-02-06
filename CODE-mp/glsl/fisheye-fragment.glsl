@@ -2240,17 +2240,20 @@ void main(void){
 	if(main_real(outColor, isInvisible)){
 		//gl_FragColor.xyz = outColor.xyz;
 		
+		bool additive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+		bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+		bool alphaAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_SRC_ALPHA && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+		bool alphaModulated = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_SRC_ALPHA; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
+		bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;
+		bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;
+		bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
+			
+
 		if(shaderDebugUniform == 1){
 			outColor.xyz = vec3(0.05f);
 		}
 				
 		if(myFogUniform != 0.0f && !isInvisible){
-			bool additive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
-			bool weirdAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
-			bool alphaAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_SRC_ALPHA && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR; //(rawStateBitsUniform & GLS_SRCBLEND_ONE) > 0 && (rawStateBitsUniform & GLS_DSTBLEND_ONE) > 0;
-			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;
-			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;
-			bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
 			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
 			float originalIntensity = exp(-myFogUniform*0.001f*length(eyeSpaceCoordsGeom.xyz));
 			vec3 mixval = myFogColorUniform;
@@ -2282,6 +2285,9 @@ void main(void){
 		//gl_FragColor = outColor;
 		gl_FragData[0] = outColor;
 		gl_FragData[1].x = length(eyeSpaceCoordsGeom.xyz);
+		if((additive && length(outColor.xyz) < 0.2f) || isInvisible || alphaModulated && outColor.w < 0.2f){
+			gl_FragData[1].x = uintBitsToFloat(0x7F800000);
+		}
 	}// else{
 	//	gl_FragColor = vec4(0.0f);
 	//}

@@ -8,6 +8,8 @@
 #define qglBitmap glBitmap
 #define qglBlendFunc glBlendFunc
 #define qglBlendFunci glBlendFunci
+#define qglBlendEquation glBlendEquation
+#define qglBlendEquationi glBlendEquationi
 #define qglCallList glCallList
 #define qglCallLists glCallLists
 #define qglClear glClear

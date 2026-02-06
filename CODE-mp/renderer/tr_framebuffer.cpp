@@ -744,6 +744,26 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 
 #endif
 }
+qboolean R_FrameBuffer_SetProjection2D(qboolean is2D) {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	if (!fishEyeShader || !fishEyeShader->IsWorking())
+		return qfalse;
+
+	fbo.drawing2D = is2D;
+
+#if MULTIATTACH
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
+
+	return qtrue;
+
+#endif
+}
 
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX, float fovY, int jitterIndex, int jitterTotalFrames) {
 #ifdef HAVE_GLES
@@ -1936,7 +1956,7 @@ void R_FrameBuffer_StartFrame( void ) {
 		qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 	}
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2055,7 +2075,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-		qglDrawBuffers(2, attachment1and2);
+		qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2106,7 +2126,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		// do i need to bindframebuffer main again here? let's say yes. if not, revert this. i added this long after the pbo version of this was no longer in use, if it ever was
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-		qglDrawBuffers(2, attachment1and2);
+		qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2155,7 +2175,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-		qglDrawBuffers(2, attachment1and2);
+		qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2202,7 +2222,7 @@ qboolean R_FrameBuffer_EndHDRRead() {
 	
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2233,7 +2253,7 @@ void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex) {
 	qglClear(GL_COLOR_BUFFER_BIT);
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2280,7 +2300,7 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 	//Reset fbo
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2338,7 +2358,7 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWr
 		R_DrawQuad(	fbo.blur->color, glConfig.vidWidth, glConfig.vidHeight );
 	}
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #endif
 
 	R_FrameBuffer_ReactivateFisheye();
@@ -2375,7 +2395,7 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	//Reset fbo
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2464,7 +2484,7 @@ qboolean R_FrameBuffer_ApplyExposure( ) { // really kinda useless unless you wan
 	R_DrawQuad(	fbo.exposure->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #endif
 
 	R_FrameBuffer_ReactivateFisheye();
@@ -2525,7 +2545,7 @@ qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 
 #if MULTIATTACH
-	qglDrawBuffers(2, attachment1and2);
+	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
 #endif
 
 	R_FrameBuffer_ReactivateFisheye();
@@ -2579,7 +2599,7 @@ void R_FrameBuffer_EndFrame( void ) {
 		R_DrawQuad(sourceBuffer->color, fbo.screenWidth, fbo.screenHeight);
 		break;
 	case 1:
-		qglColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+		qglColor4f(0.0005f, 0.0005f, 0.0005f, 1.0f);
 		R_DrawQuad(fbo.main->secondaryColor, fbo.screenWidth, fbo.screenHeight);
 		break;
 	case 2:
