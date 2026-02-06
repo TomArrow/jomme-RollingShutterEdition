@@ -2509,6 +2509,7 @@ typedef struct {
 typedef struct {
 	frameBufferData_t* multiSample;
 	frameBufferData_t* main;
+	frameBufferData_t* extra; // depth and maybe other stuff
 	frameBufferData_t* exposure;
 	frameBufferData_t* postprocessing;
 	frameBufferData_t* blur;

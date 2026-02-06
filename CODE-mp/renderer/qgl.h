@@ -570,7 +570,7 @@ extern  void APIENTRY depthRangeScaledNV(GLclampd zNear, GLclampd zFar);
 extern  void ( APIENTRY * qglDisable )(GLenum cap);
 extern  void ( APIENTRY * qglDisableClientState )(GLenum array);
 extern  void ( APIENTRY * qglDrawArrays )(GLenum mode, GLint first, GLsizei count);
-extern  void ( APIENTRY * qglDrawBuffer )(GLenum mode);
+extern  void ( APIENTRY * qglDrawBuffer)(GLenum mode);
 extern  void ( APIENTRY * qglDrawElements )(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
 extern  void ( APIENTRY * qglDrawPixels )(GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
 extern  void ( APIENTRY * qglEdgeFlag )(GLboolean flag);
@@ -897,6 +897,8 @@ extern void (APIENTRY* qglFramebufferTexture2D)(GLenum, GLenum, GLenum, GLuint, 
 extern GLenum(APIENTRY* qglCheckFramebufferStatus)(GLenum);
 extern void (APIENTRY* qglDeleteFramebuffers)(GLsizei, const GLuint*);
 extern void (APIENTRY* qglDeleteRenderbuffers)(GLsizei, const GLuint*);
+extern void (APIENTRY* qglDrawBuffers)(GLsizei n, const GLenum* bufs);
+extern void (APIENTRY* qglBlendFunci)(GLuint buf, GLenum sfactor, GLenum dfactor);
 
 //Multisampled FBO support
 extern void (APIENTRY* qglRenderbufferStorageMultisampleEXT) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);

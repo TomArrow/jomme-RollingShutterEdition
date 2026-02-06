@@ -7,6 +7,7 @@
 #define qglBindTexture glBindTexture
 #define qglBitmap glBitmap
 #define qglBlendFunc glBlendFunc
+#define qglBlendFunci glBlendFunci
 #define qglCallList glCallList
 #define qglCallLists glCallLists
 #define qglClear glClear
@@ -66,6 +67,7 @@
 #define qglDisableClientState glDisableClientState
 #define qglDrawArrays glDrawArrays
 #define qglDrawBuffer glDrawBuffer
+#define qglDrawBuffers glDrawBuffers
 #define qglDrawElements glDrawElements
 #define qglDrawPixels glDrawPixels
 #define qglEdgeFlag glEdgeFlag

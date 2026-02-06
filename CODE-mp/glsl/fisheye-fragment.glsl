@@ -2279,7 +2279,9 @@ void main(void){
 			outColor.xyz = vec3(0.0f,intensity,threshvalue);
 		} 
 		
-		gl_FragColor = outColor;
+		//gl_FragColor = outColor;
+		gl_FragData[0] = outColor;
+		gl_FragData[1].x = length(eyeSpaceCoordsGeom.xyz);
 	}// else{
 	//	gl_FragColor = vec4(0.0f);
 	//}

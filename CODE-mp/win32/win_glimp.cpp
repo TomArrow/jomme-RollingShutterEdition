@@ -1360,6 +1360,12 @@ static void GLW_InitTextureCompression( void )
 	}
 }
 
+
+void APIENTRY unsupportedBlendFunci(GLuint buf, GLenum sfactor, GLenum dfactor)
+{
+	qglBlendFunc( sfactor, dfactor ); // meh lol
+}
+
 /*
 ** GLW_InitExtensions
 */
@@ -1939,6 +1945,8 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		qglCheckFramebufferStatus = (GLenum(APIENTRY*)(GLenum)) qwglGetProcAddress("glCheckFramebufferStatusEXT");
 		qglDeleteFramebuffers = (void (APIENTRY*)(GLsizei, const GLuint*)) qwglGetProcAddress("glDeleteFramebuffersEXT");
 		qglDeleteRenderbuffers = (void (APIENTRY*)(GLsizei, const GLuint*)) qwglGetProcAddress("glDeleteRenderbuffersEXT");
+		qglDrawBuffers = (void (APIENTRY*)(GLsizei,const GLenum *)) qwglGetProcAddress("glDrawBuffers"); // i should check for correct extensions here separately...
+		qglBlendFunci = (void (APIENTRY*)(GLuint,GLenum,GLenum)) qwglGetProcAddress("glBlendFunci"); // i should check for correct extensions here separately...
 
 		if (!strstr(glConfig.extensions_string, "GL_ARB_depth_texture")) {
 			ri.Printf(PRINT_WARNING, "WARNING: GL_ARB_depth_texture is missing\n");
@@ -1956,6 +1964,9 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		else {
 			ri.Printf(PRINT_WARNING, "WARNING: packed_depth_stencil is missing\n");
 		}
+	}
+	else {
+		qglBlendFunci = unsupportedBlendFunci;
 	}
 
 	glConfig.depthMapFloat = qfalse;

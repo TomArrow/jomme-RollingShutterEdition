@@ -377,7 +377,7 @@ void GL_State( unsigned int stateBits )
 			}
 
 			qglEnable( GL_BLEND );
-			qglBlendFunc( srcFactor, dstFactor );
+			qglBlendFunci(0, srcFactor, dstFactor );
 		}
 		else
 		{
@@ -2193,11 +2193,11 @@ static inline void RB_DrawGlowOverlay()
 	// use additive blending through multitexture though.
 	if ( r_DynamicGlowSoft->integer )
 	{
-		qglBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_COLOR );
+		qglBlendFunci(0, GL_ONE, GL_ONE_MINUS_SRC_COLOR );
 	}
 	else
 	{
-		qglBlendFunc( GL_ONE, GL_ONE );
+		qglBlendFunci(0, GL_ONE, GL_ONE );
 	}
 	qglEnable( GL_BLEND );  
 
@@ -2220,7 +2220,7 @@ static inline void RB_DrawGlowOverlay()
 
 	qglDisable( GL_TEXTURE_RECTANGLE_EXT );
 	qglEnable( GL_TEXTURE_2D );
-	qglBlendFunc( GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR );
+	qglBlendFunci(0, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR );
 	qglDisable( GL_BLEND );
 
 	// NOTE: Multi-texture wasn't that much faster (we're obviously not bottlenecked by transform pipeline),

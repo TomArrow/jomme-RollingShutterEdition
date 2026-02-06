@@ -1778,6 +1778,7 @@ void R_FrameBuffer_Init( void ) {
 
 	//create our main frame buffer
 	fbo.main = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
+	fbo.extra = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
 	fbo.exposure = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
 	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
@@ -1785,7 +1786,7 @@ void R_FrameBuffer_Init( void ) {
 		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags | FB_MIPMAP | FB_MAGLINEAR | FB_REPEATEDGE, superSampleMultiplier);
 	}
 
-	if (!fbo.main) {
+	if (!fbo.main || !fbo.extra) {
 		// if the main fbuffer failed then we should disable framebuffer 
 		// rendering
 		glMMEConfig.framebufferObject = qfalse;

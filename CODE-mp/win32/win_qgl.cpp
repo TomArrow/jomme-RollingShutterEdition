@@ -416,6 +416,8 @@ void (APIENTRY* qglFramebufferTexture2D)(GLenum, GLenum, GLenum, GLuint, GLint);
 GLenum(APIENTRY* qglCheckFramebufferStatus)(GLenum);
 void (APIENTRY* qglDeleteFramebuffers)(GLsizei, const GLuint*);
 void (APIENTRY* qglDeleteRenderbuffers)(GLsizei, const GLuint*);
+void (APIENTRY* qglDrawBuffers)(GLsizei n, const GLenum* bufs);
+void (APIENTRY* qglBlendFunci)(GLuint buf, GLenum sfactor, GLenum dfactor);
 
 void (APIENTRY* qglRenderbufferStorageMultisampleEXT) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 void (APIENTRY* qglBlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
@@ -998,6 +1000,17 @@ static void APIENTRY logBlendFunc(GLenum sfactor, GLenum dfactor)
 	fprintf( glw_state.log_fp, "glBlendFunc( %s, %s )\n", sf, df );
 	dllBlendFunc( sfactor, dfactor );
 }
+
+//static void APIENTRY logBlendFunci(GLuint buf, GLenum sfactor, GLenum dfactor)
+//{
+//	char sf[128], df[128];
+//
+//	BlendToName( sf, sfactor );
+//	BlendToName( df, dfactor );
+//
+//	fprintf( glw_state.log_fp, "glBlendFunci( %d, %s, %s )\n", buf, sf, df );
+//	dllBlendFunci( buf, sfactor, dfactor );
+//}
 
 static void APIENTRY logCallList(GLuint list)
 {
