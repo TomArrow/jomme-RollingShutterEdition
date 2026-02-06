@@ -63,6 +63,11 @@
 #include "qgl.h"
 #endif
 
+#define MULTIATTACH 1
+
+GLenum attachment1[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_NONE };
+GLenum attachment1and2[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_COLOR_ATTACHMENT1_EXT };
+
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
@@ -1930,7 +1935,11 @@ void R_FrameBuffer_StartFrame( void ) {
 	} else {
 		qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 	}
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	if (glConfig.depthClamp && r_glDepthClamp->integer) {
 		qglEnable(GL_DEPTH_CLAMP);
 	}
@@ -2031,7 +2040,11 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		
 		//qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.colorSpaceConvResult->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1);
+#else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 
 		qglColor4f(1, 1, 1, 1);
 		GL_State(GLS_DEPTHTEST_DISABLE);
@@ -2041,12 +2054,21 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		qglUseProgram(0);
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1and2);
+#else
+		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 		qglReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	}
-	else if (source == HDRCONVSOURCE_PBO) { // We assume the PBO is bound!
+	else if (source == HDRCONVSOURCE_PBO) { // We assume the PBO is bound!  Note: This whole section isn't used (anymore?) so idk if it even works at all or ever worked. Forgot.
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.colorSpaceConv->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1);
+#else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 
 		// Fix random black image when saber flare happens
 		// Credit: https://community.khronos.org/t/gldrawpixels-or-how-to-lose-your-time-infinitely/44513/7
@@ -2069,13 +2091,26 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		//R_DrawQuad(fbo.main->color, glConfig.vidWidth, glConfig.vidHeight);
 		//Reset fbo
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.colorSpaceConvResult->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1);
+#else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 
 		qglColor4f(1, 1, 1, 1);
 		GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHTEST_DISABLE);
 		qglUseProgram(hdrPqShader->ShaderId(false,false));
 		R_DrawQuad(fbo.colorSpaceConv->color, glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(0);
+		qglUseProgram(0); 
+
+		// do i need to bindframebuffer main again here? let's say yes. if not, revert this. i added this long after the pbo version of this was no longer in use, if it ever was
+		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1and2);
+#else
+		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
+
 		//qglFinish();
 	}
 	else if(source == HDRCONVSOURCE_MAINFBO) {
@@ -2104,7 +2139,11 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		R_FrameBuffer_GenerateMainMipMaps();
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.colorSpaceConvResult->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1);
+#else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 		//The color used to blur add this frame
 		qglColor4f(1, 1, 1, 1);
 		GL_State(GLS_DEPTHTEST_DISABLE);
@@ -2115,6 +2154,11 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		qglUseProgram(0);
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1and2);
+#else
+		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 		qglReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 		
 	}
@@ -2136,7 +2180,12 @@ qboolean R_FrameBuffer_StartHDRRead() {
 	if (!hdrPqShader->IsWorking())
 		return qfalse;
 	
-	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.colorSpaceConvResult->fbo);
+	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.colorSpaceConvResult->fbo); 
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	qglReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
 	return qtrue;
@@ -2152,6 +2201,11 @@ qboolean R_FrameBuffer_EndHDRRead() {
 		return qfalse;
 	
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	qglReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	//qglReadBuffer(GL_BACK);
 
@@ -2170,11 +2224,19 @@ void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex) {
 
 	// Clear the buffer for the next image so we can always use ADD blending.
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.rollingShutterBuffers[bufferIndex].next->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	qglClear(GL_COLOR_BUFFER_BIT);
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	R_FrameBuffer_ReactivateFisheye();
 }
 
@@ -2197,7 +2259,11 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 	R_FrameBuffer_GenerateMainMipMaps();
 
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, selectedFrameBufferData->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	//The color used to blur add this frame
 	//c = 1.0f;
 	//c = 1.0f/(float)mme_rollingShutterBlur->integer;
@@ -2213,7 +2279,11 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 	R_DrawQuadPartial(fbo.main->color, glConfig.vidWidth, height, 0,offset,rollingShutterSuperSampleMultiplier);
 	//Reset fbo
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	/*usedFloat = qtrue;
 	if (frame == total - 1) {
 		qglColor4f(1, 1, 1, 1);
@@ -2239,7 +2309,11 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWr
 	R_FrameBuffer_GenerateMainMipMaps();
 
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.blur->fbo );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	//The color used to blur add this frame
 	c = scale;
 	qglColor4f( c , c , c , 1 );
@@ -2252,13 +2326,20 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWr
 	R_DrawQuad(	fbo.main->color, glConfig.vidWidth, glConfig.vidHeight );
 	//Reset fbo
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	usedFloat = qtrue;
 	if ( frame == total - 1  || forceWriteback) {
 		qglColor4f( 1, 1, 1, 1 );
 		GL_State( GLS_DEPTHTEST_DISABLE );
 		R_DrawQuad(	fbo.blur->color, glConfig.vidWidth, glConfig.vidHeight );
 	}
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#endif
 
 	R_FrameBuffer_ReactivateFisheye();
 
@@ -2280,7 +2361,11 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	R_FrameBuffer_GenerateMainMipMaps();
 
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.extraViews[index]->fbo );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	//The color used to blur add this frame
 	c = 1.0f;
 	qglColor4f( c , c , c , 1 );
@@ -2289,7 +2374,11 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	R_DrawQuad(	fbo.main->color, glConfig.vidWidth, glConfig.vidHeight );
 	//Reset fbo
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 
@@ -2332,7 +2421,11 @@ qboolean R_FrameBuffer_ApplyExposure( ) { // really kinda useless unless you wan
 	
 	// First copy image into exposure FBO and apply exposure
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.exposure->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	//The color used to blur add this frame 
 	float multiplier = r_fboExposure->value;
 	vec3_t tint{ 1.0f,1.0f,1.0f };
@@ -2360,13 +2453,19 @@ qboolean R_FrameBuffer_ApplyExposure( ) { // really kinda useless unless you wan
 	
 	// Now copy it back
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	qglColor4f(1, 1, 1, 1);
 	GL_State(GLS_DEPTHTEST_DISABLE );
 	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	R_DrawQuad(	fbo.exposure->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
-	
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#endif
 
 	R_FrameBuffer_ReactivateFisheye();
 
@@ -2391,7 +2490,11 @@ qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 	
 	// First copy image into exposure FBO and apply exposure
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.postprocessing->fbo);
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 
 	qglColor4f(1.0f,1.0f,1.0f, 1.0f);
 
@@ -2400,8 +2503,12 @@ qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 	R_DrawQuad(fbo.main->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	
 	// Now copy it back
-	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo ); 
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1);
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
 	qglColor4f(1, 1, 1, 1);
 	GL_State(GLS_DEPTHTEST_DISABLE );
 	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
@@ -2416,7 +2523,11 @@ qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 	R_DrawQuad(	fbo.postprocessing->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier,true);
 	qglUseProgram(0);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
-	
+
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment1and2);
+#endif
+
 	R_FrameBuffer_ReactivateFisheye();
 
 	return qtrue;
@@ -2468,7 +2579,7 @@ void R_FrameBuffer_EndFrame( void ) {
 		R_DrawQuad(sourceBuffer->color, fbo.screenWidth, fbo.screenHeight);
 		break;
 	case 1:
-		qglColor4f(0.01f, 0.01f, 0.01f, 1.0f);
+		qglColor4f(0.1f, 0.1f, 0.1f, 1.0f);
 		R_DrawQuad(fbo.main->secondaryColor, fbo.screenWidth, fbo.screenHeight);
 		break;
 	case 2:
