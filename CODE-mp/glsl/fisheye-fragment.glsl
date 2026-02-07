@@ -190,6 +190,7 @@ uniform sampler2D text_in27;
 uniform sampler2D text_in28;
 uniform sampler2D text_in29;
 uniform sampler2D text_in30;
+uniform sampler2D text_in31;
 
 
 vec4 sampleTextureSafe(sampler2D sampler,vec2 uvCoords,float thelod,vec4 thegrad){
@@ -267,6 +268,7 @@ varying vec4 pureVertexCoordsGeom;
 #define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
 #define RENDERFLAG_ISGORE 32 // is gore
 #define RENDERFLAG_FASTPREVIEW 64
+#define RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND 128
 
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
@@ -2183,13 +2185,16 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	}
 
 	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0 && (renderFlagsUniform & RENDERFLAG_ISGORE) == 0){
-	
+		vec3 oriColor = outFragColor.xyz;
 		vec3 axis[3];
 		axis[0] = vec3(0.0, 0.0, -1.0);
 		axis[1] = vec3(-1.0, 0.0, 0.0);
 		axis[2] = vec3(0.0, 1.0, 0.0);
 		// lightNormal or lightReferenceNormal
 		vec3 surfaceNormal = lightReferenceNormal;
+		if(isWorldBrushUniform > 0){
+			surfaceNormal = mix(lightReferenceNormal,lightNormal,0.5f);
+		}
 		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
 		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
 		vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
@@ -2227,6 +2232,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
 		//outFragColor.xyz = sampleTextureSafe(text_in30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
 		//outFragColor.xyz = sampleTextureSafe(text_in30, uvCoords, thelod,thegrad).xyz;
+		if(isWorldBrushUniform > 0){
+			outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f);
+		}
 	}
 
 	return true;
@@ -2247,7 +2255,11 @@ void main(void){
 		bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;
 		bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;
 		bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
-			
+		
+		//if(!additive){
+		//	outColor = vec4(0.0f,0.0f,0.0f,1.0f);
+		//	return;
+		//}
 
 		if(shaderDebugUniform == 1){
 			outColor.xyz = vec3(0.05f);

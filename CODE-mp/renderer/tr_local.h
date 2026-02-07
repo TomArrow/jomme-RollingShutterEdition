@@ -131,6 +131,7 @@ typedef struct sceneView_s {
 	qboolean	copyAxis;
 	qboolean	is360;
 	int			id;
+	int			flags;
 } sceneView_t;
 
 typedef struct variousSSBOData_s { // various static ssbo stuff.
@@ -745,6 +746,9 @@ typedef struct {
 	qboolean	isSceneView;
 	sceneView_t sceneView;
 
+	qboolean	haveWorldSceneView; // for world reflections
+	int			worldSceneView;
+
 	// track whether we need to use stencil for skies
 	int			lastSkyShader;
 	qboolean	renderingMultipleSkies;
@@ -1202,6 +1206,8 @@ typedef struct {
 	trRefEntity_t	entity2D;	// currentEntity will point at this when doing 2D rendering
 	//mme
 	float			sceneZfar;
+	qboolean	needSceneViewAttached;
+	int			sceneViewId;
 } backEndState_t;
 
 
@@ -2065,7 +2071,7 @@ void RE_AddCheapLightToScene( const vec3_t org, float intensity, float r, float 
 qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
 void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
 void RE_AddWindPointToScene(const vec3_t origin, const vec3_t direction, float intensity, float radius);
-int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis);
+int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis, int flags);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 void RE_RenderScene( const refdef_t *fd );
 void RE_ApplyPostProcessing(qboolean captureShot);
@@ -2520,6 +2526,7 @@ typedef struct {
 	frameBufferData_t* colorSpaceConvResult;
 	frameBufferData_t* extraViews[MAX_SCENE_VIEWS];
 	int extraViewsMipMapsGenerated; // bitmask up to MAX_SCENE_VIEWS
+	int extraViewsSecondaryMipMapsGenerated; // bitmask up to MAX_SCENE_VIEWS
 	std::vector<doubleFrameBufferData_t> rollingShutterBuffers;
 	qboolean fishEyeActive;
 	qboolean drawing2D;
@@ -2542,6 +2549,7 @@ typedef struct {
 #define RENDERFLAG_SCENEVIEWBOUND 16 // for reflection view renders and such. have a rendered scene view bound.
 #define RENDERFLAG_ISGORE 32 // is gore
 #define RENDERFLAG_FASTPREVIEW 64
+#define RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND 128
 
 enum HDRConvertSource {
 	HDRCONVSOURCE_MAINFBO,
@@ -2556,7 +2564,7 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex);
 //Try to do an fbo blur
 qboolean R_FrameBuffer_Blur(float scale, int frame, int total, qboolean forceWriteback);
-void	R_BindSceneViewImage(int index, bool makeMipMaps);
+void	R_BindSceneViewImage(int index, bool makeMipMaps, int attachment = 0);
 qboolean R_FrameBuffer_SaveSceneView(int index);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);

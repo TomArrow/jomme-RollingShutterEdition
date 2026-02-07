@@ -730,7 +730,7 @@ int CL_CgameSystemCalls( int *args ) {
 		re.AddWindPointToScene( (const float *)VMA(1), (const float *)VMA(2), VMF(3), VMF(4));
 		return 0;
 	case CG_R_ADDVIEWTOSCENE:
-		return re.AddViewToScene( (const float *)VMA(1), (qboolean)args[2], (qboolean)args[3], (const float*)VMA(4) );
+		return re.AddViewToScene( (const float *)VMA(1), (qboolean)args[2], (qboolean)args[3], (const float*)VMA(4), args[5]);
 	case CG_R_ADDADDITIVELIGHTTOSCENE:
 		re.AddAdditiveLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6) );
 		return 0;

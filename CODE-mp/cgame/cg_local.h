@@ -1981,6 +1981,7 @@ extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_distanceAwareFov;
 extern	vmCvar_t		cg_zoomFov;
 extern	vmCvar_t		cg_playerReflection; 
+extern	vmCvar_t		cg_worldReflection;
 extern	vmCvar_t		cg_playerWindPoints;
 extern	vmCvar_t		cg_playerWindPointMultiplier;
 extern	vmCvar_t		cg_playerWindPointRadius;
@@ -2726,7 +2727,7 @@ void		trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t 
 void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int numPolys );
 void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap);
 void		trap_R_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
-int			trap_R_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const vec3_t axis[3]);
+int			trap_R_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const vec3_t axis[3], int flags);
 void		trap_R_AddWindPointToScene(const vec3_t org, const vec3_t direction, float force, float radius);
 
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );

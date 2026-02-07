@@ -376,23 +376,40 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 }
 
 static void R_BindSceneViewImage() {
-	if (backEnd.currentEntity->e.useSceneViewTexture) {
+	int currenttmu = glState.currenttmu;
+	//if (backEnd.currentEntity->e.useSceneViewTexture) {
+	if (backEnd.needSceneViewAttached) {
 		GL_SelectTexture(30);
 		qglEnable(GL_TEXTURE_2D);
-		R_BindSceneViewImage(backEnd.currentEntity->e.sceneViewTexture, true);
-		GL_SelectTexture(0);
+		R_BindSceneViewImage(backEnd.sceneViewId, true);
+		GL_SelectTexture(31);
+		qglEnable(GL_TEXTURE_2D);
+		R_BindSceneViewImage(backEnd.sceneViewId, true, 1);
+		//GL_SelectTexture(0);
+	}
+	if (glState.currenttmu != currenttmu) {
+		GL_SelectTexture(currenttmu);
 	}
 }
+
 static void R_UnbindSceneViewImage() {
-	if (backEnd.currentEntity->e.useSceneViewTexture) {
+	int currenttmu = glState.currenttmu;
+	if (backEnd.needSceneViewAttached) {
 		GL_SelectTexture(30);
 		GL_Bind(tr.defaultImage);
 		qglDisable(GL_TEXTURE_2D);
-		GL_SelectTexture(0);
+		GL_SelectTexture(31);
+		GL_Bind(tr.defaultImage);
+		qglDisable(GL_TEXTURE_2D);
+		//GL_SelectTexture(0);
+	}
+	if (glState.currenttmu != currenttmu) {
+		GL_SelectTexture(currenttmu);
 	}
 }
 
 static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* input) {
+	int currenttmu = glState.currenttmu;
 	for (int i = 0; i < 2; i++) {
 
 		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
@@ -429,9 +446,12 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 		GL_Bind(tr.cloudsImage);
 	}
 	R_BindSceneViewImage();
+	if(glState.currenttmu != currenttmu){
+		GL_SelectTexture(currenttmu);
+	}
 }
 static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* input) {
-
+	int currenttmu = glState.currenttmu;
 	for (int i = 0; i < 2; i++) {
 
 		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
@@ -459,6 +479,9 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 		qglDisable(GL_TEXTURE_2D);
 	}
 	R_UnbindSceneViewImage();
+	if (glState.currenttmu != currenttmu) {
+		GL_SelectTexture(currenttmu);
+	}
 }
 
 /*

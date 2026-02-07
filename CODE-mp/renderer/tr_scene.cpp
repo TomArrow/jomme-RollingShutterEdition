@@ -503,7 +503,7 @@ RE_AddViewToScene
 
 =====================
 */
-int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis ) {
+int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis, int flags ) {
 	sceneView_t	*sv;
 
 	if ( !tr.registered ) {
@@ -526,6 +526,7 @@ int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, co
 	}
 	sv->is360 = is360;
 	sv->copyAxis = copyAxis;
+	sv->flags = flags;
 
 	r_numsceneviews++;
 
@@ -855,6 +856,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	VectorCopy( fd->vieworg, parms.pvsOrigin );
 
+	int worldReflectionSceneView = -1;
 	if (!r_fboGLSLFastPreview->integer || tr.captureIsActive) {
 
 		for (int i = 0; i < sceneViewCount; i++,sceneViews++) { // extra views for reflections and such
@@ -869,9 +871,16 @@ void RE_RenderScene( const refdef_t *fd ) {
 				VectorCopy(sceneViews->axis[2], sceneViewViewParms.ori.axis[2]);
 			}
 			R_RenderView(&sceneViewViewParms);
+			if (sceneViews->flags & SCENEVIEW_WORLDREFLECT) {
+				worldReflectionSceneView = i;
+			}
 		}
 	}
 
+	if (worldReflectionSceneView != -1) {
+		parms.haveWorldSceneView = qtrue;
+		parms.worldSceneView = worldReflectionSceneView;
+	}
 	R_RenderView( &parms );
 
 	// the next scene rendered in this frame will tack on after this one

@@ -776,6 +776,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	shader_t		*shader, *oldShader;
 	int64_t			fogNum, oldFogNum;
 	int64_t			entityNum, oldEntityNum;
+	qboolean		oldUseSceneView;
+	int				oldSceneView;
 	int64_t			oldSurfaceType = SF_BAD;
 	int64_t			dlighted, oldDlighted;
 	int				depthRange, oldDepthRange;
@@ -828,12 +830,15 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	// draw everything
 	oldEntityNum = -1;
 	backEnd.currentEntity = &tr.worldEntity;
+	backEnd.needSceneViewAttached = qfalse;
 	oldShader = NULL;
 	oldFogNum = -1;
 	oldDepthRange = qfalse;
 	oldDlighted = qfalse;
 	oldSort = (uint64_t) -1;
 	depthRange = qfalse;
+	oldUseSceneView = (qboolean)-1; // ugh
+	oldSceneView = -1;
 	
 	// Clear for endsurface first run
 	tess.numIndexes = 0;
@@ -872,8 +877,10 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #endif
 
 		bool goreStatusChanged = *drawSurf->surface != oldSurfaceType && (*drawSurf->surface == SF_MDX_GORE || oldSurfaceType == SF_MDX_GORE);
-		bool sceneViewTextureChanged = backEnd.refdef.entities[entityNum].e.sceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.sceneViewTexture;
-		bool usedSceneViewTextureChanged = backEnd.refdef.entities[entityNum].e.useSceneViewTexture != backEnd.refdef.entities[oldEntityNum].e.useSceneViewTexture;
+		qboolean useSceneViewTexture = (qboolean)(backEnd.viewParms.haveWorldSceneView && entityNum == REFENTITYNUM_WORLD && shader->isWorldShader || backEnd.refdef.entities[entityNum].e.useSceneViewTexture);
+		int sceneViewTexture = (backEnd.viewParms.haveWorldSceneView && entityNum == REFENTITYNUM_WORLD && shader->isWorldShader) ? backEnd.viewParms.worldSceneView : backEnd.refdef.entities[entityNum].e.sceneViewTexture;
+		bool sceneViewTextureChanged = sceneViewTexture != oldSceneView;
+		bool usedSceneViewTextureChanged = useSceneViewTexture != oldUseSceneView;
 
 		//
 		// change the tess parameters if needed
@@ -898,6 +905,13 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			oldShader = shader;
 			oldFogNum = fogNum;
 			oldDlighted = dlighted;
+		}
+
+		backEnd.needSceneViewAttached = useSceneViewTexture;
+		backEnd.sceneViewId = sceneViewTexture;
+
+		if (sceneViewTextureChanged || usedSceneViewTextureChanged) {
+			R_FrameBuffer_SetDynamicUniforms2(); // whaat am i even doing
 		}
 
 		if (entityNum == REFENTITYNUM_WORLD && *drawSurf->surface != oldSurfaceType) {
@@ -989,6 +1003,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			}
 
 			oldEntityNum = entityNum;
+			oldUseSceneView = useSceneViewTexture;
+			oldSceneView = sceneViewTexture;
 		}
 
 		// add the triangles for this surface
@@ -1001,6 +1017,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	if (oldShader != NULL) {
 		RB_EndSurface();
 	}
+
+	backEnd.needSceneViewAttached = qfalse;
 
 	// go back to the world modelview matrix
 	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
@@ -1237,6 +1255,7 @@ const void *RB_StretchPic ( const void *data ) {
 			RB_EndSurface();
 		}
 		backEnd.currentEntity = &backEnd.entity2D;
+		backEnd.needSceneViewAttached = qfalse;
 		RB_BeginSurface( shader, 0 );
 	}
 
@@ -1326,6 +1345,7 @@ const void * RB_DrawLine( const void *data ) {
 			RB_EndSurface();
 		}
 		backEnd.currentEntity = &backEnd.entity2D;
+		backEnd.needSceneViewAttached = qfalse;
 		RB_BeginSurface( shader, 0 );
 	}
 

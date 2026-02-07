@@ -2006,6 +2006,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, int demoPlayb
 		}
 	}
 
+	if (cg_worldReflection.integer) {
+		trap_R_AddViewToScene(cg.refdef.vieworg, qtrue, qtrue, NULL, SCENEVIEW_WORLDREFLECT); // todo if first person dont render the player himself in this?
+	}
+
 	// actually issue the rendering calls
 	CG_DrawActive( stereoView );
 

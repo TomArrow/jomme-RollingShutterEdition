@@ -667,6 +667,7 @@ vmCvar_t	cg_fov;
 vmCvar_t	cg_distanceAwareFov;
 vmCvar_t	cg_zoomFov;
 vmCvar_t	cg_playerReflection;
+vmCvar_t	cg_worldReflection;
 vmCvar_t	cg_playerWindPoints;
 vmCvar_t	cg_playerWindPointMultiplier;
 vmCvar_t	cg_playerWindPointRadius;
@@ -971,6 +972,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_drawGun, "cg_drawGun", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_zoomFov, "cg_zoomfov", "40.0", NULL, CVAR_ARCHIVE },
 	{ &cg_playerReflection, "cg_playerReflection", "0", NULL, CVAR_ARCHIVE },
+	{ &cg_worldReflection, "cg_worldReflection", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPoints, "cg_playerWindPoints", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPointMultiplier, "cg_playerWindPointMultiplier", "0.7", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPointRadius, "cg_playerWindPointRadius", "120.0", NULL, CVAR_ARCHIVE },

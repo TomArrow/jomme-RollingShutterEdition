@@ -8893,7 +8893,7 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	if (gigaReflections) {
-		gigaReflectionsSceneViewId = trap_R_AddViewToScene(cent->lerpOrigin,qtrue,qtrue,NULL);
+		gigaReflectionsSceneViewId = trap_R_AddViewToScene(cent->lerpOrigin,qtrue,qtrue,NULL,0);
 	}
 
 	if (!cent->trickAlphaTime || (cg.time - cent->trickAlphaTime) > 1000)

@@ -62,6 +62,10 @@
 #define RF_MAYBECHEAPLIGHT	0x80000	// makes a light if this is an additive shaader, proportional to the size.
 
 
+// sceneview flags
+#define SCENEVIEW_WORLDREFLECT	(1<<0)
+
+
 
 // refdef flags
 #define RDF_NOWORLDMODEL	1		// used for player configuration screen

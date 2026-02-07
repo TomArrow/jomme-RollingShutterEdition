@@ -66,12 +66,13 @@
 #define MULTIATTACH 1
 
 GLenum attachment1[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_NONE };
+GLenum attachment2[2] = { GL_COLOR_ATTACHMENT1_EXT , GL_NONE };
 GLenum attachment1and2[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_COLOR_ATTACHMENT1_EXT };
 
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
-#define NUM_TEXTURE_SAMPLERS 31  // 29 = cloud image, 30 = sceneview image
+#define NUM_TEXTURE_SAMPLERS 32  // 29 = cloud image, 30 = sceneview image, 31 = sceneview secondary color buffer
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
@@ -359,6 +360,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 	int extraRenderFlags = backEnd.viewParms.isSceneView ? RENDERFLAG_SCENEVIEW : 0;
 	if (backEnd.currentEntity && backEnd.currentEntity->e.useSceneViewTexture) {
 		extraRenderFlags |= RENDERFLAG_SCENEVIEWBOUND;
+	}
+	else if(backEnd.needSceneViewAttached) {
+		extraRenderFlags |= RENDERFLAG_SCENEVIEWBOUND | RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND;
 	}
 	if (r_fboGLSLFastPreview->integer && !tr.captureIsActive) {
 		extraRenderFlags |= RENDERFLAG_FASTPREVIEW;
@@ -1079,7 +1083,7 @@ void R_SetGL2DSize (int width, int height) {
 }
 
 
-void R_BindSceneViewImage( int index, bool makeMipMaps) {
+void R_BindSceneViewImage( int index, bool makeMipMaps, int attachment) {
 #ifdef HAVE_GLES
 	//TODO
 #else
@@ -1091,7 +1095,9 @@ void R_BindSceneViewImage( int index, bool makeMipMaps) {
 		return;
 	}
 
-	if ( glState.currenttextures[glState.currenttmu] != fbo.extraViews[index]->color ) {
+	GLuint sourceBuffer = attachment == 1 ? fbo.extraViews[index]->secondaryColor : fbo.extraViews[index]->color;
+
+	if ( glState.currenttextures[glState.currenttmu] != sourceBuffer) {
 		if (r_fboGLSLFastPreview->integer && !tr.captureIsActive) {
 
 			qglBindTexture(GL_TEXTURE_2D, tr.defaultImage->texnum);
@@ -1099,12 +1105,20 @@ void R_BindSceneViewImage( int index, bool makeMipMaps) {
 		}
 		else {
 
-			qglBindTexture(GL_TEXTURE_2D, fbo.extraViews[index]->color);
-			glState.currenttextures[glState.currenttmu] = fbo.extraViews[index]->color;
-
-			if (makeMipMaps && !(fbo.extraViewsMipMapsGenerated & (1 << index))) {
-				qglGenerateMipmap(GL_TEXTURE_2D);
-				fbo.extraViewsMipMapsGenerated |= (1 << index);
+			qglBindTexture(GL_TEXTURE_2D, sourceBuffer);
+			glState.currenttextures[glState.currenttmu] = sourceBuffer;
+			
+			if (attachment == 1) {
+				if (makeMipMaps && !(fbo.extraViewsSecondaryMipMapsGenerated & (1 << index))) {
+					qglGenerateMipmap(GL_TEXTURE_2D);
+					fbo.extraViewsSecondaryMipMapsGenerated |= (1 << index);
+				}
+			}
+			else {
+				if (makeMipMaps && !(fbo.extraViewsMipMapsGenerated & (1 << index))) {
+					qglGenerateMipmap(GL_TEXTURE_2D);
+					fbo.extraViewsMipMapsGenerated |= (1 << index);
+				}
 			}
 		}
 	};
@@ -1116,8 +1130,11 @@ void R_DrawQuad( GLuint tex, int width, int height, bool forceMakeMipmaps = fals
 #ifdef HAVE_GLES
 	//TODO
 #else
+	int oldTex = -1;
+	GL_SelectTexture(0);
 	qglEnable(GL_TEXTURE_2D);
 	if ( glState.currenttextures[0] != tex ) {
+		oldTex = glState.currenttextures[0];
 		GL_SelectTexture( 0 );
 		qglBindTexture(GL_TEXTURE_2D, tex);
 		glState.currenttextures[0] = tex; 
@@ -1133,6 +1150,11 @@ void R_DrawQuad( GLuint tex, int width, int height, bool forceMakeMipmaps = fals
 	  qglTexCoord2f(1.0, 0.0); qglVertex2f(width, height);	
 	  qglTexCoord2f(0.0, 0.0); qglVertex2f(0.0  , height);	
 	qglEnd();	
+
+	if (oldTex != -1) { // dumb? idk
+		qglBindTexture(GL_TEXTURE_2D, oldTex);
+		glState.currenttextures[0] = oldTex;
+	}
 #endif
 }
 
@@ -1827,7 +1849,7 @@ void R_FrameBuffer_Init( void ) {
 	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
 	for (int i = 0; i < MAX_SCENE_VIEWS; i++) {
-		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags | FB_MIPMAP | FB_MAGLINEAR | FB_REPEATEDGE, superSampleMultiplier);
+		fbo.extraViews[i] = R_FrameBufferCreate(width, height, flags | FB_MIPMAP | FB_MAGLINEAR | FB_REPEATEDGE | FB_SECONDARYBUFFER, superSampleMultiplier);
 	}
 
 	if (!fbo.main/* || !fbo.extra*/) {
@@ -2392,6 +2414,16 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHTEST_DISABLE);
 	R_SetGL2DSize( glConfig.vidWidth, glConfig.vidHeight );
 	R_DrawQuad(	fbo.main->color, glConfig.vidWidth, glConfig.vidHeight );
+
+
+#if MULTIATTACH
+	qglDrawBuffers(2, attachment2);
+	qglColor4f(c, c, c, 1);
+	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHTEST_DISABLE);
+	R_SetGL2DSize(glConfig.vidWidth, glConfig.vidHeight);
+	R_DrawQuad(fbo.main->secondaryColor, glConfig.vidWidth, glConfig.vidHeight); // copy secondary color attachment. need for ssr
+#endif
+
 	//Reset fbo
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 #if MULTIATTACH
@@ -2403,6 +2435,7 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 
 	fbo.extraViewsMipMapsGenerated &= ~(1 << index);
+	fbo.extraViewsSecondaryMipMapsGenerated &= ~(1 << index);
 
 	R_FrameBuffer_ReactivateFisheye();
 
