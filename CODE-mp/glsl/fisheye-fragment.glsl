@@ -2223,6 +2223,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	}
 
 	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0 && (renderFlagsUniform & RENDERFLAG_ISGORE) == 0){
+		bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
 		vec3 oriColor = outFragColor.xyz;
 		// lightNormal or lightReferenceNormal
 		vec3 surfaceNormal = lightReferenceNormal;
@@ -2231,27 +2232,60 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		}
 		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
 		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
-		vec3 outVec = viewerVectorMinusNormal - normalPart; // the non-normal part gets inverted
+		vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
 
 		outVec = normalize(outVec);
 
-		bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
 
+		if(ssr){
+			#define SSR_MAX_STEPS 50
+			#define SSR_STEP_SIZE 20
+			vec2 uvRefl;
+			vec4 thegrad;
+			bool found = false;
+			vec3 newPos = eyeSpaceCoordsGeom.xyz + outVec;
+			uvRefl = get360UVFromVector(-normalize(newPos));
+			thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
+			if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
+			if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
+			thegrad *= gradMultiplier; // gotta calc the grad up here cuz inside the loop dFdx and dFdy will break and cause artifaacts
+			for(int i=0;i<SSR_MAX_STEPS;i++){
+				newPos = eyeSpaceCoordsGeom.xyz + float(i+1)*float(SSR_STEP_SIZE)*outVec;
+				float dist = length(newPos);
+				newPos = normalize(newPos);
+				uvRefl = get360UVFromVector(-newPos);
+				float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
+				if(abs(distComp-dist) < 20.0f){
+					found = true;
+					break;
+				}
+			}
+			if(found){
+				outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+				outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f);
+			} else{
+				//outFragColor.xyz =oriColor + vec3(1.0f,0.0f,0.0f)*max(worldNormal.z,0.0f);
+			}
+			
 
-		vec2 uvRefl = get360UVFromVector(outVec);
+		} else{
+		
+			vec2 uvRefl = get360UVFromVector(-outVec);
 
-		vec4 thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
+			vec4 thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
 
-		// at the 180/-180 boundary, a discontinuity is created, causing a visible seam. fix that up.
-		if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
-		if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
-		thegrad *= gradMultiplier;
-		outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
-		//outFragColor.xyz = sampleTextureSafe(text_in30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
-		//outFragColor.xyz = sampleTextureSafe(text_in30, uvCoords, thelod,thegrad).xyz;
-		if(isWorldBrushUniform > 0){
-			outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f);
+			// at the 180/-180 boundary, a discontinuity is created, causing a visible seam. fix that up.
+			if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
+			if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
+			thegrad *= gradMultiplier;
+			outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+			//outFragColor.xyz = sampleTextureSafe(text_in30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
+			//outFragColor.xyz = sampleTextureSafe(text_in30, uvCoords, thelod,thegrad).xyz;
+			if(isWorldBrushUniform > 0){
+				outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f);
+			}
 		}
+
 	}
 
 	return true;
