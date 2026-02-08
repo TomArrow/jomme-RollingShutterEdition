@@ -305,6 +305,44 @@ vec3 getPerpendicularAxis(vec3 point, vec3 mainAxis)
 }
 
 
+
+vec2 get360UVFromVector(vec3 outVec){
+	const vec3 axis[3] = {
+		 vec3(0.0, 0.0, -1.0),
+		 vec3(-1.0, 0.0, 0.0),
+		 vec3(0.0, 1.0, 0.0)
+	};
+	//axis[0] = vec3(0.0, 0.0, -1.0);
+	//axis[1] = vec3(-1.0, 0.0, 0.0);
+	//axis[2] = vec3(0.0, 1.0, 0.0);
+	const float pi = radians(180);
+	float xAngle = angleOnPlane(outVec, -axis[1].xyz, axis[0].xyz) / pi;
+	vec3 perpendicularZAxisToPoint = getPerpendicularAxis(outVec, axis[2].xyz);
+	float yAngle = angleOnPlane(outVec, axis[2].xyz, perpendicularZAxisToPoint) / pi;
+		
+	float depth = dot(axis[0].xyz, outVec);
+	xAngle -= 0.5;
+	xAngle *= 2;
+	float widthSign = sign(xAngle);
+	xAngle = depth <= 0 ? xAngle : widthSign *(1.0 + (1.0 - abs(xAngle)));
+	xAngle *= 0.5;
+
+	yAngle -= 0.5;
+	yAngle *= 2;
+	float heightSign = sign(yAngle);
+	//outFragColor.x = -xAngle;
+	//outFragColor.y = 0;//yAngle;
+	//outFragColor.z = 0;
+	//vec2 uvRefl = vec2((xAngle+1.0)/2.0f,(yAngle+1.0)/2.0f);
+	return vec2((xAngle+1.0)/2.0f,(yAngle+1.0)/2.0f);
+}
+
+
+
+
+
+
+
 const vec3 rgbToGray = vec3( 0.2989f,0.5870f, 0.1140f);
 
 // thermal vision
@@ -2186,10 +2224,6 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0 && (renderFlagsUniform & RENDERFLAG_ISGORE) == 0){
 		vec3 oriColor = outFragColor.xyz;
-		vec3 axis[3];
-		axis[0] = vec3(0.0, 0.0, -1.0);
-		axis[1] = vec3(-1.0, 0.0, 0.0);
-		axis[2] = vec3(0.0, 1.0, 0.0);
 		// lightNormal or lightReferenceNormal
 		vec3 surfaceNormal = lightReferenceNormal;
 		if(isWorldBrushUniform > 0){
@@ -2197,32 +2231,15 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		}
 		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
 		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
-		vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
+		vec3 outVec = viewerVectorMinusNormal - normalPart; // the non-normal part gets inverted
 
-		outVec = -normalize(outVec);
+		outVec = normalize(outVec);
 
-		float pi = radians(180);
-		float xAngle = angleOnPlane(outVec, -axis[1].xyz, axis[0].xyz) / pi;
-		vec3 perpendicularZAxisToPoint = getPerpendicularAxis(outVec, axis[2].xyz);
-		float yAngle = angleOnPlane(outVec, axis[2].xyz, perpendicularZAxisToPoint) / pi;
-		
-		float depth = dot(axis[0].xyz, outVec);
-		xAngle -= 0.5;
-		xAngle *= 2;
-		float widthSign = sign(xAngle);
-		xAngle = depth <= 0 ? xAngle : widthSign *(1.0 + (1.0 - abs(xAngle)));
-		xAngle *= 0.5;
+		bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
 
-		yAngle -= 0.5;
-		yAngle *= 2;
-		float heightSign = sign(yAngle);
-		outFragColor.x = -xAngle;
-		outFragColor.y = 0;//yAngle;
-		outFragColor.z = 0;
-		vec2 uvRefl = vec2((xAngle+1.0)/2.0f,(yAngle+1.0)/2.0f);
-		
-		//outFragColor.xyz = texture2D(text_in30, uvRefl).xyz; // seam
-		//outFragColor.xyz = textureLod(text_in30,uvRefl,0).xyz; // clean but aliased
+
+		vec2 uvRefl = get360UVFromVector(outVec);
+
 		vec4 thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
 
 		// at the 180/-180 boundary, a discontinuity is created, causing a visible seam. fix that up.
