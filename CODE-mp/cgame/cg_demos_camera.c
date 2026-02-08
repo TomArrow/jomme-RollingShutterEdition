@@ -734,13 +734,17 @@ void cameraMove(void) {
 		if (!(demo.oldcmd.buttons & BUTTON_ATTACK)) {
 			VectorClear( demo.camera.velocity );
 		}
-		//VectorAdd( angles, demo.cmdDeltaAngles, angles );
-		// ent's 6-degrees-of-freedom fix:
-		Quat_t q1, q2, qr;
-		QuatFromAngles(angles, q1);
-		QuatFromAngles(demo.cmdDeltaAngles, q2);
-		QuatMultiply(q1, q2, qr);
-		QuatToAngles(qr, angles);
+		if (!mov_6degreesoffreedom.integer) {
+			VectorAdd( angles, demo.cmdDeltaAngles, angles );
+		}
+		else {
+			// ent's 6-degrees-of-freedom fix:
+			Quat_t q1, q2, qr;
+			QuatFromAngles(angles, q1);
+			QuatFromAngles(demo.cmdDeltaAngles, q2);
+			QuatMultiply(q1, q2, qr);
+			QuatToAngles(qr, angles);
+		}
 		
 		
 		AnglesNormalize180( angles );

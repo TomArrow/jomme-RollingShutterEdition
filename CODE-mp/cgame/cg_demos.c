@@ -993,6 +993,10 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 	}
 	cg.refdef.centerPrintFont = cgDC.Assets.qhBigFont;
 
+	if (cg_worldReflection.integer) {
+		trap_R_AddViewToScene(cg.refdef.vieworg, qtrue, qtrue, NULL, SCENEVIEW_WORLDREFLECT); // todo if first person dont render the player himself in this?
+	}
+
 	trap_R_RenderScene( &cg.refdef );
 	CG_SaberClashFlare(qtrue);
 	trap_R_ApplyPostProcessing( captureFrame );
