@@ -2115,6 +2115,13 @@ static void CG_RegisterGraphics( void ) {
 			cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag_ysal.md3" );
 			cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag_ysal.md3" );
 		}
+		cgs.media.flagTris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", cgs.media.flagTris.tris, sizeof(cgs.media.flagTris.tris) / sizeof(cgs.media.flagTris.tris[0]));
+
+		cgs.media.flagNoFlagSkin = trap_R_RegisterSkin("models/flags/flag_noflag.skin");
+
+		cgs.media.flagShaderGiga[TEAM_RED] = trap_R_RegisterShader("models/map_objects/mp/flag_giga");
+		cgs.media.flagShaderGiga[TEAM_BLUE] = trap_R_RegisterShader("models/map_objects/mp/flag2_giga");
+		cgs.media.flagShaderGiga[TEAM_FREE] = trap_R_RegisterShader("models/map_objects/mp/flag2_giga");
 
 		cgs.media.flagShaderYsal[TEAM_RED] = trap_R_RegisterShaderNoMipHUD("gfx/hud/mpi_rflag_ys");
 		cgs.media.flagShaderYsal[TEAM_BLUE] = trap_R_RegisterShaderNoMipHUD("gfx/hud/mpi_bflag_ys");

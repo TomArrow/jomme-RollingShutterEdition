@@ -464,6 +464,7 @@ typedef struct {
 	qboolean		rgbMultSet;
 	float			heatMult;
 	qboolean		heatMultSet;
+	qboolean		forceUseNormal;
 
 	waveForm_t		alphaWave;
 	alphaGen_t		alphaGen;
@@ -596,6 +597,7 @@ Ghoul2 Insert End
 	// True if this shader has a stage with glow in it (just an optimization).
 	bool hasGlow;
 #endif
+	bool hasForceNormal; // polyverts with known normal, lightdir etc yada
 
 	bool hasDepthWrite;
 
@@ -1745,6 +1747,7 @@ void		RE_LoadWorldMap( const char *mapname );
 void		RE_SetWorldVisData( const byte *vis );
 qhandle_t	RE_RegisterServerModel( const char *name );
 qhandle_t	RE_RegisterModel( const char *name );
+int			R_GetMd3Verts(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, size_t bufferSizeTris);
 qhandle_t	RE_RegisterSkin( const char *name );
 void		RE_Shutdown( qboolean destroyWindow );
 
@@ -2496,6 +2499,7 @@ typedef struct {
 	// for vertexlit stuff
 	bool haveVertexLightDirection;
 	int	stageColorGen;
+	qboolean	stageForceNormal;
 } fishEyeData_t;
 
 typedef struct {
@@ -2571,7 +2575,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO
 qboolean R_FrameBuffer_SetProjection2D(qboolean is2D);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL, const bool* isGore=NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const qboolean* stageForceNormal = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL, const bool* isGore=NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();

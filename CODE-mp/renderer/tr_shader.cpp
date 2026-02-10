@@ -1486,6 +1486,10 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 		{
 			stage->isDetail = qtrue;
 		}
+		else if ( !Q_stricmp( token, "forceUseNormal" ) )
+		{
+			stage->forceUseNormal = qtrue;
+		}
 		//
 		// blendfunc <srcFactor> <dstFactor>
 		// or blendfunc <add|filter|blend>
@@ -2373,6 +2377,10 @@ static qboolean ParseShader( const char **text )
 				shader.hasGlow = true;
 			}
 #endif
+			if ( stages[s].forceUseNormal )
+			{
+				shader.hasForceNormal = true;
+			}
 			s++;
 			continue;
 		}

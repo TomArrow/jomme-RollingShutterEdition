@@ -150,7 +150,7 @@ void GL_BindMultitexture( image_t *image0, GLuint env0, image_t *image1, GLuint 
 ** GL_Cull
 */
 void GL_Cull( int cullType ) {
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, cullType == CT_TWO_SIDED ? &trueBool : &falseBool);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL,NULL, cullType == CT_TWO_SIDED ? &trueBool : &falseBool);
 	if ( glState.faceCulling == cullType ) {
 		return;
 	}
@@ -276,7 +276,7 @@ void GL_State( unsigned int stateBits )
 		}
 	}
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, &rawStateBits, &stateBits);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, &rawStateBits, &stateBits);
 
 	diff = stateBits ^ glState.glStateBits;
 
@@ -825,7 +825,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		}
 	}
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false for safety
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false for safety
 
 	// draw everything
 	oldEntityNum = -1;
@@ -923,7 +923,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		}
 
 		if (goreStatusChanged) {
-			R_FrameBuffer_SetDynamicUniforms2(NULL,NULL,NULL,NULL,NULL,NULL, (*drawSurf->surface == SF_MDX_GORE) ? &trueBool : &falseBool);
+			R_FrameBuffer_SetDynamicUniforms2(NULL,NULL, NULL, NULL,NULL,NULL,NULL, (*drawSurf->surface == SF_MDX_GORE) ? &trueBool : &falseBool);
 		}
 
 		//
@@ -971,7 +971,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
 				R_TransformDlights( backEnd.refdef.num_dlights, backEnd.refdef.dlights, &backEnd.ori );
 
-				bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
+				bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs || *drawSurf->surface == SF_POLY && tess.shader->hasForceNormal;
 				R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool);
 				//oldSurfaceType = *drawSurf->surface;
 			}
@@ -1027,7 +1027,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	}
 
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false again
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false again
 
 #if 0
 	RB_DrawSun();

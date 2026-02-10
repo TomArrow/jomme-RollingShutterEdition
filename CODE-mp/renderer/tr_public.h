@@ -42,6 +42,7 @@ typedef struct {
 	// size display elements
 	void	(*BeginRegistration)( glconfig_t *config );
 	qhandle_t (*RegisterModel)( const char *name );
+	int		  (*GetMd3Verts)( qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, size_t bufferSizeTris );
 	qhandle_t (*RegisterSkin)( const char *name );
 	qhandle_t (*RegisterShader)( const char *name );
 	qhandle_t (*RegisterShaderNoMip)( const char *name );

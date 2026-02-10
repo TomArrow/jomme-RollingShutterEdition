@@ -563,7 +563,7 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 		} else {
 			return;
 		}
-		CG_Draw3DModel( x, y, w, h, handle, 0, origin, angles );
+		CG_Draw3DModel( x, y, w, h, handle, cgs.media.flagNoFlagSkin, origin, angles );
 	} else if ( cg_drawIcons.integer ) {
 		gitem_t *item;
 

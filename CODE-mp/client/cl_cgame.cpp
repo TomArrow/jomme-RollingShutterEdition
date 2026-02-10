@@ -659,6 +659,8 @@ int CL_CgameSystemCalls( int *args ) {
 		return 0; 
 	case CG_R_REGISTERMODEL:
 		return re.RegisterModel( (const char *)VMA(1) );
+	case CG_R_GETMD3SURFACES:
+		return re.GetMd3Verts( args[1], (const char *)VMA(2), (meshTriangle_t *)VMA(3), args[4] );
 	case CG_R_REGISTERSKIN:
 		return re.RegisterSkin( (const char *)VMA(1) );
 	case CG_R_REGISTERSHADER:

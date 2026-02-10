@@ -222,6 +222,9 @@ void	trap_R_LoadWorldMap( const char *mapname ) {
 qhandle_t trap_R_RegisterModel( const char *name ) {
 	return syscall( CG_R_REGISTERMODEL, name );
 }
+int trap_R_GetMD3Surfaces( qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, int bufferSizeTris) {
+	return syscall( CG_R_GETMD3SURFACES, handle, surfaceName, meshTris, bufferSizeTris);
+}
 
 qhandle_t trap_R_RegisterSkin( const char *name ) {
 	return syscall( CG_R_REGISTERSKIN, name );

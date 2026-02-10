@@ -1571,6 +1571,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 #ifndef DEDICATED
 	re.BeginRegistration = RE_BeginRegistration;
 	re.RegisterModel = RE_RegisterModel;
+	re.GetMd3Verts = R_GetMd3Verts;
 	re.RegisterSkin = RE_RegisterSkin;
 	re.RegisterShader = RE_RegisterShader;
 	re.RegisterShaderNoMip = RE_RegisterShaderNoMip;

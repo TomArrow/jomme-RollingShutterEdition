@@ -168,6 +168,15 @@ typedef enum {
 	IMPACTSOUND_FLESH
 } impactSound_t;
 
+
+
+#define MD3TRIANGLESET_MAXCOUNT 100
+typedef struct md3TriangleSet_s {
+	meshTriangle_t tris[MD3TRIANGLESET_MAXCOUNT];
+	int triangleCount;
+} md3TriangleSet_t;
+
+
 //=================================================
 
 // player entities need to track more information
@@ -1286,7 +1295,10 @@ typedef struct {
 	qhandle_t	itemHoloModel;
 	qhandle_t	redFlagModel;
 	qhandle_t	blueFlagModel;
+	md3TriangleSet_t	flagTris;
 	qhandle_t	neutralFlagModel;
+	qhandle_t	flagNoFlagSkin;
+	qhandle_t	flagShaderGiga[4];
 	qhandle_t	flagShader[4];
 	qhandle_t	flagShaderYsal[4];
 	//qhandle_t	flagShader[3]; //JK2
@@ -2703,6 +2715,7 @@ void		trap_R_LoadWorldMap( const char *mapname );
 // all media should be registered during level startup to prevent
 // hitches during gameplay
 qhandle_t	trap_R_RegisterModel( const char *name );			// returns rgb axis if not found
+int			trap_R_GetMD3Surfaces(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, int bufferSizeTris);
 qhandle_t	trap_R_RegisterSkin( const char *name );			// returns all white if not found
 qhandle_t	trap_R_RegisterShader( const char *name );			// returns all white if not found
 qhandle_t	trap_R_RegisterShaderNoMip( const char *name );			// returns all white if not found

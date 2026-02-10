@@ -238,6 +238,19 @@ void RB_SurfacePolychain( srfPoly_t *p ) {
 		tess.texCoords[numv][0][0] = p->verts[i].st[0];
 		tess.texCoords[numv][0][1] = p->verts[i].st[1];
 
+		//if (p->verts[i].haveNormal) {
+			tess.normal[numv][0] = p->verts[i].normal[0];
+			tess.normal[numv][1] = p->verts[i].normal[1];
+			tess.normal[numv][2] = p->verts[i].normal[2];
+
+			tess.lightdir[numv][0] = p->verts[i].lightdir[0];
+			tess.lightdir[numv][1] = p->verts[i].lightdir[1];
+			tess.lightdir[numv][2] = p->verts[i].lightdir[2];
+			tess.ambientLight[numv][0] = p->verts[i].ambientLight[0];
+			tess.ambientLight[numv][1] = p->verts[i].ambientLight[1];
+			tess.ambientLight[numv][2] = p->verts[i].ambientLight[2];
+		//}
+
 		Com_Memcpy(tess.vertexColors[numv], p->verts[i].modulate,sizeof(float)*4);
 		//*(int *)&tess.vertexColors[numv] = *(int *)p->verts[ i ].modulate;
 

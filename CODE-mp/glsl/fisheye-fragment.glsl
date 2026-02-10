@@ -282,6 +282,7 @@ uniform int haveVertexLightDirectionUniform;
 uniform int stageColorGenUniform;
 uniform uint rawStateBitsUniform;
 uniform uint appliedStateBitsUniform;
+uniform int stageForceNormalUniform;
 
 uniform int thermalVisionUniform;
 uniform int shaderDebugUniform;
@@ -422,7 +423,7 @@ void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 		distanceFactor =  length(eyeSpaceCoordsGeom);
 		distanceFactor = 1.0f/(distanceFactor*0.001f+1.0f);
 	}
-	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
+	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0){
 		powfactor = 0.45f;
 		colorIn /= texAverageBrightnessUniform;
 		normalmult = clamp(dot(mynormal,normalize(-eyeSpaceCoordsGeom.xyz)),0.0f,1.0f);
@@ -439,7 +440,7 @@ void heatVision(inout vec4 colorInOut, vec3 lightmapIn, vec3 mynormal){
 	colorIn.x = pow(colorIn.x,powfactor);
 	colorIn.y = pow(colorIn.y,powfactor);
 	colorIn.z = pow(colorIn.z,powfactor);
-	if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE && !additive){
+	if((stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0) && !additive){
 		colorIn *= 0.5f;
 		colorIn += vec3(0.5f);
 		colorIn *= 40.0f;
@@ -1571,7 +1572,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	float effectiveAlpha = color.w*vertColor.w;
 
-	vec3 lightReferenceNormal = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
+	vec3 lightReferenceNormal = (stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	
 	//bool usesBlending = (appliedStateBitsUniform & GLS_SRCBLEND_BITS) > 0 && (appliedStateBitsUniform & GLS_DSTBLEND_BITS) > 0;
 
@@ -1918,7 +1919,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 							continue;
 						}
 
-						float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+						float shadowLineIntensity = (stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0) ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
 
 						float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
 						if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint*10.0f){
@@ -2014,7 +2015,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 								continue;
 							}
 
-							float shadowLineIntensity = stageColorGenUniform == CGEN_LIGHTING_DIFFUSE ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+							float shadowLineIntensity = (stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0) ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
 
 							float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
 							if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,dlightOrigin) > maxDistPoint*maxDistPoint){
@@ -2135,7 +2136,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		//}
 		//return;
 		vertexLitMult = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
-		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE){
+		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0){ // TODO fix this for flag?
 			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided).xyz * MULTDIVIDE255;
 		}
 		outFragColor.xyz -= boringShadowSubtractVal;
@@ -2236,9 +2237,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 		outVec = normalize(outVec);
 
-
+		float specIntensitySchlickMultReflective = 0.5f+(1.0-0.5f)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
 		if(ssr){
-			#define SSR_MAX_STEPS 50
+			#define SSR_MAX_STEPS 150
 			#define SSR_STEP_SIZE 20
 			vec2 uvRefl;
 			vec4 thegrad;
@@ -2248,7 +2249,8 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
 			if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
 			if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
-			thegrad *= gradMultiplier; // gotta calc the grad up here cuz inside the loop dFdx and dFdy will break and cause artifaacts
+			thegrad *= 0.5f;
+			//thegrad *= gradMultiplier; // gotta calc the grad up here cuz inside the loop dFdx and dFdy will break and cause artifaacts
 			for(int i=0;i<SSR_MAX_STEPS;i++){
 				newPos = eyeSpaceCoordsGeom.xyz + float(i+1)*float(SSR_STEP_SIZE)*outVec;
 				float dist = length(newPos);
@@ -2262,7 +2264,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			}
 			if(found){
 				outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
-				outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f);
+				outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f)*specIntensitySchlickMultReflective;
 			} else{
 				//outFragColor.xyz =oriColor + vec3(1.0f,0.0f,0.0f)*max(worldNormal.z,0.0f);
 			}

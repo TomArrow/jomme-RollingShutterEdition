@@ -244,6 +244,101 @@ int R_ComputeFogNum( md3Header_t *header, trRefEntity_t *ent ) {
 
 	return 0;
 }
+/*
+=============
+R_GetMd3SurfaceVerts
+=============
+*/
+int R_GetMd3SurfaceVerts(md3Surface_t* surface, meshTriangle_t*& meshTris, size_t& bufferSizeTris) {
+	int				j;
+	float			backlerp = 0;
+	int* triangles;
+	float* texCoords;
+	int				indexes;
+	int				numVerts;
+	int				countAdded = 0; 
+	//meshVert_t*		meshVertsStart = meshVerts;
+	//meshVert_t*		meshVertsEnd = meshVerts+ bufferSize;
+	meshTriangle_t*	meshTrisStart = meshTris;
+	meshTriangle_t*	meshTrisEnd = meshTris + bufferSizeTris;
+
+	short * newXyz, * newNormals;
+	float	newXyzScale;
+	float	newNormalScale;
+	int		vertNum;
+	double	lat, lng;
+
+
+	newXyz = (short*)((byte*)surface + surface->ofsXyzNormals)
+		+ (backEnd.currentEntity->e.frame * surface->numVerts * 4);
+	newNormals = newXyz + 3;
+
+	newXyzScale = MD3_XYZ_SCALE * (1.0 - backlerp);
+	newNormalScale = 1.0 - backlerp;
+
+	numVerts = surface->numVerts;
+
+	triangles = (int*)((byte*)surface + surface->ofsTriangles);
+	indexes = surface->numTriangles * 3;
+
+	texCoords = (float*)((byte*)surface + surface->ofsSt);
+
+	for (j = 0; j < indexes && meshTris < meshTrisEnd; j+=3, meshTris++) {
+
+		for (int i = 0; i < 3; i++) {
+			meshVert_t* mVert = &meshTris->verts[i];
+			vertNum = triangles[j + i];
+			mVert->xyz[0] = (newXyz + vertNum * 4)[0] * newXyzScale;
+			mVert->xyz[1] = (newXyz + vertNum * 4)[1] * newXyzScale;
+			mVert->xyz[2] = (newXyz + vertNum * 4)[2] * newXyzScale;
+
+			lat = ((newNormals + vertNum * 4)[0] >> 8) & 0xff;
+			lng = ((newNormals + vertNum * 4)[0] & 0xff);
+
+			lat /= 256;
+			lng /= 256;
+
+			mVert->normal[0] = NewCosTable(lat) * NewSinTable(lng);
+			mVert->normal[1] = NewSinTable(lat) * NewSinTable(lng);
+			mVert->normal[2] = NewCosTable(lng);
+
+			mVert->st[0] = texCoords[vertNum * 2 + 0];
+			mVert->st[1] = texCoords[vertNum * 2 + 1];
+
+			mVert->particleId = -1;
+			// FIXME: fill in lightmapST for completeness?
+		}
+		countAdded++;
+		bufferSizeTris--;
+	}
+
+	return countAdded;
+}
+
+int R_GetMd3Verts(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, size_t bufferSizeTris) {
+	model_t* model = R_GetModelByHandle(handle);
+	if (!model || model->type != MOD_MESH || !model->md3[0]) {
+		Com_Printf("^3R_GetMd3Verts: Called with invalid handle\n");
+		return 0; // wrong type
+	}
+	md3Header_t* header = model->md3[0];
+	md3Surface_t* surface = (md3Surface_t*)((byte*)header + header->ofsSurfaces);
+	int countAdded = 0;
+	for (int i = 0; i < header->numSurfaces; i++) {
+
+		if (stricmp(surface->name, surfaceName)) {
+			surface = (md3Surface_t*)((byte*)surface + surface->ofsEnd);
+			continue; // not the requested surface
+		}
+
+		countAdded += R_GetMd3SurfaceVerts(surface, meshTris, bufferSizeTris);
+
+		surface = (md3Surface_t*)((byte*)surface + surface->ofsEnd);
+	}
+
+	return countAdded;
+}
+
 
 /*
 =================

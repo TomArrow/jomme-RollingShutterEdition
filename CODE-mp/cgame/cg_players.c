@@ -4290,7 +4290,7 @@ static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
 CG_PlayerFlag
 ===============
 */
-static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop ) {
+static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop, qhandle_t flagShaderGiga) {
 	refEntity_t		ent;
 	vec3_t			angles;
 	vec3_t			axis[3];
@@ -4343,6 +4343,8 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop ) {
 
 	ent.hModel = hModel;
 
+	ent.customSkin = cgs.media.flagNoFlagSkin;
+
 	ent.modelScale[0] = 0.5;
 	ent.modelScale[1] = 0.5;
 	ent.modelScale[2] = 0.5;
@@ -4351,6 +4353,32 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop ) {
 	VectorCopy(ent.origin, flagTop);
 	VectorMA(flagTop, 110.0, ent.axis[2], flagTop);
 	VectorMA(flagTop, 20.0, ent.axis[0], flagTop);
+
+	if (flagShaderGiga && cgs.media.flagTris.triangleCount) {
+		vec3_t			directLight, lightDir, ambientLight;
+		meshTriangle_t* tri = cgs.media.flagTris.tris;
+		polyVert_t vert[3];
+		int i,j;
+		trap_R_LightForPoint(ent.origin, ambientLight, directLight, lightDir);
+		for (i = 0; i < cgs.media.flagTris.triangleCount; i++, tri++) {
+			for (j = 0; j < 3; j++) {
+				VectorMA(ent.origin, tri->verts[j].xyz[0], ent.axis[0], vert[j].xyz);
+				VectorMA(vert[j].xyz, tri->verts[j].xyz[1], ent.axis[1], vert[j].xyz);
+				VectorMA(vert[j].xyz, tri->verts[j].xyz[2], ent.axis[2], vert[j].xyz);
+				vert[j].st[0] = tri->verts[j].st[0];
+				vert[j].st[1] = tri->verts[j].st[1];
+				VectorCopy(directLight, vert[j].modulate);
+				vert[j].modulate[3] = 255;
+				VectorCopy(ambientLight,vert[j].ambientLight);
+				VectorCopy(lightDir,vert[j].lightdir);
+				VectorScale(ent.axis[0], tri->verts[j].normal[0], vert[j].normal);
+				VectorMA(vert[j].normal, tri->verts[j].normal[1], ent.axis[1], vert[j].normal);
+				VectorMA(vert[j].normal, tri->verts[j].normal[2], ent.axis[2], vert[j].normal);
+				//VectorCopy(tri->verts[j].normal, vert[j].normal); // cool :)
+			}
+			trap_R_AddPolyToScene(flagShaderGiga, 3, vert);
+		}
+	}
 
 	/*
 	if (cent->currentState.number == cg.snap->ps.clientNum)
@@ -4397,13 +4425,13 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 	// redflag
 	if ( powerups & ( 1 << PW_REDFLAG ) ) {
-		CG_PlayerFlag( cent, cgs.media.redFlagModel, flagTop);
+		CG_PlayerFlag( cent, cgs.media.redFlagModel, flagTop, cgs.media.flagShaderGiga[TEAM_RED]);
 		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 1.0, 0.2f, 0.2f, 40.0f, qfalse);
 	}
 
 	// blueflag
 	if ( powerups & ( 1 << PW_BLUEFLAG ) ) {
-		CG_PlayerFlag( cent, cgs.media.blueFlagModel, flagTop);
+		CG_PlayerFlag( cent, cgs.media.blueFlagModel, flagTop, cgs.media.flagShaderGiga[TEAM_BLUE]);
 		trap_R_AddLightToScene(flagTop, jitterAdjustedRandomFloat(100, 32), 0.2f, 0.2f, 1.0, 40.0f, qfalse);
 	}
 

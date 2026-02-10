@@ -83,10 +83,27 @@ typedef float color5f_t[5]; // 5th is magnitude that is multiplied with rgb
 extern color4f_t identity255;
 extern color4f_t identity;
 
+#define MESHVERT_MAX_CONNECTIONS 20
+typedef struct { // for communicatingg a model with cgame
+	vec3_t		xyz;
+	float		st[2];
+	vec3_t		normal;
+	int			particleId;
+	//short		connections[MESHVERT_MAX_CONNECTIONS];
+	//short		connectionsCount;
+} meshVert_t;
+typedef struct { // for communicatingg a model with cgame
+	meshVert_t		verts[3];
+} meshTriangle_t;
+
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
 	float		modulate[4];
+	vec3_t		normal;
+	vec3_t		lightdir;
+	vec3_t		ambientLight;
+	//qboolean	haveNormal;
 } polyVert_t;
 
 typedef struct poly_s {
