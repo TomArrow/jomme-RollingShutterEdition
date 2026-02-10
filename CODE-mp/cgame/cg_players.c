@@ -4,6 +4,7 @@
 #include "cg_local.h"
 #include "../ghoul2/G2.h"
 #include "fx_local.h"
+#include "cg_demos_math.h"
 
 //[TrueView]
 #define TURN_ON				0x00000000
@@ -4284,6 +4285,211 @@ static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
 }
 #endif
 
+void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* clothState, float modelScale) {
+	// (time1+timefraction1) - (time2+timefraction2)
+	// time1+timefraction1 - time2 - timefraction2
+	// time1-time2 + timefraction1- timefraction2
+	int i,j;
+	clothVertState_t* vertState, *vertState2;
+	clothVertConnection_t* vertConn;
+	float dt = ((float)(cg.time - clothState->lastTime) + cg.timeFraction - clothState->lastTimeFraction)*0.001f; // idk if this is correct
+	float dist = VectorDistanceSquared(origin,clothState->lastOrigin);
+
+	VectorCopy(origin, clothState->lastOrigin);
+	clothState->lastTime = cg.time;
+	clothState->lastTimeFraction = cg.timeFraction;
+
+	if (dt > 1.0f || dt < 0 || dist > 200.0f*200.0f) {
+		// distcontinuity. just reset
+		for (i = 0; i< clothState->countVertStates; i++) { // ok just set everything to the normal pos
+			vertState = &clothState->vertStates[i];
+			VectorMA(origin, vertState->basePos[0], axis[0], vertState->newPosition);
+			VectorMA(vertState->newPosition, vertState->basePos[1], axis[1], vertState->newPosition);
+			VectorMA(vertState->newPosition, vertState->basePos[2], axis[2], vertState->newPosition);
+			VectorCopy(vertState->newPosition, vertState->position);
+		}
+		return;
+	}
+	if (dt == 0) {
+		// we are paused, just copy over the old values
+		for (i = 0; i < clothState->countVertStates; i++) { 
+			vertState = &clothState->vertStates[i];
+			VectorCopy(vertState->position, vertState->newPosition);
+		}
+		return;
+	}
+
+	vec3_t tmp;
+	// apply gravity
+	for (i = 0; i< clothState->countVertStates; i++) { 
+		vertState = &clothState->vertStates[i];
+		if (vertState->pinned) {
+			continue;
+		}
+		VectorCopy(vertState->newPosition,tmp);
+		vertState->newPosition[0] += (vertState->newPosition[0] - vertState->position[0]);// +(float)DEFAULT_GRAVITY * dt * dt;
+		vertState->newPosition[1] += (vertState->newPosition[1] - vertState->position[1]);// +(float)DEFAULT_GRAVITY * dt * dt;
+		vertState->newPosition[2] += (vertState->newPosition[2] - vertState->position[2]) - (float)DEFAULT_GRAVITY*dt*dt;
+		VectorCopy(tmp,vertState->position);
+	}
+
+	// springs
+	vec3_t move;
+	float deltaRatio;
+	for (int j = 0; j < 50; j++) {
+		for (i = 0; i< clothState->countVertConns; i++) {
+			vertConn = &clothState->vertConns[i];
+			vertState = &clothState->vertStates[vertConn->vert1];
+			vertState2 = &clothState->vertStates[vertConn->vert2];
+			VectorSubtract(vertState2->newPosition, vertState->newPosition, move);
+			dist = VectorLength(move);
+			if (dist == 0) {
+				continue;
+			}
+			deltaRatio = (dist-vertConn->wishLen*modelScale) / dist;
+			VectorScale(move,0.5f*deltaRatio,move);
+			if (!vertState->pinned) {
+				VectorMA(vertState->newPosition, vertState2->pinned ? 2.0f : 1.0f, move, vertState->newPosition);
+			}
+			if (!vertState2->pinned) {
+				VectorMA(vertState2->newPosition, vertState->pinned ? -2.0f : -1.0f,move,vertState2->newPosition);
+			}
+		}
+	}
+
+
+}
+
+void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGiga, vec3_t axis[3], vec3_t origin) {
+	if (flagShaderGiga && cgs.media.flagTris.triangleCount) {
+		vec3_t			directLight, lightDir, ambientLight;
+		clothVertState_t* vertState;
+		meshTriangle_t* tri = cgs.media.flagTris.tris;
+		polyVert_t vert[3];
+		int i, j;
+		trap_R_LightForPoint(origin, ambientLight, directLight, lightDir);
+		if (!cent->flagClothState.inited) {
+			cent->flagClothState = cgs.media.flagClothBasicState;
+		}
+		for (i = 0; i < cent->flagClothState.countVertStates; i++) {
+			vertState = &cent->flagClothState.vertStates[i];
+			if (vertState->pinned) { // update pinned vertices (corners)
+				VectorMA(origin, vertState->basePos[0], axis[0], vertState->newPosition);
+				VectorMA(vertState->newPosition, vertState->basePos[1], axis[1], vertState->newPosition);
+				VectorMA(vertState->newPosition, vertState->basePos[2], axis[2], vertState->newPosition);
+				VectorCopy(vertState->newPosition, vertState->position);
+			}
+		}
+
+		CG_ProcessClothState(origin, axis ,&cent->flagClothState,ent->modelScale[0]);
+
+		for (i = 0; i < cgs.media.flagTris.triangleCount; i++, tri++) {
+			for (j = 0; j < 3; j++) {
+				VectorMA(origin, tri->verts[j].xyz[0], axis[0], vert[j].xyz);
+				VectorMA(vert[j].xyz, tri->verts[j].xyz[1], axis[1], vert[j].xyz);
+				VectorMA(vert[j].xyz, tri->verts[j].xyz[2], axis[2], vert[j].xyz);
+				VectorCopy(cent->flagClothState.vertStates[tri->verts[j].particleId].newPosition, vert[j].xyz);
+				vert[j].st[0] = tri->verts[j].st[0];
+				vert[j].st[1] = tri->verts[j].st[1];
+				VectorCopy(directLight, vert[j].modulate);
+				vert[j].modulate[3] = 255;
+				VectorCopy(ambientLight, vert[j].ambientLight);
+				VectorCopy(lightDir, vert[j].lightdir);
+				VectorScale(axis[0], tri->verts[j].normal[0], vert[j].normal);
+				VectorMA(vert[j].normal, tri->verts[j].normal[1], axis[1], vert[j].normal);
+				VectorMA(vert[j].normal, tri->verts[j].normal[2], axis[2], vert[j].normal);
+				//VectorCopy(tri->verts[j].normal, vert[j].normal); // cool :)
+			}
+			trap_R_AddPolyToScene(flagShaderGiga, 3, vert);
+		}
+	}
+}
+
+
+void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState) {
+	int i,j,k;
+	float distsq = 0;
+	memset(clothState, 0, sizeof(*clothState));
+	float leftTopClosest = 99999.0f, rightTopClosest = 99999.0f;
+	int leftTopClosestId = -1, rightTopClosestId = -1;
+	vec2_t topLeft = { 0,0 }, topRight = {1,0};
+	int triconns[3][2] = {0};
+	// allocate all the unique points
+	for (i = 0; i < md3Tris->triangleCount; i++) {
+		meshTriangle_t* tri = &md3Tris->tris[i];
+		for (j = 0; j < 3; j++) {
+			meshVert_t* vert = &tri->verts[j];
+			qboolean found = qfalse;
+
+			for (k = 0; k < clothState->countVertStates; k++) {
+				distsq = VectorDistanceSquared(vert->xyz, clothState->vertStates[k].position);
+				if (distsq <= 0.00001f) {
+					found = qtrue;
+					vert->particleId = k;
+					break;
+				}
+			}
+			if (!found && clothState->countVertStates < FLAGCLOTH_MAXVERTS) {
+				clothVertState_t* vertState = &clothState->vertStates[clothState->countVertStates];
+				vert->particleId = clothState->countVertStates++;
+				VectorCopy(vert->xyz, vertState->position);
+			}
+
+			distsq = Vector2DistanceSquared(topLeft, vert->st);
+			if (distsq < leftTopClosest) {
+				leftTopClosest = distsq;
+				leftTopClosestId = vert->particleId;
+			}
+			distsq = Vector2DistanceSquared(topRight, vert->st);
+			if (distsq < rightTopClosest) {
+				rightTopClosest = distsq;
+				rightTopClosestId = vert->particleId;
+			}
+		}
+		triconns[0][0] = tri->verts[0].particleId;
+		triconns[0][1] = tri->verts[1].particleId;
+		triconns[1][0] = tri->verts[0].particleId;
+		triconns[1][1] = tri->verts[2].particleId;
+		triconns[2][0] = tri->verts[1].particleId;
+		triconns[2][1] = tri->verts[2].particleId;
+		for (j = 0; j < 3; j++) {
+			qboolean found = qfalse;
+			for (k = 0; k < clothState->countVertConns; k++) {
+				if (clothState->vertConns[k].vert1 == triconns[j][0] && clothState->vertConns[k].vert2 == triconns[j][1]
+					|| clothState->vertConns[k].vert1 == triconns[j][1] && clothState->vertConns[k].vert2 == triconns[j][0]
+					) {
+					found = qtrue;
+					break;
+				}
+			}
+			if (!found) {
+				if (!found && clothState->countVertConns < FLAGCLOTH_MAXCONNS) {
+					clothVertConnection_t* conn = &clothState->vertConns[clothState->countVertConns++];
+					conn->vert1 = triconns[j][0];
+					conn->vert2 = triconns[j][1];
+					conn->wishLen = VectorDistance(clothState->vertStates[conn->vert1].position, clothState->vertStates[conn->vert2].position);
+				}
+			}
+
+		}
+	}
+
+	if (rightTopClosestId != -1) {
+		clothState->vertStates[rightTopClosestId].pinned = qtrue;
+	}
+	if (leftTopClosestId != -1) {
+		clothState->vertStates[leftTopClosestId].pinned = qtrue;
+	}
+	for (k = 0; k < clothState->countVertStates; k++) {
+		VectorCopy(clothState->vertStates[k].position, clothState->vertStates[k].basePos);
+	}
+
+
+
+	clothState->inited = qtrue;
+}
+
+
 
 /*
 ===============
@@ -4354,31 +4560,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop, qh
 	VectorMA(flagTop, 110.0, ent.axis[2], flagTop);
 	VectorMA(flagTop, 20.0, ent.axis[0], flagTop);
 
-	if (flagShaderGiga && cgs.media.flagTris.triangleCount) {
-		vec3_t			directLight, lightDir, ambientLight;
-		meshTriangle_t* tri = cgs.media.flagTris.tris;
-		polyVert_t vert[3];
-		int i,j;
-		trap_R_LightForPoint(ent.origin, ambientLight, directLight, lightDir);
-		for (i = 0; i < cgs.media.flagTris.triangleCount; i++, tri++) {
-			for (j = 0; j < 3; j++) {
-				VectorMA(ent.origin, tri->verts[j].xyz[0], ent.axis[0], vert[j].xyz);
-				VectorMA(vert[j].xyz, tri->verts[j].xyz[1], ent.axis[1], vert[j].xyz);
-				VectorMA(vert[j].xyz, tri->verts[j].xyz[2], ent.axis[2], vert[j].xyz);
-				vert[j].st[0] = tri->verts[j].st[0];
-				vert[j].st[1] = tri->verts[j].st[1];
-				VectorCopy(directLight, vert[j].modulate);
-				vert[j].modulate[3] = 255;
-				VectorCopy(ambientLight,vert[j].ambientLight);
-				VectorCopy(lightDir,vert[j].lightdir);
-				VectorScale(ent.axis[0], tri->verts[j].normal[0], vert[j].normal);
-				VectorMA(vert[j].normal, tri->verts[j].normal[1], ent.axis[1], vert[j].normal);
-				VectorMA(vert[j].normal, tri->verts[j].normal[2], ent.axis[2], vert[j].normal);
-				//VectorCopy(tri->verts[j].normal, vert[j].normal); // cool :)
-			}
-			trap_R_AddPolyToScene(flagShaderGiga, 3, vert);
-		}
-	}
+	CG_DrawFlagVerts(cent,&ent,flagShaderGiga, ent.axis, ent.origin);
 
 	/*
 	if (cent->currentState.number == cg.snap->ps.clientNum)
@@ -5871,7 +6053,6 @@ void CG_SaberCompWork(vec3_t start, vec3_t end, int ownerNum)// , centity_t* own
 
 #define SABER_TRAIL_TIME	40.0f // You can ignore. Is a cvar now. (cg_saberTrailTime) -TA
 #define FX_USE_ALPHA		0x08000000
-#include "cg_demos_math.h"
 const vec3_t container = { -8.0f, 8.0f, 8.0f };
 void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
 	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up

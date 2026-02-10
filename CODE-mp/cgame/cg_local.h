@@ -171,10 +171,35 @@ typedef enum {
 
 
 #define MD3TRIANGLESET_MAXCOUNT 100
+#define FLAGCLOTH_MAXVERTS (MD3TRIANGLESET_MAXCOUNT*3)
+#define FLAGCLOTH_MAXCONNS (FLAGCLOTH_MAXVERTS*4) // idk random. make it higher if its no good
 typedef struct md3TriangleSet_s {
 	meshTriangle_t tris[MD3TRIANGLESET_MAXCOUNT];
 	int triangleCount;
 } md3TriangleSet_t;
+
+// each player gets his own
+typedef struct clothVertState_s {
+	qboolean	pinned;
+	vec3_t		basePos;
+	vec3_t		position;
+	vec3_t		newPosition;
+} clothVertState_t;
+typedef struct clothVertConnection_s {
+	float		wishLen;
+	int			vert1, vert2;
+
+} clothVertConnection_t;
+typedef struct flagTrianglesState_s {
+	qboolean				inited;
+	vec3_t					lastOrigin;
+	int						lastTime;
+	float					lastTimeFraction;
+	int						countVertStates;
+	int						countVertConns;
+	clothVertState_t		vertStates[FLAGCLOTH_MAXVERTS];
+	clothVertConnection_t	vertConns[FLAGCLOTH_MAXCONNS];
+} flagClothState_t; 
 
 
 //=================================================
@@ -309,6 +334,11 @@ typedef struct psHistory_s {
 	int		nextSlot;
 	timedPlayerState_t	states[MAX_STATE_HISTORY];
 } psHistory_t;
+
+
+
+
+
 
 
 #define MAX_PLAYER_WIND_HISTORY 32
@@ -507,6 +537,7 @@ typedef struct centity_s {
 	int					storageTime;
 
 	playerWindHistory_t	windHistory;
+	flagClothState_t	flagClothState;
 } centity_t;
 
 
@@ -1296,6 +1327,7 @@ typedef struct {
 	qhandle_t	redFlagModel;
 	qhandle_t	blueFlagModel;
 	md3TriangleSet_t	flagTris;
+	flagClothState_t	flagClothBasicState;
 	qhandle_t	neutralFlagModel;
 	qhandle_t	flagNoFlagSkin;
 	qhandle_t	flagShaderGiga[4];
@@ -2294,6 +2326,7 @@ void CG_NextInventory_f(void);
 void CG_PrevInventory_f(void);
 void CG_NextForcePower_f(void);
 void CG_PrevForcePower_f(void);
+void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState);
 
 void MV_LoadSettings(const char* info);
 void MV_UpdateCgFlags(void);

@@ -2116,6 +2116,7 @@ static void CG_RegisterGraphics( void ) {
 			cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag_ysal.md3" );
 		}
 		cgs.media.flagTris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", cgs.media.flagTris.tris, sizeof(cgs.media.flagTris.tris) / sizeof(cgs.media.flagTris.tris[0]));
+		CG_InitClothState(&cgs.media.flagTris,&cgs.media.flagClothBasicState);
 
 		cgs.media.flagNoFlagSkin = trap_R_RegisterSkin("models/flags/flag_noflag.skin");
 

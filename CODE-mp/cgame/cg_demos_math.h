@@ -123,6 +123,11 @@ static ID_INLINE void posGet( float t, posInterpolate_t type, const vec3_t contr
 	VectorMA( out, matrix[3], control[3], out );
 }
 
+static ID_INLINE vec_t Vector2DistanceSquared ( const vec2_t v1, const vec2_t v2 ) {
+	vec2_t v;
+	Vector2Subtract( v1, v2, v );
+	return (v[0]*v[0] + v[1]*v[1]);
+}
 static ID_INLINE vec_t VectorDistanceSquared ( const vec3_t v1, const vec3_t v2 ) {
 	vec3_t v;
 	VectorSubtract( v1, v2, v );
