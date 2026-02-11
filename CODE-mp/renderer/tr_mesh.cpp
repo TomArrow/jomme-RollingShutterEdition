@@ -249,7 +249,7 @@ int R_ComputeFogNum( md3Header_t *header, trRefEntity_t *ent ) {
 R_GetMd3SurfaceVerts
 =============
 */
-int R_GetMd3SurfaceVerts(md3Surface_t* surface, meshTriangle_t*& meshTris, size_t& bufferSizeTris) {
+int R_GetMd3SurfaceVerts(md3Surface_t* surface, meshTriangle_t*& meshTris, int& bufferSizeTris) {
 	int				j;
 	float			backlerp = 0;
 	int* triangles;
@@ -269,14 +269,18 @@ int R_GetMd3SurfaceVerts(md3Surface_t* surface, meshTriangle_t*& meshTris, size_
 	double	lat, lng;
 
 
-	newXyz = (short*)((byte*)surface + surface->ofsXyzNormals)
-		+ (backEnd.currentEntity->e.frame * surface->numVerts * 4);
+	newXyz = (short*)((byte*)surface + surface->ofsXyzNormals);
+		//+ (backEnd.currentEntity->e.frame * surface->numVerts * 4);
 	newNormals = newXyz + 3;
 
 	newXyzScale = MD3_XYZ_SCALE * (1.0 - backlerp);
 	newNormalScale = 1.0 - backlerp;
 
 	numVerts = surface->numVerts;
+
+	if (!numVerts) {
+		Com_Printf("R_GetMd3SurfaceVerts: 0 vertices\n");
+	}
 
 	triangles = (int*)((byte*)surface + surface->ofsTriangles);
 	indexes = surface->numTriangles * 3;
@@ -315,7 +319,7 @@ int R_GetMd3SurfaceVerts(md3Surface_t* surface, meshTriangle_t*& meshTris, size_
 	return countAdded;
 }
 
-int R_GetMd3Verts(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, size_t bufferSizeTris) {
+int R_GetMd3Verts(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, int bufferSizeTris) {
 	model_t* model = R_GetModelByHandle(handle);
 	if (!model || model->type != MOD_MESH || !model->md3[0]) {
 		Com_Printf("^3R_GetMd3Verts: Called with invalid handle\n");

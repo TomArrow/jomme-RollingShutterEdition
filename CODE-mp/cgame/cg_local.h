@@ -184,6 +184,7 @@ typedef struct clothVertState_s {
 	vec3_t		basePos;
 	vec3_t		position;
 	vec3_t		newPosition;
+	vec3_t		calculatedNormal;
 } clothVertState_t;
 typedef struct clothVertConnection_s {
 	float		wishLen;
@@ -2035,6 +2036,7 @@ extern	vmCvar_t		cg_flagCloth;
 extern	vmCvar_t		cg_flagClothDamp;
 extern	vmCvar_t		cg_flagClothTimeStep;
 extern	vmCvar_t		cg_flagClothTimeCompensate;
+extern	vmCvar_t		cg_flagClothNormalFix;
 
 extern	vmCvar_t		cg_eternalScoreboard;
 extern	vmCvar_t		cg_colorScoreboard;
@@ -2332,6 +2334,7 @@ void CG_PrevInventory_f(void);
 void CG_NextForcePower_f(void);
 void CG_PrevForcePower_f(void);
 qboolean CG_TessellateMd3Tris(md3TriangleSet_t* in, md3TriangleSet_t* out);
+void CG_CalcClothVertexNormals(md3TriangleSet_t* md3Tris, flagClothState_t* clothState);
 void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState); 
 
 void MV_LoadSettings(const char* info);

@@ -1747,7 +1747,7 @@ void		RE_LoadWorldMap( const char *mapname );
 void		RE_SetWorldVisData( const byte *vis );
 qhandle_t	RE_RegisterServerModel( const char *name );
 qhandle_t	RE_RegisterModel( const char *name );
-int			R_GetMd3Verts(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, size_t bufferSizeTris);
+int			R_GetMd3Verts(qhandle_t handle, const char* surfaceName, meshTriangle_t* meshTris, int bufferSizeTris);
 qhandle_t	RE_RegisterSkin( const char *name );
 void		RE_Shutdown( qboolean destroyWindow );
 

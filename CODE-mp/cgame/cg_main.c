@@ -676,6 +676,7 @@ vmCvar_t	cg_flagCloth;
 vmCvar_t	cg_flagClothDamp;
 vmCvar_t	cg_flagClothTimeStep;
 vmCvar_t	cg_flagClothTimeCompensate;
+vmCvar_t	cg_flagClothNormalFix;
 
 vmCvar_t	cg_eternalScoreboard;
 vmCvar_t	cg_colorScoreboard;
@@ -987,6 +988,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_flagClothDamp, "cg_flagClothDamp", "0.9f", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothTimeStep, "cg_flagClothTimeStep", "0.0f", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothTimeCompensate, "cg_flagClothTimeCompensate", "1", NULL, CVAR_ARCHIVE },
+	{ &cg_flagClothNormalFix, "cg_flagClothNormalFix", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_fov, "cg_fov", "120", NULL, CVAR_ARCHIVE },
 	{ &cg_distanceAwareFov, "cg_distanceAwareFov", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_viewsize, "cg_viewsize", "100", NULL, CVAR_ARCHIVE },
@@ -2123,7 +2125,7 @@ static void CG_RegisterGraphics( void ) {
 			cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag_ysal.md3" );
 			cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag_ysal.md3" );
 		}
-		md3TriangleSet_t tris;
+		md3TriangleSet_t tris = { 0 };
 		tris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", tris.tris, sizeof(tris.tris) / sizeof(tris.tris[0]));
 		//cgs.media.flagTris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", cgs.media.flagTris.tris, sizeof(cgs.media.flagTris.tris) / sizeof(cgs.media.flagTris.tris[0]));
 		if (!CG_TessellateMd3Tris(&tris, &cgs.media.flagTris)) {

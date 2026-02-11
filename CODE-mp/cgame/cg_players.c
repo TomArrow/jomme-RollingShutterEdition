@@ -4355,8 +4355,9 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 				VectorMA(origin, vertState->basePos[0], axis[0], tmp);
 				VectorMA(tmp, vertState->basePos[1], axis[1], tmp);
 				VectorMA(tmp, vertState->basePos[2], axis[2], tmp);
-				VectorSubtract(tmp,vertState->position,tmp);
-				VectorMA(vertState->position, (float)iter*stepRatio, tmp, vertState->newPosition);
+				//VectorSubtract(tmp,vertState->position,tmp);
+				//VectorMA(vertState->position, (float)iter*stepRatio, tmp, vertState->newPosition);
+				VectorMix(vertState->position, (float)iter*stepRatio, tmp, vertState->newPosition);
 				//VectorCopy(vertState->newPosition, vertState->position);
 			}
 		}
@@ -4412,7 +4413,7 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 			VectorMA(tmp, vertState->basePos[1], axis[1], tmp);
 			VectorMA(tmp, vertState->basePos[2], axis[2], tmp);
 			VectorCopy(tmp, vertState->position);
-			VectorCopy(tmp, vertState->position);
+			VectorCopy(tmp, vertState->newPosition);
 		}
 	}
 }
@@ -4431,6 +4432,10 @@ void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGig
 
 		CG_ProcessClothState(origin, axis ,&cent->flagClothState,ent->modelScale[0]);
 
+		if (cg_flagClothNormalFix.integer) {
+			CG_CalcClothVertexNormals(&cgs.media.flagTris,&cent->flagClothState);
+		}
+
 		for (i = 0; i < cgs.media.flagTris.triangleCount; i++, tri++) {
 			for (j = 0; j < 3; j++) {
 				VectorMA(origin, tri->verts[j].xyz[0], axis[0], vert[j].xyz);
@@ -4443,9 +4448,14 @@ void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGig
 				vert[j].modulate[3] = 255;
 				VectorCopy(ambientLight, vert[j].ambientLight);
 				VectorCopy(lightDir, vert[j].lightdir);
-				VectorScale(axis[0], tri->verts[j].normal[0], vert[j].normal);
-				VectorMA(vert[j].normal, tri->verts[j].normal[1], axis[1], vert[j].normal);
-				VectorMA(vert[j].normal, tri->verts[j].normal[2], axis[2], vert[j].normal);
+				if (cg_flagClothNormalFix.integer) {
+					VectorCopy(cent->flagClothState.vertStates[tri->verts[j].particleId].calculatedNormal, vert[j].normal);
+				}
+				else {
+					VectorScale(axis[0], tri->verts[j].normal[0], vert[j].normal);
+					VectorMA(vert[j].normal, tri->verts[j].normal[1], axis[1], vert[j].normal);
+					VectorMA(vert[j].normal, tri->verts[j].normal[2], axis[2], vert[j].normal);
+				}
 				//VectorCopy(tri->verts[j].normal, vert[j].normal); // cool :)
 			}
 			trap_R_AddPolyToScene(flagShaderGiga, 3, vert);
@@ -4496,6 +4506,61 @@ qboolean CG_TessellateMd3Tris(md3TriangleSet_t* in, md3TriangleSet_t* out) {
 
 	}
 	return qtrue;
+}
+
+void CG_CalcClothVertexNormals(md3TriangleSet_t* md3Tris, flagClothState_t* clothState) {
+	int i,j;
+	vec3_t side1, side2, tmp;
+	float weight = 1.0f;
+	// pre-calc triangle normals, more efficient.
+	for (j = 0; j < md3Tris->triangleCount; j++) {
+		meshTriangle_t* tri = &md3Tris->tris[j];
+
+		VectorSubtract(clothState->vertStates[tri->verts[1].particleId].newPosition, clothState->vertStates[tri->verts[0].particleId].newPosition, side1);
+		VectorSubtract(clothState->vertStates[tri->verts[2].particleId].newPosition, clothState->vertStates[tri->verts[0].particleId].newPosition, side2);
+		CrossProduct(side2, side1, tri->calculatedNormal);
+		VectorNormalize(tri->calculatedNormal);
+	}
+
+	const int attachedPoints[3][2] = { // depending which index our vert is in the triangle, give indices of other points
+		{1,2},
+		{0,2},
+		{0,1},
+	}; 
+	for (i = 0; i < clothState->countVertStates; i++) {
+		vec3_t normal = { 0,0,0 };
+		for (j = 0; j < md3Tris->triangleCount; j++) {
+			meshTriangle_t* tri = &md3Tris->tris[j];
+			int vertStateIndex = -1;
+
+			if (tri->verts[0].particleId == i) {
+				vertStateIndex = 0;
+			}
+			else if (tri->verts[1].particleId == i) {
+				vertStateIndex = 1;
+			}
+			else if (tri->verts[2].particleId == i) {
+				vertStateIndex = 2;
+			}
+
+			if (vertStateIndex == -1) {
+				continue; // this vert is not part if this triangle
+			}
+
+			// get the triangle opening angle at the vert
+			VectorSubtract(clothState->vertStates[tri->verts[attachedPoints[vertStateIndex][0]].particleId].newPosition, clothState->vertStates[tri->verts[vertStateIndex].particleId].newPosition, side1);
+			VectorSubtract(clothState->vertStates[tri->verts[attachedPoints[vertStateIndex][1]].particleId].newPosition, clothState->vertStates[tri->verts[vertStateIndex].particleId].newPosition, side2);
+			VectorNormalize(side1);
+			VectorNormalize(side2);
+			weight = acosf(DotProduct(side1,side2));
+
+			VectorMA(tri->calculatedNormal, weight, tri->calculatedNormal, normal);
+		}
+		VectorNormalize(normal);
+		VectorCopy(normal,clothState->vertStates[i].calculatedNormal);
+	}
+
+	return;
 }
 
 void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState) {
@@ -4574,11 +4639,16 @@ void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState) 
 	}
 	for (k = 0; k < clothState->countVertStates; k++) {
 		VectorCopy(clothState->vertStates[k].position, clothState->vertStates[k].basePos);
+		VectorCopy(clothState->vertStates[k].position, clothState->vertStates[k].newPosition);
 	}
 
 
 
 	clothState->inited = qtrue;
+
+#if _DEBUG
+	CG_CalcClothVertexNormals(md3Tris,clothState); // sanity check
+#endif 
 }
 
 

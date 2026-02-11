@@ -94,6 +94,7 @@ typedef struct { // for communicatingg a model with cgame
 } meshVert_t;
 typedef struct { // for communicatingg a model with cgame
 	meshVert_t		verts[3];
+	vec3_t			calculatedNormal;
 } meshTriangle_t;
 
 typedef struct {
