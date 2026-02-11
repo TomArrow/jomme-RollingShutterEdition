@@ -4328,10 +4328,13 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 
 	float fullDt = dt;
 	float stepRatio = 1.0f;
-	if (cg_flagClothTimeStep.value) {
-		iters = (dt / cg_flagClothTimeStep.value) + 0.5f;
-	} else if (demo.capture.active && demo.capture.lastRealFrameDelta > 0.0f) {
+	if (cg_flagClothTimeStep.value < 0.0f) { // negative value takes priority over demo capture, otherwise behaves same
+		iters = (dt / -cg_flagClothTimeStep.value) + 0.5f;
+	}
+	else if (demo.capture.active && demo.capture.lastRealFrameDelta > 0.0f) {
 		iters = (dt / demo.capture.lastRealFrameDelta) + 0.5f;
+	} else if (cg_flagClothTimeStep.value) {
+		iters = (dt / cg_flagClothTimeStep.value) + 0.5f;
 	}
 	if (iters <= 1) {
 		iters = 1;
@@ -4450,6 +4453,50 @@ void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGig
 	}
 }
 
+qboolean CG_TessellateMd3Tris(md3TriangleSet_t* in, md3TriangleSet_t* out) {
+	memset(out, 0, sizeof(*out));
+	if (in->triangleCount * 4 > MD3TRIANGLESET_MAXCOUNT) {
+		return qfalse;
+	}
+	// each triangle becomes 4 triangles. rly simple
+	//			/\ 
+	//		   /  \
+	//        /____\
+	//       /\    /\
+	//      /  \  /  \
+	//     /____\/____\
+	// for the purpose of this algorithm let's imagine 0 is top, 1 is right bottom, 2 is left bottom
+	// obviously in real life they can have any shape and orientation. for center triangle, lets say 0 is top left, 1 is top right, 2 bottom
+#define MIXVERTS(a,b,o) (VectorMix((a)->xyz, 0.5f, (b)->xyz, (o)->xyz), VectorMix((a)->normal, 0.5f, (b)->normal, (o)->normal),Vector2Mix((a)->st, 0.5f, (b)->st, (o)->st))
+	out->triangleCount = in->triangleCount * 4;
+	for (int i = 0; i < in->triangleCount; i++) {
+		meshTriangle_t* intri = &in->tris[i], *outtri = &out->tris[i * 4];
+
+		outtri->verts[0] = intri->verts[0];
+		MIXVERTS(&intri->verts[0], &intri->verts[1], &outtri->verts[1]);
+		MIXVERTS(&intri->verts[0], &intri->verts[2], &outtri->verts[2]);
+
+		outtri++;
+
+		MIXVERTS(&intri->verts[0], &intri->verts[1], &outtri->verts[0]);
+		outtri->verts[1] = intri->verts[1];
+		MIXVERTS(&intri->verts[1], &intri->verts[2], &outtri->verts[2]);
+
+		outtri++;
+
+		MIXVERTS(&intri->verts[0], &intri->verts[2], &outtri->verts[0]);
+		MIXVERTS(&intri->verts[1], &intri->verts[2], &outtri->verts[1]);
+		outtri->verts[2] = intri->verts[2];
+
+		outtri++;
+
+		MIXVERTS(&intri->verts[0], &intri->verts[2], &outtri->verts[0]);
+		MIXVERTS(&intri->verts[0], &intri->verts[1], &outtri->verts[1]);
+		MIXVERTS(&intri->verts[1], &intri->verts[2], &outtri->verts[2]);
+
+	}
+	return qtrue;
+}
 
 void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState) {
 	int i,j,k;

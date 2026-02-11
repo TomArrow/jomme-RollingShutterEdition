@@ -2123,7 +2123,12 @@ static void CG_RegisterGraphics( void ) {
 			cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag_ysal.md3" );
 			cgs.media.blueFlagModel = trap_R_RegisterModel( "models/flags/b_flag_ysal.md3" );
 		}
-		cgs.media.flagTris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", cgs.media.flagTris.tris, sizeof(cgs.media.flagTris.tris) / sizeof(cgs.media.flagTris.tris[0]));
+		md3TriangleSet_t tris;
+		tris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", tris.tris, sizeof(tris.tris) / sizeof(tris.tris[0]));
+		//cgs.media.flagTris.triangleCount = trap_R_GetMD3Surfaces(cgs.media.redFlagModel, "box01", cgs.media.flagTris.tris, sizeof(cgs.media.flagTris.tris) / sizeof(cgs.media.flagTris.tris[0]));
+		if (!CG_TessellateMd3Tris(&tris, &cgs.media.flagTris)) {
+			cgs.media.flagTris = tris;
+		}
 		CG_InitClothState(&cgs.media.flagTris,&cgs.media.flagClothBasicState);
 
 		cgs.media.flagNoFlagSkin = trap_R_RegisterSkin("models/flags/flag_noflag.skin");

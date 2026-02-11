@@ -2331,7 +2331,8 @@ void CG_NextInventory_f(void);
 void CG_PrevInventory_f(void);
 void CG_NextForcePower_f(void);
 void CG_PrevForcePower_f(void);
-void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState);
+qboolean CG_TessellateMd3Tris(md3TriangleSet_t* in, md3TriangleSet_t* out);
+void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState); 
 
 void MV_LoadSettings(const char* info);
 void MV_UpdateCgFlags(void);
