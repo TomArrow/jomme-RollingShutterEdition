@@ -672,11 +672,13 @@ vmCvar_t	cg_playerWindPoints;
 vmCvar_t	cg_playerWindPointMultiplier;
 vmCvar_t	cg_playerWindPointRadius;
 vmCvar_t	cg_playerWindPointDecayHalfTime;
-vmCvar_t	cg_flagCloth;
+vmCvar_t	cg_flagCloth; // 1 = flag on player, 2 = dropped flag, 4 = flag at base (maybe add wind?)
 vmCvar_t	cg_flagClothDamp;
 vmCvar_t	cg_flagClothTimeStep;
 vmCvar_t	cg_flagClothTimeCompensate;
 vmCvar_t	cg_flagClothNormalFix;
+// TODO add wind (or use the cloud wind?)
+// TODO transfer state, e.g. from carried to dropped, etc.
 
 vmCvar_t	cg_eternalScoreboard;
 vmCvar_t	cg_colorScoreboard;
@@ -984,7 +986,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_playerWindPointMultiplier, "cg_playerWindPointMultiplier", "0.7", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPointRadius, "cg_playerWindPointRadius", "120.0", NULL, CVAR_ARCHIVE },
 	{ &cg_playerWindPointDecayHalfTime, "cg_playerWindPointDecayHalfTime", "200.0f", NULL, CVAR_ARCHIVE },
-	{ &cg_flagCloth, "cg_flagCloth", "1", NULL, CVAR_ARCHIVE },
+	{ &cg_flagCloth, "cg_flagCloth", "7", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothDamp, "cg_flagClothDamp", "0.9f", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothTimeStep, "cg_flagClothTimeStep", "0.0f", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothTimeCompensate, "cg_flagClothTimeCompensate", "1", NULL, CVAR_ARCHIVE },

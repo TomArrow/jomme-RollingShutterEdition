@@ -2333,6 +2333,7 @@ void CG_NextInventory_f(void);
 void CG_PrevInventory_f(void);
 void CG_NextForcePower_f(void);
 void CG_PrevForcePower_f(void);
+void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGiga, vec3_t axis[3], vec3_t origin);
 qboolean CG_TessellateMd3Tris(md3TriangleSet_t* in, md3TriangleSet_t* out);
 void CG_CalcClothVertexNormals(md3TriangleSet_t* md3Tris, flagClothState_t* clothState);
 void CG_InitClothState(md3TriangleSet_t* md3Tris, flagClothState_t* clothState); 

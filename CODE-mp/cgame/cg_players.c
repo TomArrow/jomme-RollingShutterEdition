@@ -4721,7 +4721,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop, qh
 	VectorMA(flagTop, 110.0, ent.axis[2], flagTop);
 	VectorMA(flagTop, 20.0, ent.axis[0], flagTop);
 
-	if (cg_flagCloth.integer) {
+	if (cg_flagCloth.integer & 1) {
 		ent.customSkin = cgs.media.flagNoFlagSkin;
 		CG_DrawFlagVerts(cent, &ent, flagShaderGiga, ent.axis, ent.origin);
 	}

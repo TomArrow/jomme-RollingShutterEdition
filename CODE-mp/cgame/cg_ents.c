@@ -1773,6 +1773,10 @@ Ghoul2 Insert End
 			ent.modelScale[2] = 0.7;
 			ScaleModelAxis(&ent, qfalse);
 		}
+		if (cg_flagCloth.integer & 2 && (cent->currentState.eFlags & EF_BOUNCE_HALF) || cg_flagCloth.integer & 4 && !(cent->currentState.eFlags & EF_BOUNCE_HALF)) {
+			ent.customSkin = cgs.media.flagNoFlagSkin;
+			CG_DrawFlagVerts(cent, &ent, item->giTag == PW_REDFLAG ? cgs.media.flagShaderGiga[TEAM_RED] : cgs.media.flagShaderGiga[TEAM_BLUE], ent.axis, ent.origin);
+		}
 		trap_R_AddRefEntityToScene(&ent);
 	}
 
