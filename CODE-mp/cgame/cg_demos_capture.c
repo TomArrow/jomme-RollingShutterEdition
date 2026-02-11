@@ -484,6 +484,7 @@ void demoCaptureCommand_f(void) {
 	} else if (!Q_stricmp(cmd, "jpg") || !Q_stricmp(cmd, "tga") || !Q_stricmp(cmd, "png") || !Q_stricmp(cmd, "avi") || !Q_stricmp(cmd, "pipe")){
 		demo.capture.active = qtrue;
 		demo.capture.locked = qfalse;
+		demo.capture.lastRealFrameDelta = 0.0f;
 		
 		trap_Cvar_Set( "mme_screenShotFormat", cmd );
 		cmd = CG_Argv(2);

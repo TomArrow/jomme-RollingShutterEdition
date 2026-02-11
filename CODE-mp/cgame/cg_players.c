@@ -4,7 +4,7 @@
 #include "cg_local.h"
 #include "../ghoul2/G2.h"
 #include "fx_local.h"
-#include "cg_demos_math.h"
+#include "cg_demos.h"
 
 //[TrueView]
 #define TURN_ON				0x00000000
@@ -4290,6 +4290,7 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 	// time1+timefraction1 - time2 - timefraction2
 	// time1-time2 + timefraction1- timefraction2
 	int i,j;
+	int iter, iters = 1;
 	clothVertState_t* vertState, *vertState2;
 	clothVertConnection_t* vertConn;
 	float dt = ((float)(cg.time - clothState->lastTime) + cg.timeFraction - clothState->lastTimeFraction)*0.001f; // idk if this is correct
@@ -4308,6 +4309,7 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 			VectorMA(vertState->newPosition, vertState->basePos[2], axis[2], vertState->newPosition);
 			VectorCopy(vertState->newPosition, vertState->position);
 		}
+		clothState->lastDt = 0;
 		return;
 	}
 	if (dt == 0) {
@@ -4316,48 +4318,100 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 			vertState = &clothState->vertStates[i];
 			VectorCopy(vertState->position, vertState->newPosition);
 		}
+		clothState->lastDt = 0;
 		return;
 	}
 
-	vec3_t tmp;
-	// apply gravity
-	for (i = 0; i< clothState->countVertStates; i++) { 
-		vertState = &clothState->vertStates[i];
-		if (vertState->pinned) {
-			continue;
-		}
-		VectorCopy(vertState->newPosition,tmp);
-		vertState->newPosition[0] += (vertState->newPosition[0] - vertState->position[0]);// +(float)DEFAULT_GRAVITY * dt * dt;
-		vertState->newPosition[1] += (vertState->newPosition[1] - vertState->position[1]);// +(float)DEFAULT_GRAVITY * dt * dt;
-		vertState->newPosition[2] += (vertState->newPosition[2] - vertState->position[2]) - (float)DEFAULT_GRAVITY*dt*dt;
-		VectorCopy(tmp,vertState->position);
+	if (clothState->lastDt <= 0) {
+		clothState->lastDt = dt;
 	}
 
-	// springs
-	vec3_t move;
-	float deltaRatio;
-	for (int j = 0; j < 50; j++) {
-		for (i = 0; i< clothState->countVertConns; i++) {
-			vertConn = &clothState->vertConns[i];
-			vertState = &clothState->vertStates[vertConn->vert1];
-			vertState2 = &clothState->vertStates[vertConn->vert2];
-			VectorSubtract(vertState2->newPosition, vertState->newPosition, move);
-			dist = VectorLength(move);
-			if (dist == 0) {
+	float fullDt = dt;
+	float stepRatio = 1.0f;
+	if (cg_flagClothTimeStep.value) {
+		iters = (dt / cg_flagClothTimeStep.value) + 0.5f;
+	} else if (demo.capture.active && demo.capture.lastRealFrameDelta > 0.0f) {
+		iters = (dt / demo.capture.lastRealFrameDelta) + 0.5f;
+	}
+	if (iters <= 1) {
+		iters = 1;
+	}
+	else {
+		stepRatio = 1.0f / (float)iters;
+		dt = fullDt / (float)iters;
+	}
+	vec3_t tmp;
+
+	for (iter = 0; iter < iters; iter++) {
+
+
+
+		for (i = 0; i < clothState->countVertStates; i++) {
+			vertState = &clothState->vertStates[i];
+			if (vertState->pinned) { // partially update pinned vertices (corners)
+				VectorMA(origin, vertState->basePos[0], axis[0], tmp);
+				VectorMA(tmp, vertState->basePos[1], axis[1], tmp);
+				VectorMA(tmp, vertState->basePos[2], axis[2], tmp);
+				VectorSubtract(tmp,vertState->position,tmp);
+				VectorMA(vertState->position, (float)iter*stepRatio, tmp, vertState->newPosition);
+				//VectorCopy(vertState->newPosition, vertState->position);
+			}
+		}
+
+
+		float posAdjustMultiplier = dt / clothState->lastDt;
+		if (cg_flagClothDamp.value > 0.0f) {
+			posAdjustMultiplier *= powf(cg_flagClothDamp.value, dt);
+		}
+		// apply gravity
+		for (i = 0; i< clothState->countVertStates; i++) { 
+			vertState = &clothState->vertStates[i];
+			if (vertState->pinned) {
 				continue;
 			}
-			deltaRatio = (dist-vertConn->wishLen*modelScale) / dist;
-			VectorScale(move,0.5f*deltaRatio,move);
-			if (!vertState->pinned) {
-				VectorMA(vertState->newPosition, vertState2->pinned ? 2.0f : 1.0f, move, vertState->newPosition);
-			}
-			if (!vertState2->pinned) {
-				VectorMA(vertState2->newPosition, vertState->pinned ? -2.0f : -1.0f,move,vertState2->newPosition);
+			VectorCopy(vertState->newPosition,tmp);
+			vertState->newPosition[0] += (vertState->newPosition[0] - vertState->position[0]) * posAdjustMultiplier;// +(float)DEFAULT_GRAVITY * dt * dt;
+			vertState->newPosition[1] += (vertState->newPosition[1] - vertState->position[1]) * posAdjustMultiplier;// +(float)DEFAULT_GRAVITY * dt * dt;
+			vertState->newPosition[2] += (vertState->newPosition[2] - vertState->position[2]) * posAdjustMultiplier - (float)DEFAULT_GRAVITY*dt*dt;
+			VectorCopy(tmp,vertState->position);
+		}
+
+		// springs
+		vec3_t move;
+		float deltaRatio;
+		for (int j = 0; j < 50; j++) {
+			for (i = 0; i< clothState->countVertConns; i++) {
+				vertConn = &clothState->vertConns[i];
+				vertState = &clothState->vertStates[vertConn->vert1];
+				vertState2 = &clothState->vertStates[vertConn->vert2];
+				VectorSubtract(vertState2->newPosition, vertState->newPosition, move);
+				dist = VectorLength(move);
+				if (dist == 0) {
+					continue;
+				}
+				deltaRatio = (dist-vertConn->wishLen*modelScale) / dist;
+				VectorScale(move,0.5f*deltaRatio,move);
+				if (!vertState->pinned) {
+					VectorMA(vertState->newPosition, vertState2->pinned ? 2.0f : 1.0f, move, vertState->newPosition);
+				}
+				if (!vertState2->pinned) {
+					VectorMA(vertState2->newPosition, vertState->pinned ? -2.0f : -1.0f,move,vertState2->newPosition);
+				}
 			}
 		}
+
 	}
 
-
+	for (i = 0; i < clothState->countVertStates; i++) {
+		vertState = &clothState->vertStates[i];
+		if (vertState->pinned) { // update pinned vertices (corners)
+			VectorMA(origin, vertState->basePos[0], axis[0], tmp);
+			VectorMA(tmp, vertState->basePos[1], axis[1], tmp);
+			VectorMA(tmp, vertState->basePos[2], axis[2], tmp);
+			VectorCopy(tmp, vertState->position);
+			VectorCopy(tmp, vertState->position);
+		}
+	}
 }
 
 void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGiga, vec3_t axis[3], vec3_t origin) {
@@ -4370,15 +4424,6 @@ void CG_DrawFlagVerts(centity_t* cent, refEntity_t* ent, qhandle_t flagShaderGig
 		trap_R_LightForPoint(origin, ambientLight, directLight, lightDir);
 		if (!cent->flagClothState.inited) {
 			cent->flagClothState = cgs.media.flagClothBasicState;
-		}
-		for (i = 0; i < cent->flagClothState.countVertStates; i++) {
-			vertState = &cent->flagClothState.vertStates[i];
-			if (vertState->pinned) { // update pinned vertices (corners)
-				VectorMA(origin, vertState->basePos[0], axis[0], vertState->newPosition);
-				VectorMA(vertState->newPosition, vertState->basePos[1], axis[1], vertState->newPosition);
-				VectorMA(vertState->newPosition, vertState->basePos[2], axis[2], vertState->newPosition);
-				VectorCopy(vertState->newPosition, vertState->position);
-			}
 		}
 
 		CG_ProcessClothState(origin, axis ,&cent->flagClothState,ent->modelScale[0]);
@@ -4549,7 +4594,6 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop, qh
 
 	ent.hModel = hModel;
 
-	ent.customSkin = cgs.media.flagNoFlagSkin;
 
 	ent.modelScale[0] = 0.5;
 	ent.modelScale[1] = 0.5;
@@ -4560,7 +4604,10 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hModel, vec3_t flagTop, qh
 	VectorMA(flagTop, 110.0, ent.axis[2], flagTop);
 	VectorMA(flagTop, 20.0, ent.axis[0], flagTop);
 
-	CG_DrawFlagVerts(cent,&ent,flagShaderGiga, ent.axis, ent.origin);
+	if (cg_flagCloth.integer) {
+		ent.customSkin = cgs.media.flagNoFlagSkin;
+		CG_DrawFlagVerts(cent, &ent, flagShaderGiga, ent.axis, ent.origin);
+	}
 
 	/*
 	if (cent->currentState.number == cg.snap->ps.clientNum)

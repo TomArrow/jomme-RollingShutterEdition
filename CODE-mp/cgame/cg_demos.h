@@ -224,6 +224,7 @@ typedef struct demoMain_s {
 	struct	{
 		int		start, end;
 		qboolean active, locked;
+		float	lastRealFrameDelta;
 	} capture;
 	struct {
 		qhandle_t additiveWhiteShader;

@@ -674,6 +674,10 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 		demo.play.fraction = delta - (int)delta;
 	}
 
+	if (captureFrame) {
+		demo.capture.lastRealFrameDelta = 1000.0f / realFPS + realFPSIndex0Advance;
+	}
+
 	demo.play.lastTime = demo.play.time;
 
 	if ( demo.loop.total && captureFrame && blurTotal ) {
@@ -1459,6 +1463,7 @@ void demoPlaybackInit(void) {
 			demo.play.time = demo.capture.start - 1000;
 			demo.capture.locked = qtrue;
 			demo.capture.active = qtrue;
+			demo.capture.lastRealFrameDelta = 0.0f;
 		} else {
 			trap_Error( va("Couldn't load project %s\n", projectFile ));
 		}

@@ -195,6 +195,7 @@ typedef struct flagTrianglesState_s {
 	vec3_t					lastOrigin;
 	int						lastTime;
 	float					lastTimeFraction;
+	float					lastDt;
 	int						countVertStates;
 	int						countVertConns;
 	clothVertState_t		vertStates[FLAGCLOTH_MAXVERTS];
@@ -2030,6 +2031,10 @@ extern	vmCvar_t		cg_playerWindPoints;
 extern	vmCvar_t		cg_playerWindPointMultiplier;
 extern	vmCvar_t		cg_playerWindPointRadius;
 extern	vmCvar_t		cg_playerWindPointDecayHalfTime;
+extern	vmCvar_t		cg_flagCloth;
+extern	vmCvar_t		cg_flagClothDamp;
+extern	vmCvar_t		cg_flagClothTimeStep;
+extern	vmCvar_t		cg_flagClothTimeCompensate;
 
 extern	vmCvar_t		cg_eternalScoreboard;
 extern	vmCvar_t		cg_colorScoreboard;
