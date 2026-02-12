@@ -1768,14 +1768,24 @@ Ghoul2 Insert End
 		if (item->giType == IT_TEAM &&
 			(item->giTag == PW_REDFLAG || item->giTag == PW_BLUEFLAG))
 		{
+			int team = item->giTag == PW_REDFLAG ? TEAM_RED : TEAM_BLUE;
 			ent.modelScale[0] = 0.7;
 			ent.modelScale[1] = 0.7;
 			ent.modelScale[2] = 0.7;
 			ScaleModelAxis(&ent, qfalse);
-		}
-		if (cg_flagCloth.integer & 2 && (cent->currentState.eFlags & EF_BOUNCE_HALF) || cg_flagCloth.integer & 4 && !(cent->currentState.eFlags & EF_BOUNCE_HALF)) {
-			ent.customSkin = cgs.media.flagNoFlagSkin;
-			CG_DrawFlagVerts(cent, &ent, item->giTag == PW_REDFLAG ? cgs.media.flagShaderGiga[TEAM_RED] : cgs.media.flagShaderGiga[TEAM_BLUE], ent.axis, ent.origin);
+
+			if (cg_flagCloth.integer & 2 && (cent->currentState.eFlags & EF_BOUNCE_HALF) || cg_flagCloth.integer & 4 && !(cent->currentState.eFlags & EF_BOUNCE_HALF)) {
+				ent.customSkin = cgs.media.flagNoFlagSkin;
+				CG_DrawFlagVerts(cent, &ent, item->giTag == PW_REDFLAG ? cgs.media.flagShaderGiga[TEAM_RED] : cgs.media.flagShaderGiga[TEAM_BLUE], ent.axis, ent.origin);
+			}
+			//if (cent->currentState.eFlags & EF_BOUNCE_HALF) {
+			//	cgs.lastFlagDroppedEnt[team] = cent - cg_entities;
+			//}
+			//else {
+			//	cgs.lastFlagBaseEnt[team] = cent - cg_entities;
+			//}
+			cgs.lastFlagNotTakendEnt[team] = cent - cg_entities;
+			
 		}
 		trap_R_AddRefEntityToScene(&ent);
 	}

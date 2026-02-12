@@ -22,6 +22,7 @@ extern void CG_Draw2D( void );
 extern void CG_DrawSpeedGraph3D(/*vec4_t foreColor,
 	vec4_t backColor*/);
 extern void CG_SaberClashFlare(qboolean early);
+extern void CG_UpdateFlagStatus();
 extern float CG_DrawFPS( float y );
 extern void CG_InterpolatePlayerState( qboolean grabAngles );
 
@@ -1009,11 +1010,15 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 	if (demo.viewType == viewChase && cg.playerCent && (cg.playerCent->currentState.number < MAX_CLIENTS))
 		CG_Draw2D();
 	else if (cg_draw2D.integer) {
+		CG_UpdateFlagStatus();
 		CG_SaberClashFlare(qfalse);
 		if (cg_drawFPS.integer)
 			CG_DrawFPS(0.0f);
 		if (mov_drawChatbox.integer)
 			CG_ChatBox_DrawStrings();
+	}
+	else {
+		CG_UpdateFlagStatus();
 	}
 	
 	//those looping sounds in intermission are annoying

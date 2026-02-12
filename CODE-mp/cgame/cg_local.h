@@ -1869,6 +1869,10 @@ typedef struct {
 
 	//new flagstatus stuff
 	clientInfo_t* redFlagCarrier, * blueFlagCarrier, * yellowFlagCarrier;
+	clientInfo_t* lastRedFlagCarrier, * lastBlueFlagCarrier, * lastYellowFlagCarrier;
+	//int				lastFlagBaseEnt[TEAM_NUM_TEAMS];
+	//int				lastFlagDroppedEnt[TEAM_NUM_TEAMS];
+	int				lastFlagNotTakendEnt[TEAM_NUM_TEAMS];
 	int				redFlagTime, blueFlagTime, yellowFlagTime;
 
 	qboolean  newHud;
@@ -2037,6 +2041,7 @@ extern	vmCvar_t		cg_flagClothDamp;
 extern	vmCvar_t		cg_flagClothTimeStep;
 extern	vmCvar_t		cg_flagClothTimeCompensate;
 extern	vmCvar_t		cg_flagClothNormalFix;
+extern	vmCvar_t		cg_flagClothTransferState;
 
 extern	vmCvar_t		cg_eternalScoreboard;
 extern	vmCvar_t		cg_colorScoreboard;

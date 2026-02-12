@@ -4357,15 +4357,15 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 				VectorMA(tmp, vertState->basePos[2], axis[2], tmp);
 				//VectorSubtract(tmp,vertState->position,tmp);
 				//VectorMA(vertState->position, (float)iter*stepRatio, tmp, vertState->newPosition);
-				VectorMix(vertState->position, (float)iter*stepRatio, tmp, vertState->newPosition);
+				VectorMix(vertState->position, (float)(iter+1)*stepRatio, tmp, vertState->newPosition);
 				//VectorCopy(vertState->newPosition, vertState->position);
 			}
 		}
 
 
-		float posAdjustMultiplier = dt / clothState->lastDt;
+		float posAdjustMultiplier = cg_flagClothTimeCompensate.integer ? dt / clothState->lastDt : 1.0f;
 		if (cg_flagClothDamp.value > 0.0f) {
-			posAdjustMultiplier *= powf(cg_flagClothDamp.value, dt);
+			posAdjustMultiplier *= 1.0f-powf(cg_flagClothDamp.value, dt);
 		}
 		// apply gravity
 		for (i = 0; i< clothState->countVertStates; i++) { 
@@ -4404,6 +4404,7 @@ void CG_ProcessClothState(vec3_t origin, vec3_t axis[3], flagClothState_t* cloth
 			}
 		}
 
+		clothState->lastDt = dt;
 	}
 
 	for (i = 0; i < clothState->countVertStates; i++) {

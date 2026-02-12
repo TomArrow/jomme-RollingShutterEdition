@@ -672,13 +672,13 @@ vmCvar_t	cg_playerWindPoints;
 vmCvar_t	cg_playerWindPointMultiplier;
 vmCvar_t	cg_playerWindPointRadius;
 vmCvar_t	cg_playerWindPointDecayHalfTime;
-vmCvar_t	cg_flagCloth; // 1 = flag on player, 2 = dropped flag, 4 = flag at base (maybe add wind?)
+vmCvar_t	cg_flagCloth; // bitmask 1 = flag on player, 2 = dropped flag, 4 = flag at base (maybe add wind?)
 vmCvar_t	cg_flagClothDamp;
 vmCvar_t	cg_flagClothTimeStep;
 vmCvar_t	cg_flagClothTimeCompensate;
 vmCvar_t	cg_flagClothNormalFix;
+vmCvar_t	cg_flagClothTransferState; // bitmask 1 = carrying -> dropped. 2 = pad/dropped -> grabbed
 // TODO add wind (or use the cloud wind?)
-// TODO transfer state, e.g. from carried to dropped, etc.
 
 vmCvar_t	cg_eternalScoreboard;
 vmCvar_t	cg_colorScoreboard;
@@ -991,6 +991,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_flagClothTimeStep, "cg_flagClothTimeStep", "0.0f", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothTimeCompensate, "cg_flagClothTimeCompensate", "1", NULL, CVAR_ARCHIVE },
 	{ &cg_flagClothNormalFix, "cg_flagClothNormalFix", "1", NULL, CVAR_ARCHIVE },
+	{ &cg_flagClothTransferState, "cg_flagClothTransferState", "3", NULL, CVAR_ARCHIVE },
 	{ &cg_fov, "cg_fov", "120", NULL, CVAR_ARCHIVE },
 	{ &cg_distanceAwareFov, "cg_distanceAwareFov", "0", NULL, CVAR_ARCHIVE },
 	{ &cg_viewsize, "cg_viewsize", "100", NULL, CVAR_ARCHIVE },

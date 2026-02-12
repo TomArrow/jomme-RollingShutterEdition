@@ -4161,6 +4161,54 @@ static qboolean CG_OtherFlagDropped(void) {
 	return qfalse;
 }
 
+void CG_UpdateFlagStatus() {
+
+	if (cgs.redflag == FLAG_TAKEN)
+	{
+		if (!cgs.redFlagTime)
+			cgs.redFlagTime = cg.time;
+
+		if (!cgs.redFlagCarrier)
+			cgs.redFlagCarrier = cgs.lastRedFlagCarrier = CG_GetFlagCarrier(TEAM_RED);
+
+	}
+	else if (cgs.redFlagCarrier || cgs.redFlagTime) {
+		cgs.redFlagCarrier = NULL;
+		cgs.redFlagTime = 0;
+	}
+
+	if (cgs.blueflag == FLAG_TAKEN)
+	{
+		if (!cgs.blueFlagTime)
+			cgs.blueFlagTime = cg.time;
+
+		if (!cgs.blueFlagCarrier)
+			cgs.blueFlagCarrier = cgs.lastBlueFlagCarrier = CG_GetFlagCarrier(TEAM_BLUE);
+
+	}
+	else if (cgs.blueFlagCarrier || cgs.blueFlagTime) {
+		cgs.blueFlagCarrier = NULL;
+		cgs.blueFlagTime = 0;
+	}
+
+	if (cgs.isCTFMod && cgs.CTF3ModeActive)
+	{
+		if (cgs.yellowflag == FLAG_TAKEN)
+		{
+			if (!cgs.yellowFlagTime)
+				cgs.yellowFlagTime = cg.time;
+
+			if (!cgs.yellowFlagCarrier)
+				cgs.yellowFlagCarrier = cgs.lastYellowFlagCarrier = CG_GetFlagCarrier(TEAM_FREE);
+
+		}
+		else if (cgs.yellowFlagCarrier || cgs.yellowFlagTime) {
+			cgs.yellowFlagCarrier = NULL;
+			cgs.yellowFlagTime = 0;
+		}
+	}
+}
+
 void CG_DrawEnhancedFlagStatus(void)
 {
 	qhandle_t redFlagShader = 0, blueFlagShader = 0, yellowFlagShader = 0;
@@ -4198,7 +4246,7 @@ void CG_DrawEnhancedFlagStatus(void)
 		Com_sprintf(redFlagTimeStr, sizeof(redFlagTimeStr), "%i:%02i", mins, secs);
 
 		if (!cgs.redFlagCarrier)
-			cgs.redFlagCarrier = CG_GetFlagCarrier(TEAM_RED);
+			cgs.redFlagCarrier = cgs.lastRedFlagCarrier = CG_GetFlagCarrier(TEAM_RED);
 
 		if (cgs.redFlagCarrier && cgs.redFlagCarrier->infoValid) {
 			switch (cgs.redFlagCarrier->team) {
@@ -4234,7 +4282,7 @@ void CG_DrawEnhancedFlagStatus(void)
 		Com_sprintf(blueFlagTimeStr, sizeof(blueFlagTimeStr), "%i:%02i", mins, secs);
 
 		if (!cgs.blueFlagCarrier)
-			cgs.blueFlagCarrier = CG_GetFlagCarrier(TEAM_BLUE);
+			cgs.blueFlagCarrier = cgs.lastBlueFlagCarrier = CG_GetFlagCarrier(TEAM_BLUE);
 
 		if (cgs.blueFlagCarrier && cgs.blueFlagCarrier->infoValid) {
 			switch (cgs.blueFlagCarrier->team) {
@@ -4272,7 +4320,7 @@ void CG_DrawEnhancedFlagStatus(void)
 			Com_sprintf(yellowFlagTimeStr, sizeof(yellowFlagTimeStr), "%i:%02i", mins, secs);
 
 			if (!cgs.yellowFlagCarrier)
-				cgs.yellowFlagCarrier = CG_GetFlagCarrier(TEAM_FREE);
+				cgs.yellowFlagCarrier = cgs.lastYellowFlagCarrier = CG_GetFlagCarrier(TEAM_FREE);
 
 			if (cgs.yellowFlagCarrier && cgs.yellowFlagCarrier->infoValid) {
 				switch (cgs.yellowFlagCarrier->team) {
@@ -5211,6 +5259,7 @@ void CG_Draw2D( void ) {
 	}
 
 	if ( cg_draw2D.integer == 0 ) {
+		CG_UpdateFlagStatus();
 		CG_UpdateFallVector();
 		return;
 	}

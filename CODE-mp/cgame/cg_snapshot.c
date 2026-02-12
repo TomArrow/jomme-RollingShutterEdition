@@ -27,6 +27,29 @@ static void CG_ResetEntity( centity_t *cent ) {
 	if ( cent->currentState.eType == ET_PLAYER ) {
 		CG_ResetPlayerEntity( cent );
 	}
+	else if ((cg_flagClothTransferState.integer&1) && cent->currentState.eType == ET_ITEM && cent->currentState.modelindex && (cent->currentState.eFlags & EF_BOUNCE_HALF)) {
+		// this entity arrived fresh. let's see if it's a dropped flag. if it is, grab the flag state from the last carrying player
+		gitem_t* item = &bg_itemlist[cent->currentState.modelindex];
+		if (item->giType == IT_TEAM &&
+			(item->giTag == PW_REDFLAG || item->giTag == PW_BLUEFLAG)) {
+			flagClothState_t* clothState = NULL;
+			if (item->giTag == PW_REDFLAG && cgs.lastRedFlagCarrier) {
+				int client = cgs.lastRedFlagCarrier - cgs.clientinfo;
+				if (client >= 0 && client < MAX_CLIENTS) {
+					clothState = &cg_entities[client].flagClothState;
+				}
+			}
+			else if (item->giTag == PW_BLUEFLAG && cgs.lastBlueFlagCarrier) {
+				int client = cgs.lastBlueFlagCarrier - cgs.clientinfo;
+				if (client >= 0 && client < MAX_CLIENTS) {
+					clothState = &cg_entities[client].flagClothState;
+				}
+			}
+			if (clothState) {
+				cent->flagClothState = *clothState;
+			}
+		}
+	}
 }
 
 /*
