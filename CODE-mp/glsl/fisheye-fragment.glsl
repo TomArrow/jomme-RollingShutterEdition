@@ -241,6 +241,11 @@ uniform float dLightAddPostPowMultUniform;
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
 
+uniform float worldReflectNormalMixUniform;
+uniform float worldReflectGradMultUniform;
+uniform float worldReflectPuddleThreshUniform;
+uniform int worldReflectMultiSampleUniform;
+
 uniform int isLightmapUniform; 
 uniform int isWorldBrushUniform; 
 uniform int isSaberUniform; 
@@ -2229,7 +2234,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		// lightNormal or lightReferenceNormal
 		vec3 surfaceNormal = lightReferenceNormal;
 		if(isWorldBrushUniform > 0){
-			surfaceNormal = mix(lightReferenceNormal,lightNormal,0.5f);
+			surfaceNormal = mix(lightReferenceNormal,lightNormal,worldReflectNormalMixUniform);
 		}
 		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
 		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;

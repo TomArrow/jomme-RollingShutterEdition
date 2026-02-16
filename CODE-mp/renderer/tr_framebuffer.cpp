@@ -172,6 +172,11 @@ typedef struct uniformLocations_t {
 	GLint shadowLinesB[MAX_SHADOWLINES];
 	GLint cheapLightsCountUniform;
 
+	GLint worldReflectNormalMixUniform;
+	GLint worldReflectGradMultUniform;
+	GLint worldReflectPuddleThreshUniform;
+	GLint worldReflectMultiSampleUniform;
+
 	GLint shaderStylesUniform[MAXLIGHTMAPS_REAL];
 };
 
@@ -228,6 +233,10 @@ cvar_t *r_fboGLSLParallaxMappingIntensity;
 cvar_t *r_fboGLSLParallaxMappingDepth;
 cvar_t *r_fboGLSLParallaxMappingGamma;
 cvar_t *r_fboGLSLParallaxMappingLayers;
+cvar_t *r_fboGLSLWorldReflectNormalMix;
+cvar_t *r_fboGLSLWorldReflectGradMult;
+cvar_t *r_fboGLSLWorldReflectPuddleTresh;
+cvar_t *r_fboGLSLWorldReflectMultiSample;
 cvar_t *r_fboGLSLThermalVision;
 cvar_t *r_fboGLSLShaderDebug;
 cvar_t *r_fboGLSLCloudShadowScale;
@@ -445,6 +454,11 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->myFogUniform, r_fboGLSLFog->value);
 		qglUniform3fv(uniformLocationsTess->myFogColorUniform, 1, tr.fboGLSLFogColor);
 
+		qglUniform1f(uniformLocationsTess->worldReflectNormalMixUniform, r_fboGLSLWorldReflectNormalMix->value);
+		qglUniform1f(uniformLocationsTess->worldReflectGradMultUniform, r_fboGLSLWorldReflectGradMult->value);
+		qglUniform1f(uniformLocationsTess->worldReflectPuddleThreshUniform, r_fboGLSLWorldReflectPuddleTresh->value);
+		qglUniform1f(uniformLocationsTess->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
+
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
 		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
@@ -551,6 +565,11 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1f(uniformLocations->myFogUniform, r_fboGLSLFog->value);
 		qglUniform3fv(uniformLocations->myFogColorUniform, 1, tr.fboGLSLFogColor);
+
+		qglUniform1f(uniformLocations->worldReflectNormalMixUniform, r_fboGLSLWorldReflectNormalMix->value);
+		qglUniform1f(uniformLocations->worldReflectGradMultUniform, r_fboGLSLWorldReflectGradMult->value);
+		qglUniform1f(uniformLocations->worldReflectPuddleThreshUniform, r_fboGLSLWorldReflectPuddleTresh->value);
+		qglUniform1f(uniformLocations->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -1652,6 +1671,12 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 			locs->shadowLinesA[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].a",j));
 			locs->shadowLinesB[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].b",j));
 		}
+
+		locs->worldReflectNormalMixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectNormalMixUniform");
+		locs->worldReflectGradMultUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectGradMultUniform");
+		locs->worldReflectPuddleThreshUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectPuddleThreshUniform");
+		locs->worldReflectMultiSampleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectMultiSampleUniform");
+
 		locs++;
 	}
 }
@@ -1747,6 +1772,10 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMappingDepth = ri.Cvar_Get( "r_fboGLSLParallaxMappingDepth", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingGamma = ri.Cvar_Get( "r_fboGLSLParallaxMappingGamma", "10.0", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMappingLayers = ri.Cvar_Get( "r_fboGLSLParallaxMappingLayers", "200", CVAR_ARCHIVE);
+	r_fboGLSLWorldReflectNormalMix = ri.Cvar_Get( "r_fboGLSLWorldReflectNormalMix", "0.5", CVAR_ARCHIVE);
+	r_fboGLSLWorldReflectGradMult = ri.Cvar_Get( "r_fboGLSLWorldReflectGradMult", "2.0", CVAR_ARCHIVE);
+	r_fboGLSLWorldReflectMultiSample = ri.Cvar_Get( "r_fboGLSLWorldReflectMultiSample", "0", CVAR_ARCHIVE);
+	r_fboGLSLWorldReflectPuddleTresh = ri.Cvar_Get( "r_fboGLSLWorldReflectPuddleTresh", "0.0", CVAR_ARCHIVE);
 	r_fboGLSLShaderDebug = ri.Cvar_Get( "r_fboGLSLShaderDebug", "0", CVAR_TEMP);
 	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
 	r_fboGLSLCloudShadowScale = ri.Cvar_Get( "r_fboGLSLCloudShadowScale", "1.0", CVAR_ARCHIVE);
