@@ -1775,7 +1775,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLWorldReflectNormalMix = ri.Cvar_Get( "r_fboGLSLWorldReflectNormalMix", "0.2", CVAR_ARCHIVE);
 	r_fboGLSLWorldReflectGradMult = ri.Cvar_Get( "r_fboGLSLWorldReflectGradMult", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLWorldReflectMultiSample = ri.Cvar_Get( "r_fboGLSLWorldReflectMultiSample", "0", CVAR_ARCHIVE);
-	r_fboGLSLWorldReflectPuddleTresh = ri.Cvar_Get( "r_fboGLSLWorldReflectPuddleTresh", "1.01", CVAR_ARCHIVE);
+	r_fboGLSLWorldReflectPuddleTresh = ri.Cvar_Get( "r_fboGLSLWorldReflectPuddleTresh", "0.5", CVAR_ARCHIVE);
 	r_fboGLSLShaderDebug = ri.Cvar_Get( "r_fboGLSLShaderDebug", "0", CVAR_TEMP);
 	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
 	r_fboGLSLCloudShadowScale = ri.Cvar_Get( "r_fboGLSLCloudShadowScale", "1.0", CVAR_ARCHIVE);

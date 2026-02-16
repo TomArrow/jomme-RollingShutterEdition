@@ -2241,7 +2241,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		if(isWorldBrushUniform > 0){
 			surfaceNormal = mix(lightReferenceNormal,lightNormalWorldReflect,worldReflectNormalMixUniform);
 
-			if(length(colorWorldReflect) < worldReflectPuddleThreshUniform){
+			if(length(colorWorldReflect.xyz)/texAverageBrightnessUniform < worldReflectPuddleThreshUniform){
 				// colorWorldReflect
 				surfaceNormal =  mix(surfaceNormal,lightReferenceNormal,worldNormal.z*worldNormal.z);
 			}
