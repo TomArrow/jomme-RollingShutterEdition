@@ -1512,9 +1512,13 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	bool haveLightmap = (stageLightmapBitmaskUniform & 1) > 0 || multitex && (stageLightmapBitmaskUniform & 3) > 0;
 
 	vec2 uvCoords = my_TexCoord[0].st;
+	vec2 uvCoordsWorldReflect = my_TexCoord[0].st;
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
+	vec3 effectiveUVPixelPosWorldReflect = eyeSpaceCoordsGeom.xyz;
 	vec4 color;
+	vec4 colorWorldReflect;
 	
+	bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 	
 	float thelod = textureQueryLod(text_in0,uvCoords).x;
@@ -1524,29 +1528,27 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	//	gradMultiplier*=4.0f;
 	//}
 	float gradnoise = clamp(1.15f*2.0f*gaussian_rand(uvCoords),1.0f,1.3f); // try to smooth out the transition between levels of detail, as it forms a straight line thats visible on high frequency textures even with anisotropic filtering
-	vec4 thegrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradMultiplier * gradnoise;
+	vec4 rawgrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradnoise;
+	vec4 thegrad = rawgrad * gradMultiplier;
+	vec4 thegradWorldReflect = rawgrad * worldReflectGradMultUniform;
 	//textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
 
     if(fishEyeModeUniform == 0){
 	
 		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegrad):parallaxMapSteep(effectiveUVPixelPos,thelod,thegrad);
+			if(ssr){
+				uvCoordsWorldReflect = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegradWorldReflect):parallaxMapSteep(effectiveUVPixelPosWorldReflect,thelod,thegradWorldReflect);
+			}
 		} else {
 			uvCoords = my_TexCoord[0].st; // Don't parallax lightmaps
-		}
-		//uvCoords = fract(uvCoords);
-		//color = texture2D(text_in0, uvCoords);
-		color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
+		}		
+	}
 
-		outFragColor = color; 
-		//gl_FragColor.xyz+=debugColor;
-		
-	} else {
-		
-		//color = texture2D(text_in0, uvCoords);
-		color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
-		outFragColor = color; 
-		//gl_FragColor.xyz+=debugColor;
+	color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
+	outFragColor = color;
+	if(ssr){
+		colorWorldReflect = sampleTextureSafe(text_in0, uvCoordsWorldReflect, thelod,thegradWorldReflect);
 	}
 
 	vec4 vertexLitMult = vec4(1.0f);
@@ -1662,6 +1664,10 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	//vec3 lightNormal = normal;
 	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,vertexLit ? lightReferenceNormal : lightmapReferenceNormal,thelod,thegrad);
+	vec3 lightNormalWorldReflect = lightNormal;
+	if(ssr){
+		lightNormalWorldReflect = calculateTextureNormal(uvCoordsWorldReflect,effectiveUVPixelPosWorldReflect,vertexLit ? lightReferenceNormal : lightmapReferenceNormal,thelod,thegradWorldReflect);
+	}
 
 	//outFragColor.xyz = lightNormal*0.5f+0.5f;
 	//float test = 0.72f* length(fract(my_TexCoord[0].st-uvCoords));
@@ -2229,12 +2235,16 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	}
 
 	if((renderFlagsUniform & RENDERFLAG_SCENEVIEWBOUND) > 0 && (renderFlagsUniform & RENDERFLAG_ISGORE) == 0){
-		bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
 		vec3 oriColor = outFragColor.xyz;
 		// lightNormal or lightReferenceNormal
 		vec3 surfaceNormal = lightReferenceNormal;
 		if(isWorldBrushUniform > 0){
-			surfaceNormal = mix(lightReferenceNormal,lightNormal,worldReflectNormalMixUniform);
+			surfaceNormal = mix(lightReferenceNormal,lightNormalWorldReflect,worldReflectNormalMixUniform);
+
+			if(length(colorWorldReflect) < worldReflectPuddleThreshUniform){
+				// colorWorldReflect
+				surfaceNormal =  mix(surfaceNormal,lightReferenceNormal,worldNormal.z*worldNormal.z);
+			}
 		}
 		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
 		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
