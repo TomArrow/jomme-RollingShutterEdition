@@ -457,7 +457,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocationsTess->worldReflectNormalMixUniform, r_fboGLSLWorldReflectNormalMix->value);
 		qglUniform1f(uniformLocationsTess->worldReflectGradMultUniform, r_fboGLSLWorldReflectGradMult->value);
 		qglUniform1f(uniformLocationsTess->worldReflectPuddleThreshUniform, r_fboGLSLWorldReflectPuddleTresh->value);
-		qglUniform1f(uniformLocationsTess->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
+		qglUniform1i(uniformLocationsTess->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
 
 		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
@@ -569,7 +569,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1f(uniformLocations->worldReflectNormalMixUniform, r_fboGLSLWorldReflectNormalMix->value);
 		qglUniform1f(uniformLocations->worldReflectGradMultUniform, r_fboGLSLWorldReflectGradMult->value);
 		qglUniform1f(uniformLocations->worldReflectPuddleThreshUniform, r_fboGLSLWorldReflectPuddleTresh->value);
-		qglUniform1f(uniformLocations->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
+		qglUniform1i(uniformLocations->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
 
 		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
 		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);

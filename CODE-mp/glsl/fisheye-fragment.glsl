@@ -771,7 +771,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 		vec2 uvCoords;
 
 		float layerDepth = parallaxMapDepthUniform / float(layers);
-		vec3 currentPlace = eyeSpaceCoordsGeom.xyz;
+		vec3 currentPlace = finalPosition;//eyeSpaceCoordsGeom.xyz;
 		float gamma = 1.0f/parallaxMapGammaUniform;
 
 		//vec4 color = texture2D(text_in, my_TexCoord[0].st);
@@ -1511,12 +1511,17 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	bool standAloneLightmap = !multitex && (stageLightmapBitmaskUniform & 1) > 0;
 	bool haveLightmap = (stageLightmapBitmaskUniform & 1) > 0 || multitex && (stageLightmapBitmaskUniform & 3) > 0;
 
+#define MAX_SSR_MULTISAMPLE 5  // worldReflectMultiSampleUniform
+	int ssrMultiSamples = clamp(worldReflectMultiSampleUniform+1,1,MAX_SSR_MULTISAMPLE);
+	int ssrMultiSampleCount = ssrMultiSamples*ssrMultiSamples;
+
 	vec2 uvCoords = my_TexCoord[0].st;
-	vec2 uvCoordsWorldReflect = my_TexCoord[0].st;
+	vec2 uvCoordsWorldReflect[MAX_SSR_MULTISAMPLE*MAX_SSR_MULTISAMPLE];
 	vec3 effectiveUVPixelPos = eyeSpaceCoordsGeom.xyz;
-	vec3 effectiveUVPixelPosWorldReflect = eyeSpaceCoordsGeom.xyz;
+	vec3 effectiveUVPixelPosWorldReflect[MAX_SSR_MULTISAMPLE*MAX_SSR_MULTISAMPLE];
+	effectiveUVPixelPosWorldReflect[0] = eyeSpaceCoordsGeom.xyz;
 	vec4 color;
-	vec4 colorWorldReflect;
+	vec4 colorWorldReflect[MAX_SSR_MULTISAMPLE*MAX_SSR_MULTISAMPLE];
 	
 	bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
@@ -1528,17 +1533,34 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	//	gradMultiplier*=4.0f;
 	//}
 	float gradnoise = clamp(1.15f*2.0f*gaussian_rand(uvCoords),1.0f,1.3f); // try to smooth out the transition between levels of detail, as it forms a straight line thats visible on high frequency textures even with anisotropic filtering
-	vec4 rawgrad = vec4(dFdx(uvCoords),dFdy(uvCoords)) * gradnoise;
-	vec4 thegrad = rawgrad * gradMultiplier;
-	vec4 thegradWorldReflect = rawgrad * worldReflectGradMultUniform;
+	vec4 rawgrad = vec4(dFdx(uvCoords),dFdy(uvCoords));
+	vec4 thegrad = rawgrad * gradMultiplier * gradnoise;
+	vec4 thegradWorldReflect = rawgrad * worldReflectGradMultUniform * gradnoise;
 	//textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
+
+	if(ssr && ssrMultiSampleCount > 1){
+		vec3 effectiveUVPixelStep[2] = {dFdx(effectiveUVPixelPos),dFdy(effectiveUVPixelPos)};
+		vec2 baseuv = uvCoords-0.5f*rawgrad.xy-0.5f*rawgrad.zw;
+		vec4 uvstep = rawgrad / float(ssrMultiSamples);
+		vec3 baseUVpixel = effectiveUVPixelPos - 0.5f*effectiveUVPixelStep[0]- 0.5f*effectiveUVPixelStep[1];
+		effectiveUVPixelStep[0] = effectiveUVPixelStep[0] / float(ssrMultiSamples);
+		effectiveUVPixelStep[1] = effectiveUVPixelStep[1] / float(ssrMultiSamples);
+		for(int x=0;x<ssrMultiSamples;x++){
+			for(int y=0;y<ssrMultiSamples;y++){
+				uvCoordsWorldReflect[y*ssrMultiSamples+x] = baseuv + uvstep.xy*float(x) + uvstep.zw*float(y);
+				effectiveUVPixelPosWorldReflect[y*ssrMultiSamples+x] = baseUVpixel + effectiveUVPixelStep[0]*float(x) + effectiveUVPixelStep[1]*float(y);
+			}
+		}
+	}
 
     if(fishEyeModeUniform == 0){
 	
 		if(!standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegrad):parallaxMapSteep(effectiveUVPixelPos,thelod,thegrad);
 			if(ssr){
-				uvCoordsWorldReflect = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegradWorldReflect):parallaxMapSteep(effectiveUVPixelPosWorldReflect,thelod,thegradWorldReflect);
+				for(int i=0;i<ssrMultiSampleCount;i++){
+					uvCoordsWorldReflect[i] = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegradWorldReflect):parallaxMapSteep(effectiveUVPixelPosWorldReflect[i],thelod,thegradWorldReflect);
+				}
 			}
 		} else {
 			uvCoords = my_TexCoord[0].st; // Don't parallax lightmaps
@@ -1548,7 +1570,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
 	outFragColor = color;
 	if(ssr){
-		colorWorldReflect = sampleTextureSafe(text_in0, uvCoordsWorldReflect, thelod,thegradWorldReflect);
+		for(int i=0;i<ssrMultiSampleCount;i++){
+			colorWorldReflect[i] = sampleTextureSafe(text_in0, uvCoordsWorldReflect[i], thelod,thegradWorldReflect);
+		}
 	}
 
 	vec4 vertexLitMult = vec4(1.0f);
@@ -1664,9 +1688,12 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	//vec3 lightNormal = normal;
 	vec3 lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,vertexLit ? lightReferenceNormal : lightmapReferenceNormal,thelod,thegrad);
-	vec3 lightNormalWorldReflect = lightNormal;
+	vec3 lightNormalWorldReflect[MAX_SSR_MULTISAMPLE*MAX_SSR_MULTISAMPLE];
+	lightNormalWorldReflect[0] = lightNormal;
 	if(ssr){
-		lightNormalWorldReflect = calculateTextureNormal(uvCoordsWorldReflect,effectiveUVPixelPosWorldReflect,vertexLit ? lightReferenceNormal : lightmapReferenceNormal,thelod,thegradWorldReflect);
+		for(int i=0; i< ssrMultiSampleCount;i++){
+			lightNormalWorldReflect[i] = calculateTextureNormal(uvCoordsWorldReflect[i],effectiveUVPixelPosWorldReflect[i],vertexLit ? lightReferenceNormal : lightmapReferenceNormal,thelod,thegradWorldReflect);
+		}
 	}
 
 	//outFragColor.xyz = lightNormal*0.5f+0.5f;
@@ -2238,55 +2265,69 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		vec3 oriColor = outFragColor.xyz;
 		// lightNormal or lightReferenceNormal
 		vec3 surfaceNormal = lightReferenceNormal;
-		if(isWorldBrushUniform > 0){
-			surfaceNormal = mix(lightReferenceNormal,lightNormalWorldReflect,worldReflectNormalMixUniform);
-
-			if(length(colorWorldReflect.xyz)/texAverageBrightnessUniform < worldReflectPuddleThreshUniform){
-				// colorWorldReflect
-				surfaceNormal =  mix(surfaceNormal,lightReferenceNormal,worldNormal.z*worldNormal.z);
-			}
-		}
-		vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
-		vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
-		vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
-
-		outVec = normalize(outVec);
 
 		float specIntensitySchlickMultReflective = 0.5f+(1.0-0.5f)*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent*cosviewercomponent;
 		if(ssr){
 			#define SSR_MAX_STEPS 150
 			#define SSR_STEP_SIZE 20
-			vec2 uvRefl;
-			vec4 thegrad;
-			bool found = false;
-			vec3 newPos = eyeSpaceCoordsGeom.xyz + outVec;
-			uvRefl = get360UVFromVector(-normalize(newPos));
-			thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
-			if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
-			if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
-			thegrad *= 0.5f;
-			//thegrad *= gradMultiplier; // gotta calc the grad up here cuz inside the loop dFdx and dFdy will break and cause artifaacts
-			for(int i=0;i<SSR_MAX_STEPS;i++){
-				newPos = eyeSpaceCoordsGeom.xyz + float(i+1)*float(SSR_STEP_SIZE)*outVec;
-				float dist = length(newPos);
-				newPos = normalize(newPos);
-				uvRefl = get360UVFromVector(-newPos);
-				float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
-				if(abs(distComp-dist) < 20.0f){
-					found = true;
-					break;
-				}
-			}
-			if(found){
-				outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
-				outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f)*specIntensitySchlickMultReflective;
-			} else{
-				//outFragColor.xyz =oriColor + vec3(1.0f,0.0f,0.0f)*max(worldNormal.z,0.0f);
-			}
 			
+			vec3 reflectionAccum = vec3(0.0f);
+			for(int s=0;s<ssrMultiSampleCount;s++){ // todo make it alsoo do a new viewervector and all that with multisample? or is it negligible?
+				if(isWorldBrushUniform > 0){
+					surfaceNormal = mix(lightReferenceNormal,lightNormalWorldReflect[s],worldReflectNormalMixUniform);
 
+					if(length(colorWorldReflect[s].xyz)/texAverageBrightnessUniform < worldReflectPuddleThreshUniform){
+						// colorWorldReflect
+						surfaceNormal =  mix(surfaceNormal,lightReferenceNormal,worldNormal.z*worldNormal.z);
+					}
+				}
+				vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
+				vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
+				vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
+
+				outVec = normalize(outVec);
+
+				vec2 uvRefl;
+				vec4 thegrad;
+				bool found = false;
+				vec3 newPos = eyeSpaceCoordsGeom.xyz + outVec;
+				uvRefl = get360UVFromVector(-normalize(newPos));
+				thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
+				if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
+				if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
+				thegrad *= 0.5f;
+				//thegrad *= gradMultiplier; // gotta calc the grad up here cuz inside the loop dFdx and dFdy will break and cause artifaacts
+				for(int i=0;i<SSR_MAX_STEPS;i++){
+					newPos = eyeSpaceCoordsGeom.xyz + float(i+1)*float(SSR_STEP_SIZE)*outVec;
+					float dist = length(newPos);
+					newPos = normalize(newPos);
+					uvRefl = get360UVFromVector(-newPos);
+					float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
+					if(abs(distComp-dist) < 20.0f){
+						found = true;
+						break;
+					}
+				}
+				if(found){
+					reflectionAccum += textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+					//outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+					//outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f)*specIntensitySchlickMultReflective;
+				} else{
+					//outFragColor.xyz =oriColor + vec3(1.0f,0.0f,0.0f)*max(worldNormal.z,0.0f);
+				}
+			
+			}
+			reflectionAccum /= float(ssrMultiSampleCount);
+			outFragColor.xyz =oriColor + reflectionAccum*max(worldNormal.z,0.0f)*specIntensitySchlickMultReflective;
+			//outFragColor.x = float(worldReflectMultiSampleUniform)*0.25f;
 		} else{
 		
+			
+			vec3 normalPart = surfaceNormal * dot(surfaceNormal,viewerVectorNorm);
+			vec3 viewerVectorMinusNormal = viewerVectorNorm - normalPart;
+			vec3 outVec = normalPart - viewerVectorMinusNormal; // the non-normal part gets inverted
+
+			outVec = normalize(outVec);
 			vec2 uvRefl = get360UVFromVector(-outVec);
 
 			vec4 thegrad = vec4(dFdx(uvRefl),dFdy(uvRefl));
