@@ -368,6 +368,9 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 	int fishEye = backEnd.viewParms.isSceneView && backEnd.viewParms.sceneView.is360 ? 2 : r_fboFishEye->integer;
 	int extraRenderFlags = backEnd.viewParms.isSceneView ? RENDERFLAG_SCENEVIEW : 0;
+	if (backEnd.viewParms.isSceneView && (backEnd.viewParms.sceneView.flags & SCENEVIEW_WORLDREFLECT)) {
+		extraRenderFlags |= RENDERFLAG_RENDERINGWORLDREFLECT;
+	}
 	if (backEnd.currentEntity && backEnd.currentEntity->e.useSceneViewTexture) {
 		extraRenderFlags |= RENDERFLAG_SCENEVIEWBOUND;
 	}

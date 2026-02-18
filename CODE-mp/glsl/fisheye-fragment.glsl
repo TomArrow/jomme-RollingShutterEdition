@@ -274,6 +274,7 @@ varying vec4 pureVertexCoordsGeom;
 #define RENDERFLAG_ISGORE 32 // is gore
 #define RENDERFLAG_FASTPREVIEW 64
 #define RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND 128
+#define RENDERFLAG_RENDERINGWORLDREFLECT 256
 
 uniform int alphaFuncUniform; 
 uniform float alphaFuncValueUniform;
@@ -1524,6 +1525,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	vec4 colorWorldReflect[MAX_SSR_MULTISAMPLE*MAX_SSR_MULTISAMPLE];
 	
 	bool ssr = (renderFlagsUniform & RENDERFLAG_SCENEVIEWWORLDREFLECTBOUND) > 0;
+	bool renderingSSRBuffer = (renderFlagsUniform & RENDERFLAG_RENDERINGWORLDREFLECT) > 0;
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 	
 	float thelod = textureQueryLod(text_in0,uvCoords).x;
@@ -2406,9 +2408,15 @@ void main(void){
 		//gl_FragColor = outColor;
 		gl_FragData[0] = outColor;
 		gl_FragData[1].x = length(eyeSpaceCoordsGeom.xyz);
-		if((additive && length(outColor.xyz) < 0.2f) || isInvisible || alphaModulated && outColor.w < 0.2f){
+		if((additive && length(outColor.xyz) < 0.1f) || isInvisible || alphaModulated && outColor.w < 0.2f){
 			gl_FragData[1].x = uintBitsToFloat(0x7F800000);
+			bool renderingSSRBuffer = (renderFlagsUniform & RENDERFLAG_RENDERINGWORLDREFLECT) > 0;
+			if(renderingSSRBuffer && additive){
+				outColor.xyz = vec3(0.0f);
+			}
 		}
+
+		gl_FragData[0] = outColor;
 	}// else{
 	//	gl_FragColor = vec4(0.0f);
 	//}
