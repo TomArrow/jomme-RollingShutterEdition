@@ -2273,6 +2273,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			#define SSR_MAX_STEPS 150
 			#define SSR_STEP_SIZE 20
 			
+			vec2 depthTexSize = textureSize(text_in31,0);
 			vec3 reflectionAccum = vec3(0.0f);
 			for(int s=0;s<ssrMultiSampleCount;s++){ // todo make it alsoo do a new viewervector and all that with multisample? or is it negligible?
 				if(isWorldBrushUniform > 0){
@@ -2303,21 +2304,33 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 				float newDist = 0;
 				vec2 uvReflOld = uvRefl;
 				vec3 basePos = eyeSpaceCoordsGeom.xyz + lightReferenceNormal*3.0f;
+
+				if(outVec.z > 0 && eyeSpaceCoordsGeom.z < 0 || outVec.z < 0 && eyeSpaceCoordsGeom.z > 0){ // btw -Z in eye space -> forward into the view from camera 
+					// we are tracing backwards toward the camera.
+					// dont hit stuff from behind, it turns into a mess with lightsabers (numerous ghosts) due to randomly hitting/not hitting them
+					// based on the 20 unit step size (presumably)
+					// nvm strike all this. that wasnt the reason. at least not the main one. it still helps in edge cases tho
+					// but we still want to find stuff behind the camera (360), soo just forward until that.
+					float forwardAmount = -eyeSpaceCoordsGeom.z/outVec.z;
+					basePos += forwardAmount * outVec;
+				}
+
 				for(int i=0;i<SSR_MAX_STEPS;i++){
 					newPos = basePos + float(i)*float(SSR_STEP_SIZE)*outVec;
 					float dist = length(newPos);
 					newPos = normalize(newPos);
 					uvRefl = get360UVFromVector(-newPos);
-					float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
+					//float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
+					float distComp = texelFetch(text_in31,ivec2(fract(uvRefl)*depthTexSize),0).x; // texelfetch the depth to avoid ghosts of lightsabers
 					newDist = abs(distComp-dist);
 					//if(newDist < 20.0f){
 					if(dist > distComp && newDist < float(SSR_STEP_SIZE)){
 						found = true;
-						if(newDist > float(SSR_STEP_SIZE+5)){
+						//if(newDist > float(SSR_STEP_SIZE+5)){
 							// we approached it from behind?
 							//newDist = oldDist;
 							//uvRefl = uvReflOld;
-						}
+						//}
 						break;
 					}
 					oldDist = newDist;
