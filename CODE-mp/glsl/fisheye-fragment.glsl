@@ -2299,18 +2299,32 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 				if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
 				thegrad *= 0.5f;
 				//thegrad *= gradMultiplier; // gotta calc the grad up here cuz inside the loop dFdx and dFdy will break and cause artifaacts
+				float oldDist = 0;
+				float newDist = 0;
+				vec2 uvReflOld = uvRefl;
+				vec3 basePos = eyeSpaceCoordsGeom.xyz + lightReferenceNormal*3.0f;
 				for(int i=0;i<SSR_MAX_STEPS;i++){
-					newPos = eyeSpaceCoordsGeom.xyz + float(i+1)*float(SSR_STEP_SIZE)*outVec;
+					newPos = basePos + float(i)*float(SSR_STEP_SIZE)*outVec;
 					float dist = length(newPos);
 					newPos = normalize(newPos);
 					uvRefl = get360UVFromVector(-newPos);
 					float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
-					if(abs(distComp-dist) < 20.0f){
+					newDist = abs(distComp-dist);
+					//if(newDist < 20.0f){
+					if(dist > distComp && newDist < float(SSR_STEP_SIZE)){
 						found = true;
+						if(newDist > float(SSR_STEP_SIZE+5)){
+							// we approached it from behind?
+							//newDist = oldDist;
+							//uvRefl = uvReflOld;
+						}
 						break;
 					}
+					oldDist = newDist;
+					uvReflOld = uvRefl;
 				}
 				if(found){
+					uvRefl = mix(uvReflOld,uvRefl,oldDist/(newDist+oldDist));
 					reflectionAccum += textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
 					//outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
 					//outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f)*specIntensitySchlickMultReflective;
