@@ -260,7 +260,8 @@ void RB_ClipSkyPolygons( shaderCommands_t *input )
 
 				static vec3_t tmpCoord;
 				static const vec3_t rotDir{ 0,0,1 };
-				RotatePointAroundVector(p[j], rotDir, p[j],-r_skyboxRotate->integer);
+				RotatePointAroundVector(tmpCoord, rotDir, p[j],-r_skyboxRotate->integer);
+				VectorCopy(tmpCoord, p[j]);
 			}
 		}
 		ClipSkyPolygon( 3, p[0], 0 );
@@ -672,6 +673,13 @@ void R_InitSkyTexCoords( float heightCloud )
 							NULL,
 							skyVec );
 
+				// TA: Quick explanation after it took me hours to understand:
+				// This is a ray-sphere intersection. radiusWorld is the radius of the world we are standing on.
+				// So our ray begins on top of the world (0,0,radiusWorld). 
+				// The cloud layer has radius radiusWorld+cloudHeight and is centered at (0,0,0)
+				// We are intersecting the ray starting on the world surface with the cloud layer above. 
+				// p is a multiplier for skyVec to intersect with the cloud layer.
+				// Why we add 4096 to [2] after.... I DONT KNOW
 				// compute parametric value 'p' that intersects with cloud layer
 				p = ( 1.0f / ( 2 * DotProduct( skyVec, skyVec ) ) ) *
 					( -2 * skyVec[2] * radiusWorld + 
