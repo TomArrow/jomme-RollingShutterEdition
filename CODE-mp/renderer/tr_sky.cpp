@@ -1,7 +1,7 @@
 // tr_sky.c
 #include "tr_local.h"
 
-#define SKY_SUBDIVISIONS		8
+#define SKY_SUBDIVISIONS		16
 #define HALF_SKY_SUBDIVISIONS	(SKY_SUBDIVISIONS/2)
 
 static float s_cloudTexCoords[6][SKY_SUBDIVISIONS+1][SKY_SUBDIVISIONS+1][2];
@@ -479,6 +479,19 @@ static void FillCloudySkySide( const int mins[2], const int maxs[2], qboolean ad
 		for ( s = mins[0]+HALF_SKY_SUBDIVISIONS; s <= maxs[0]+HALF_SKY_SUBDIVISIONS; s++ )
 		{
 			VectorAdd( s_skyPoints[t][s], backEnd.viewParms.ori.origin, tess.xyz[tess.numVertexes] );
+			if (r_skyboxRotate->integer) {
+
+				static vec3_t tmpCoord;
+				static const vec3_t rotDir{ 0,0,1 };
+
+				RotatePointAroundVector(tmpCoord, rotDir, s_skyPoints[t][s], r_skyboxRotate->integer);
+				VectorCopy(tmpCoord, s_skyPoints[t][s]);
+
+				VectorAdd(s_skyPoints[t][s], backEnd.viewParms.ori.origin, tess.xyz[tess.numVertexes]);
+
+				//RotatePointAroundVector(tmpCoord, rotDir, s_skyPoints[t + 1][s], r_skyboxRotate->integer);
+				//VectorCopy(tmpCoord, s_skyPoints[t + 1][s]);
+			}
 			tess.texCoords[tess.numVertexes][0][0] = s_skyTexCoords[t][s][0];
 			tess.texCoords[tess.numVertexes][0][1] = s_skyTexCoords[t][s][1];
 
@@ -638,6 +651,7 @@ void R_BuildCloudData( shaderCommands_t *input )
 				break;
 			}
 			FillCloudBox( input->shader, i );
+			break; // only the first time emits vertices anyway, why bother calling it over and over?
 		}
 	}
 }

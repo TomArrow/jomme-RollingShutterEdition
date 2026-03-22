@@ -265,6 +265,11 @@ cvar_t* r_consoleFont;
 cvar_t* r_fontSharpness;
 cvar_t* r_font3DBrightness;
 
+
+cvar_t* r_rgbMult[RGBMULTCVARS];
+
+
+
 #ifndef DEDICATED
 
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
@@ -1183,6 +1188,10 @@ extern qboolean Sys_LowPhysicalMemory();
 	r_consoleFont->modified = qtrue;
 	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "3", CVAR_ARCHIVE);
 	r_font3DBrightness = ri.Cvar_Get("r_font3DBrightness", "2", CVAR_ARCHIVE);
+
+	for (int i = 0; i < RGBMULTCVARS; i++) {
+		r_rgbMult[i] = ri.Cvar_Get(va("rgbMult%d",i), "1.0", CVAR_TEMP);
+	}
 }
 
 #ifdef G2_COLLISION_ENABLED

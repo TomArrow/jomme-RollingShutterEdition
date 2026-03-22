@@ -318,6 +318,12 @@ typedef enum {
 } colorGen_t;
 
 typedef enum {
+	CMULT_BAD,
+	CMULT_CONST,
+	CMULT_CVAR
+} colorMult_t;
+
+typedef enum {
 	TCGEN_BAD,
 	TCGEN_IDENTITY,			// clear to 0,0
 	TCGEN_LIGHTMAP,
@@ -460,8 +466,9 @@ typedef struct {
 
 	waveForm_t		rgbWave;
 	colorGen_t		rgbGen;
-	vec3_t			rgbMult;
-	qboolean		rgbMultSet;
+	colorMult_t		rgbMult;
+	vec3_t			rgbMultConst;
+	cvar_t*			rgbMultCvar;
 	float			heatMult;
 	qboolean		heatMultSet;
 	qboolean		forceUseNormal;
@@ -1583,6 +1590,9 @@ Ghoul2 Insert End
 extern	cvar_t* r_consoleFont;
 extern	cvar_t* r_fontSharpness;
 extern	cvar_t* r_font3DBrightness;
+
+#define RGBMULTCVARS	32
+extern	cvar_t* r_rgbMult[RGBMULTCVARS];
 
 //====================================================================
 

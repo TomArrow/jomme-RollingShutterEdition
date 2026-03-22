@@ -1606,11 +1606,38 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 		else if ( !Q_stricmp( token, "rgbMult" ) )
 		{
 			vec3_t	color;
-			if (ParseVector(text, 3, color)) {
-				stage->rgbMult[0] = color[0];
-				stage->rgbMult[1] = color[1];
-				stage->rgbMult[2] = color[2];
-				stage->rgbMultSet = qtrue;
+			const char* texttmp = *text;
+			token = COM_ParseExt(text, qfalse);
+			if (!Q_stricmp(token, "const")) {
+				if (ParseVector(text, 3, color)) {
+					stage->rgbMultConst[0] = color[0];
+					stage->rgbMultConst[1] = color[1];
+					stage->rgbMultConst[2] = color[2];
+					stage->rgbMult = CMULT_CONST;
+				}
+			} else if (!Q_stricmp(token, "cvar")) {
+				token = COM_ParseExt(text, qfalse);
+				cvar_t* tmpCvar;
+				if (tmpCvar = Cvar_FindVar(token)) {
+					stage->rgbMultCvar = tmpCvar;
+					stage->rgbMult = CMULT_CVAR;
+				}
+				else {
+					ri.Printf(PRINT_WARNING, "WARNING: invalid rgbMult cvar '%s' in shader '%s'\n", token, shader.name);
+				}
+			} else if (!Q_stricmp(token, "(")) {
+				// fallback to old naive implementation that just took a vector
+				*text = texttmp;
+				if (ParseVector(text, 3, color)) {
+					stage->rgbMultConst[0] = color[0];
+					stage->rgbMultConst[1] = color[1];
+					stage->rgbMultConst[2] = color[2];
+					stage->rgbMult = CMULT_CONST;
+				}
+			} else
+			{
+				ri.Printf(PRINT_WARNING, "WARNING: invalid rgbMult parameter in shader '%s'\n", shader.name);
+				continue;
 			}
 		}
 		//

@@ -1613,6 +1613,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		if(thermalVision){
 			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
 		}
+		if(vertexLit){
+			outFragColor.xyz *= vertColor.xyz;
+		}
 		return true;
 	//} else if(effectiveAlpha <= 0.0 && usesBlending) { // this causes issues (thermalvision 3) in its current form. leads to WEIRD negative values and all sorts of weird af shit
 		//return true; // this seem fair?

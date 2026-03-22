@@ -352,6 +352,10 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 
 	shader_t *state = (shader->remappedShader) ? shader->remappedShader : shader;
 
+	if (tr.mmeSkyShader && state->isSky) {
+		state = tr.mmeSkyShader;
+	}
+
 	tess.numIndexes = 0;
 	tess.numVertexes = 0;
 	Com_Memset(tess.vertexColorsRawSet, 0, sizeof(tess.vertexColorsRawSet));
@@ -1524,10 +1528,14 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 
 	}
 
-	if (pStage->rgbMultSet) {
-		variousStuffMultiplier[0] *= pStage->rgbMult[0];
-		variousStuffMultiplier[1] *= pStage->rgbMult[1];
-		variousStuffMultiplier[2] *= pStage->rgbMult[2];
+	if (pStage->rgbMult) {
+		if (pStage->rgbMult == CMULT_CONST) {
+			variousStuffMultiplier[0] *= pStage->rgbMultConst[0];
+			variousStuffMultiplier[1] *= pStage->rgbMultConst[1];
+			variousStuffMultiplier[2] *= pStage->rgbMultConst[2];
+		} else if (pStage->rgbMult == CMULT_CVAR && pStage->rgbMultCvar) {
+			VectorScale(variousStuffMultiplier, pStage->rgbMultCvar->value, variousStuffMultiplier);
+		}
 	}
 
 	if (ENABLEGLSL && r_fboGLSL->integer && r_fboGLSLThermalVision->integer > 0 && r_fboGLSLThermalVision->integer < 4 && pStage->heatMultSet) {
