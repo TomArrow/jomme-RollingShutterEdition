@@ -1810,7 +1810,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLShaderDebug = ri.Cvar_Get( "r_fboGLSLShaderDebug", "0", CVAR_TEMP);
 	r_fboGLSLThermalVision = ri.Cvar_Get( "r_fboGLSLThermalVision", "0", CVAR_TEMP);
 	r_fboGLSLCloudShadowScale = ri.Cvar_Get( "r_fboGLSLCloudShadowScale", "1.0", CVAR_ARCHIVE);
-	r_fboGLSLCloudShadowTimeScale = ri.Cvar_Get( "r_fboGLSLCloudShadowTimeScale", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLCloudShadowTimeScale = ri.Cvar_Get( "r_fboGLSLCloudShadowTimeScale", "1.5", CVAR_ARCHIVE);
 	r_fboGLSLCloudShadowPower = ri.Cvar_Get( "r_fboGLSLCloudShadowPower", "0.7", CVAR_ARCHIVE);
 	r_fboGLSLCloudIntensityCompensate = ri.Cvar_Get( "r_fboGLSLCloudIntensityCompensate", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLFog = ri.Cvar_Get( "r_fboGLSLFog", "0.0", CVAR_ARCHIVE);
