@@ -339,10 +339,11 @@ inline void ComputeFinalLightDirection(const float* lightdirs, float *result)
 {
 	int			k;
 	//float		result[4];
-	float		r, g, b;
+	//float		r, g, b;
+	vec3_t		sum = { 0,0,0 };
 
 	//Debug
-	r = g = b = 0;
+	//r = g = b = 0;
 
 	if (tr.haveVertLightDirs) {
 		for (k = 0; k < MAXLIGHTMAPS_REAL; k++)
@@ -352,9 +353,9 @@ inline void ComputeFinalLightDirection(const float* lightdirs, float *result)
 				float* styleColor = styleColors[tess.shader->styles[k]];
 				float styleIntensity = RGBTOGRAY(styleColor);
 
-				r += (float)((*lightdirs++)) * styleIntensity;
-				g += (float)((*lightdirs++)) * styleIntensity;
-				b += (float)((*lightdirs++)) * styleIntensity;
+				sum[0] += (float)((*lightdirs++)) * styleIntensity;
+				sum[1] += (float)((*lightdirs++)) * styleIntensity;
+				sum[2] += (float)((*lightdirs++)) * styleIntensity;
 			}
 			else
 			{
@@ -363,10 +364,11 @@ inline void ComputeFinalLightDirection(const float* lightdirs, float *result)
 		}
 	}
 
-	result[0] = r / 255.0f;
-	result[1] = g / 255.0f;
-	result[2] = b / 255.0f;
-
+	//result[0] = r / 255.0f;
+	//result[1] = g / 255.0f;
+	//result[2] = b / 255.0f;
+	VectorNormalize(sum);
+	VectorCopy(sum, result);
 }
 
 

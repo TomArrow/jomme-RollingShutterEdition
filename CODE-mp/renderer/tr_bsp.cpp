@@ -2598,7 +2598,7 @@ static void R_CalcVertexLightDirs(void)
 					style = surface->shader ? surface->shader->styles[j] : 0;
 					if (style == LS_LSNONE) break;
 					VectorSet(styleColors[style], 255, 255, 255, 255);
-					R_LightDirForPoint(face->points[i].xyz, face->points[i].lightdir[j], face->points[i].normal, NULL, &s_worldData);
+					R_LightDirForPoint(face->points[i].xyz, face->points[i].lightdir[j], face->points[i].normal, NULL, &s_worldData, r_bspVertLightDirCalcRestrictDot->value, r_bspVertLightDirCalcRestrictDotLow->value);
 					lightdirsCalced++;
 					VectorSet(styleColors[style], 0, 0, 0, 0);
 					if (!surface->shader) break;
@@ -2617,7 +2617,7 @@ static void R_CalcVertexLightDirs(void)
 					style = surface->shader ? surface->shader->styles[j] : 0;
 					if (style == LS_LSNONE) break;
 					VectorSet(styleColors[style], 255, 255, 255, 255);
-					R_LightDirForPoint(grid->verts[i].xyz, grid->verts[i].lightdir[j], grid->verts[i].normal, NULL, &s_worldData);
+					R_LightDirForPoint(grid->verts[i].xyz, grid->verts[i].lightdir[j], grid->verts[i].normal, NULL, &s_worldData, r_bspVertLightDirCalcRestrictDot->value, r_bspVertLightDirCalcRestrictDotLow->value);
 					lightdirsCalced++;
 					VectorSet(styleColors[style], 0, 0, 0, 0);
 					if (!surface->shader) break;
@@ -2635,7 +2635,7 @@ static void R_CalcVertexLightDirs(void)
 					style = surface->shader ? surface->shader->styles[j] : 0;
 					if (style == LS_LSNONE) break;
 					VectorSet(styleColors[style], 255, 255, 255, 255);
-					R_LightDirForPoint(tris->verts[i].xyz, tris->verts[i].lightdir[j], tris->verts[i].normal, NULL, &s_worldData);
+					R_LightDirForPoint(tris->verts[i].xyz, tris->verts[i].lightdir[j], tris->verts[i].normal, NULL, &s_worldData, r_bspVertLightDirCalcRestrictDot->value, r_bspVertLightDirCalcRestrictDotLow->value);
 					lightdirsCalced++;
 					VectorSet(styleColors[style], 0, 0, 0, 0);
 					if (!surface->shader) break;

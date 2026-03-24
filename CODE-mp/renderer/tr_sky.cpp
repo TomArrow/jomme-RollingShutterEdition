@@ -831,6 +831,7 @@ Other things could be stuck in here, like birds in the sky, etc
 ================
 */
 void RB_StageIteratorSky( void ) {
+	static shaderStage_t emptyStage = {};
 	bool useStencil = R_UsingStencilSky();
 	bool mustClearStencil = false;
 #ifdef JEDIACADEMY_GLOW
@@ -845,7 +846,7 @@ void RB_StageIteratorSky( void ) {
 	R_FrameBuffer_SetDynamicUniforms(NULL, &falseBool, &falseBool,0,0,0,0,&trueBool);
 	int colorGen = CGEN_BAD;
 	qboolean nope = qfalse;
-	R_FrameBuffer_SetDynamicUniforms2(NULL, &colorGen, &nope);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, &colorGen, &emptyStage, &nope);
 
 	if (useStencil) {
 

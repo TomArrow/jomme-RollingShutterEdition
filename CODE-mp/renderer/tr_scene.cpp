@@ -789,7 +789,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 	for (int i = 0; i < tr.refdef.num_shadowlines; i++) {
 		if (tr.refdef.shadowlines[i].flags & 1) {
 			// foot shadow
-			R_LightDirForPoint(tr.refdef.shadowlines[i].middle, tr.refdef.shadowlines[i].lightdir,vec3_origin, tr.refdef.shadowlines[i].lightdir+3,tr.world);
+			R_LightDirForPoint(tr.refdef.shadowlines[i].middle, tr.refdef.shadowlines[i].lightdir,vec3_origin, tr.refdef.shadowlines[i].lightdir+3,tr.world,-99.0f,-99.0f);
 		}
 	}
 

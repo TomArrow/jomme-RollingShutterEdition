@@ -1061,9 +1061,10 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 	ent->lightDir[2] = DotProduct( lightDir, ent->e.axis[2] );
 }
 
-int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world)
+int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world, float normalDotRestrict, float normalDotRestrictLow)
 {
 	trRefEntity_t ent;
+	float dot;
 
 	if (world->lightGridData == NULL)
 		return qfalse;
@@ -1072,14 +1073,22 @@ int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* dire
 	VectorCopy(point, ent.e.origin);
 	R_SetupEntityLightingGrid(&ent, world);
 
-	if (VectorLengthSquared(normal) == 0.0f || DotProduct(ent.lightDir, normal) > 0.2f) {
+	dot = DotProduct(ent.lightDir, normal);
+	if (VectorLengthSquared(normal) == 0.0f || dot > normalDotRestrict) {
 		VectorCopy(ent.lightDir, lightDir);
 		if (directionality) {
 			*directionality = ent.directionality;
 		}
 	}
 	else {
-		VectorCopy(normal, lightDir);
+		dot = (dot - normalDotRestrictLow)/(normalDotRestrict- normalDotRestrictLow);
+		if (dot > 0.0f) {
+			VectorScale(normal,(1.0f- dot), lightDir);
+			VectorMA(lightDir, dot, ent.lightDir, lightDir);
+		}
+		else {
+			VectorCopy(normal, lightDir);
+		}
 		if (directionality) {
 			*directionality = 0;
 		}

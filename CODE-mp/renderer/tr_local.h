@@ -1443,6 +1443,9 @@ extern cvar_t* r_skyboxRotate;			// Degrees on height axis to rotate skybox (to 
 extern	cvar_t	*r_newDLights;
 
 extern	cvar_t	*r_smoothenPlanarNormals; // angle value for smoothing planar normals for glsl to make maps smooother without needing to compile them differently
+extern	cvar_t	*r_bspVertLightDirCalcRestrictDot; // vertex light dir will default to the vertex normal if the dot between light dir and the vertex normal is below this. the q3e reference value is 0.2
+extern	cvar_t	*r_bspVertLightDirCalcRestrictDotLow; // lower point for this. smoothly transition to normal instead of hard-cutting off.
+extern	cvar_t	*r_alphaGenLightingSpecularHQ; // calc alphagen lightingspecular per vertex, not per 4 vertices.
 
 extern	cvar_t	*r_norefresh;			// bypasses the ref rendering
 extern	cvar_t	*r_drawentities;		// disable/enable entity rendering
@@ -2000,7 +2003,7 @@ void R_DlightBmodel( bmodel_t *bmodel );
 void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent );
 void R_TransformDlights( int count, dlight_t *dl, orientationr_t *ori );
 int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
-int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world); // from quake3e
+int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world, float normalDotRestrict, float normalDotRestrictLow); // from quake3e
 void RE_SetLightStyle(int style, color4f_t color);
 
 
@@ -2508,8 +2511,12 @@ typedef struct {
 
 	// for vertexlit stuff
 	bool haveVertexLightDirection;
+	bool isModel;
 	int	stageColorGen;
 	qboolean	stageForceNormal;
+
+	int	stageTCGen;
+	qboolean	stageHasTCMod;
 } fishEyeData_t;
 
 typedef struct {
@@ -2586,7 +2593,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO
 qboolean R_FrameBuffer_SetProjection2D(qboolean is2D);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const int* stageColorGen = NULL, const qboolean* stageForceNormal = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL, const bool* isGore=NULL);
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const bool* isModel = NULL, const int* stageColorGen = NULL, const shaderStage_t* stage= NULL, const qboolean* stageForceNormal = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL, const bool* isGore=NULL);
 qboolean R_FrameBuffer_SendDLightInfo();
 qboolean R_FrameBuffer_SendDLightSSBOInfo();
 qboolean R_FrameBuffer_DeactivateFisheye();

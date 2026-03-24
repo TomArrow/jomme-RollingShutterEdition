@@ -84,6 +84,10 @@ cvar_t	*r_newDLights;
 
 cvar_t	*r_smoothenPlanarNormals;
 
+cvar_t	*r_bspVertLightDirCalcRestrictDot;
+cvar_t	*r_bspVertLightDirCalcRestrictDotLow;
+cvar_t	*r_alphaGenLightingSpecularHQ;
+
 cvar_t	*r_norefresh;
 cvar_t	*r_drawentities;
 cvar_t	*r_drawworld;
@@ -1096,6 +1100,9 @@ void R_Register( void )
 	r_newDLights = ri.Cvar_Get ("r_newDLights", "0", 0);
 
 	r_smoothenPlanarNormals = ri.Cvar_Get( "r_smoothenPlanarNormals", "20", CVAR_LATCH|CVAR_ARCHIVE );
+	r_bspVertLightDirCalcRestrictDot = ri.Cvar_Get( "r_bspVertLightDirCalcRestrictDot", "0.2", CVAR_LATCH|CVAR_ARCHIVE );
+	r_bspVertLightDirCalcRestrictDotLow = ri.Cvar_Get( "r_bspVertLightDirCalcRestrictDotLow", "0.0", CVAR_LATCH|CVAR_ARCHIVE );
+	r_alphaGenLightingSpecularHQ = ri.Cvar_Get( "r_alphaGenLightingSpecularHQ", "1", CVAR_LATCH|CVAR_ARCHIVE );
 
 	r_measureOverdraw = ri.Cvar_Get( "r_measureOverdraw", "0", CVAR_CHEAT );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5", 0 );

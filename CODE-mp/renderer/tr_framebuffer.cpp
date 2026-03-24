@@ -131,8 +131,13 @@ typedef struct uniformLocations_t {
 	GLint multiTexModeUniform;
 
 	GLint haveVertexLightDirectionUniform;
+	GLint isModelUniform;
 	GLint stageColorGenUniform;
 	GLint stageForceNormalUniform;
+
+	GLint stageTCGenUniform;
+	GLint stageHasTCModUniform;
+	GLint gigaTCGenUniform;
 
 	GLint rawStateBitsUniform;
 	GLint appliedStateBitsUniform;
@@ -246,6 +251,7 @@ cvar_t *r_fboGLSLCloudIntensityCompensate;
 cvar_t *r_fboGLSLFog;
 cvar_t *r_fboGLSLFogColor;
 cvar_t *r_fboGLSLPreviewSecondary;
+cvar_t *r_fboGLSLGigaTCGen;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeNormalBlend; // doesnt do anything rn
 cvar_t *r_fboFishEyeTessellate;
@@ -439,8 +445,13 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->deluxeMappingUniform, tr.deluxeMapping);
 
 		qglUniform1i(uniformLocationsTess->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
+		qglUniform1i(uniformLocationsTess->isModelUniform, fbo.fishEyeData.isModel ? 1 : 0);
 		qglUniform1i(uniformLocationsTess->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
 		qglUniform1i(uniformLocationsTess->stageForceNormalUniform, fbo.fishEyeData.stageForceNormal);
+
+		qglUniform1i(uniformLocationsTess->stageTCGenUniform, fbo.fishEyeData.stageTCGen);
+		qglUniform1i(uniformLocationsTess->stageHasTCModUniform, fbo.fishEyeData.stageHasTCMod);
+		qglUniform1i(uniformLocationsTess->gigaTCGenUniform, r_fboGLSLGigaTCGen->integer);
 
 		qglUniform1ui(uniformLocationsTess->rawStateBitsUniform, fbo.fishEyeData.stateBitsRaw);
 		qglUniform1ui(uniformLocationsTess->appliedStateBitsUniform, fbo.fishEyeData.stateBitsApplied);
@@ -551,8 +562,13 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->deluxeMappingUniform, tr.deluxeMapping);
 
 		qglUniform1i(uniformLocations->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
+		qglUniform1i(uniformLocations->isModelUniform, fbo.fishEyeData.isModel ? 1 : 0);
 		qglUniform1i(uniformLocations->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
 		qglUniform1i(uniformLocations->stageForceNormalUniform, fbo.fishEyeData.stageForceNormal);
+
+		qglUniform1i(uniformLocations->stageTCGenUniform, fbo.fishEyeData.stageTCGen);
+		qglUniform1i(uniformLocations->stageHasTCModUniform, fbo.fishEyeData.stageHasTCMod);
+		qglUniform1i(uniformLocations->gigaTCGenUniform, r_fboGLSLGigaTCGen->integer);
 
 		qglUniform1ui(uniformLocations->rawStateBitsUniform, fbo.fishEyeData.stateBitsRaw);
 		qglUniform1ui(uniformLocations->appliedStateBitsUniform, fbo.fishEyeData.stateBitsApplied);
@@ -916,7 +932,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const int* stageColorGen, const qboolean* stageForceNormal, const bool* nocull, const byte* shaderStyles, unsigned int* stateBitsRaw, unsigned int* stateBitsApplied, const bool* isGore) {
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const bool* isModel, const int* stageColorGen, const shaderStage_t* stage, const qboolean* stageForceNormal, const bool* nocull, const byte* shaderStyles, unsigned int* stateBitsRaw, unsigned int* stateBitsApplied, const bool* isGore) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -929,8 +945,15 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	if (haveVertexLightDir) {
 		fbo.fishEyeData.haveVertexLightDirection = *haveVertexLightDir;
 	}
+	if (isModel) {
+		fbo.fishEyeData.isModel = *isModel;
+	}
 	if (stageColorGen) {
 		fbo.fishEyeData.stageColorGen = *stageColorGen;
+	}
+	if (stage) {
+		fbo.fishEyeData.stageTCGen = stage->bundle[0].image ? stage->bundle[0].tcGen : TCGEN_BAD;
+		fbo.fishEyeData.stageHasTCMod = stage->bundle[0].image ? (qboolean)(stage->bundle[0].numTexMods > 0) : qfalse;
 	}
 	if (stageForceNormal) {
 		fbo.fishEyeData.stageForceNormal = *stageForceNormal;
@@ -1619,8 +1642,13 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->deluxeMappingUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "deluxeMappingUniform");
 
 		locs->haveVertexLightDirectionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
+		locs->isModelUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isModelUniform");
 		locs->stageColorGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageColorGenUniform");
 		locs->stageForceNormalUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageForceNormalUniform");
+
+		locs->stageTCGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageTCGenUniform");
+		locs->stageHasTCModUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageHasTCModUniform");
+		locs->gigaTCGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "gigaTCGenUniform");
 
 		locs->rawStateBitsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "rawStateBitsUniform");
 		locs->appliedStateBitsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "appliedStateBitsUniform");
@@ -1803,6 +1831,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLDLightsFastSkipThreshold = ri.Cvar_Get( "r_fboGLSLDLightsFastSkipThreshold", "0.00001", CVAR_ARCHIVE);
 	r_fboGLSLFastPreview = ri.Cvar_Get( "r_fboGLSLFastPreview", "1", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_fboGLSLGigaTCGen = ri.Cvar_Get( "r_fboGLSLGigaTCGen", "1", CVAR_ARCHIVE);
 	r_fboFishEye = ri.Cvar_Get( "r_fboFishEye", "0", CVAR_ARCHIVE);
 	r_fboFishEyeNormalBlend = ri.Cvar_Get( "r_fboFishEyeNormalBlend", "0.0", CVAR_ARCHIVE);
 	r_fboFishEyeTessellate = ri.Cvar_Get( "r_fboFishEyeTessellate", "1", CVAR_ARCHIVE);
