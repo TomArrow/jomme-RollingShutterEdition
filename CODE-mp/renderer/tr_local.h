@@ -318,7 +318,7 @@ typedef enum {
 } colorGen_t;
 
 typedef enum {
-	CMULT_BAD,
+	CMULT_NONE,
 	CMULT_CONST,
 	CMULT_CVAR
 } colorMult_t;

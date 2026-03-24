@@ -2888,6 +2888,10 @@ static qboolean CollapseMultitexture( void ) {
 		return qfalse;
 	}
 
+	if (stages[0].rgbMult || stages[1].rgbMult) {
+		return qfalse; // for now. in future maybe just add a constant factor and add them together if all else is identical
+	}
+
 	abits = stages[0].stateBits;
 	bbits = stages[1].stateBits;
 

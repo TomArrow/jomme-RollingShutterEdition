@@ -1197,7 +1197,7 @@ extern qboolean Sys_LowPhysicalMemory();
 	r_font3DBrightness = ri.Cvar_Get("r_font3DBrightness", "2", CVAR_ARCHIVE);
 
 	for (int i = 0; i < RGBMULTCVARS; i++) {
-		r_rgbMult[i] = ri.Cvar_Get(va("rgbMult%d",i), "1.0", CVAR_TEMP);
+		r_rgbMult[i] = ri.Cvar_Get(va("rgbMult%d",i), "0.0", CVAR_TEMP);
 	}
 }
 
