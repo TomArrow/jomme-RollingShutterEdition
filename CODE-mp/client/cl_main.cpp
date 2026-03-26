@@ -2458,9 +2458,9 @@ void CL_InitRef( void ) {
 
 	// cinematic stuff
 
-	ri.CIN_UploadCinematic = CIN_UploadCinematic;
-	ri.CIN_PlayCinematic = CIN_PlayCinematic;
-	ri.CIN_RunCinematic = CIN_RunCinematic;
+	ri.CIN_UploadCinematic = CIN_UploadCinematic; // called when the image is bound, after runcinematic
+	ri.CIN_PlayCinematic = CIN_PlayCinematic; // opens or returns existing handle
+	ri.CIN_RunCinematic = CIN_RunCinematic; // called when the image is bound, before uploadcinematic
 
 	ri.CM_PointContents = CM_PointContents;
 

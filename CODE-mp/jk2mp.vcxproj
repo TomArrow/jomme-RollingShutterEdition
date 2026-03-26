@@ -408,6 +408,9 @@
     </MASM>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="avilib\avilib.cpp" />
+    <ClCompile Include="avilib\reader.cpp" />
+    <ClCompile Include="avilib\writer.cpp" />
     <ClCompile Include="botlib\be_aas_bspq3.cpp" />
     <ClCompile Include="botlib\be_aas_cluster.cpp" />
     <ClCompile Include="botlib\be_aas_debug.cpp" />
@@ -677,6 +680,11 @@
     <ClInclude Include="adm\route_tracer.hpp" />
     <ClInclude Include="adm\version.hpp" />
     <ClInclude Include="adm\write.hpp" />
+    <ClInclude Include="avilib\avidef.h" />
+    <ClInclude Include="avilib\avilib.h" />
+    <ClInclude Include="avilib\common.h" />
+    <ClInclude Include="avilib\reader.h" />
+    <ClInclude Include="avilib\writer.h" />
     <ClInclude Include="botlib\aasfile.h" />
     <ClInclude Include="botlib\be_aas_bsp.h" />
     <ClInclude Include="botlib\be_aas_cluster.h" />

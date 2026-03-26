@@ -713,6 +713,12 @@ void CG_DemosDrawActiveFrame(int serverTime, stereoFrame_t stereoView) {
 
 	/* Set the correct time */
 	cg.time = trap_MME_SeekTime( demo.line.time );
+	// oh wait... do i need to seek ahead here? so i have the relevant future snaps for quad interp?
+	//if (cg.snap && cg.snap->serverTime == cg.time && !cg.nextSnap || cg.nextSnap && cg.nextSnap->serverTime == cg.time) {
+		// does this help with actual jomme? defo noticed some dupe frames even with vanilla jomme tho.
+		// eh i guess maybe i dont need this cuz i seek ahead to nextnext etc anyway
+		//trap_MME_SeekTime(demo.play.time + 1); // transitioning. we dont wanna have 1 ms of stuck frames. yea kinda cringe, is there a better way?
+	//}
 	/* cg.time is shifted ahead a bit to correct some issues.. */
 	frameSpeed *= demo.play.speed;
 

@@ -100,6 +100,33 @@ void COM_StripExtension( const char *in, char *out ) {
 
 /*
 ==================
+COM_IsExtension
+==================
+*/
+qboolean COM_IsExtension (char *path, const char *extension ) {
+	char	oldPath[MAX_QPATH];
+	char    *src;
+
+//
+// if path doesn't have a .EXT, append extension
+// (extension should include the .)
+//
+	src = path + strlen(path) - 1;
+
+	while (*src != '/' && src != path) {
+		if ( *src == '.' ) {
+			if (!Q_stricmp(src,extension)) {
+				return qtrue;
+			}
+			return qfalse; 
+		}
+		src--;
+	}
+
+	return qfalse;
+}
+/*
+==================
 COM_DefaultExtension
 ==================
 */

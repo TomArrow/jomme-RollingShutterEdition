@@ -1337,6 +1337,7 @@ float Com_Clamp( float min, float max, float value );
 char	*COM_SkipPath( char *pathname );
 void	COM_StripExtension( const char *in, char *out );
 void	COM_DefaultExtension( char *path, int maxSize, const char *extension );
+qboolean COM_IsExtension(char* path, const char* extension);
 
 void	COM_BeginParseSession( const char *name );
 int		COM_GetCurrentParseLine( void );

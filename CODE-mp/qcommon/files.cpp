@@ -278,6 +278,7 @@ typedef struct {
 	qboolean	zipFile;
 	qboolean	streamed;
 	char		name[MAX_ZPATH];
+	char		ospath[MAX_OSPATH];
 } fileHandleData_t;
 
 std::recursive_mutex fshMutex;
@@ -687,6 +688,22 @@ std::string FS_GetSanePath( const char *file )
 
 	return filepath;
 }
+/*
+================
+FS_GetActualPath
+
+Get actual path of the file that can actually be used without the FS_ functions
+================
+*/
+std::string FS_GetActualPath( fileHandle_t f )
+{
+	std::lock_guard lock(fshMutex); // just to be safe...
+	if (fsh[f].zipFile == qtrue) {
+		return "";
+	}
+	return fsh[f].ospath;
+
+}
 
 qboolean FS_FileErase( const char *file )
 {
@@ -754,6 +771,7 @@ fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
 	fsh[f].handleFiles.file.o = fopen(ospath.c_str(), "wb");
 
 	Q_strncpyz(fsh[f].name, filename, sizeof(fsh[f].name));
+	Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
@@ -797,6 +815,7 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
 	}
 
 	fsh[f].handleFiles.file.o = fopen( ospath.c_str(), "rb" );
+	Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 	fsh[f].handleSync = qfalse;
   if (!fsh[f].handleFiles.file.o)
   {
@@ -813,10 +832,12 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
       }
 
       fsh[f].handleFiles.file.o = fopen( ospath.c_str(), "rb" );
+	  Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
       fsh[f].handleSync = qfalse;
 
       if ( !fsh[f].handleFiles.file.o )
       {
+		fsh[f].ospath[0] = '\0';
         f = 0;
       }
     }
@@ -833,6 +854,7 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
     }
 
 	  fsh[f].handleFiles.file.o = fopen( ospath.c_str(), "rb" );
+	  Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 	  fsh[f].handleSync = qfalse;
 
 	  if( !fsh[f].handleFiles.file.o ) {
@@ -981,6 +1003,7 @@ fileHandle_t FS_FOpenFileWrite( const char *filename, qboolean quiet ) { // quie
 	fsh[f].handleFiles.file.o = fopen( ospath.c_str(), "wb" );
 
 	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
+	Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
@@ -1017,6 +1040,7 @@ fileHandle_t FS_FOpenFileReadWrite( const char *filename ) {
 	fsh[f].handleFiles.file.o = fopen( ospath.c_str(), "r+b" );
 
 	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
+	Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
@@ -1053,6 +1077,7 @@ fileHandle_t FS_FDirectOpenFileWrite( const char *filename, const char *mode ) {
 	fsh[f].handleFiles.file.o = fopen( ospath.c_str(), mode );
 
 	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
+	Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
@@ -1095,6 +1120,7 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 	}
 
 	fsh[f].handleFiles.file.o = fopen( ospath.c_str(), "ab" );
+	Q_strncpyz(fsh[f].ospath, ospath.c_str(), sizeof(fsh[f].ospath));
 	fsh[f].handleSync = qfalse;
 	if (!fsh[f].handleFiles.file.o) {
 		f = 0;
@@ -1286,6 +1312,7 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 						fsh[*file].handleFiles.file.z = pak->handle;
 					}
 					Q_strncpyz( fsh[*file].name, filename, sizeof( fsh[*file].name ) );
+					fsh[*file].ospath[0] = '\0';
 					fsh[*file].zipFile = qtrue;
 					zfi = (unz_s *)fsh[*file].handleFiles.file.z;
 					// in case the file was new
@@ -1360,6 +1387,7 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 			}
       
 			Q_strncpyz( fsh[*file].name, filename, sizeof( fsh[*file].name ) );
+			Q_strncpyz(fsh[*file].ospath, netpath.c_str(), sizeof(fsh[*file].ospath));
 			fsh[*file].zipFile = qfalse;
 			if ( fs_debug->integer ) {
 				Com_Printf( "FS_FOpenFileRead: %s (found in '%s/%s')\n", filename,
@@ -3641,6 +3669,7 @@ fileHandle_t FS_PipeOpen(const char* qcmd, const char* qpath, const char* mode) 
 #endif
 
 	Q_strncpyz(fsh[f].name, qpath, sizeof(fsh[f].name));
+	Q_strncpyz(fsh[f].ospath, ospath, sizeof(fsh[f].ospath));
 
 	fsh[f].handleSync = qfalse;
 #ifdef USE_AIO

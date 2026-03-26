@@ -87,6 +87,9 @@
     <Filter Include="Renderer\videometa">
       <UniqueIdentifier>{a2e95d12-f2bc-4919-9098-aecf9ffb8f76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Renderer\avilib">
+      <UniqueIdentifier>{d25044bb-c8b1-4d05-adc1-7e759edaecaf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client\0_SH_Leak.cpp">
@@ -827,6 +830,15 @@
     <ClCompile Include="videometa\VideoMetaHelper.cpp">
       <Filter>Renderer\videometa</Filter>
     </ClCompile>
+    <ClCompile Include="avilib\avilib.cpp">
+      <Filter>Renderer\avilib</Filter>
+    </ClCompile>
+    <ClCompile Include="avilib\reader.cpp">
+      <Filter>Renderer\avilib</Filter>
+    </ClCompile>
+    <ClCompile Include="avilib\writer.cpp">
+      <Filter>Renderer\avilib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client\client.h">
@@ -1350,6 +1362,21 @@
     </ClInclude>
     <ClInclude Include="videometa\VideoMetaHelperShared.h">
       <Filter>Renderer\videometa</Filter>
+    </ClInclude>
+    <ClInclude Include="avilib\avidef.h">
+      <Filter>Renderer\avilib</Filter>
+    </ClInclude>
+    <ClInclude Include="avilib\avilib.h">
+      <Filter>Renderer\avilib</Filter>
+    </ClInclude>
+    <ClInclude Include="avilib\common.h">
+      <Filter>Renderer\avilib</Filter>
+    </ClInclude>
+    <ClInclude Include="avilib\reader.h">
+      <Filter>Renderer\avilib</Filter>
+    </ClInclude>
+    <ClInclude Include="avilib\writer.h">
+      <Filter>Renderer\avilib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
