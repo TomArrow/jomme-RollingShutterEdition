@@ -7,7 +7,6 @@
 
 #include "../ui/ui_shared.h"
 
-qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y);
 qboolean CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle );
 
 void CG_CalculateSpeed(centity_t* cent); //jk2pro.

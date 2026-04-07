@@ -34,6 +34,8 @@
 
 #define TCGEN_ENVIRONMENT_MAPPED 17
 
+#define SF_FACE 2
+#define SF_GRID 3
 
 #define GLS_SRCBLEND_ZERO						0x00000001
 #define GLS_SRCBLEND_ONE						0x00000002
@@ -288,6 +290,7 @@ uniform int deluxeMappingUniform;
 
 uniform int haveVertexLightDirectionUniform;
 uniform int isModelUniform;
+uniform int surfaceTypeUniform;
 uniform int stageColorGenUniform;
 uniform int stageTCGenUniform;
 uniform uint rawStateBitsUniform;
@@ -1524,7 +1527,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	vec2 rawUVCoords = my_TexCoord[0].st;
 	
-	vec3 lightReferenceNormal = (isModelUniform > 0 || stageForceNormalUniform > 0) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
+	vec3 lightReferenceNormal = (isModelUniform > 0 || stageForceNormalUniform > 0 || surfaceTypeUniform == SF_GRID) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	vec3 worldPixel = (worldModelViewMatrixReverseGeom*eyeSpaceCoordsGeom).xyz;
 	vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
 	bool doingGigaEnvTCGen = false;

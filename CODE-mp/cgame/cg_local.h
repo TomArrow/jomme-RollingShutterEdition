@@ -2458,6 +2458,8 @@ qboolean CG_YourTeamHasFlag(void);
 qboolean CG_OtherTeamHasFlag(void);
 clientInfo_t* CG_GetFlagCarrier(team_t flag);
 qhandle_t CG_StatusHandle(int task);
+qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float* x, float* y);
+qboolean CG_WorldCoordToScreenCoord(vec3_t worldCoord, int* x, int* y);
 
 
 

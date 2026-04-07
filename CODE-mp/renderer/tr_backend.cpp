@@ -150,7 +150,7 @@ void GL_BindMultitexture( image_t *image0, GLuint env0, image_t *image1, GLuint 
 ** GL_Cull
 */
 void GL_Cull( int cullType ) {
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL,NULL, cullType == CT_TWO_SIDED ? &trueBool : &falseBool);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL,NULL, cullType == CT_TWO_SIDED ? &trueBool : &falseBool);
 	if ( glState.faceCulling == cullType ) {
 		return;
 	}
@@ -276,7 +276,7 @@ void GL_State( unsigned int stateBits )
 		}
 	}
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, NULL, &rawStateBits, &stateBits);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &rawStateBits, &stateBits);
 
 	diff = stateBits ^ glState.glStateBits;
 
@@ -779,6 +779,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	qboolean		oldUseSceneView;
 	int				oldSceneView;
 	int64_t			oldSurfaceType = SF_BAD;
+	int				oldWorldSurfaceCategory = -2;
 	int64_t			dlighted, oldDlighted;
 	int				depthRange, oldDepthRange;
 	int				i;
@@ -825,7 +826,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		}
 	}
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, &falseBool, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false for safety
+	R_FrameBuffer_SetDynamicUniforms2(NULL, &falseBool, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false for safety
 
 	// draw everything
 	oldEntityNum = -1;
@@ -877,6 +878,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #endif
 
 		bool goreStatusChanged = *drawSurf->surface != oldSurfaceType && (*drawSurf->surface == SF_MDX_GORE || oldSurfaceType == SF_MDX_GORE);
+		int worldSurfaceCategory = entityNum == REFENTITYNUM_WORLD ? (std::clamp(*drawSurf->surface, SF_GRID, SF_POLY) - SF_GRID) : -1;
+		bool worldSurfaceCategoryChanged = worldSurfaceCategory != oldWorldSurfaceCategory;
 		qboolean useSceneViewTexture = (qboolean)(backEnd.viewParms.haveWorldSceneView && entityNum == REFENTITYNUM_WORLD && shader->isWorldShader || backEnd.refdef.entities[entityNum].e.useSceneViewTexture);
 		int sceneViewTexture = (backEnd.viewParms.haveWorldSceneView && entityNum == REFENTITYNUM_WORLD && shader->isWorldShader) ? backEnd.viewParms.worldSceneView : backEnd.refdef.entities[entityNum].e.sceneViewTexture;
 		bool sceneViewTextureChanged = sceneViewTexture != oldSceneView;
@@ -886,7 +889,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// change the tess parameters if needed
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
-		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted || goreStatusChanged
+		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted || goreStatusChanged || worldSurfaceCategoryChanged
 			|| ( entityNum != oldEntityNum && (!shader->entityMergable || sceneViewTextureChanged || usedSceneViewTextureChanged)) ) {
 			if (oldShader != NULL) {
 #ifdef __MACOS__	// crutch up the mac's limited buffer queue size
@@ -914,16 +917,19 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			R_FrameBuffer_SetDynamicUniforms2(); // whaat am i even doing
 		}
 
-		if (entityNum == REFENTITYNUM_WORLD && *drawSurf->surface != oldSurfaceType) {
-			// this is kinda shitty. polys may have saame shaders as world in theory, and we may be unable to set uniforms separately.
-			// if that becomes a problem, maybe do an endsurface here or sth idk if the state of having lightdirs changes
-			bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
-			R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool, &falseBool);
-			//oldSurfaceType = *drawSurf->surface;
+		if (*drawSurf->surface != oldSurfaceType) {
+			if (entityNum == REFENTITYNUM_WORLD) {
+				// this is kinda shitty. polys may have saame shaders as world in theory, and we may be unable to set uniforms separately.
+				// if that becomes a problem, maybe do an endsurface here or sth idk if the state of having lightdirs changes
+				bool haveWorldLightDirs = *drawSurf->surface >= SF_FACE && *drawSurf->surface <= SF_TRIANGLES && tr.haveVertLightDirs;
+				R_FrameBuffer_SetDynamicUniforms2((haveWorldLightDirs) ? &trueBool : &falseBool, &falseBool);
+				//oldSurfaceType = *drawSurf->surface;
+			}
+			R_FrameBuffer_SetDynamicUniforms2(NULL,NULL, drawSurf->surface); // again this is kinda cringe since different surface types can share a mergable shader. we'll just have to interrupt tess whenever a distinction becomes relevant for glsl (like with worldSurfaceCategoryChanged)
 		}
 
 		if (goreStatusChanged) {
-			R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL,NULL, NULL, NULL,NULL,NULL,NULL, (*drawSurf->surface == SF_MDX_GORE) ? &trueBool : &falseBool);
+			R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL,NULL, NULL, NULL,NULL,NULL,NULL, (*drawSurf->surface == SF_MDX_GORE) ? &trueBool : &falseBool);
 		}
 
 		//
@@ -977,6 +983,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			}
 
 			oldSurfaceType = *drawSurf->surface;
+			oldWorldSurfaceCategory = worldSurfaceCategory;
 
 			qglLoadMatrixf( backEnd.ori.modelMatrix ); 
 
@@ -1027,7 +1034,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	}
 
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, &falseBool, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false again
+	R_FrameBuffer_SetDynamicUniforms2(NULL, &falseBool, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false again
 
 #if 0
 	RB_DrawSun();

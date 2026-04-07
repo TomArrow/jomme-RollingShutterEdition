@@ -846,7 +846,7 @@ void RB_StageIteratorSky( void ) {
 	R_FrameBuffer_SetDynamicUniforms(NULL, &falseBool, &falseBool,0,0,0,0,&trueBool);
 	int colorGen = CGEN_BAD;
 	qboolean nope = qfalse;
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, &colorGen, &emptyStage, &nope);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, &colorGen, &emptyStage, &nope);
 
 	if (useStencil) {
 

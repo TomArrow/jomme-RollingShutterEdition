@@ -132,6 +132,7 @@ typedef struct uniformLocations_t {
 
 	GLint haveVertexLightDirectionUniform;
 	GLint isModelUniform;
+	GLint surfaceTypeUniform;
 	GLint stageColorGenUniform;
 	GLint stageForceNormalUniform;
 
@@ -446,6 +447,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocationsTess->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
 		qglUniform1i(uniformLocationsTess->isModelUniform, fbo.fishEyeData.isModel ? 1 : 0);
+		qglUniform1i(uniformLocationsTess->surfaceTypeUniform, (int)fbo.fishEyeData.surfaceType);
 		qglUniform1i(uniformLocationsTess->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
 		qglUniform1i(uniformLocationsTess->stageForceNormalUniform, fbo.fishEyeData.stageForceNormal);
 
@@ -563,6 +565,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocations->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
 		qglUniform1i(uniformLocations->isModelUniform, fbo.fishEyeData.isModel ? 1 : 0);
+		qglUniform1i(uniformLocations->surfaceTypeUniform, (int)fbo.fishEyeData.surfaceType);
 		qglUniform1i(uniformLocations->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
 		qglUniform1i(uniformLocations->stageForceNormalUniform, fbo.fishEyeData.stageForceNormal);
 
@@ -932,7 +935,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 #endif
 }
 
-qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const bool* isModel, const int* stageColorGen, const shaderStage_t* stage, const qboolean* stageForceNormal, const bool* nocull, const byte* shaderStyles, unsigned int* stateBitsRaw, unsigned int* stateBitsApplied, const bool* isGore) {
+qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const bool* isModel, surfaceType_t* surfaceType, const int* stageColorGen, const shaderStage_t* stage, const qboolean* stageForceNormal, const bool* nocull, const byte* shaderStyles, unsigned int* stateBitsRaw, unsigned int* stateBitsApplied, const bool* isGore) {
 #ifdef HAVE_GLES
 	//TODO
 	return qfalse;
@@ -947,6 +950,9 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	}
 	if (isModel) {
 		fbo.fishEyeData.isModel = *isModel;
+	}
+	if (surfaceType) {
+		fbo.fishEyeData.surfaceType = *surfaceType;
 	}
 	if (stageColorGen) {
 		fbo.fishEyeData.stageColorGen = *stageColorGen;
@@ -1643,6 +1649,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 
 		locs->haveVertexLightDirectionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
 		locs->isModelUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isModelUniform");
+		locs->surfaceTypeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "surfaceTypeUniform");
 		locs->stageColorGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageColorGenUniform");
 		locs->stageForceNormalUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageForceNormalUniform");
 

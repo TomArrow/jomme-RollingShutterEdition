@@ -376,7 +376,7 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 
 	tess.fading = false;
 
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL,NULL, NULL, NULL,NULL,state->styles);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL,NULL, NULL, NULL,NULL,state->styles);
 }
 
 static void R_BindSceneViewImage() {
@@ -1915,7 +1915,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 		bool isLightmap = pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap;
 		R_FrameBuffer_SetDynamicUniforms(NULL, &isLightmap, NULL,0,0,0,0,0,0,pStage);
 		int colorGen = pStage->rgbGen;
-		R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, &colorGen, pStage, &pStage->forceUseNormal);
+		R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, &colorGen, pStage, &pStage->forceUseNormal);
 
 		if ( stage && r_lightmap->integer && !( pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap || pStage->bundle[0].vertexLightmap ) )
 		{
@@ -2229,7 +2229,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	bool isLightmap = false;
 	R_FrameBuffer_SetDynamicUniforms(NULL, &isLightmap, NULL);
 	int colorGen = tess.xstages[0]->rgbGen;
-	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, &colorGen, tess.xstages[0], &tess.xstages[0]->forceUseNormal);
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, &colorGen, tess.xstages[0], &tess.xstages[0]->forceUseNormal);
 
 	R_BindSceneViewImage();
 
