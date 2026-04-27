@@ -203,6 +203,67 @@ SURFACE SHADERS
 =============================================================
 */
 
+void R_ActivateHackPortalTex() {
+	GLfloat eyePlanes[7] = { 0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0.0f }; // why make 4 separate arrays when we just need identity
+	GLfloat bias[16] = {
+		0.5f * glConfig.vidWidth, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f * glConfig.vidHeight, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.5f, 0.0f,
+		0.5f * glConfig.vidWidth, 0.5f * glConfig.vidHeight, 0.5f, 1.0f,
+	};
+
+	// enable rectangle tex
+	//image->frameUsed = tr.frameCount;
+	glState.currenttextures[glState.currenttmu] = tr.sceneImage;
+	glState.rectangletex[glState.currenttmu] = qtrue;
+	qglEnable(GL_TEXTURE_RECTANGLE_EXT);
+	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.sceneImage);
+
+	// enable eye texture projection
+	qglTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	qglTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	qglTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	qglTexGeni(GL_Q, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+
+	qglEnable(GL_TEXTURE_GEN_S);
+	qglEnable(GL_TEXTURE_GEN_T);
+	qglEnable(GL_TEXTURE_GEN_R);
+	qglEnable(GL_TEXTURE_GEN_Q);
+
+
+	qglMatrixMode(GL_MODELVIEW);
+	qglPushMatrix();
+	qglLoadIdentity();
+
+	qglTexGenfv(GL_S,GL_EYE_PLANE, eyePlanes+3);
+	qglTexGenfv(GL_T,GL_EYE_PLANE, eyePlanes+2);
+	qglTexGenfv(GL_R,GL_EYE_PLANE, eyePlanes+1);
+	qglTexGenfv(GL_Q,GL_EYE_PLANE, eyePlanes);
+
+	qglPopMatrix();
+
+	qglMatrixMode(GL_TEXTURE);
+	qglLoadMatrixf(bias);
+	qglMultMatrixf(backEnd.viewParms.projectionMatrix);
+	qglMatrixMode(GL_MODELVIEW);
+}
+void R_DeActivateHackPortalTex() {
+	// disable rectangle tex
+	glState.currenttextures[glState.currenttmu] = 0;
+	glState.rectangletex[glState.currenttmu] = qfalse;
+	qglDisable(GL_TEXTURE_RECTANGLE_EXT);
+
+	// disable eye texture projection
+	qglDisable(GL_TEXTURE_GEN_S);
+	qglDisable(GL_TEXTURE_GEN_T);
+	qglDisable(GL_TEXTURE_GEN_R);
+	qglDisable(GL_TEXTURE_GEN_Q);
+
+	qglMatrixMode(GL_TEXTURE);
+	qglLoadIdentity();
+	qglMatrixMode(GL_MODELVIEW);
+}
+
 /*
 =================
 R_BindAnimatedImage
@@ -213,7 +274,13 @@ R_BindAnimatedImage
 void R_BindAnimatedImage( textureBundle_t *bundle, qboolean deluxeMap) {
 	uint64_t index;
 
-	if ( bundle->isVideoMap ) {
+	if ( bundle->isHackPortal && !backEnd.viewParms.hackPortalNum && !backEnd.viewParms.isPortal) {
+		if (!glState.rectangletex[glState.currenttmu] || glState.currenttextures[glState.currenttmu] != tr.sceneImage) { // this is a bit ugly... should find a way to turn it into a proper image_t?
+			R_ActivateHackPortalTex();
+		}
+		return;
+	}
+	else if ( bundle->isVideoMap ) {
 		ri.CIN_RunCinematic(bundle->videoMapHandle);
 		ri.CIN_UploadCinematic(bundle->videoMapHandle);
 		return;
@@ -2416,6 +2483,27 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	}
 }
 
+void RB_HackPortalSurfaceTessEnd() {
+	GL_State(GLS_DEPTHMASK_TRUE);
+	qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	GL_Cull(CT_FRONT_SIDED);
+	GL_SelectTexture(0);
+	GL_Bind(tr.whiteImage); // just random texture, it's not like anything is actually drawn. maybe we can skip this altogether?
+	qglDepthFunc(GL_ALWAYS);
+	qglVertexPointer(3, GL_FLOAT, sizeof(tess.xyz[0]), tess.xyz);
+	qglDisableClientState(GL_COLOR_ARRAY);
+	qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	qglDepthRange(1.0, 1.0);
+	// draw the polys
+	R_DrawElements(tess.numIndexes, tess.indexes);
+
+	qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	qglDepthRange(0.0, 1.0);
+
+	qglDepthFunc(GL_LEQUAL);
+	tess.numIndexes = 0; 
+}
+
 /*
 ** RB_EndSurface
 */
@@ -2433,6 +2521,13 @@ void RB_EndSurface( void ) {
 	}	
 	if (input->xyz[SHADER_MAX_VERTEXES-1][0] != 0) {
 		ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_VERTEXES hit");
+	}
+
+	if ( backEnd.viewParms.hackPortalNum < 0 ) {
+		// we just quickly draw the surface to set depth at a fixed 1.0 (we cleared at 0.0)
+		// before drawing the actual portal contents
+		RB_HackPortalSurfaceTessEnd();
+		return;
 	}
 
 	if ( tess.shader == tr.shadowShader ) {
@@ -2473,6 +2568,15 @@ void RB_EndSurface( void ) {
 	}
 	// clear shader so we can tell we don't have any unclosed surfaces
 	tess.numIndexes = 0;
+
+	if (glState.rectangletex[0] || glState.rectangletex[1]) { // just to be safe, in case we didnt draw anything other than that, to not trip up random native opengl calls later?
+		int currenttmu = glState.currenttmu;
+		GL_SelectTexture(0);
+		R_DeActivateHackPortalTex();
+		GL_SelectTexture(1);
+		R_DeActivateHackPortalTex();
+		GL_SelectTexture(currenttmu);
+	}
 
 	GLimp_LogComment( "----------\n" );
 }

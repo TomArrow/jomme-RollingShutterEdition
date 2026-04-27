@@ -11,6 +11,7 @@
 #include "../qcommon/disablewarnings.h"
 
 static	int			r_firstSceneDrawSurf;
+static	int			r_firstSceneHackPortalDrawSurf;
 
 static	int			r_numdlights;
 static	int			r_firstSceneDlight;
@@ -57,6 +58,7 @@ void R_ToggleSmpFrame( void ) {
 	backEndData[tr.smpFrame]->commands.used = 0;
 
 	r_firstSceneDrawSurf = 0;
+	r_firstSceneHackPortalDrawSurf = 0;
 
 	r_numdlights = 0;
 	r_firstSceneDlight = 0;
@@ -728,6 +730,9 @@ void RE_RenderScene( const refdef_t *fd ) {
 	tr.refdef.numDrawSurfs = r_firstSceneDrawSurf;
 	tr.refdef.drawSurfs = backEndData[tr.smpFrame]->drawSurfs;
 
+	tr.refdef.numHackPortalDrawSurfs = r_firstSceneHackPortalDrawSurf;
+	tr.refdef.hackPortalDrawSurfs = backEndData[tr.smpFrame]->drawSurfsHackPortal;
+
 	tr.refdef.num_entities = r_numentities - r_firstSceneEntity;
 	tr.refdef.entities = &backEndData[tr.smpFrame]->entities[r_firstSceneEntity];
 	tr.refdef.miniEntities = &backEndData[tr.smpFrame]->miniEntities[r_firstSceneMiniEntity];
@@ -885,6 +890,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	// the next scene rendered in this frame will tack on after this one
 	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
+	r_firstSceneHackPortalDrawSurf = tr.refdef.numHackPortalDrawSurfs;
 	r_firstSceneEntity = r_numentities;
 	r_firstSceneSceneView = r_numsceneviews;
 	r_firstSceneMiniEntity = r_numminientities;

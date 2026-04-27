@@ -133,7 +133,11 @@ triangleFromEdge[ v1 ][ v2 ]
 void RB_ShadowTessEnd( void ) {
 	int		i;
 	int		numTris;
-	vec3_t	lightDir;
+	vec3_t	lightDir; 
+	float	expandLength = 512;
+
+	// TODO Depth Fail ("Carmack's Reverse")?
+	// TODO reject normals that align with the shadow/light direction, so we don't shadow undersides of stuff (looks bad)
 
 	// we can only do this if we have enough space in the vertex buffers
 	if ( tess.numVertexes >= SHADER_MAX_VERTEXES / 2 ) {
@@ -150,9 +154,11 @@ void RB_ShadowTessEnd( void ) {
 
 	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
 
+	//expandLength = backEnd.ori.origin[2] - backEnd.currentEntity->e.shadowPlane + 64 + 50; // TA: let's go distance to shadowplane, plus playerheight, plus a bit extra so some angles are covered. don't go 512 units like in the original so we don't cast shadows through 200 walls. TODO restrict normals too so we don't draw on undersides of geometry we stand on. meh, doesnt rly work.
+
 	// project vertexes away from light direction
 	for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-		VectorMA( tess.xyz[i], -512, lightDir, tess.xyz[i+tess.numVertexes] );
+		VectorMA( tess.xyz[i], -expandLength, lightDir, tess.xyz[i+tess.numVertexes] );
 	}
 
 	// decide which triangles face the light
@@ -231,6 +237,8 @@ void RB_ShadowTessEnd( void ) {
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 
 	qglDisable( GL_CULL_FACE );
+
+	tess.numIndexes = 0;
 }
 
 
@@ -263,8 +271,8 @@ void RB_ShadowFinish( void ) {
 	GL_Bind( tr.whiteImage );
 
     qglLoadIdentity ();
-
-	qglColor3f( 0.6f, 0.6f, 0.6f );
+	
+	qglColor3f( tr.stencilShadowColor[0], tr.stencilShadowColor[1], tr.stencilShadowColor[2]);
 	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO );
 
 //	qglColor3f( 1, 0, 0 );

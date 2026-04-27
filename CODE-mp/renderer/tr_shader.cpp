@@ -87,7 +87,43 @@ const unsigned char g_strGlowPShaderARB[] =
 	END"
 };
 /***********************************************************************************************************/
+const char* g_GammaVertexShaderARB = {
+	"!!ARBvp1.0" "\n"
+	"MOV result.position, vertex.position;" "\n"
+	"MOV result.texcoord[0], vertex.texcoord[0];" "\n"
+	"END"
+};
+const char* g_alphaUnPremultiplyPixelShaderARB = {
+	"!!ARBfp1.0" "\n"
+	"TEMP R0;" "\n"
+	"TEMP R1;" "\n"
+	"TEX R0, fragment.texcoord[0], texture[0], RECT;" "\n"
+	"RCP R1.x, R0.w;" "\n"
+	"MUL R1.xyz, R0, R1.x;" "\n"
+	"CMP result.color.xyz, -R0.w, R1, R0;" "\n"
+	"MOV result.color.w, R0;" "\n"
+	"END"
+};
 
+#define GL_PROGRAM_ERROR_STRING_ARB						0x8874
+#define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
+
+// just borrowing the gamma vertex shader from jk2mv since i need it for the alpha unpremultiply for hackportals
+qboolean MV_GammaGenerateVertexShaderProgram() {
+	int err = 0;
+	assert(qglGenProgramsARB);
+
+	// vertex shader
+	qglGenProgramsARB(1, &tr.gammaVertexShader);
+	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
+	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaVertexShaderARB), g_GammaVertexShaderARB);
+	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
+	if (err != -1) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
 
 static char *s_shaderText;
 
@@ -1744,6 +1780,21 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			else if ( !Q_stricmp( token, "texture" ) || !Q_stricmp( token, "base" ) )
 			{
 				stage->bundle[0].tcGen = TCGEN_TEXTURE;
+			}
+			else if (!Q_stricmp(token, "hackPortal"))
+			{
+				// special hack portal to allow using portals more flexibly (like additive)
+				// 
+				// incompatible clients will simply throw a warning at not knowing "tcGen hackportal" and draw
+				// the stage with the normal map/animmap/whatever
+				// but this client will insert the portal drawing instead.
+#ifndef DEDICATED
+				if (glConfig.deviceSupportsHackPortals) {
+					stage->bundle[0].isHackPortal = qtrue;
+					shader.hasHackPortal = qtrue;
+					stage->hasHackPortal = qtrue;
+				}
+#endif
 			}
 			else if ( !Q_stricmp( token, "vector" ) )
 			{
@@ -4693,6 +4744,20 @@ static void ScanAndLoadShaderFiles( const char *path )
 
 }
 
+qboolean R_GenerateAlphaUnPremultiplyProgram() {
+	int err = 0;
+
+	// pixel shader
+	qglGenProgramsARB(1, &tr.alphaUnPremultiplyPixelShader);
+	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.alphaUnPremultiplyPixelShader);
+	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_alphaUnPremultiplyPixelShaderARB), g_alphaUnPremultiplyPixelShaderARB);
+	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
+	if (err != -1) {
+		return qtrue;
+	}
+
+	return qfalse;
+}
 
 /*
 ====================
@@ -4722,8 +4787,6 @@ static void CreateInternalShaders( void ) {
 	tr.shadowShader = FinishShader();
 
 #ifdef JEDIACADEMY_GLOW
-	#define GL_PROGRAM_ERROR_STRING_ARB						0x8874
-	#define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
 
 	// Allocate and Load the global 'Glow' Vertex Program. - AReis
 	if ( qglGenProgramsARB )
@@ -4802,6 +4865,16 @@ static void CreateInternalShaders( void ) {
 		assert( iErrPos == -1 );
 	}
 #endif
+	if (MV_GammaGenerateVertexShaderProgram()) {
+		ri.Printf(PRINT_WARNING, "WARNING: failed initializing gamma vertex program... falling back to hardware gamma correction, alpha unpremultiply for hackportals deactivated\n");
+		glConfig.deviceSupportsHackPortalAlphaUnPremultiply = qfalse;
+	}
+	else {
+		if (R_GenerateAlphaUnPremultiplyProgram()) {
+			ri.Printf(PRINT_WARNING, "WARNING: failed initializing alpha unpremultiply program ... hackportals might have seams when using multisampling\n");
+			glConfig.deviceSupportsHackPortalAlphaUnPremultiply = qfalse;
+		}
+	}
 }
 
 static void CreateExternalShaders( void ) {

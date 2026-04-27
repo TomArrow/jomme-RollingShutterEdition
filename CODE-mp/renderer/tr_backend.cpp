@@ -71,6 +71,10 @@ void GL_Bind( image_t *image ) {
 		averageBrightness = tr.dlightImage->averageBrightnessLevel;
 	}
 
+	if (glState.rectangletex[glState.currenttmu]) {
+		R_DeActivateHackPortalTex();
+	}
+
 	if ( glState.currenttextures[glState.currenttmu] != texnum ) {
 		image->frameUsed = tr.frameCount;
 		glState.currenttextures[glState.currenttmu] = texnum;
@@ -711,16 +715,29 @@ void RB_BeginDrawingView (void) {
 		}
 	}
 
+	if (glConfig.deviceSupportsHackPortalAlphaUnPremultiply && glConfig.samples > 0 && r_fastHackPortalMultisample->integer != 2 && backEnd.viewParms.hackPortalNum == 1) {
+		clearBits |= GL_COLOR_BUFFER_BIT;
+		qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
 	// If this pass is to just render the glowing objects, don't clear the depth buffer since
 	// we're sharing it with the main scene (since the main scene has already been rendered). -AReis
 	// same if we already did a z prepass
-	if ( g_bRenderGlowingObjects || g_bRenderedZPrepass )
+	if ( g_bRenderGlowingObjects || g_bRenderedZPrepass || backEnd.viewParms.hackPortalNum > 0) // for hackportals, we pre-drew some depth to limit drawing of the actual portal contents
 	{
 		clearBits &= ~GL_DEPTH_BUFFER_BIT;
 	}
 #endif
 
+	if (backEnd.viewParms.hackPortalNum < 0) {
+		// we clear the hackportal to 0, and then we draw the portal surface at depth 1
+		// that way we limit where portal contents are drawn without having to abuse stencils or other stuff
+		qglClearDepth(0.0f);
+	}
+
 	qglClear( clearBits );
+
+	qglClearDepth(1.0f);
 
 	if ( ( backEnd.refdef.rdflags & RDF_HYPERSPACE ) )
 	{
@@ -801,7 +818,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #endif
 
 #ifdef JEDIACADEMY_GLOW
-	if (g_bRenderGlowingObjects) {
+	if (g_bRenderGlowingObjects || backEnd.viewParms.hackPortalNum < 0) {
 	//only shadow on initial passes
 		didShadowPass = true;
 	}
@@ -809,6 +826,10 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 	// save original time for entity shader offsets
 	originalTime = backEnd.refdef.floatTime;
+
+	if (tess.numIndexes > 0) {
+		RB_EndSurface();
+	}
 
 	// clear the z buffer, set the modelview, etc
 	RB_BeginDrawingView ();
@@ -982,6 +1003,10 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				//oldSurfaceType = *drawSurf->surface;
 			}
 
+			if (backEnd.viewParms.hackPortalNum < 0) {
+				depthRange = 3;
+			}
+
 			oldSurfaceType = *drawSurf->surface;
 			oldWorldSurfaceCategory = worldSurfaceCategory;
 
@@ -1003,6 +1028,10 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 					case 2:
 						qglDepthRange(0, 0);
+						break;
+
+					case 3:
+						qglDepthRange(1, 1);
 						break;
 				}
 
@@ -1594,7 +1623,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 	*/
 
 	// Render dynamic glowing/flaring objects.
-	if ( !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL) && g_bDynamicGlowSupported && r_DynamicGlow->integer )
+	if ( !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL) && g_bDynamicGlowSupported && r_DynamicGlow->integer && backEnd.viewParms.hackPortalNum >= 0 )
 	{
 		// Copy the normal scene to texture.
 		qglDisable( GL_TEXTURE_2D );
@@ -1605,6 +1634,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 		qglEnable( GL_TEXTURE_2D );    
 
 		// Just clear colors, but leave the depth buffer intact so we can 'share' it.
+		// wait do we really need to clear? we're just drawing back, why do we care?	
 		qglClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 		qglClear( GL_COLOR_BUFFER_BIT ); 
 
@@ -1849,6 +1879,74 @@ const void	*RB_SwapBuffers( const void *data ) {
 	return (const void *)(cmd + 1);
 }
 
+/*
+==================
+RB_ReadPixels
+==================
+*/
+const void *RB_CaptureHackPortals( const void *data )
+{
+	const captureHackPortalsCommand_t *cmd;
+	int		memcount;
+
+	cmd = (const captureHackPortalsCommand_t*)data;
+
+	// finish any 2D drawing if needed
+	if (tess.numIndexes) {
+		RB_EndSurface();
+	}
+
+	// copy the current rendered image into a texture
+	// TODO check if gpu supports this feature?
+	GL_SelectTexture(0);
+	qglEnable(GL_TEXTURE_RECTANGLE_EXT);
+	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, cmd->glImage);
+	qglCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
+
+	// if needed & possible, do an alpha unpremultiply, so we dont get seams at the edges with multisampling
+	// sadly this is very inefficient. we need to clear the scene, draw it back into the scene, and copy it back to the texture again, sigh.
+	// TODO add r_fastHackPortals to skip this and for debugging.
+	if (glConfig.deviceSupportsHackPortalAlphaUnPremultiply && glConfig.samples > 0 && !r_fastHackPortalMultisample->integer) {
+
+		RB_SetGL2D();
+		qglEnable(GL_VERTEX_PROGRAM_ARB);
+		qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
+		qglEnable(GL_FRAGMENT_PROGRAM_ARB);
+		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.alphaUnPremultiplyPixelShader);
+
+		GL_State(GLS_DEFAULT| GLS_DEPTHTEST_DISABLE);
+
+		// wait do we really need to clear? we're just drawing back, why do we care?
+		qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		qglClear(GL_COLOR_BUFFER_BIT);
+
+		qglBegin(GL_QUADS);
+		qglTexCoord2f(0.0f, 0.0f);
+		qglVertex2f(-1.0f, -1.0f);
+
+		qglTexCoord2f(0.0f, (float)glConfig.vidHeight);
+		qglVertex2f(-1.0f, 1.0f);
+
+		qglTexCoord2f((float)glConfig.vidWidth, (float)glConfig.vidHeight);
+		qglVertex2f(1.0f, 1.0f);
+
+		qglTexCoord2f((float)glConfig.vidWidth, 0.0f);
+		qglVertex2f(1.0f, -1.0f);
+		qglEnd();
+
+		qglDisable(GL_VERTEX_PROGRAM_ARB);
+		qglDisable(GL_FRAGMENT_PROGRAM_ARB);
+
+		// and copy it back :P
+		qglCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
+	}
+
+	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, 0);
+	qglDisable(GL_TEXTURE_RECTANGLE_EXT);
+
+	return (const void *)(cmd + 1);
+}
+
 
 /*
 ====================
@@ -1910,6 +2008,9 @@ again:
 			break;
 		case RC_POST_PROCESS:
 			data = RB_PostProcessCmd( data );
+			break;
+		case RC_CAPTURE_HACKPORTALS:
+			data = RB_CaptureHackPortals(data);
 			break;
 		case RC_END_OF_LIST:
 		default:

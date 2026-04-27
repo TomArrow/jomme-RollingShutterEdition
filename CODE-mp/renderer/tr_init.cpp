@@ -70,6 +70,7 @@ cvar_t	*r_measureOverdraw;
 
 cvar_t	*r_inGameVideo;
 cvar_t	*r_fastsky;
+cvar_t	*r_fastHackPortalMultisample;
 cvar_t	*r_drawSun;
 cvar_t	*r_dynamiclight;
 cvar_t	*r_dlightBacks;
@@ -173,6 +174,7 @@ cvar_t	*r_styleOnly;
 cvar_t	*r_uiFullScreen;
 cvar_t	*r_shadows;
 cvar_t	*r_stencilSky;
+cvar_t	*r_stencilShadowColor;
 cvar_t	*r_shadowRange;
 cvar_t	*r_flares;
 cvar_t	*r_mode;
@@ -749,10 +751,12 @@ void GL_SetDefaultState( void ) {
 		GL_TextureMode( r_textureMode->string );
 		GL_TexEnv( GL_MODULATE );
 		qglDisable( GL_TEXTURE_2D );
+		qglDisable( GL_TEXTURE_RECTANGLE_EXT );
 		GL_SelectTexture( 0 );
 	}
 
 	qglEnable(GL_TEXTURE_2D);
+	qglDisable( GL_TEXTURE_RECTANGLE_EXT );
 	GL_TextureMode( r_textureMode->string );
 	GL_TexEnv( GL_MODULATE );
 
@@ -1045,6 +1049,7 @@ void R_Register( void )
 	r_stereoSeparation = ri.Cvar_Get( "r_stereoSeparation", "0", 0 );
 	r_ignoreGLErrors = ri.Cvar_Get( "r_ignoreGLErrors", "1", CVAR_ARCHIVE );
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
+	r_fastHackPortalMultisample = ri.Cvar_Get("r_fastHackPortalMultisample", "0", CVAR_ARCHIVE);
 	r_inGameVideo = ri.Cvar_Get( "r_inGameVideo", "1", CVAR_ARCHIVE );
 	r_drawSun = ri.Cvar_Get( "r_drawSun", "0", CVAR_ARCHIVE );
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
@@ -1129,6 +1134,8 @@ void R_Register( void )
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", 0 );
 	r_stencilSky = ri.Cvar_Get("r_stencilSky", "1", CVAR_ARCHIVE);
 	r_shadowRange = ri.Cvar_Get("r_shadowRange", "1000", 0);
+	r_stencilShadowColor = ri.Cvar_Get("r_stencilShadowColor", "0.6", CVAR_ARCHIVE);
+	r_stencilShadowColor->modified = qtrue;
 
 	r_maxpolys = ri.Cvar_Get( "r_maxpolys", va("%d", MAX_POLYS), 0);
 	r_maxpolyverts = ri.Cvar_Get( "r_maxpolyverts", va("%d", MAX_POLYVERTS), 0);

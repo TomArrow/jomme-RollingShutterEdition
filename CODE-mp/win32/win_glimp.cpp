@@ -301,6 +301,7 @@ chooseAgain:
 		ri.Printf(PRINT_ALL, "Pbuffer Created: (%d x %d) samples %d format %d\n", width, height, samples, pixelFormat );
 		glConfig.vidWidth = width;
 		glConfig.vidHeight = height;
+		glConfig.samples = samples;
 		qwglMakeCurrent( glw_state.pbuf.hDC, glw_state.pbuf.hGLRC );
 //		glConfig.windowAspect = 1;
 		/* Always force on the console with pbuffer drawing */
@@ -1417,6 +1418,7 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		ri.Printf( PRINT_ALL, "*** IGNORING OPENGL EXTENSIONS ***\n" );
 #ifdef JEDIACADEMY_GLOW
 		g_bDynamicGlowSupported = false;
+		glConfig.deviceSupportsHackPortals = qfalse;
 		g_SSBOsSupported = false;
 		ri.Cvar_Set( "r_DynamicGlow","0" );
 #endif
@@ -1897,6 +1899,13 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 	if(bNVRegisterCombiners)
 		qglGetIntegerv( GL_MAX_GENERAL_COMBINERS_NV, &iNumGeneralCombiners );
 
+	if (bTexRectSupported && qglActiveTextureARB) {
+		glConfig.deviceSupportsHackPortals = qtrue;
+	}
+	else {
+		glConfig.deviceSupportsHackPortals = qfalse;
+	}
+
 	// Only allow dynamic glows/flares if they have the hardware
 	if ( bTexRectSupported && bARBVertexProgram && bHasRenderTexture && qglActiveTextureARB && glConfig.maxActiveTextures >= 4 &&
 		( ( bNVRegisterCombiners && iNumGeneralCombiners >= 2 ) || bARBFragmentProgram ) )
@@ -1909,6 +1918,14 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 	{
 		g_bDynamicGlowSupported = false;
 		ri.Cvar_Set( "r_DynamicGlow","0" );
+	}
+
+	// gamma correction
+	if (qglActiveTextureARB && bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
+		glConfig.deviceSupportsHackPortalAlphaUnPremultiply = qtrue;
+	}
+	else {
+		glConfig.deviceSupportsHackPortalAlphaUnPremultiply = qfalse;
 	}
 
 

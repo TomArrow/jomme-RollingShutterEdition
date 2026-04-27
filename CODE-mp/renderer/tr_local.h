@@ -451,7 +451,7 @@ typedef struct {
 	byte			oneShotAnimMap;
 	byte			vertexLightmap;
 	byte			isVideoMap;
-
+	qboolean		isHackPortal;
 } textureBundle_t;
 
 #define NUM_GLSL_EXTRA_LIGHTMAPS_MAX 14
@@ -494,6 +494,7 @@ typedef struct {
 	int				multitextureEnv;		// to tell glsl the multitex env info
 
 	qboolean		isAdditiveGlow;			// kind of automated way to guess if a stage is meant to be just an additive overlay like for lights on a wall, so we can scale its intensity
+	qboolean		hasHackPortal;			// this is a special hacky portal (tommyternal feature), to allow additive portals and shenanigans like that
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -622,6 +623,7 @@ Ghoul2 Insert End
 	qboolean hasLightmapStage;
 
 	qboolean isWorldShader; // UGLY hack.
+	qboolean		hasHackPortal;
 } shader_t;
 
 typedef struct shaderState_s {
@@ -695,7 +697,10 @@ typedef struct {
 
 	int			numDrawSurfs;
 	struct drawSurf_s	*drawSurfs;
-	
+
+	int			numHackPortalDrawSurfs;
+	struct drawSurf_s* hackPortalDrawSurfs;
+
 	float		timeFraction;
 
 	vec3_t		viewAngles; // for MME so we can export AE cam paths
@@ -742,6 +747,7 @@ typedef struct {
 	orientationr_t	world;
 	vec3_t		pvsOrigin;			// may be different than or.origin for portals
 	qboolean	isPortal;			// true if this view is through a portal
+	int			hackPortalNum;		// true if this view is the first hack portal (wanna clear to black so we can alpha unpremultiply)
 	qboolean	isMirror;			// the portal is a mirror, invert the face culling
 	int			frameSceneNum;		// copied from tr.frameSceneNum
 	int			frameCount;			// copied from tr.frameCount
@@ -1122,7 +1128,9 @@ extern	refimport_t		ri;
 
 
 #define	MAX_DRAWSURFS			0x10000
+#define	MAX_DRAWSURFS_HACKPORTAL	0x10
 #define	DRAWSURF_MASK			(MAX_DRAWSURFS-1)
+#define	DRAWSURF_HACKPORTAL_MASK	(MAX_DRAWSURFS_HACKPORTAL-1)
 
 /*
 
@@ -1174,7 +1182,8 @@ float NewCosTable (double jediOutcast);
 
 // the renderer front end should never modify glstate_t
 typedef struct {
-	int			currenttextures[32];
+	int			currenttextures[32]; 
+	qboolean	rectangletex[2];
 	int			currenttmu;
 	qboolean	finishCalled;
 	int			texEnv[32];
@@ -1279,12 +1288,14 @@ typedef struct {
 	// Image the glowing objects are rendered to. - AReis
 	GLuint					screenGlow;
 
-	// A rectangular texture representing the normally rendered scene.
+	// A rectangular texture representing the normally rendered scene. Also used for hackportals
 	GLuint					sceneImage;
 
 	// Image used to downsample and blur scene to.	- AReis
 	GLuint					blurImage;
 #endif
+
+	GLuint					gammaVertexShader,alphaUnPremultiplyPixelShader;
 
 	shader_t				*defaultShader;
 	shader_t				*shadowShader;
@@ -1373,6 +1384,8 @@ typedef struct {
 	qboolean capturingDofOrStereo;
 	qboolean latestDofOrStereoFrame;
 	qboolean captureIsActive; // Really just for the normal DMA sound to check if it should use a low quality resampler. Also maybe for quickjitter.
+
+	vec4_t					stencilShadowColor;
 } trGlobals_t;
 
 
@@ -1434,6 +1447,7 @@ extern cvar_t	*r_primitives;			// "0" = based on compiled vertex array existance
 
 extern cvar_t	*r_inGameVideo;				// controls whether in game video should be draw
 extern cvar_t	*r_fastsky;				// controls whether sky should be cleared or drawn
+extern cvar_t	*r_fastHackPortalMultisample; // skip alpha unpremultiply for hackportals
 extern cvar_t	*r_drawSun;				// controls drawing of sun quad
 extern cvar_t	*r_dynamiclight;		// dynamic lights enabled/disabled
 extern cvar_t	*r_dlightBacks;			// dlight non-facing surfaces for continuity
@@ -1550,6 +1564,7 @@ extern	cvar_t	*r_clear;						// force screen clear every frame
 
 extern	cvar_t	*r_shadows;						// controls shadows: 0 = none, 1 = blur, 2 = stencil, 3 = black planar projection
 extern	cvar_t	*r_stencilSky;					// use stencils to allow drawing multiple skies without overlap issues
+extern	cvar_t	*r_stencilShadowColor;			// color of stencil shadows
 extern	cvar_t	*r_flares;						// light flares
 
 extern	cvar_t	*r_intensity;
@@ -1844,7 +1859,8 @@ char	*R_FindShaderText( const char *shadername );
 
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
-void    R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+void		R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+void		R_DeActivateHackPortalTex();
 
 /*
 ====================================================================
@@ -1950,7 +1966,7 @@ inline bool RB_TessShaderSame(shader_t* shader, shader_t* tessShader) {
 void RB_BeginSurface(shader_t *shader, int fogNum );
 void RB_EndSurface(void);
 void RB_CheckOverflow( int verts, int indexes );
-#define RB_CHECKOVERFLOW(v,i) if (tess.numVertexes + (v) >= SHADER_MAX_VERTEXES || tess.numIndexes + (i) >= SHADER_MAX_INDEXES ) {RB_CheckOverflow(v,i);}
+#define RB_CHECKOVERFLOW(v,i) if (tess.numVertexes + (v) >= SHADER_MAX_VERTEXES/2 && tess.shader == tr.shadowShader || tess.numVertexes + (v) >= SHADER_MAX_VERTEXES || tess.numIndexes + (i) >= SHADER_MAX_INDEXES ) {RB_CheckOverflow(v,i);}
 
 void RB_StageIteratorGeneric( void );
 void RB_StageIteratorSky( void );
@@ -2317,6 +2333,11 @@ typedef struct {
 	float	radius;
 } captureCommand_t;
 
+typedef struct {
+	int		commandId;
+	GLuint	glImage;
+} captureHackPortalsCommand_t;
+
 typedef enum {
 	RC_END_OF_LIST,
 	RC_SET_COLOR,
@@ -2331,6 +2352,7 @@ typedef enum {
 	RC_CAPTURE_STEREO,
 	RC_POST_PROCESS,
 	RC_DRAW_LINE,
+	RC_CAPTURE_HACKPORTALS,
 } renderCommand_t;
 
 
@@ -2347,6 +2369,7 @@ typedef enum {
 // on an SMP machine
 typedef struct {
 	drawSurf_t	drawSurfs[MAX_DRAWSURFS];
+	drawSurf_t	drawSurfsHackPortal[MAX_DRAWSURFS_HACKPORTAL];
 	shadowline_t	shadowLines[MAX_SHADOWLINES_TO_SORT];
 	sceneView_t		sceneViews[MAX_SCENE_VIEWS]; // extra views we render for stuff like premium 360 reflections
 	dlightCheap_t	cheaplights[MAX_CHEAPLIGHTS_TO_SORT];
@@ -2379,6 +2402,7 @@ void R_ShutdownCommandBuffers( void );
 void R_SyncRenderThread( void );
 
 void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, int numDrawSurfs );
+void R_AddCaptureHackPortalsCmd(GLuint glImage);
 
 void RE_SetColor( const float *rgba );
 void RE_StretchPic ( float x, float y, float w, float h, 

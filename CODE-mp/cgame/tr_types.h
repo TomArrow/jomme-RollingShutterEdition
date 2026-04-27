@@ -350,7 +350,7 @@ typedef struct {
 	int						maxVertexAttributes;
 
 
-	int						colorBits, depthBits, stencilBits;
+	int						colorBits, depthBits, stencilBits, samples;
 
 	qboolean				deviceSupportsGamma;
 	textureCompression_t	textureCompression;
@@ -367,6 +367,10 @@ typedef struct {
 	qboolean				depthMapFloatNVActive; // NV float depth map is activated.
 	qboolean				depthClamp; // GPU supports GL_ARB_depth_clamp (clamping instead of clipping depth map)
 	qboolean				packedDepthStencil; // GPU supports EXT_packed_depth_stenci
+
+	// hack portals
+	qboolean				deviceSupportsHackPortals;
+	qboolean				deviceSupportsHackPortalAlphaUnPremultiply;
 
 	int						vidWidth, vidHeight;
 	// aspect is the screen's physical width / height, which may be different

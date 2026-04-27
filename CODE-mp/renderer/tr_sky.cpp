@@ -817,7 +817,7 @@ void RB_DrawSun( void ) {
 }
 
 bool R_UsingStencilSky() {
-	return r_stencilSky->integer && (backEnd.viewParms.renderingMultipleSkies || tr.world && tr.world->wantsStencilSkies) || r_stencilSky->integer == 2 || r_stencilSky->integer == 4;
+	return r_stencilSky->integer && glConfig.stencilBits > 0 && (backEnd.viewParms.renderingMultipleSkies || tr.world && tr.world->wantsStencilSkies) || r_stencilSky->integer == 2 || r_stencilSky->integer == 4;
 }
 
 void R_DrawElements(int numIndexes, const glIndex_t* indexes);
@@ -861,12 +861,15 @@ void RB_StageIteratorSky( void ) {
 			return;
 		}
 
+		GLuint stencilBit = (1 << (glConfig.stencilBits - 1)); // use the highest bit so we interfere as little as possible with r_shadows 2 or r_measureoverdraw. TODO make those restricted to not use the highest bit if stencil skies are active.
 		GL_State(GLS_DEPTHMASK_TRUE);
 		qglEnable(GL_STENCIL_TEST);
 		qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-		qglStencilMask(1);
-		qglStencilFunc(GL_ALWAYS, 1, 1);
+		qglStencilMask(stencilBit);
+		qglStencilFunc(GL_ALWAYS, stencilBit, stencilBit);
 		qglStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+		GL_Cull(CT_FRONT_SIDED);
 
 		// draw the polys
 		GL_SelectTexture(0);
@@ -877,8 +880,8 @@ void RB_StageIteratorSky( void ) {
 		R_DrawElements(tess.numIndexes, tess.indexes);
 
 		qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		qglStencilMask(1); 
-		qglStencilFunc(GL_EQUAL, 1, 1);
+		qglStencilMask(stencilBit);
+		qglStencilFunc(GL_EQUAL, stencilBit, stencilBit);
 		if (!tess.xstages[0]) {
 			qglStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); // reset it again for the next sky :) works fine as long as all the actual polys are correctly being drawn over by the sky poly stuff
 		}
@@ -887,6 +890,7 @@ void RB_StageIteratorSky( void ) {
 			mustClearStencil = true;
 		}
 
+		qglStencilMask(~0U);
 		g_bRenderStencilTestedSky = true; // let GL_State know to always set GLS_DEPTHTEST_DISABLE while we're doing this.
 	}
 
