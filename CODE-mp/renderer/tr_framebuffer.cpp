@@ -319,7 +319,8 @@ extern int rollingShutterBufferCount;
 extern int progressOvershoot;
 extern float drift;
 
-fbo_t fbo;
+fbo_t fbo; 
+fboExtraUniforms_t fboUniformsEx; // extra uniforms
 
 
 R_GLSL* thermalPostProcessingShader = NULL;
@@ -995,6 +996,22 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	//if (!uniformsSet) {
 		R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
 	//}
+
+	return qtrue;
+#endif
+}
+
+// ok finally sick of that old method. just set it in fboUniformsEx, then call this.
+qboolean R_FrameBuffer_SetDynamicUniforms3() {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+		return qfalse;
+	}
+
+	R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
 
 	return qtrue;
 #endif
@@ -1799,7 +1816,8 @@ void R_FrameBuffer_Init( void ) {
 	fbo.soundDeformSampleCount = 0;
 	fbo.soundDeformSampleRate = 44100;
 
-	memset( &fbo, 0, sizeof( fbo ) );
+	memset( &fbo, 0, sizeof( fbo ) ); 
+	memset(&fboUniformsEx, 0, sizeof(fboUniformsEx));
 	r_fbo = ri.Cvar_Get( "r_fbo", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSL = ri.Cvar_Get( "r_fboGLSL", "0", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSLNoiseFuckery = ri.Cvar_Get( "r_fboGLSLNoiseFuckery", "5", CVAR_ARCHIVE);
