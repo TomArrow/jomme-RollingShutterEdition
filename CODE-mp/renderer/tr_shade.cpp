@@ -205,19 +205,28 @@ SURFACE SHADERS
 
 void R_ActivateHackPortalTex() {
 	GLfloat eyePlanes[7] = { 0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0.0f }; // why make 4 separate arrays when we just need identity
+	//GLfloat bias[16] = {
+	//	0.5f * glConfig.vidWidth, 0.0f, 0.0f, 0.0f,
+	//	0.0f, 0.5f * glConfig.vidHeight, 0.0f, 0.0f,
+	//	0.0f, 0.0f, 0.5f, 0.0f,
+	//	0.5f * glConfig.vidWidth, 0.5f * glConfig.vidHeight, 0.5f, 1.0f,
+	//};
 	GLfloat bias[16] = {
-		0.5f * glConfig.vidWidth, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.5f * glConfig.vidHeight, 0.0f, 0.0f,
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.5f, 0.0f,
-		0.5f * glConfig.vidWidth, 0.5f * glConfig.vidHeight, 0.5f, 1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,
 	};
 
 	// enable rectangle tex
 	//image->frameUsed = tr.frameCount;
-	glState.currenttextures[glState.currenttmu] = tr.sceneImage;
+	glState.currenttextures[glState.currenttmu] = tr.sceneImage2D;
 	glState.rectangletex[glState.currenttmu] = qtrue;
-	qglEnable(GL_TEXTURE_RECTANGLE_EXT);
-	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.sceneImage);
+	//qglEnable(GL_TEXTURE_2D);
+	qglBindTexture(GL_TEXTURE_2D, tr.sceneImage2D);
+
+	fboUniformsEx.textRectBitmask |= (1 << glState.currenttmu);
+	R_FrameBuffer_SetDynamicUniforms3();
 
 	// enable eye texture projection
 	qglTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
@@ -251,7 +260,11 @@ void R_DeActivateHackPortalTex() {
 	// disable rectangle tex
 	glState.currenttextures[glState.currenttmu] = 0;
 	glState.rectangletex[glState.currenttmu] = qfalse;
-	qglDisable(GL_TEXTURE_RECTANGLE_EXT);
+	//qglDisable(GL_TEXTURE_2D);
+	qglBindTexture(GL_TEXTURE_2D, 0);
+
+	fboUniformsEx.textRectBitmask &= ~(1 << glState.currenttmu);
+	R_FrameBuffer_SetDynamicUniforms3();
 
 	// disable eye texture projection
 	qglDisable(GL_TEXTURE_GEN_S);
@@ -275,7 +288,7 @@ void R_BindAnimatedImage( textureBundle_t *bundle, qboolean deluxeMap) {
 	uint64_t index;
 
 	if ( bundle->isHackPortal && !backEnd.viewParms.hackPortalNum && !backEnd.viewParms.isPortal) {
-		if (!glState.rectangletex[glState.currenttmu] || glState.currenttextures[glState.currenttmu] != tr.sceneImage) { // this is a bit ugly... should find a way to turn it into a proper image_t?
+		if (!glState.rectangletex[glState.currenttmu] || glState.currenttextures[glState.currenttmu] != tr.sceneImage2D) { // this is a bit ugly... should find a way to turn it into a proper image_t?
 			R_ActivateHackPortalTex();
 		}
 		return;

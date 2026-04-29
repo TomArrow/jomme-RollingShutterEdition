@@ -128,6 +128,7 @@ typedef struct uniformLocations_t {
 	GLint text_in[NUM_TEXTURE_SAMPLERS];
 	GLint stageImageBitmaskUniform;
 	GLint stageLightmapBitmaskUniform;
+	GLint bindingRectImageBitmaskUniform;
 	GLint multiTexModeUniform;
 
 	GLint haveVertexLightDirectionUniform;
@@ -461,6 +462,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
+		qglUniform1ui(uniformLocationsTess->bindingRectImageBitmaskUniform, fboUniformsEx.textRectBitmask);
 		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
 
 		qglUniform1f(uniformLocationsTess->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
@@ -579,6 +581,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
 		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
+		qglUniform1ui(uniformLocations->bindingRectImageBitmaskUniform, fboUniformsEx.textRectBitmask);
 		qglUniform1i(uniformLocations->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
 
 		qglUniform1f(uniformLocations->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
@@ -1679,6 +1682,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 
 		locs->stageImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
 		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
+		locs->bindingRectImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "bindingRectImageBitmaskUniform");
 		locs->multiTexModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
 
 		for (int j = 0; j < NUM_TEXTURE_SAMPLERS; j++) {

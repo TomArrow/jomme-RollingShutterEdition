@@ -1460,6 +1460,8 @@ void RE_Shutdown( qboolean destroyWindow ) {
 		// Release the scene texture.
 		qglDeleteTextures( 1, &tr.sceneImage );
 
+		qglDeleteTextures( 1, &tr.sceneImage2D );
+
 		// Release the blur texture.
 		qglDeleteTextures( 1, &tr.blurImage );
 	}

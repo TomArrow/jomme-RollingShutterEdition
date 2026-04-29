@@ -1288,8 +1288,11 @@ typedef struct {
 	// Image the glowing objects are rendered to. - AReis
 	GLuint					screenGlow;
 
-	// A rectangular texture representing the normally rendered scene. Also used for hackportals
+	// A rectangular texture representing the normally rendered scene. 
 	GLuint					sceneImage;
+
+	// Used for hackportals. cant use rect with my glsl or ill run out of sampler units available
+	GLuint					sceneImage2D;
 
 	// Image used to downsample and blur scene to.	- AReis
 	GLuint					blurImage;
@@ -2588,7 +2591,7 @@ typedef struct {
 
 // got tired of the dumb dynamicuniform functions at last xd
 typedef struct {
-	unsigned int	test;
+	unsigned int	textRectBitmask;
 } fboExtraUniforms_t;
 
 extern fboExtraUniforms_t fboUniformsEx;

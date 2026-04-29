@@ -1899,9 +1899,9 @@ const void *RB_CaptureHackPortals( const void *data )
 	// copy the current rendered image into a texture
 	// TODO check if gpu supports this feature?
 	GL_SelectTexture(0);
-	qglEnable(GL_TEXTURE_RECTANGLE_EXT);
-	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, cmd->glImage);
-	qglCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
+	qglEnable(GL_TEXTURE_2D);
+	qglBindTexture(GL_TEXTURE_2D, cmd->glImage);
+	qglCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
 
 	// if needed & possible, do an alpha unpremultiply, so we dont get seams at the edges with multisampling
 	// sadly this is very inefficient. we need to clear the scene, draw it back into the scene, and copy it back to the texture again, sigh.
@@ -1924,13 +1924,13 @@ const void *RB_CaptureHackPortals( const void *data )
 		qglTexCoord2f(0.0f, 0.0f);
 		qglVertex2f(-1.0f, -1.0f);
 
-		qglTexCoord2f(0.0f, (float)glConfig.vidHeight);
+		qglTexCoord2f(0.0f, 1.0f);
 		qglVertex2f(-1.0f, 1.0f);
 
-		qglTexCoord2f((float)glConfig.vidWidth, (float)glConfig.vidHeight);
+		qglTexCoord2f(1.0f, 1.0f);
 		qglVertex2f(1.0f, 1.0f);
 
-		qglTexCoord2f((float)glConfig.vidWidth, 0.0f);
+		qglTexCoord2f(1.0f, 0.0f);
 		qglVertex2f(1.0f, -1.0f);
 		qglEnd();
 
@@ -1938,11 +1938,12 @@ const void *RB_CaptureHackPortals( const void *data )
 		qglDisable(GL_FRAGMENT_PROGRAM_ARB);
 
 		// and copy it back :P
-		qglCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
+		qglCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
 	}
 
-	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, 0);
-	qglDisable(GL_TEXTURE_RECTANGLE_EXT);
+	qglBindTexture(GL_TEXTURE_2D, 0);
+	//qglDisable(GL_TEXTURE_2D);
+	glState.currenttextures[glState.currenttmu] = 0;
 
 	return (const void *)(cmd + 1);
 }

@@ -137,7 +137,7 @@ float gaussian_rand( vec2 n )
 
 
 
-
+uniform uint bindingRectImageBitmaskUniform;
 
 
 
@@ -1525,14 +1525,21 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	int ssrMultiSamples = clamp(worldReflectMultiSampleUniform+1,1,MAX_SSR_MULTISAMPLE);
 	int ssrMultiSampleCount = ssrMultiSamples*ssrMultiSamples;
 
+	bool tex0IsRect = (bindingRectImageBitmaskUniform & (1<<0)) > 0;
+	bool tex1IsRect = (bindingRectImageBitmaskUniform & (1<<1)) > 0;
+
 	vec2 rawUVCoords = my_TexCoord[0].st;
+	if(tex0IsRect){
+		rawUVCoords = gl_FragCoord.xy / textureSize(text_in0,0); // dumb hack. prolly breaks with supersampling :/ TODO get the vidwidth as uniform
+		//rawUVCoords = gl_TexCoord[0].st; // auto-generated (meh doesnt work)
+	}
 	
 	vec3 lightReferenceNormal = (isModelUniform > 0 || stageForceNormalUniform > 0 || surfaceTypeUniform == SF_GRID) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	vec3 worldPixel = (worldModelViewMatrixReverseGeom*eyeSpaceCoordsGeom).xyz;
 	vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
 	bool doingGigaEnvTCGen = false;
 	bool isSimpleTCGenEnv = stageTCGenUniform == TCGEN_ENVIRONMENT_MAPPED && stageHasTCModUniform == 0;
-	if( isSimpleTCGenEnv && gigaTCGenUniform > 0){
+	if( isSimpleTCGenEnv && gigaTCGenUniform > 0 && !tex0IsRect){
 		vec3 viewer = (worldModelViewMatrixReverseGeom*vec4(viewerVector,0)).xyz;
 		viewer = normalize(viewer);
 		vec3 lightReferenceNormalWorld = (worldModelViewMatrixReverseGeom*vec4(lightReferenceNormal,0)).xyz;
@@ -1589,7 +1596,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		}
 	}
 
-    if(fishEyeModeUniform == 0){
+    if(fishEyeModeUniform == 0 && !tex0IsRect){
 	
 		if(!doingGigaEnvTCGen && !standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegrad,rawUVCoords):parallaxMapSteep(effectiveUVPixelPos,thelod,thegrad);

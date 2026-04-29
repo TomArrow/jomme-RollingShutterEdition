@@ -1448,7 +1448,7 @@ void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs, drawSurf_t* hackP
 
 	if (portalRenderCount) { // we capture whatever hackportals were drawn and will use them later. 
 		// we reuse tr.sceneImage. it's just used for gamma correction otherwise, why not. Later we will bind it to draw the portal surface.
-		R_AddCaptureHackPortalsCmd(tr.sceneImage);
+		R_AddCaptureHackPortalsCmd(tr.sceneImage2D);
 	}
 
 	// check for any pass through drawing, which
