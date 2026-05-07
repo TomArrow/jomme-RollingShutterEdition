@@ -72,7 +72,7 @@ GLenum attachment1and2[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_COLOR_ATTACHMENT1_EX
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
-#define NUM_TEXTURE_SAMPLERS 32  // 29 = cloud image, 30 = sceneview image, 31 = sceneview secondary color buffer
+#define NUM_TEXTURE_SAMPLERS 31  // 28 = cloud image, 29 = sceneview image, 30 = sceneview secondary color buffer
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
@@ -126,6 +126,7 @@ typedef struct uniformLocations_t {
 	GLint deluxeMappingUniform;
 
 	GLint text_in[NUM_TEXTURE_SAMPLERS];
+	GLint text_inArray31;
 	GLint stageImageBitmaskUniform;
 	GLint stageLightmapBitmaskUniform;
 	GLint bindingRectImageBitmaskUniform;
@@ -507,6 +508,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocationsTess->text_in[i], i);
 		}
+		qglUniform1i(uniformLocationsTess->text_inArray31, 31);
 		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
 			qglUniform1i(uniformLocationsTess->shaderStylesUniform[i], fbo.fishEyeData.shaderStyles[i]);
 		}
@@ -627,6 +629,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
 			qglUniform1i(uniformLocations->shaderStylesUniform[i],fbo.fishEyeData.shaderStyles[i]);
 		}
+		qglUniform1i(uniformLocations->text_inArray31, 31);
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocations->text_in[i], i);
 		}
@@ -1686,8 +1689,9 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->multiTexModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
 
 		for (int j = 0; j < NUM_TEXTURE_SAMPLERS; j++) {
-			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in%d",j));
+			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in[%d]",j));
 		}
+		locs->text_inArray31 = qglGetUniformLocation(program->ShaderIdByBits(i), "text_inArray31");
 
 		locs->cloudScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudScaleUniform");
 		locs->cloudTimeScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudTimeScaleUniform");

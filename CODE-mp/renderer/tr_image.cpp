@@ -940,10 +940,12 @@ static void Upload32( T *picData,
 	if (!mipmap)
 	{
 #ifdef LIGHTMAP_ARRAY
-		if (lightmap >= 0 && lightmap < tr.numLightmaps) {
+		if (lightmap >= 0 && lightmap < tr.numLightmaps && tr.doLightmapArray) {
 			R_InitLightmapArray(*pformat,0,width,height,tr.numLightmaps);
-			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,width), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original, but just make it tiny.
+			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,width), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original so to not completely mess up the normal pipeline, but just make it tiny.
 			qglDisable(GL_TEXTURE_2D);
+
+			// actual image data goes into the array
 			qglEnable(GL_TEXTURE_2D_ARRAY);
 			qglBindTexture(GL_TEXTURE_2D_ARRAY, tr.lightmapArray);
 			qglTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, tr.numLightmaps, GL_RGBA, sourceDataFormat, picData);

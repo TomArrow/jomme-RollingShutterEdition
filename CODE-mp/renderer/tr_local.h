@@ -1315,6 +1315,7 @@ typedef struct {
 	qboolean				hdrLightmap;
 	qboolean				deluxeMapping;
 	GLuint					lightmapArray;
+	qboolean				doLightmapArray;
 	qboolean				haveVertLightDirs;
 
 	trRefEntity_t			*currentEntity;

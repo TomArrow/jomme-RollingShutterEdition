@@ -15,6 +15,8 @@
 
 #define PERLINFVCKERY 1
 
+#define	LIGHTMAP_ARRAY 1
+
 #define	CGEN_BAD 0
 #define	CGEN_IDENTITY_LIGHTING 1	// tr.identityLight
 #define	CGEN_IDENTITY 2		// always (1 11 11 11)
@@ -163,45 +165,15 @@ precision highp int;
 
 #define NUM_GLSL_EXTRA_LIGHTMAPS_MAX 14
 
-uniform sampler2D text_in0;
-uniform sampler2D text_in1;
-uniform sampler2D text_in2;
-uniform sampler2D text_in3;
-uniform sampler2D text_in4;
-uniform sampler2D text_in5;
-uniform sampler2D text_in6;
-uniform sampler2D text_in7;
-uniform sampler2D text_in8;
-uniform sampler2D text_in9;
-uniform sampler2D text_in10;
-uniform sampler2D text_in11;
-uniform sampler2D text_in12;
-uniform sampler2D text_in13;
-uniform sampler2D text_in14;
-uniform sampler2D text_in15;
-uniform sampler2D text_in16;
-uniform sampler2D text_in17;
-uniform sampler2D text_in18;
-uniform sampler2D text_in19;
-uniform sampler2D text_in20;
-uniform sampler2D text_in21;
-uniform sampler2D text_in22;
-uniform sampler2D text_in23;
-uniform sampler2D text_in24;
-uniform sampler2D text_in25;
-uniform sampler2D text_in26;
-uniform sampler2D text_in27;
-uniform sampler2D text_in28;
-uniform sampler2D text_in29;
-uniform sampler2D text_in30;
-uniform sampler2D text_in31;
+uniform sampler2D text_in[31];
+uniform sampler2DArray text_inArray31;
 
 
-vec4 sampleTextureSafe(sampler2D sampler,vec2 uvCoords,float thelod,vec4 thegrad){
+vec4 sampleTextureSafe(int sampler,vec2 uvCoords,float thelod,vec4 thegrad){
 #if TEXTUREGRAD
-	return textureGrad(sampler,uvCoords,thegrad.xy,thegrad.zw);
+	return textureGrad(text_in[sampler],uvCoords,thegrad.xy,thegrad.zw);
 #else
-	return textureLod(sampler,uvCoords,thelod);
+	return textureLod(text_in[sampler],uvCoords,thelod);
 #endif
 }
 
@@ -760,8 +732,8 @@ vec2 parallaxMap(float thelod,vec4 thegrad, vec2 rawUV){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		//vec4 color = texture2D(text_in0, my_TexCoord[0].st);
-		vec4 color = sampleTextureSafe(text_in0, rawUV, thelod,thegrad);
+		//vec4 color = texture2D(0, my_TexCoord[0].st);
+		vec4 color = sampleTextureSafe(0, rawUV, thelod,thegrad);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -811,8 +783,8 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 			
 			//uvCoords = fract(uvCoords);
 			//uvCoords = fract(uvCoords);
-			//vec4 color = texture2D(text_in0, uvCoords);
-			vec4 color = sampleTextureSafe(text_in0, uvCoords,thelod,thegrad);
+			//vec4 color = texture2D(0, uvCoords);
+			vec4 color = sampleTextureSafe(0, uvCoords,thelod,thegrad);
 			oldtexDepth = texDepth;
 			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
 			
@@ -1226,7 +1198,7 @@ vec3 powVec(vec3 invec, float power){
 	);
 }
 
-vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtexcoord, vec3 eyespacelightdir, bool havedeluxe, vec3 lightNormal, vec3 lightReferenceNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, int style, vec3 worldPixel){
+vec4 getLightmapIntensity(int sampler, int deluxeSampler, vec2 lmtexcoord, vec3 eyespacelightdir, bool havedeluxe, vec3 lightNormal, vec3 lightReferenceNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, int style, vec3 worldPixel){
 	vec4 color;
 	vec4 direction = vec4(1.0f);
 	bool haveDir = false;
@@ -1234,12 +1206,12 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 	{
 		//return vec4(-vertexNormal,1.0f)*0.1f;
 		//vec2 thelod = textureQueryLod(sampler,lmtexcoord);
-		color = texture2D(sampler, lmtexcoord);
+		color = texture2D(text_in[sampler], lmtexcoord);
 		//return vec4(1.0f);
 		//return color;
 		if(havedeluxe || haveVertexLightDirectionUniform > 0){
 			if(havedeluxe){
-				direction = texture2D(deluxeSampler, lmtexcoord); // visualize n
+				direction = texture2D(text_in[deluxeSampler], lmtexcoord); // visualize n
 				//float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 				//return direction;
 				direction = (dirmat*direction);
@@ -1294,8 +1266,8 @@ vec4 getLightmapIntensity(sampler2D sampler, sampler2D deluxeSampler, vec2 lmtex
 			color.y *= fract(uv.t);
 			color.z = 0;
 		} else{
-			vec3 mult = texture2D(text_in29,uv).xyz;
-			vec3 multBlur = textureLod(text_in29,uv,4.0f).xyz;
+			vec3 mult = texture2D(text_in[28],uv).xyz;
+			vec3 multBlur = textureLod(text_in[28],uv,4.0f).xyz;
 
 			vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
 			float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
@@ -1310,8 +1282,8 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
 		//uvCoords.t = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[1]);
-		//vec4 color = texture2D(text_in0, uvCoords);
-		vec4 color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
+		//vec4 color = texture2D(0, uvCoords);
+		vec4 color = sampleTextureSafe(0, uvCoords, thelod,thegrad);
 		//vec4 color = texture2D(text_in, uvCoords);
 		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
@@ -1328,15 +1300,15 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		vec3 transposedCoords = startPosition + offset3d;
 		uvCoords.s = dot(transposedCoords,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
-		//vec4 color2 = texture2D(text_in0, uvCoords);
-		vec4 color2 = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
+		//vec4 color2 = texture2D(0, uvCoords);
+		vec4 color2 = sampleTextureSafe(0, uvCoords, thelod,thegrad);
 		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
-		//vec4 color3 = texture2D(text_in0, uvCoords);
-		vec4 color3 = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
+		//vec4 color3 = texture2D(0, uvCoords);
+		vec4 color3 = sampleTextureSafe(0, uvCoords, thelod,thegrad);
 		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
 
 		vec3 place1 = startPosition - referenceNormal * offset;
@@ -1530,7 +1502,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	vec2 rawUVCoords = my_TexCoord[0].st;
 	if(tex0IsRect){
-		rawUVCoords = gl_FragCoord.xy / textureSize(text_in0,0); // dumb hack. prolly breaks with supersampling :/ TODO get the vidwidth as uniform
+		rawUVCoords = gl_FragCoord.xy / textureSize(text_in[0],0); // dumb hack. prolly breaks with supersampling :/ TODO get the vidwidth as uniform
 		//rawUVCoords = gl_TexCoord[0].st; // auto-generated (meh doesnt work)
 	}
 	
@@ -1569,7 +1541,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	bool renderingSSRBuffer = (renderFlagsUniform & RENDERFLAG_RENDERINGWORLDREFLECT) > 0;
 	bool vertexLit = (lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0;
 	
-	float thelod = textureQueryLod(text_in0,uvCoords).x;
+	float thelod = textureQueryLod(text_in[0],uvCoords).x;
 	thelod = thelod - biaslod(thelod);
 	float gradMultiplier = jitterTotalFramesUniform == 0 ? 0.5f : 1.0f / sqrt(float(jitterTotalFramesUniform)/3.0f);
 	//if(thermalVisionUniform > 0){
@@ -1579,7 +1551,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	vec4 rawgrad = vec4(dFdx(uvCoords),dFdy(uvCoords));
 	vec4 thegrad = rawgrad * gradMultiplier * gradnoise;
 	vec4 thegradWorldReflect = rawgrad * worldReflectGradMultUniform * gradnoise;
-	//textureGrad(text_in0,uvCoords,thegrad.xy,thegrad.zw);
+	//textureGrad(0,uvCoords,thegrad.xy,thegrad.zw);
 
 	if(ssr && ssrMultiSampleCount > 1){
 		vec3 effectiveUVPixelStep[2] = {dFdx(effectiveUVPixelPos),dFdy(effectiveUVPixelPos)};
@@ -1610,11 +1582,11 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		}		
 	}
 
-	color = sampleTextureSafe(text_in0, uvCoords, thelod,thegrad);
+	color = sampleTextureSafe(0, uvCoords, thelod,thegrad);
 	outFragColor = color;
 	if(ssr){
 		for(int i=0;i<ssrMultiSampleCount;i++){
-			colorWorldReflect[i] = sampleTextureSafe(text_in0, uvCoordsWorldReflect[i], thelod,thegradWorldReflect);
+			colorWorldReflect[i] = sampleTextureSafe(0, uvCoordsWorldReflect[i], thelod,thegradWorldReflect);
 		}
 	}
 
@@ -1628,7 +1600,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	
 	//if((stageLightmapBitmaskUniform & (1<<6))>0){
 		
-		//gl_FragColor = texture2D(text_in6, my_TexCoord[1].st);
+		//gl_FragColor = texture2D(6, my_TexCoord[1].st);
 		//return;
 	//}
 	//if((lightDir[0] != 0.0f || lightDir[1] != 0.0f || lightDir[2] != 0.0f) && haveVertexLightDirectionUniform > 0 && stageLightmapBitmaskUniform == 0){
@@ -2157,54 +2129,54 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 		// styles
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in2,text_in17,my_TexCoord[2].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,lightmapReferenceNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[1],worldPixel);		
+			lightmapStyleAdd += getLightmapIntensity(2,17,my_TexCoord[2].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<17)) > 0, lightNormal,lightmapReferenceNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[1],worldPixel);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in3,text_in18,my_TexCoord[3].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,lightmapReferenceNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[2],worldPixel);		
+			lightmapStyleAdd += getLightmapIntensity(3,18,my_TexCoord[3].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<18)) > 0, lightNormal,lightmapReferenceNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[2],worldPixel);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in4,text_in19,my_TexCoord[4].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,lightmapReferenceNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[3],worldPixel);		
+			lightmapStyleAdd += getLightmapIntensity(4,19,my_TexCoord[4].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<19)) > 0, lightNormal,lightmapReferenceNormal,deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[3],worldPixel);		
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in5,text_in20,my_TexCoord[5].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[4],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(5,20,my_TexCoord[5].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<20)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[4],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<6))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in6,text_in21,my_TexCoord[6].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<21)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[5],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(6,21,my_TexCoord[6].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<21)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[5],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<7))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in7,text_in22,my_TexCoord[7].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<22)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[6],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(7,22,my_TexCoord[7].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<22)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[6],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<8))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in8,text_in23,my_TexCoord[8].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<23)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[7],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(8,23,my_TexCoord[8].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<23)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[7],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<9))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in9,text_in24,my_TexCoord[9].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<24)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[8],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(9,24,my_TexCoord[9].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<24)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[8],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<10))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in10,text_in25,my_TexCoord[10].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<25)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[9],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(10,25,my_TexCoord[10].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<25)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[9],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<11))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in11,text_in26,my_TexCoord[11].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<26)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[10],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(11,26,my_TexCoord[11].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<26)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[10],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<12))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in12,text_in27,my_TexCoord[12].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<27)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[11],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(12,27,my_TexCoord[12].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<27)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[11],worldPixel);			
 		}
 		if((stageLightmapBitmaskUniform & (1<<13))>0){
-			lightmapStyleAdd += getLightmapIntensity(text_in13,text_in28,my_TexCoord[13].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<28)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[12],worldPixel);			
+			lightmapStyleAdd += getLightmapIntensity(13,28,my_TexCoord[13].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<28)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,shaderStylesUniform[12],worldPixel);			
 		}/**/
 		
 		/*
 		if((stageLightmapBitmaskUniform & (1<<2))>0){
-			lightmapStyleAdd += texture2D(text_in2, my_TexCoord[2].st);				
+			lightmapStyleAdd += texture2D(2, my_TexCoord[2].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<3))>0){
-			lightmapStyleAdd += texture2D(text_in3, my_TexCoord[3].st);				
+			lightmapStyleAdd += texture2D(3, my_TexCoord[3].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<4))>0){
-			lightmapStyleAdd += texture2D(text_in4, my_TexCoord[4].st);				
+			lightmapStyleAdd += texture2D(4, my_TexCoord[4].st);				
 		}
 		if((stageLightmapBitmaskUniform & (1<<5))>0){
-			lightmapStyleAdd += texture2D(text_in5, my_TexCoord[5].st);				
+			lightmapStyleAdd += texture2D(5, my_TexCoord[5].st);				
 		}*/
 
 		addValue *= baseColorForLightingReal; // because if we have a lightmap, we 100% used 1.0 as the baseColorForLighting, so we revert that here.
@@ -2252,9 +2224,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	vec4 color2 = vec4(0);
 	if(multitex){
 		if((stageLightmapBitmaskUniform & 2) >0){
-			color2 = getLightmapIntensity(text_in1,text_in16,my_TexCoord[1].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,0,worldPixel);
+			color2 = getLightmapIntensity(1,16,my_TexCoord[1].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,0,worldPixel);
 		} else{
-			color2 = texture2D(text_in16, my_TexCoord[1].st);
+			color2 = texture2D(text_in[16], my_TexCoord[1].st);
 		}
 		//color2.xyz *= (stageLightmapBitmaskUniform & 2) > 0 ? lightStyles[0].xyz*MULTDIVIDE255 : vec3(1.0f);
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
@@ -2322,7 +2294,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			#define SSR_MAX_STEPS 150
 			#define SSR_STEP_SIZE 20
 			
-			vec2 depthTexSize = textureSize(text_in31,0);
+			vec2 depthTexSize = textureSize(text_in[30],0);
 			vec3 reflectionAccum = vec3(0.0f);
 			for(int s=0;s<ssrMultiSampleCount;s++){ // todo make it alsoo do a new viewervector and all that with multisample? or is it negligible?
 				if(isWorldBrushUniform > 0){
@@ -2369,8 +2341,8 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 					float dist = length(newPos);
 					newPos = normalize(newPos);
 					uvRefl = get360UVFromVector(-newPos);
-					//float distComp = textureGrad(text_in31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
-					float distComp = texelFetch(text_in31,ivec2(fract(uvRefl)*depthTexSize),0).x; // texelfetch the depth to avoid ghosts of lightsabers
+					//float distComp = textureGrad(31,fract(uvRefl),thegrad.xy,thegrad.zw).x;
+					float distComp = texelFetch(text_in[30],ivec2(fract(uvRefl)*depthTexSize),0).x; // texelfetch the depth to avoid ghosts of lightsabers
 					newDist = abs(distComp-dist);
 					//if(newDist < 20.0f){
 					if(dist > distComp && newDist < float(SSR_STEP_SIZE)){
@@ -2387,8 +2359,8 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 				}
 				if(found){
 					uvRefl = mix(uvReflOld,uvRefl,oldDist/(newDist+oldDist));
-					reflectionAccum += textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
-					//outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+					reflectionAccum += textureGrad(text_in[29],fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+					//outFragColor.xyz = textureGrad(30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
 					//outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f)*specIntensitySchlickMultReflective;
 				} else{
 					//outFragColor.xyz =oriColor + vec3(1.0f,0.0f,0.0f)*max(worldNormal.z,0.0f);
@@ -2414,9 +2386,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			if (abs(thegrad.x) > 0.5) thegrad.x -= sign(thegrad.x);
 			if (abs(thegrad.z) > 0.5) thegrad.z -= sign(thegrad.z);
 			thegrad *= gradMultiplier;
-			outFragColor.xyz = textureGrad(text_in30,fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
-			//outFragColor.xyz = sampleTextureSafe(text_in30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
-			//outFragColor.xyz = sampleTextureSafe(text_in30, uvCoords, thelod,thegrad).xyz;
+			outFragColor.xyz = textureGrad(text_in[29],fract(uvRefl),thegrad.xy,thegrad.zw).xyz;
+			//outFragColor.xyz = sampleTextureSafe(30, vec2(xAngle,yAngle), thelod,thegrad).xyz;
+			//outFragColor.xyz = sampleTextureSafe(30, uvCoords, thelod,thegrad).xyz;
 			if(isWorldBrushUniform > 0){
 				outFragColor.xyz =oriColor + outFragColor.xyz*max(worldNormal.z,0.0f);
 			}

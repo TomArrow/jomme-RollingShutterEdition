@@ -283,6 +283,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	R_SyncRenderThread();
 
 	tr.hdrLightmap = qfalse;
+	tr.doLightmapArray = (qboolean)(r_fboGLSL->integer && ENABLEGLSL);
 
 	// create all the lightmaps
 	realLightmapCount = tr.numLightmaps = len / (LIGHTMAP_SIZE * LIGHTMAP_SIZE * 3);

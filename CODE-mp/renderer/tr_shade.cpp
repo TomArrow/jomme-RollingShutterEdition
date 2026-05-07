@@ -463,10 +463,10 @@ static void R_BindSceneViewImage() {
 	int currenttmu = glState.currenttmu;
 	//if (backEnd.currentEntity->e.useSceneViewTexture) {
 	if (backEnd.needSceneViewAttached) {
-		GL_SelectTexture(30);
+		GL_SelectTexture(29);
 		qglEnable(GL_TEXTURE_2D);
 		R_BindSceneViewImage(backEnd.sceneViewId, true);
-		GL_SelectTexture(31);
+		GL_SelectTexture(30);
 		qglEnable(GL_TEXTURE_2D);
 		R_BindSceneViewImage(backEnd.sceneViewId, true, 1);
 		//GL_SelectTexture(0);
@@ -479,10 +479,10 @@ static void R_BindSceneViewImage() {
 static void R_UnbindSceneViewImage() {
 	int currenttmu = glState.currenttmu;
 	if (backEnd.needSceneViewAttached) {
-		GL_SelectTexture(30);
+		GL_SelectTexture(29);
 		GL_Bind(tr.defaultImage);
 		qglDisable(GL_TEXTURE_2D);
-		GL_SelectTexture(31);
+		GL_SelectTexture(30);
 		GL_Bind(tr.defaultImage);
 		qglDisable(GL_TEXTURE_2D);
 		//GL_SelectTexture(0);
@@ -525,10 +525,17 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 		}
 	}
 	if (tr.cloudsImageInited) {
-		GL_SelectTexture(29);
+		GL_SelectTexture(28);
 		qglEnable(GL_TEXTURE_2D);
 		GL_Bind(tr.cloudsImage);
 	}
+#ifdef LIGHTMAP_ARRAY
+	if (tr.lightmapArray) {
+		GL_SelectTexture(31);
+		qglEnable(GL_TEXTURE_2D_ARRAY);
+		qglBindTexture(GL_TEXTURE_2D_ARRAY, tr.lightmapArray);
+	}
+#endif
 	R_BindSceneViewImage();
 	if(glState.currenttmu != currenttmu){
 		GL_SelectTexture(currenttmu);
@@ -559,9 +566,15 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 		}
 	}
 	if (tr.cloudsImageInited) {
-		GL_SelectTexture(29);
+		GL_SelectTexture(28);
 		qglDisable(GL_TEXTURE_2D);
 	}
+#ifdef LIGHTMAP_ARRAY
+	if (tr.lightmapArray) {
+		GL_SelectTexture(31);
+		qglDisable(GL_TEXTURE_2D_ARRAY);
+	}
+#endif
 	R_UnbindSceneViewImage();
 	if (glState.currenttmu != currenttmu) {
 		GL_SelectTexture(currenttmu);
