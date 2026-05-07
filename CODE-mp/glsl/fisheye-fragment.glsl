@@ -17,6 +17,15 @@
 
 #define	LIGHTMAP_ARRAY 1
 
+#if LIGHTMAP_ARRAY
+#define LIGHTMAPNUM(a) lightmapNumsUniform[(a)]
+#define DELUXELIGHTMAPNUM(a,b) (lightmapNumsUniform[(a)]+1)
+#else
+#define LIGHTMAPNUM(a) (a)
+#define DELUXELIGHTMAPNUM(a,b) (b)
+#endif
+
+
 #define	CGEN_BAD 0
 #define	CGEN_IDENTITY_LIGHTING 1	// tr.identityLight
 #define	CGEN_IDENTITY 2		// always (1 11 11 11)
@@ -520,6 +529,7 @@ uniform int dLightsCountUniform;
 uniform dlight_t dLightsUniform[32]; 
 
 uniform int shaderStylesUniform[14];
+uniform int lightmapNumsUniform[32];
 
 struct shadowline_t {
 	vec4			point1;
@@ -1206,12 +1216,26 @@ vec4 getLightmapIntensity(int sampler, int deluxeSampler, vec2 lmtexcoord, vec3 
 	{
 		//return vec4(-vertexNormal,1.0f)*0.1f;
 		//vec2 thelod = textureQueryLod(sampler,lmtexcoord);
+#if LIGHTMAP_ARRAY
+		if((stageLightmapBitmaskUniform & (1<<sampler))>0){
+			color = texture(text_inArray31, vec3(lmtexcoord,LIGHTMAPNUM(sampler)));
+			//color = vec4(float(LIGHTMAPNUM(sampler))*0.02f);
+			//color = texture(text_inArray31, vec3(0.5f,0.5f,1));
+		} else{
+			color = texture2D(text_in[sampler], lmtexcoord);
+		}
+#else
 		color = texture2D(text_in[sampler], lmtexcoord);
+#endif
 		//return vec4(1.0f);
 		//return color;
 		if(havedeluxe || haveVertexLightDirectionUniform > 0){
 			if(havedeluxe){
+#if LIGHTMAP_ARRAY
+				direction = texture(text_inArray31, vec3(lmtexcoord,DELUXELIGHTMAPNUM(sampler,deluxeSampler)));
+#else
 				direction = texture2D(text_in[deluxeSampler], lmtexcoord); // visualize n
+#endif
 				//float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 				//return direction;
 				direction = (dirmat*direction);

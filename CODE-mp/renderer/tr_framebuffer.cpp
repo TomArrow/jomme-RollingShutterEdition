@@ -186,6 +186,7 @@ typedef struct uniformLocations_t {
 	GLint worldReflectMultiSampleUniform;
 
 	GLint shaderStylesUniform[MAXLIGHTMAPS_REAL];
+	GLint lightmapNumsUniform[NUM_TEXTURE_SAMPLERS];
 };
 
 typedef enum {
@@ -507,6 +508,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		}
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocationsTess->text_in[i], i);
+			qglUniform1i(uniformLocationsTess->lightmapNumsUniform[i], fboUniformsEx.lightmapNums[i]);
 		}
 		qglUniform1i(uniformLocationsTess->text_inArray31, 31);
 		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
@@ -632,6 +634,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->text_inArray31, 31);
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			qglUniform1i(uniformLocations->text_in[i], i);
+			qglUniform1i(uniformLocations->lightmapNumsUniform[i], fboUniformsEx.lightmapNums[i]);
 		}
 	}
 
@@ -1690,6 +1693,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 
 		for (int j = 0; j < NUM_TEXTURE_SAMPLERS; j++) {
 			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in[%d]",j));
+			locs->lightmapNumsUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("lightmapNumsUniform[%d]",j));
 		}
 		locs->text_inArray31 = qglGetUniformLocation(program->ShaderIdByBits(i), "text_inArray31");
 

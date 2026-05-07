@@ -495,7 +495,9 @@ static void R_UnbindSceneViewImage() {
 static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* input) {
 	int currenttmu = glState.currenttmu;
 	for (int i = 0; i < 2; i++) {
-
+#ifdef LIGHTMAP_ARRAY
+		fboUniformsEx.lightmapNums[i] = pStage->bundle[i].image[0]->lightmapNum;
+#endif
 		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
 			GL_SelectTexture(2+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX); // was 6. but want maxlightmaps 4->12. so 4+2 -> 12+2
 			qglEnable(GL_TEXTURE_2D);
@@ -507,6 +509,9 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 	}
 	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
 		if (pStage->bundle[i].image[0]) {
+#ifdef LIGHTMAP_ARRAY
+			fboUniformsEx.lightmapNums[i] = pStage->bundle[i].image[0]->lightmapNum;
+#endif
 			GL_SelectTexture(i);
 			qglEnable(GL_TEXTURE_2D);
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -524,6 +529,9 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			}
 		}
 	}
+#ifdef LIGHTMAP_ARRAY
+	R_FrameBuffer_SetDynamicUniforms3();
+#endif
 	if (tr.cloudsImageInited) {
 		GL_SelectTexture(28);
 		qglEnable(GL_TEXTURE_2D);

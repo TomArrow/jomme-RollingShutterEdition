@@ -941,14 +941,14 @@ static void Upload32( T *picData,
 	{
 #ifdef LIGHTMAP_ARRAY
 		if (lightmap >= 0 && lightmap < tr.numLightmaps && tr.doLightmapArray) {
-			R_InitLightmapArray(*pformat,0,width,height,tr.numLightmaps);
+			R_InitLightmapArray(*pformat,1,width,height,tr.numLightmaps);
 			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,width), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original so to not completely mess up the normal pipeline, but just make it tiny.
 			qglDisable(GL_TEXTURE_2D);
 
 			// actual image data goes into the array
 			qglEnable(GL_TEXTURE_2D_ARRAY);
 			qglBindTexture(GL_TEXTURE_2D_ARRAY, tr.lightmapArray);
-			qglTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, tr.numLightmaps, GL_RGBA, sourceDataFormat, picData);
+			qglTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, lightmap, width, height, 1, GL_RGBA, sourceDataFormat, picData);
 			qglDisable(GL_TEXTURE_2D_ARRAY);
 			qglEnable(GL_TEXTURE_2D);
 		}
@@ -1278,6 +1278,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 	image->wrapClampMode = glWrapClampMode;
 
 	image->bpc = picWrap->bpc;
+	image->lightmapNum = lightmap;
 
 	// lightmaps are always allocated on TMU 1
 	if ( qglActiveTextureARB && isLightmap ) {

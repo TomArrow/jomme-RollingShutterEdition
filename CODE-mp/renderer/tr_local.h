@@ -223,7 +223,7 @@ typedef struct image_s {
 	vec3_t		averageColor;
 
 	TextureBitsPerChannel bpc;
-	qboolean	lightmap;
+	int			lightmapNum;
 
 } image_t;
 
@@ -2599,6 +2599,7 @@ typedef struct {
 // got tired of the dumb dynamicuniform functions at last xd
 typedef struct {
 	unsigned int	textRectBitmask;
+	int				lightmapNums[31];
 } fboExtraUniforms_t;
 
 extern fboExtraUniforms_t fboUniformsEx;
