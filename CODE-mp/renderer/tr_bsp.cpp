@@ -253,6 +253,7 @@ static	void R_ColorShiftLightingBytes( byte in[3])
 	in[2] = b;
 }
 
+
 /*
 ===============
 R_LoadLightmaps
@@ -272,6 +273,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	int			maxLightmapNum;
 	float maxIntensity = 0;
 	double sumIntensity = 0;
+	int realLightmapCount = 0;
 	dsurface_t* surf;
 
     len = l->filelen;
@@ -283,7 +285,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	tr.hdrLightmap = qfalse;
 
 	// create all the lightmaps
-	tr.numLightmaps = len / (LIGHTMAP_SIZE * LIGHTMAP_SIZE * 3);
+	realLightmapCount = tr.numLightmaps = len / (LIGHTMAP_SIZE * LIGHTMAP_SIZE * 3);
 
 	// check if we have deluxemaps
 	// detection based on ioq3
@@ -292,6 +294,29 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 		tr.deluxeMapping = qfalse;
 	}
 	else {
+		// check the actual lightmap count rn so we can safely allocate a GL_TEXTURE_2D_ARRAY with the right size
+		if (tr.numLightmaps <= 0) {
+			for (i = 0, surf = (dsurface_t*)(fileBase + surfs->fileofs);
+				i < surfs->filelen / sizeof(dsurface_t); i++, surf++) {
+				for (j = 0; j < MAXLIGHTMAPS_REAL; j++) {
+					int lightmapNum = j >= MAXLIGHTMAPS_BSP ? LIGHTMAP_NONE : LittleLong(surf->lightmapNum[j]);
+
+					if (lightmapNum >= realLightmapCount) {
+						realLightmapCount = lightmapNum + 1;
+					}
+				}
+			}
+			if (realLightmapCount == 1) {
+				// we are using external lightmaps, but we only ever referenced index 0.
+				// so lets check if we can find an index 1.
+				int lightmapToFind = 1;
+				R_FindLightmap(&lightmapToFind);
+				if (tr.lightmaps[1] != NULL) {
+					realLightmapCount = 2;
+				}
+			}
+		}
+
 		tr.deluxeMapping = (qboolean)(qglActiveTextureARB && r_fboGLSL->integer && ENABLEGLSL);
 		if (tr.deluxeMapping) {
 			maxLightmapNum = 0;
@@ -325,6 +350,13 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 				}
 			}
 		}
+
+		tr.numLightmaps = realLightmapCount;
+	}
+
+	if (!tr.numLightmaps && realLightmapCount) {
+		tr.numLightmaps = realLightmapCount;
+		return;
 	}
 
 	if (!len) {
@@ -379,7 +411,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 			}
 		}
 		tr.lightmaps[i] = R_CreateImage( va("*%s/lightmap%d",sMapName,i), &picWrap, 
-			LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse, qtrue, GL_CLAMP );
+			LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse, qtrue, GL_CLAMP, i );
 	}
 
 	if ( r_lightmap->integer == 2 )	{

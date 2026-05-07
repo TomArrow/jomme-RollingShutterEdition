@@ -746,7 +746,7 @@ static void Upload32( T *picData,
 						 qboolean isLightmap,
 						 qboolean allowTC,
 						 int *pformat, 
-						 int *pUploadWidth, int *pUploadHeight,TextureBitsPerChannel bpc )
+						 int *pUploadWidth, int *pUploadHeight,TextureBitsPerChannel bpc, int lightmap = -1 )
 {
 	int			samples;
 	int			i, c;
@@ -935,10 +935,26 @@ static void Upload32( T *picData,
 	*pUploadWidth = width;
 	*pUploadHeight = height;
 
+
 	// copy or resample data as appropriate for first MIP level
 	if (!mipmap)
 	{
-		qglTexImage2D (GL_TEXTURE_2D, 0, *pformat, width, height, 0, GL_RGBA, sourceDataFormat, picData);
+#ifdef LIGHTMAP_ARRAY
+		if (lightmap >= 0 && lightmap < tr.numLightmaps) {
+			R_InitLightmapArray(*pformat,0,width,height,tr.numLightmaps);
+			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,width), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original, but just make it tiny.
+			qglDisable(GL_TEXTURE_2D);
+			qglEnable(GL_TEXTURE_2D_ARRAY);
+			qglBindTexture(GL_TEXTURE_2D_ARRAY, tr.lightmapArray);
+			qglTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, tr.numLightmaps, GL_RGBA, sourceDataFormat, picData);
+			qglDisable(GL_TEXTURE_2D_ARRAY);
+			qglEnable(GL_TEXTURE_2D);
+		}
+		else 
+#endif
+		{
+			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, width, height, 0, GL_RGBA, sourceDataFormat, picData);
+		}
 		goto done;
 	}
 
@@ -1070,6 +1086,12 @@ void R_Images_Clear(void)
 	}
 
 	AllocatedImages.clear();
+
+#ifdef LIGHTMAP_ARRAY
+	if (qglDeleteTextures) {	//won't have one if we switched to dedicated.
+		qglDeleteTextures(1, &tr.lightmapArray);
+	}
+#endif
 
 	giTextureBindNum = 1024;
 }
@@ -1205,7 +1227,7 @@ This is the only way any image_t are created
 ================
 */
 image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int width, int height, 
-					   qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
+					   qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, int lightmap) {
 	image_t		*image;
 	qboolean	isLightmap = qfalse;
 
@@ -1294,7 +1316,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			allowTC,
 			&image->internalFormat,
 			&image->uploadWidth,
-			&image->uploadHeight,picWrap->bpc);
+			&image->uploadHeight,picWrap->bpc, lightmap);
 		break;
 	case BPC_32BIT:
 		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer) {
@@ -1316,7 +1338,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			allowTC,
 			&image->internalFormat,
 			&image->uploadWidth,
-			&image->uploadHeight, picWrap->bpc);
+			&image->uploadHeight, picWrap->bpc, lightmap);
 		break;
 	case BPC_16BIT:
 		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer) {
@@ -1338,7 +1360,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			allowTC,
 			&image->internalFormat,
 			&image->uploadWidth,
-			&image->uploadHeight, picWrap->bpc);
+			&image->uploadHeight, picWrap->bpc, lightmap);
 		break;
 	case BPC_8BIT:
 	default:
@@ -1361,7 +1383,7 @@ image_t *R_CreateImage( const char *name, const textureImage_t *picWrap, int wid
 			allowTC,
 			&image->internalFormat,
 			&image->uploadWidth,
-			&image->uploadHeight, picWrap->bpc); // This is the classical approach.
+			&image->uploadHeight, picWrap->bpc, lightmap); // This is the classical approach.
 		break;
 
 	}
@@ -2460,7 +2482,7 @@ Finds or loads the given image.
 Returns NULL if it fails, not a default image.
 ==============
 */
-image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
+image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, int lightmap) {
 	image_t	*image;
 	int		width, height;
 	//byte	*pic;
@@ -2502,7 +2524,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 		return NULL;
 	}
 
-	image = R_CreateImage( ( char * ) name, &picWrap, width, height, mipmap, allowPicmip, allowTC, glWrapClampMode );
+	image = R_CreateImage( ( char * ) name, &picWrap, width, height, mipmap, allowPicmip, allowTC, glWrapClampMode, lightmap );
 	ri.Free( picWrap.ptr );
 	return image;
 }
@@ -2693,6 +2715,29 @@ static void R_CreateDefaultImage( void ) {
 		data[x][DEFAULT_SIZE-1][3] = 255;
 	}
 	tr.defaultImage = R_CreateImage("*default", &picWrap, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, qfalse, GL_REPEAT );
+}
+
+/*
+==================
+R_InitLightmapArray
+==================
+*/
+void R_InitLightmapArray(int internalFormat, int mipLevelCount, int width, int height, int layerCount) {
+#ifdef LIGHTMAP_ARRAY
+	if (!tr.lightmapArray) {
+		tr.lightmapArray = 1024 + giTextureBindNum++;
+		qglDisable(GL_TEXTURE_2D);
+		qglEnable(GL_TEXTURE_2D_ARRAY);
+		qglBindTexture(GL_TEXTURE_2D_ARRAY, tr.lightmapArray);
+		qglTexStorage3D(GL_TEXTURE_2D_ARRAY, mipLevelCount, internalFormat, width, height, layerCount);
+		qglTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		qglTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		qglDisable(GL_TEXTURE_2D_ARRAY);
+		qglEnable(GL_TEXTURE_2D);
+	}
+#endif
 }
 
 /*

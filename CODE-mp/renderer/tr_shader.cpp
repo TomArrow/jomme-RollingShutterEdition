@@ -3842,7 +3842,7 @@ void R_FindLightmap(int* lightmapIndex) {
 
 	// attempt to load an external lightmap
 	sprintf(fileName, "%s/" EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex);
-	image = R_FindImageFile(fileName, qfalse, qfalse, qtrue, GL_CLAMP);
+	image = R_FindImageFile(fileName, qfalse, qfalse, qtrue, GL_CLAMP, *lightmapIndex);
 	if (image == NULL) {
 		*lightmapIndex = LIGHTMAP_BY_VERTEX;
 		return;

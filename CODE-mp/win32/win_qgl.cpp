@@ -424,6 +424,10 @@ void (APIENTRY* qglBlendEquationi)(GLuint buf, GLenum mode);
 void (APIENTRY* qglRenderbufferStorageMultisampleEXT) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 void (APIENTRY* qglBlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
+//2d array texture stuff
+void (APIENTRY* qglTexStorage3D)(GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth);
+void (APIENTRY* qglTexSubImage3D)(GLenum target, GLint level, GLint xoffset,GLint yoffset,GLint zoffset,GLsizei width,GLsizei height,GLsizei depth,GLenum format,GLenum type,const void* pixels);
+
 //added fragment/vertex program extensions
 void (APIENTRYP qglAttachShader) (GLuint, GLuint);
 void (APIENTRYP qglBindAttribLocation) (GLuint, GLuint, const GLchar*);

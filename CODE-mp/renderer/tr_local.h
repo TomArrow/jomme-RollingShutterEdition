@@ -39,6 +39,8 @@ long myftol( float f );
 
 #define CAPTURE_FLOAT
 
+#define LIGHTMAP_ARRAY
+
 // everything that is needed by the backend needs
 // to be double buffered to allow it to run in
 // parallel on a dual cpu machine
@@ -221,6 +223,7 @@ typedef struct image_s {
 	vec3_t		averageColor;
 
 	TextureBitsPerChannel bpc;
+	qboolean	lightmap;
 
 } image_t;
 
@@ -1311,6 +1314,7 @@ typedef struct {
 	image_t					*lightmaps[MAX_LIGHTMAPS];
 	qboolean				hdrLightmap;
 	qboolean				deluxeMapping;
+	GLuint					lightmapArray;
 	qboolean				haveVertLightDirs;
 
 	trRefEntity_t			*currentEntity;
@@ -1810,11 +1814,13 @@ typedef struct {
 void    	R_Init( void );
 //void		R_LoadImage( const char *name, byte **pic, int *width, int *height );
 void		R_LoadImage( const char *name, textureImage_t *picWrap, int *width, int *height );
-image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, int lightmap = -1);
 
 image_t		*R_CreateImage( const char *name, const textureImage_t* picWrap, int width, int height, qboolean mipmap
-					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode );
+					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode, int lightmap = -1);
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
+
+void		R_InitLightmapArray(int internalFormat, int mipLevelCount, int width, int height, int layerCount);
 
 void		R_SetColorMappings( void );
 void		R_GammaCorrect( byte *buffer, int bufSize );

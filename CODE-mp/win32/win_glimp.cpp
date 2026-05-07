@@ -2014,6 +2014,13 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 		glConfig.depthClamp = qtrue;
 	}
 
+	qglTexStorage3D = (void (APIENTRYP)(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei))qwglGetProcAddress("glTexStorage3D");
+	qglTexSubImage3D = (void (APIENTRYP)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const void*))qwglGetProcAddress("glTexSubImage3D");
+	if (!qglTexStorage3D || !qglTexSubImage3D) {
+		Com_Printf("Failed to get qglTexStorage3D and qglTexSubImage3D\n");
+		qglTexStorage3D = NULL;
+		qglTexSubImage3D = NULL;
+	}
 
 	glMMEConfig.framebufferMultiSample = qfalse;
 	if (strstr(glConfig.extensions_string, "GL_EXT_framebuffer_multisample") && strstr(glConfig.extensions_string, "GL_EXT_framebuffer_blit")) {

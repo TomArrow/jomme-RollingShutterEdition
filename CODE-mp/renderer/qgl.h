@@ -260,6 +260,9 @@ extern void (APIENTRYP qglDebugMessageCallback) (DEBUGPROC callback, const void*
 
 #define GL_TEXTURE_RECTANGLE_EXT			0x84F5
 
+// texture arrays
+#define GL_TEXTURE_2D_ARRAY                 0x8C1A
+
 /*
 ** extension constants
 */
@@ -905,6 +908,10 @@ extern void (APIENTRY* qglBlendEquationi)(GLuint buf, GLenum mode);
 //Multisampled FBO support
 extern void (APIENTRY* qglRenderbufferStorageMultisampleEXT) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 extern void (APIENTRY* qglBlitFramebufferEXT)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+
+// 2d array texture stuff
+extern void (APIENTRY* qglTexStorage3D)(GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth);
+extern void (APIENTRY* qglTexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
 
 
 //added fragment/vertex program extensions
