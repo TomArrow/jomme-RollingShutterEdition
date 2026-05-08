@@ -497,7 +497,7 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 	for (int i = 0; i < 2; i++) {
 #ifdef LIGHTMAP_ARRAY
 		fboUniformsEx.lightmapNums[i] = pStage->bundle[i].image[0]->lightmapNum;
-#endif
+#else
 		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
 			GL_SelectTexture(2+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX); // was 6. but want maxlightmaps 4->12. so 4+2 -> 12+2
 			qglEnable(GL_TEXTURE_2D);
@@ -506,12 +506,19 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			R_BindAnimatedImage(&pStage->bundle[i], qtrue);
 			break;
 		}
+#endif
 	}
 	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
 		if (pStage->bundle[i].image[0]) {
-#ifdef LIGHTMAP_ARRAY
+#ifdef LIGHTMAP_ARRAY 
+			// this is so dumb and hacky lmao. we have the now useless 2x2 "lightmap" images here in the bundles just so we can generate the texcoords.
+			// but we dont actually bind the textures cuz all the lightmap stuff comes straight out of the lightmap array texture anyway.
+			// so we can use all the spare texture samplers instead of binding endless amounts of lightmaps and deluxemaps for a million styles to them.
+			// however we still need the texcoords, and we are limited in how many vertexattribs we can have so that still limits our total style count.
 			fboUniformsEx.lightmapNums[i] = pStage->bundle[i].image[0]->lightmapNum;
-#endif
+			qglEnableVertexAttribArray(i + 8);
+			qglVertexAttribPointer(i + 8, 2, GL_FLOAT, qfalse, 0, input->svars.texcoords[i]);
+#else
 			GL_SelectTexture(i);
 			qglEnable(GL_TEXTURE_2D);
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -527,6 +534,7 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 				//qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
 				R_BindAnimatedImage(&pStage->bundle[i],qtrue);
 			}
+#endif
 		}
 	}
 #ifdef LIGHTMAP_ARRAY
@@ -552,16 +560,23 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* input) {
 	int currenttmu = glState.currenttmu;
 	for (int i = 0; i < 2; i++) {
-
+#ifdef LIGHTMAP_ARRAY 
+		fboUniformsEx.lightmapNums[i] = -1;
+#else
 		if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
 			GL_SelectTexture(2+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX);
 			qglDisable(GL_TEXTURE_2D);
 			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 			break;
 		}
+#endif
 	}
 	for (int i = 2; i < NUM_TEXTURE_BUNDLES; i++) { // multi-style lightmap thingie im doing with glsl
 		if (pStage->bundle[i].image[0]) {
+#ifdef LIGHTMAP_ARRAY 
+			fboUniformsEx.lightmapNums[i] = -1;
+			qglDisableVertexAttribArray(i + 8);
+#else
 			GL_SelectTexture(i);
 			qglDisable(GL_TEXTURE_2D);
 			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -571,6 +586,7 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 				qglDisable(GL_TEXTURE_2D);
 				qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
 			}
+#endif
 		}
 	}
 	if (tr.cloudsImageInited) {
