@@ -278,10 +278,20 @@ void RB_ShadowFinish( void ) {
 //	qglColor3f( 1, 0, 0 );
 //	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
 
-	qglBegin( GL_QUADS );
+	//qglBegin( GL_QUADS );
+	//qglVertex3f( -100, 100, -10 );
+	//qglVertex3f( 100, 100, -10 );
+	//qglVertex3f( 100, -100, -10 );
+	//qglVertex3f( -100, -100, -10 );
+	//qglEnd ();
+
+	qglBegin( GL_TRIANGLES );
 	qglVertex3f( -100, 100, -10 );
 	qglVertex3f( 100, 100, -10 );
 	qglVertex3f( 100, -100, -10 );
+
+	qglVertex3f(-100, 100, -10);
+	qglVertex3f(100, -100, -10);
 	qglVertex3f( -100, -100, -10 );
 	qglEnd ();
 

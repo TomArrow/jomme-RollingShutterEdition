@@ -496,6 +496,29 @@ static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
 
 }
 
+static int parseVec4(const char* text, vec4_t out) {
+	int matches = sscanf(text, "%f %f %f %f", &out[0], &out[1], &out[2], &out[3]);
+	if (matches <= 0) {
+		out[0] = out[1] = out[2] = out[3] = 1.0f;
+	}
+	else if (matches == 1) {
+		// Only 1 number. Use as scale in general for colors.
+		out[1] = out[2] = out[0];
+		out[3] = 1.0f;
+	}
+	else if (matches == 3) { // Alpha not specified
+		out[3] = 1.0f;
+	}
+	else if (matches == 2) { // First number is color scale, second is alpha
+		out[3] = out[1];
+		out[1] = out[2] = out[0];
+	}
+	else {
+		// I guess we got all 4? All good.
+	}
+	return matches;
+}
+
 /*
 ====================
 RE_BeginFrame
@@ -713,7 +736,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 	if (r_stencilShadowColor->modified) {
 		const char* stencilShadowColorTextPointer = r_stencilShadowColor->string;
-		if (!COM_ParseVec4((const char**)&stencilShadowColorTextPointer,&tr.stencilShadowColor)) {
+		if (!parseVec4(stencilShadowColorTextPointer, tr.stencilShadowColor)) {
 			Vector4Set(tr.stencilShadowColor,0.6f,0.6f,0.6f,1.0f);
 		}
 		r_stencilShadowColor->modified = qfalse;

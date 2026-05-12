@@ -2496,7 +2496,7 @@ void RenderSurfaces(CRenderSurface &RS) //also ended up just ripping right from 
 		if ( /*!RS.personalModel
 			&& */r_shadows->integer == 2 
 //			&& RS.fogNum == 0
-			&& (RS.renderfx & RF_SHADOW_PLANE )
+			//&& (RS.renderfx & RF_SHADOW_PLANE )
 			&& !(RS.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
 			&& shader->sort == SS_OPAQUE ) 
 		{		// set the surface info to point at the where the transformed bone list is going to be for when the surface gets rendered out
@@ -3648,7 +3648,7 @@ void RB_SurfaceGhoul( CRenderableSurface *surf )
 #endif
 
 	// first up, sanity check our numbers
-	RB_CheckOverflow( surface->numVerts, surface->numTriangles );
+	RB_CheckOverflow( surface->numVerts, surface->numTriangles*3);
 
 	//
 	// deform the vertexes by the lerped bones
