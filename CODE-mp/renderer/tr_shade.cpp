@@ -458,6 +458,31 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 
 	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL,NULL, NULL, NULL,NULL,state->styles);
 }
+// keep all the vertices etc, only change the shader
+void RB_RedoSurface( shader_t *shader ) {
+
+	shader_t *state = (shader->remappedShader) ? shader->remappedShader : shader;
+
+	if (tr.mmeSkyShader && state->isSky) {
+		state = tr.mmeSkyShader;
+	}
+
+	tess.shader = state;
+	//tess.dlightBits = 0;		// will be OR'd in by surface functions
+
+	tess.xstages = state->stages;
+	tess.numPasses = state->numUnfoggedPasses;
+	tess.currentStageIteratorFunc = state->optimalStageIteratorFunc;
+
+	tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
+	if (tess.shader->clampTime && tess.shaderTime >= tess.shader->clampTime) {
+		tess.shaderTime = tess.shader->clampTime;
+	}
+
+	tess.fading = false;
+
+	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL,NULL, NULL, NULL,NULL,state->styles);
+}
 
 static void R_BindSceneViewImage() {
 	int currenttmu = glState.currenttmu;
@@ -2557,13 +2582,22 @@ void RB_HackPortalSurfaceTessEnd() {
 /*
 ** RB_EndSurface
 */
-void RB_EndSurface( void ) {
+void RB_EndSurface( qboolean projecting ) {
 	shaderCommands_t *input;
 
 	input = &tess;
 
 	if (input->numIndexes == 0) {
 		return;
+	}
+
+	if (projecting) {
+		if (g_bRenderZPrepass) {
+			return;
+		}
+		if (tess.shader->isSky) { // crashes otherwise :)
+			return;
+		}
 	}
 
 	if (input->indexes[SHADER_MAX_INDEXES-1] != 0) {
@@ -2616,8 +2650,6 @@ void RB_EndSurface( void ) {
 	if ( r_shownormals->integer/* && com_developer->integer*/ ) {
 		DrawNormals (input);
 	}
-	// clear shader so we can tell we don't have any unclosed surfaces
-	tess.numIndexes = 0;
 
 	if (glState.rectangletex[0] || glState.rectangletex[1]) { // just to be safe, in case we didnt draw anything other than that, to not trip up random native opengl calls later?
 		int currenttmu = glState.currenttmu;
@@ -2629,5 +2661,16 @@ void RB_EndSurface( void ) {
 	}
 
 	GLimp_LogComment( "----------\n" );
+
+
+	// do an additional pass for the projector shader (ye ik, disgusting)
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !projecting && !backEnd.projection2D) {
+		RB_RedoSurface(tr.projector.shader);
+		RB_EndSurface(qtrue);
+		//tess.currentStageIteratorFunc();
+	}
+	// clear shader so we can tell we don't have any unclosed surfaces
+	tess.numIndexes = 0;
+
 }
 

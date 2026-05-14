@@ -519,6 +519,28 @@ static int parseVec4(const char* text, vec4_t out) {
 	return matches;
 }
 
+static int parseVec3(const char* text, vec3_t out) {
+	int matches = sscanf(text, "%f %f %f", &out[0], &out[1], &out[2], &out[3]);
+	if (matches <= 0) {
+		out[0] = out[1] = out[2] = 1.0f;
+	}
+	else if (matches == 1) {
+		// Only 1 number. Use as scale in general for colors.
+		out[1] = out[2] = out[0];
+	}
+	else if (matches == 3) { // Alpha not specified
+
+	}
+	else if (matches == 2) { // First number is color scale, second is alpha
+		//out[3] = out[1];
+		out[1] = out[2] = out[0];
+	}
+	else {
+		// I guess we got all 4? All good.
+	}
+	return matches;
+}
+
 /*
 ====================
 RE_BeginFrame
@@ -629,6 +651,36 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			tr.mmeWorldShader = 0;
 		}
 		mme_worldShader->modified = qfalse;
+	}
+
+	if ( r_fboGLSLProjector ) { // yes im checking if the cvar exists, not if integer is 1
+		if (r_fboGLSLProjectorShader->modified) {
+			if (R_FindShaderText(r_fboGLSLProjectorShader->string)) {
+				tr.projector.shader = R_FindShader(r_fboGLSLProjectorShader->string, lightmapsNone, stylesDefault, qtrue);
+			}
+			else {
+				tr.projector.shader = 0;
+			}
+			r_fboGLSLProjectorShader->modified = qfalse;
+		}
+		if (r_fboGLSLProjectorPos->modified) {
+			const char* s = r_fboGLSLProjectorPos->string;
+			if (!parseVec3(s, tr.projector.pos)) {
+				VectorSet(tr.projector.pos, -588, 4516, 216);
+			}
+			r_fboGLSLProjectorPos->modified = qfalse;
+		}
+		if (r_fboGLSLProjectorAng->modified) {
+			const char* s = r_fboGLSLProjectorAng->string;
+			if (!parseVec3(s, tr.projector.ang)) {
+				VectorSet(tr.projector.ang, 0, 90, 0);
+			}
+			r_fboGLSLProjectorAng->modified = qfalse;
+		}
+		if (r_fboGLSLProjectorFov->modified) {
+			tr.projector.fov = r_fboGLSLProjectorFov->value;
+			r_fboGLSLProjectorFov->modified = qfalse;
+		}
 	}
 
 	if ( mme_skyShader->modified) {

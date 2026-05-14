@@ -256,6 +256,11 @@ cvar_t *r_fboGLSLFog;
 cvar_t *r_fboGLSLFogColor;
 cvar_t *r_fboGLSLPreviewSecondary;
 cvar_t *r_fboGLSLGigaTCGen;
+cvar_t *r_fboGLSLProjector;
+cvar_t *r_fboGLSLProjectorShader;
+cvar_t *r_fboGLSLProjectorPos;
+cvar_t *r_fboGLSLProjectorAng;
+cvar_t *r_fboGLSLProjectorFov;
 cvar_t *r_fboFishEye;
 cvar_t *r_fboFishEyeNormalBlend; // doesnt do anything rn
 cvar_t *r_fboFishEyeTessellate;
@@ -1869,6 +1874,12 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLFastPreview = ri.Cvar_Get( "r_fboGLSLFastPreview", "1", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSLGigaTCGen = ri.Cvar_Get( "r_fboGLSLGigaTCGen", "1", CVAR_ARCHIVE);
+	r_fboGLSLProjector = ri.Cvar_Get( "r_fboGLSLProjector", "0", CVAR_ARCHIVE);
+	r_fboGLSLProjectorShader = ri.Cvar_Get( "r_fboGLSLProjectorShader", "textures/doomgiver/mapd2", CVAR_ARCHIVE);
+	r_fboGLSLProjectorPos = ri.Cvar_Get( "r_fboGLSLProjectorPos", "-588 4516 216", CVAR_ARCHIVE);
+	r_fboGLSLProjectorAng = ri.Cvar_Get( "r_fboGLSLProjectorAng", "0 90 0", CVAR_ARCHIVE);
+	r_fboGLSLProjectorFov = ri.Cvar_Get( "r_fboGLSLProjectorFov", "50", CVAR_ARCHIVE);
+	r_fboGLSLProjectorShader->modified = r_fboGLSLProjectorPos->modified = r_fboGLSLProjectorAng->modified = r_fboGLSLProjectorFov->modified = qtrue;
 	r_fboFishEye = ri.Cvar_Get( "r_fboFishEye", "0", CVAR_ARCHIVE);
 	r_fboFishEyeNormalBlend = ri.Cvar_Get( "r_fboFishEyeNormalBlend", "0.0", CVAR_ARCHIVE);
 	r_fboFishEyeTessellate = ri.Cvar_Get( "r_fboFishEyeTessellate", "1", CVAR_ARCHIVE);

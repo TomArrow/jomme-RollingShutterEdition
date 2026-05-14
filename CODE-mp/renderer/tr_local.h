@@ -1361,6 +1361,12 @@ typedef struct {
 	shader_t				*sortedShaders[MAX_SHADERS];
 	shader_t				*mmeWorldShader;
 	shader_t				*mmeSkyShader;
+	struct {
+		shader_t			*shader;
+		vec3_t				pos;
+		vec3_t				ang;
+		float				fov;
+	} projector;
 	deformStage_t			mmeWorldDeform;
 	int						mmeWorldBlend;
 	vec4_t					mmeSkyColor;
@@ -1518,6 +1524,11 @@ extern cvar_t	*r_fboGLSLCloudIntensityCompensate;
 extern cvar_t	*r_fboGLSLFog;
 extern cvar_t	*r_fboGLSLFogColor;
 extern cvar_t	*r_fboGLSLFastPreview;
+extern cvar_t	*r_fboGLSLProjector;
+extern cvar_t	*r_fboGLSLProjectorShader;
+extern cvar_t	*r_fboGLSLProjectorPos;
+extern cvar_t	*r_fboGLSLProjectorAng;
+extern cvar_t	*r_fboGLSLProjectorFov;
 extern cvar_t	*r_fboFishEye;
 extern cvar_t	*r_fboFishEyeNormalBlend;
 extern cvar_t	*r_ext_compiled_vertex_array;
@@ -1974,7 +1985,8 @@ inline bool RB_TessShaderSame(shader_t* shader, shader_t* tessShader) {
 }
 
 void RB_BeginSurface(shader_t *shader, int fogNum );
-void RB_EndSurface(void);
+void RB_RedoSurface(shader_t* shader);
+void RB_EndSurface(qboolean projecting = qfalse);
 void RB_CheckOverflow( int verts, int indexes );
 #define RB_CHECKOVERFLOW(v,i) if (tess.numVertexes + (v) >= SHADER_MAX_VERTEXES/2 && tess.shader == tr.shadowShader || tess.numVertexes + (v) >= SHADER_MAX_VERTEXES || tess.numIndexes + (i) >= SHADER_MAX_INDEXES ) {RB_CheckOverflow(v,i);}
 

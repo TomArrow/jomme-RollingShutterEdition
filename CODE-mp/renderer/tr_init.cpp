@@ -1261,6 +1261,13 @@ void R_Init( void ) {
 		r_fboGLSLFogColor->modified = qtrue; // cringe xd
 	}
 
+	if (r_fboGLSLProjector) {
+		r_fboGLSLProjectorShader->modified = qtrue; // cringe xd
+		r_fboGLSLProjectorPos->modified = qtrue; // cringe xd
+		r_fboGLSLProjectorAng->modified = qtrue; // cringe xd
+		r_fboGLSLProjectorFov->modified = qtrue; // cringe xd
+	}
+
 	// During init, enable debug output
 	//qglEnable(GL_DEBUG_OUTPUT); //Nope won't work. Needs opengl 4.3.
 	//qglDebugMessageCallback(MessageCallback, 0);
