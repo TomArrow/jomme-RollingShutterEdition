@@ -1365,7 +1365,9 @@ typedef struct {
 		shader_t			*shader;
 		vec3_t				pos;
 		vec3_t				ang;
-		float				fov;
+		float				fov[2];
+		float				modelMatrix[16];
+		float				projectionMatrix[16];
 	} projector;
 	deformStage_t			mmeWorldDeform;
 	int						mmeWorldBlend;
@@ -1732,6 +1734,9 @@ void R_WorldNormalToEntity (vec3_t localVec, vec3_t world);
 int R_CullLocalBox (vec3_t bounds[2]);
 int R_CullPointAndRadius( vec3_t origin, float radius );
 int R_CullLocalPointAndRadius( vec3_t origin, float radius );
+
+void myGlMultMatrix(const float* a, const float* b, float* out);
+extern float	s_flipMatrix[16];
 
 void R_RotateForEntity( const trRefEntity_t *ent, const viewParms_t *viewParms, orientationr_t *ori );
 void R_RotateForWorld ( const orientationr_t* input, orientationr_t* world );
@@ -2612,6 +2617,7 @@ typedef struct {
 typedef struct {
 	unsigned int	textRectBitmask;
 	int				lightmapNums[31];
+	qboolean		projectorActive;
 } fboExtraUniforms_t;
 
 extern fboExtraUniforms_t fboUniformsEx;

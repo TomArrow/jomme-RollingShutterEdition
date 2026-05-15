@@ -520,7 +520,7 @@ static int parseVec4(const char* text, vec4_t out) {
 }
 
 static int parseVec3(const char* text, vec3_t out) {
-	int matches = sscanf(text, "%f %f %f", &out[0], &out[1], &out[2], &out[3]);
+	int matches = sscanf(text, "%f %f %f", &out[0], &out[1], &out[2]);
 	if (matches <= 0) {
 		out[0] = out[1] = out[2] = 1.0f;
 	}
@@ -536,10 +536,146 @@ static int parseVec3(const char* text, vec3_t out) {
 		out[1] = out[2] = out[0];
 	}
 	else {
-		// I guess we got all 4? All good.
+		// I guess we got all 3? All good.
 	}
 	return matches;
 }
+
+static int parseVec2(const char* text, float* out) {
+	int matches = sscanf(text, "%f %f", &out[0], &out[1]);
+	if (matches <= 0) {
+		out[0] = out[1] = 1.0f;
+	}
+	else if (matches == 1) {
+		// Only 1 number. Use as scale in general for colors.
+		out[1] = out[0];
+	}
+	else {
+		// I guess we got all 2? All good.
+	}
+	return matches;
+}
+
+static void R_UpdateProjectorModelMatrix() {
+
+	float	viewerMatrix[16];
+	const float* origin = tr.projector.pos;
+	vec3_t		axis[3];		// orientation in world
+	AnglesToAxis(tr.projector.ang, axis);
+
+	viewerMatrix[0] = axis[0][0];
+	viewerMatrix[4] = axis[0][1];
+	viewerMatrix[8] = axis[0][2];
+	viewerMatrix[12] = -origin[0] * viewerMatrix[0] + -origin[1] * viewerMatrix[4] + -origin[2] * viewerMatrix[8];
+
+	viewerMatrix[1] = axis[1][0];
+	viewerMatrix[5] = axis[1][1];
+	viewerMatrix[9] = axis[1][2];
+	viewerMatrix[13] = -origin[0] * viewerMatrix[1] + -origin[1] * viewerMatrix[5] + -origin[2] * viewerMatrix[9];
+
+	viewerMatrix[2] = axis[2][0];
+	viewerMatrix[6] = axis[2][1];
+	viewerMatrix[10] = axis[2][2];
+	viewerMatrix[14] = -origin[0] * viewerMatrix[2] + -origin[1] * viewerMatrix[6] + -origin[2] * viewerMatrix[10];
+
+	viewerMatrix[3] = 0;
+	viewerMatrix[7] = 0;
+	viewerMatrix[11] = 0;
+	viewerMatrix[15] = 1;
+
+	// convert from our coordinate system (looking down X)
+	// to OpenGL's coordinate system (looking down -Z)
+	myGlMultMatrix(viewerMatrix, s_flipMatrix, tr.projector.modelMatrix);
+}
+
+static void R_UpdateProjectorMatrix(void) {
+	float	xmin, xmax, ymin, ymax;
+	float	width, height, depth;
+	float	zNear, zFar, zProj, stereoSep;
+	float	dx=0, dy=0;
+	int		jitterIndex = 0;
+	int		jitterTotalFrames = 0;
+	vec2_t	pixelJitter, eyeJitter;
+	vec3_t	lightsVoxelJitter = { 0 };
+	vec3_t	lightsJitter = { 0 };
+
+	//
+	// set up projection matrix
+	//
+	zNear = r_znear->value;
+	zFar = 4000;// backEnd.viewParms.zFar; //hmm
+
+
+	zProj = r_zproj->value;
+	stereoSep = 0;// r_stereoSeparation->value;
+
+	ymax = zNear * tan(tr.projector.fov[1] * M_PI / 360.0f);
+	ymin = -ymax;
+
+	xmax = zNear * tan(tr.projector.fov[0] * M_PI / 360.0f);
+	xmin = -xmax;
+
+	width = xmax - xmin;
+	height = ymax - ymin;
+	depth = zFar - zNear;
+
+	pixelJitter[0] = pixelJitter[1] = 0;
+	eyeJitter[0] = eyeJitter[1] = 0;
+
+
+	/* Jitter the view */
+	/*
+	if (stereoSep <= 0.0f) {
+		R_MME_JitterView(pixelJitter, eyeJitter, lightsVoxelJitter, lightsJitter, &jitterIndex, &jitterTotalFrames);
+	}
+	else if (stereoSep > 0.0f) {
+		R_MME_JitterViewStereo(pixelJitter, eyeJitter); // didnt implement light jitter for stero :)
+	}
+
+	dx = (pixelJitter[0] * width) / backEnd.viewParms.viewportWidth;
+	dy = (pixelJitter[1] * height) / backEnd.viewParms.viewportHeight;
+	dx += eyeJitter[0];
+	dy += eyeJitter[1];*/
+
+
+	xmin += dx; xmax += dx;
+	ymin += dy; ymax += dy;
+
+	//qglMatrixMode(GL_PROJECTION);
+	//qglPushMatrix();
+	//qglLoadIdentity();
+	//qglFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
+	//qglGetFloatv(GL_PROJECTION_MATRIX, tr.projector.projectionMatrix);
+	//qglPopMatrix();
+
+	tr.projector.projectionMatrix[0] = 2 * zNear / width;
+	tr.projector.projectionMatrix[4] = 0;
+	tr.projector.projectionMatrix[8] = (xmax + xmin + 2 * stereoSep) / width;	// normally 0
+	tr.projector.projectionMatrix[12] = 2 * zProj * stereoSep / width;
+
+	tr.projector.projectionMatrix[1] = 0;
+	tr.projector.projectionMatrix[5] = 2 * zNear / height;
+	tr.projector.projectionMatrix[9] = (ymax + ymin) / height;	// normally 0
+	tr.projector.projectionMatrix[13] = 0;
+
+	tr.projector.projectionMatrix[2] = 0;
+	tr.projector.projectionMatrix[6] = 0;
+	if (r_zinvert->integer) {
+		tr.projector.projectionMatrix[10] = -(zNear) / depth;
+		tr.projector.projectionMatrix[14] = -zFar * zNear / depth;
+	}
+	else {
+		tr.projector.projectionMatrix[10] = -(zFar + zNear) / depth;
+		tr.projector.projectionMatrix[14] = -2 * zFar * zNear / depth;
+	}
+
+	tr.projector.projectionMatrix[3] = 0;
+	tr.projector.projectionMatrix[7] = 0;
+	tr.projector.projectionMatrix[11] = -1;
+	tr.projector.projectionMatrix[15] = 0;
+}
+
+
 
 /*
 ====================
@@ -668,6 +804,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			if (!parseVec3(s, tr.projector.pos)) {
 				VectorSet(tr.projector.pos, -588, 4516, 216);
 			}
+			R_UpdateProjectorModelMatrix();
 			r_fboGLSLProjectorPos->modified = qfalse;
 		}
 		if (r_fboGLSLProjectorAng->modified) {
@@ -675,10 +812,16 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			if (!parseVec3(s, tr.projector.ang)) {
 				VectorSet(tr.projector.ang, 0, 90, 0);
 			}
+			R_UpdateProjectorModelMatrix();
 			r_fboGLSLProjectorAng->modified = qfalse;
 		}
 		if (r_fboGLSLProjectorFov->modified) {
-			tr.projector.fov = r_fboGLSLProjectorFov->value;
+			const char* s = r_fboGLSLProjectorFov->string;
+			if (!parseVec2(s, tr.projector.fov)) {
+				tr.projector.fov[0] = 40;
+				tr.projector.fov[1] = 30;
+			}
+			R_UpdateProjectorMatrix();
 			r_fboGLSLProjectorFov->modified = qfalse;
 		}
 	}

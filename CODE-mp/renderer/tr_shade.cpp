@@ -2665,8 +2665,12 @@ void RB_EndSurface( qboolean projecting ) {
 
 	// do an additional pass for the projector shader (ye ik, disgusting)
 	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !projecting && !backEnd.projection2D) {
+		fboUniformsEx.projectorActive = qtrue;
+		R_FrameBuffer_SetDynamicUniforms3();
 		RB_RedoSurface(tr.projector.shader);
 		RB_EndSurface(qtrue);
+		fboUniformsEx.projectorActive = qfalse;
+		R_FrameBuffer_SetDynamicUniforms3();
 		//tess.currentStageIteratorFunc();
 	}
 	// clear shader so we can tell we don't have any unclosed surfaces

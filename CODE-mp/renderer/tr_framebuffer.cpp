@@ -108,6 +108,10 @@ typedef struct uniformLocations_t {
 	GLint soundDeformSampleRateUniform;
 	GLint soundDeformSampleCountUniform;
 
+	GLint projectorModelViewMatrixUniform;
+	GLint projectorProjectionMatrixUniform;
+	GLint projectorActiveUniform;
+
 	GLint soundDeformTimeUniform;
 	GLint soundDeformIntensityUniform;
 	GLint soundDeformSpreadSpeedUniform;
@@ -437,6 +441,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->soundDeformSampleRateUniform, fbo.soundDeformSampleRate);
 		qglUniform1i(uniformLocationsTess->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
 
+		qglUniformMatrix4fv(uniformLocationsTess->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
+		qglUniformMatrix4fv(uniformLocationsTess->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
+		qglUniform1i(uniformLocationsTess->projectorActiveUniform, fboUniformsEx.projectorActive);
+
 		qglUniform1f(uniformLocationsTess->soundDeformTimeUniform, fbo.musicDeformData.time);
 		qglUniform1f(uniformLocationsTess->soundDeformIntensityUniform, fbo.musicDeformData.intensity);
 		qglUniform1f(uniformLocationsTess->soundDeformSpreadSpeedUniform, fbo.musicDeformData.spreadSpeed);
@@ -557,6 +565,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniformMatrix4fv(uniformLocations->worldModelViewMatrixUniform, 1, GL_FALSE, backEnd.viewParms.world.modelMatrix);
 		qglUniform1i(uniformLocations->soundDeformSampleRateUniform, fbo.soundDeformSampleRate);
 		qglUniform1i(uniformLocations->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
+
+		qglUniformMatrix4fv(uniformLocations->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
+		qglUniformMatrix4fv(uniformLocations->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
+		qglUniform1i(uniformLocations->projectorActiveUniform, fboUniformsEx.projectorActive);
 
 		qglUniform1f(uniformLocations->soundDeformTimeUniform, fbo.musicDeformData.time);
 		qglUniform1f(uniformLocations->soundDeformIntensityUniform, fbo.musicDeformData.intensity);
@@ -1661,6 +1673,10 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->soundDeformSampleRateUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleRateUniform");
 		locs->soundDeformSampleCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleCountUniform");
 
+		locs->projectorModelViewMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorModelViewMatrixUniform");
+		locs->projectorProjectionMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorProjectionMatrixUniform");
+		locs->projectorActiveUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorActiveUniform");
+
 		locs->soundDeformTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformTimeUniform");
 		locs->soundDeformIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformIntensityUniform");
 		locs->soundDeformSpreadSpeedUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSpreadSpeedUniform");
@@ -1878,7 +1894,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLProjectorShader = ri.Cvar_Get( "r_fboGLSLProjectorShader", "textures/doomgiver/mapd2", CVAR_ARCHIVE);
 	r_fboGLSLProjectorPos = ri.Cvar_Get( "r_fboGLSLProjectorPos", "-588 4516 216", CVAR_ARCHIVE);
 	r_fboGLSLProjectorAng = ri.Cvar_Get( "r_fboGLSLProjectorAng", "0 90 0", CVAR_ARCHIVE);
-	r_fboGLSLProjectorFov = ri.Cvar_Get( "r_fboGLSLProjectorFov", "50", CVAR_ARCHIVE);
+	r_fboGLSLProjectorFov = ri.Cvar_Get( "r_fboGLSLProjectorFov", "40 30", CVAR_ARCHIVE);
 	r_fboGLSLProjectorShader->modified = r_fboGLSLProjectorPos->modified = r_fboGLSLProjectorAng->modified = r_fboGLSLProjectorFov->modified = qtrue;
 	r_fboFishEye = ri.Cvar_Get( "r_fboFishEye", "0", CVAR_ARCHIVE);
 	r_fboFishEyeNormalBlend = ri.Cvar_Get( "r_fboFishEyeNormalBlend", "0.0", CVAR_ARCHIVE);

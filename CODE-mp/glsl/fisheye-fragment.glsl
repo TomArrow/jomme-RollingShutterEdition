@@ -201,6 +201,11 @@ varying vec2 my_TexCoord[TEXTURE_COUNT];
 uniform mat4x4 worldModelViewMatrixUniform;
 in mat4x4 worldModelViewMatrixReverseGeom;
 
+
+uniform mat4x4 projectorModelViewMatrixUniform;
+uniform mat4x4 projectorProjectionMatrixUniform;
+uniform int projectorActiveUniform;
+
 const mat4 lightdirtransform = mat4(
 	2.0f,0.0f,0.0f,0.0f,
 	0.0f,2.0f,0.0f,0.0f,
@@ -1532,6 +1537,31 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	
 	vec3 lightReferenceNormal = (isModelUniform > 0 || stageForceNormalUniform > 0 || surfaceTypeUniform == SF_GRID) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	vec3 worldPixel = (worldModelViewMatrixReverseGeom*eyeSpaceCoordsGeom).xyz;
+		
+	if(projectorActiveUniform > 0){
+		//if(worldPixel - projectorPos){
+		//lightReferenceNormal
+		//}
+		// untested, but i figure its something like this...
+		vec4 projectorEyePixel = projectorModelViewMatrixUniform*vec4(worldPixel,1.0f);
+		vec4 clipSpace = projectorProjectionMatrixUniform*projectorEyePixel;
+		if(clipSpace.w >= 0)
+		{
+			outFragColor = vec4(0);
+			isinvisible = true;
+			return true; // ok? why do light calc for shit that isnt even visible
+		}
+		clipSpace.xyz /= clipSpace.w;
+		if(clipSpace.x < -1 || clipSpace.x > 1 || clipSpace.y < -1 || clipSpace.y > 1)
+		{
+			outFragColor = vec4(0);
+			isinvisible = true;
+			return true; // ok? why do light calc for shit that isnt even visible
+		}
+		rawUVCoords.s = clipSpace.x*0.5f + 0.5f;
+		rawUVCoords.t = clipSpace.y*0.5f + 0.5f;
+	}
+
 	vec3 viewerVector = -eyeSpaceCoordsGeom.xyz;
 	bool doingGigaEnvTCGen = false;
 	bool isSimpleTCGenEnv = stageTCGenUniform == TCGEN_ENVIRONMENT_MAPPED && stageHasTCModUniform == 0;
@@ -1592,9 +1622,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		}
 	}
 
-    if(fishEyeModeUniform == 0 && !tex0IsRect){
+    if(fishEyeModeUniform == 0 && projectorActiveUniform == 0 && !tex0IsRect){
 	
-		if(!doingGigaEnvTCGen && !standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
+		if( !doingGigaEnvTCGen && !standAloneLightmap && perlinFuckery == 0 && isWorldBrushUniform > 0 && (renderFlagsUniform & RENDERFLAG_SIMPLELIGHTING) == 0 && (renderFlagsUniform & RENDERFLAG_NOLIGHTING) == 0){
 			uvCoords = parallaxMapLayersUniform < 2 ? parallaxMap(thelod,thegrad,rawUVCoords):parallaxMapSteep(effectiveUVPixelPos,thelod,thegrad);
 			if(ssr){
 				for(int i=0;i<ssrMultiSampleCount;i++){
@@ -1728,7 +1758,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	//vec3 lightNormal = normal;
 	vec3 lightNormal = vertexLit ? lightReferenceNormal : lightmapReferenceNormal;
-	if(!isSimpleTCGenEnv){
+	if(!isSimpleTCGenEnv && projectorActiveUniform == 0){
 		lightNormal = calculateTextureNormal(uvCoords,effectiveUVPixelPos,lightNormal,thelod,thegrad);
 	}
 	vec3 lightNormalWorldReflect[MAX_SSR_MULTISAMPLE*MAX_SSR_MULTISAMPLE];
