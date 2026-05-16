@@ -110,6 +110,7 @@ typedef struct uniformLocations_t {
 
 	GLint projectorModelViewMatrixUniform;
 	GLint projectorProjectionMatrixUniform;
+	GLint projectorPosUniform;
 	GLint projectorActiveUniform;
 
 	GLint soundDeformTimeUniform;
@@ -443,6 +444,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniformMatrix4fv(uniformLocationsTess->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
 		qglUniformMatrix4fv(uniformLocationsTess->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
+		qglUniform3fv(uniformLocationsTess->projectorPosUniform, 1, tr.projector.pos);
 		qglUniform1i(uniformLocationsTess->projectorActiveUniform, fboUniformsEx.projectorActive);
 
 		qglUniform1f(uniformLocationsTess->soundDeformTimeUniform, fbo.musicDeformData.time);
@@ -568,6 +570,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 		qglUniformMatrix4fv(uniformLocations->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
 		qglUniformMatrix4fv(uniformLocations->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
+		qglUniform3fv(uniformLocations->projectorPosUniform, 1, tr.projector.pos);
 		qglUniform1i(uniformLocations->projectorActiveUniform, fboUniformsEx.projectorActive);
 
 		qglUniform1f(uniformLocations->soundDeformTimeUniform, fbo.musicDeformData.time);
@@ -1675,6 +1678,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 
 		locs->projectorModelViewMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorModelViewMatrixUniform");
 		locs->projectorProjectionMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorProjectionMatrixUniform");
+		locs->projectorPosUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorPosUniform");
 		locs->projectorActiveUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorActiveUniform");
 
 		locs->soundDeformTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformTimeUniform");
