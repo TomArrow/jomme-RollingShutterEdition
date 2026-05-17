@@ -25,6 +25,9 @@ bool g_bRenderProjectorPrepass = false;
 // whether a z prepass has been rendered for the current surfaces
 bool g_bRenderedZPrepass = false;
 
+// whether we are rendering the projector
+bool g_bRenderProjector = false;
+
 // Whether we are currently rendering only glowing objects or not.
 bool g_bRenderGlowingObjects = false;
 

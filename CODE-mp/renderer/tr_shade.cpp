@@ -24,6 +24,7 @@ const float floatColorsScaleFactor = 1.0f / 255.0f;
 #ifdef JEDIACADEMY_GLOW
 extern bool g_bRenderGlowingObjects;
 #endif
+extern bool g_bRenderProjector;
 
 /*
 ================
@@ -2075,6 +2076,13 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 			continue;
 		}
 #endif
+		// nvm thinking mistake...
+		//if (g_bRenderProjector && (pStage->stateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) && 
+		//	((pStage->stateBits & (GLS_SRCBLEND_BITS) != GLS_SRCBLEND_ONE) || (pStage->stateBits & (GLS_DSTBLEND_BITS) != GLS_DSTBLEND_ZERO))
+		//	) {
+		//	continue; // this stage has some kind of transparency. its gonna look cancer when projecting onto,
+		//}
+
 		if (g_bRenderZPrepass && !(pStage->stateBits & GLS_DEPTHMASK_TRUE)) {
 			continue; // this stage doesnt seem to write anything to depth, so dont bother
 		}
@@ -2694,7 +2702,12 @@ void RB_EndSurface( qboolean projecting ) {
 
 
 	// do an additional pass for the projector shader (ye ik, disgusting)
-	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !projecting && !backEnd.projection2D) {
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !projecting && !backEnd.projection2D && !tess.shader->defaultShader && tess.shader != tr.defaultShader && tess.shader->sort < SS_BLEND0 &&
+		 !( // if stage 0 has some kind of transparency, let's not do this, as transparent images usually don't cover the entire area, but the projector would, looking fugly.
+			 (tess.xstages[0]->stateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) &&
+			((tess.xstages[0]->stateBits & (GLS_SRCBLEND_BITS) != GLS_SRCBLEND_ONE) || (tess.xstages[0]->stateBits & (GLS_DSTBLEND_BITS) != GLS_DSTBLEND_ZERO))
+			 )
+		) {
 		fboUniformsEx.projectorActive = qtrue;
 		R_FrameBuffer_SetDynamicUniforms3();
 
@@ -2713,8 +2726,12 @@ void RB_EndSurface( qboolean projecting ) {
 
 		qglPopMatrix();
 
+		g_bRenderProjector = true;
+
 		RB_RedoSurface(tr.projector.shader);
 		RB_EndSurface(qtrue);
+
+		g_bRenderProjector = false;
 
 		qglDisable(GL_CLIP_PLANE2);
 		qglDisable(GL_CLIP_PLANE3);
