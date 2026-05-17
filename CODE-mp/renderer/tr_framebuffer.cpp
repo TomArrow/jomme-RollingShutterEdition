@@ -263,6 +263,7 @@ cvar_t *r_fboGLSLFogColor;
 cvar_t *r_fboGLSLPreviewSecondary;
 cvar_t *r_fboGLSLGigaTCGen;
 cvar_t *r_fboGLSLProjector;
+cvar_t *r_fboGLSLProjectorWorldShadow;
 cvar_t *r_fboGLSLProjectorShader;
 cvar_t *r_fboGLSLProjectorPos;
 cvar_t *r_fboGLSLProjectorAng;
@@ -2019,6 +2020,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSLGigaTCGen = ri.Cvar_Get( "r_fboGLSLGigaTCGen", "1", CVAR_ARCHIVE);
 	r_fboGLSLProjector = ri.Cvar_Get( "r_fboGLSLProjector", "0", CVAR_ARCHIVE);
+	r_fboGLSLProjectorWorldShadow = ri.Cvar_Get( "r_fboGLSLProjectorWorldShadow", "1", CVAR_ARCHIVE);
 	r_fboGLSLProjectorShader = ri.Cvar_Get( "r_fboGLSLProjectorShader", "textures/doomgiver/mapd2", CVAR_ARCHIVE);
 	r_fboGLSLProjectorPos = ri.Cvar_Get( "r_fboGLSLProjectorPos", "-588 4516 216", CVAR_ARCHIVE);
 	r_fboGLSLProjectorAng = ri.Cvar_Get( "r_fboGLSLProjectorAng", "0 90 0", CVAR_ARCHIVE);

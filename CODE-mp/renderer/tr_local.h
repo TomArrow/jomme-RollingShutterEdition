@@ -1536,6 +1536,7 @@ extern cvar_t	*r_fboGLSLFog;
 extern cvar_t	*r_fboGLSLFogColor;
 extern cvar_t	*r_fboGLSLFastPreview;
 extern cvar_t	*r_fboGLSLProjector;
+extern cvar_t	*r_fboGLSLProjectorWorldShadow;
 extern cvar_t	*r_fboGLSLProjectorShader;
 extern cvar_t	*r_fboGLSLProjectorPos;
 extern cvar_t	*r_fboGLSLProjectorAng;

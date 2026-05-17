@@ -111,6 +111,10 @@ static qboolean	R_CullSurface( surfaceType_t *surface, shader_t *shader ) {
 		return qfalse;
 	}
 
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer) {
+		return qfalse;
+	}
+
 	if ( shader->cullType == CT_TWO_SIDED ) {
 		return qfalse;
 	}
@@ -313,6 +317,10 @@ static void R_AddWorldSurface( msurface_t *surf, int dlightBits ) {
 	surf->shader->isWorldShader = qtrue;
 
 	R_AddDrawSurf( surf->data, shader, surf->fogIndex, dlightBits );
+
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer && *surf->data == SF_FACE) {
+		R_AddDrawSurf(surf->data, tr.projectorshadowShader, surf->fogIndex, dlightBits);
+	}
 }
 
 /*

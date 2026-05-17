@@ -166,6 +166,7 @@ void RB_ShadowTessEnd( void ) {
 
 	// project vertexes away from light direction
 	if (g_bRenderProjectorPrepass) {
+		expandLength = 9999;
 		if (backEnd.currentEntity == &tr.worldEntity) {
 			VectorCopy(tr.projector.pos, projectorPos);
 		}
