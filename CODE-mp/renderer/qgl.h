@@ -100,8 +100,8 @@ extern void (APIENTRYP qglDebugMessageCallback) (DEBUGPROC callback, const void*
 #define GL_MAX_COLOR_ATTACHMENTS_EXT      0x8CDF
 #define GL_COLOR_ATTACHMENT0_EXT          0x8CE0
 #define GL_COLOR_ATTACHMENT1_EXT          0x8CE1
-//#define GL_COLOR_ATTACHMENT2_EXT          0x8CE2
-//#define GL_COLOR_ATTACHMENT3_EXT          0x8CE3
+#define GL_COLOR_ATTACHMENT2_EXT          0x8CE2
+#define GL_COLOR_ATTACHMENT3_EXT          0x8CE3
 //#define GL_COLOR_ATTACHMENT4_EXT          0x8CE4
 //#define GL_COLOR_ATTACHMENT5_EXT          0x8CE5
 //#define GL_COLOR_ATTACHMENT6_EXT          0x8CE6

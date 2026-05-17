@@ -4786,6 +4786,11 @@ static void CreateInternalShaders( void ) {
 	shader.sort = SS_STENCIL_SHADOW;
 	tr.shadowShader = FinishShader();
 
+	// projector shader is just a marker
+	Q_strncpyz( shader.name, "<projector shadow>", sizeof( shader.name ) );
+	shader.sort = SS_STENCIL_SHADOW;
+	tr.projectorshadowShader = FinishShader();
+
 #ifdef JEDIACADEMY_GLOW
 
 	// Allocate and Load the global 'Glow' Vertex Program. - AReis

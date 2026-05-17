@@ -1543,10 +1543,18 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	vec3 projectorLightDir = - normalize(worldPixel-projectorPosUniform);
 
 	if(projectorActiveUniform > 0){
+		//vec2 shadowBufferCoords = gl_FragCoord.xy / textureSize(text_in[27],0);
+		//vec4 shadowBuffer = textureLod(text_in[27],shadowBufferCoords,0);
+		vec4 shadowBuffer = texelFetch(text_in[27],ivec2(gl_FragCoord.xy),0);
 		//if(worldPixel - projectorPos){
 		//lightReferenceNormal
 		//}
 		// untested, but i figure its something like this...
+		if(shadowBuffer.x != 0){
+			outFragColor = vec4(0);
+			isinvisible = true;
+			return true; // ok? why do light calc for shit that isnt even visible
+		}
 		vec4 projectorEyePixel = projectorModelViewMatrixUniform*vec4(worldPixel,1.0f);
 		vec4 clipSpace = projectorProjectionMatrixUniform*projectorEyePixel;
 		if(clipSpace.w >= 0)

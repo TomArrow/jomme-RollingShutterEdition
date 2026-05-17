@@ -43,8 +43,11 @@ void main(void)
 			discard; // ok? why do light calc for shit that isnt even visible
 		}
 	}
-	gl_FragColor = color; 
-	gl_FragColor.xyz *= vertColor.xyz; 
+	gl_FragData[0] = color; 
+	gl_FragData[0].xyz *= vertColor.xyz; 
+
+	gl_FragData[2].xyz = vec3(1.0,0.0,0.0);
+
 	//gl_FragColor.xyz = vec3(gl_FragCoord.z+0.5f);
 }
 

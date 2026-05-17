@@ -20,6 +20,8 @@ static void RB_BlurGlowTexture();
 
 // whether we are rendering a z prepass
 bool g_bRenderZPrepass = false;
+// whether we are rendering a projector shadow prepass
+bool g_bRenderProjectorPrepass = false;
 // whether a z prepass has been rendered for the current surfaces
 bool g_bRenderedZPrepass = false;
 
@@ -1590,24 +1592,28 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 
 	// z prepass
-	if (r_zPrepass->integer) {
+	if (r_zPrepass->integer || r_fboGLSLProjector && r_fboGLSLProjector->integer) { // projector shadow prepass just utilizes the same logic as z prepass/piggybacks onto it.
 		g_bRenderZPrepass = true;
+		g_bRenderProjectorPrepass = r_fboGLSLProjector && r_fboGLSLProjector->integer;
 		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
 
-		if (r_zPrepass->integer != 2) {
+		if (r_zPrepass->integer != 2 && !g_bRenderProjectorPrepass) {
 			qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont draw anything to color buffer
 		}
 		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
-		if (r_zPrepass->integer != 2) {
+		if (r_zPrepass->integer != 2 && !g_bRenderProjectorPrepass) {
 			qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		}
 		g_bRenderZPrepass = false;
+		g_bRenderProjectorPrepass = false;
 
 		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);
-		g_bRenderedZPrepass = true;
+		if (r_zPrepass->integer) {
+			g_bRenderedZPrepass = true;
+		}
 	}
 
-	if (!g_bRenderedZPrepass || r_zPrepass->integer != 2) {
+	if (!g_bRenderedZPrepass || r_zPrepass->integer != 2 && !(r_fboGLSLProjector && r_fboGLSLProjector->integer > 1)) {
 		RB_RenderDrawSurfList(cmd->drawSurfs, cmd->numDrawSurfs);
 	}
 	g_bRenderedZPrepass = false;

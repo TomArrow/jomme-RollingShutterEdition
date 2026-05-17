@@ -2513,6 +2513,27 @@ void RenderSurfaces(CRenderSurface &RS) //also ended up just ripping right from 
 			newSurf->boneCache = RS.boneCache;
 			R_AddDrawSurf( (surfaceType_t *)newSurf, tr.shadowShader, 0, qfalse );
 		}
+		
+		if ( /*!RS.personalModel
+			&& */r_fboGLSLProjector && r_fboGLSLProjector->integer //&& g_bRenderProjectorPrepass
+//			&& RS.fogNum == 0
+			//&& (RS.renderfx & RF_SHADOW_PLANE )
+			&& !(RS.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
+			&& shader->sort == SS_OPAQUE ) 
+		{		// set the surface info to point at the where the transformed bone list is going to be for when the surface gets rendered out
+			CRenderableSurface *newSurf = new CRenderableSurface;
+			if (surface->numVerts >= SHADER_MAX_VERTEXES/2)
+			{ //we need numVerts*2 xyz slots free in tess to do shadow, if this surf is going to exceed that then let's try the lowest lod -rww
+				mdxmSurface_t *lowsurface = (mdxmSurface_t *)G2_FindSurface(RS.currentModel, RS.surfaceNum, RS.currentModel->numLods-1);
+				newSurf->surfaceData = lowsurface;
+			}
+			else
+			{
+				newSurf->surfaceData = surface;
+			}
+			newSurf->boneCache = RS.boneCache;
+			R_AddDrawSurf( (surfaceType_t *)newSurf, tr.projectorshadowShader, 0, qfalse );
+		}
 
 		// projection shadows work fine with personal models
 		if ( r_shadows->integer == 3

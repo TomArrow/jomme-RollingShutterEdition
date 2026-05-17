@@ -501,6 +501,7 @@ static void R_BindSceneViewImage() {
 	}
 }
 
+
 static void R_UnbindSceneViewImage() {
 	int currenttmu = glState.currenttmu;
 	if (backEnd.needSceneViewAttached) {
@@ -511,6 +512,29 @@ static void R_UnbindSceneViewImage() {
 		GL_Bind(tr.defaultImage);
 		qglDisable(GL_TEXTURE_2D);
 		//GL_SelectTexture(0);
+	}
+	if (glState.currenttmu != currenttmu) {
+		GL_SelectTexture(currenttmu);
+	}
+}
+static void R_BindProjectorImage() {
+	int currenttmu = glState.currenttmu;
+	//if (backEnd.currentEntity->e.useSceneViewTexture) {
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tess.shader == tr.projector.shader) {
+		GL_SelectTexture(27);
+		qglEnable(GL_TEXTURE_2D);
+		R_BindOwnAttachmentAsTexture(27, qfalse, 2);
+	}
+	if (glState.currenttmu != currenttmu) {
+		GL_SelectTexture(currenttmu);
+	}
+}
+static void R_UnbindProjectorImage() {
+	int currenttmu = glState.currenttmu;
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tess.shader == tr.projector.shader) {
+		GL_SelectTexture(27);
+		GL_Bind(tr.defaultImage);
+		qglDisable(GL_TEXTURE_2D);
 	}
 	if (glState.currenttmu != currenttmu) {
 		GL_SelectTexture(currenttmu);
@@ -578,6 +602,7 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 	}
 #endif
 	R_BindSceneViewImage();
+	R_BindProjectorImage();
 	if(glState.currenttmu != currenttmu){
 		GL_SelectTexture(currenttmu);
 	}
@@ -625,6 +650,7 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 	}
 #endif
 	R_UnbindSceneViewImage();
+	R_UnbindProjectorImage();
 	if (glState.currenttmu != currenttmu) {
 		GL_SelectTexture(currenttmu);
 	}
@@ -1488,7 +1514,7 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 	//float variousStuffMultiplier = 1.0f;
 	vec3_t variousStuffMultiplier = {1.0f,1.0f,1.0f};
 
-	if ( tess.shader != tr.projectionShadowShader && tess.shader != tr.shadowShader && 
+	if ( tess.shader != tr.projectionShadowShader && tess.shader != tr.shadowShader && tess.shader != tr.projectorshadowShader && 
 			( backEnd.currentEntity->e.renderfx & (RF_DISINTEGRATE1|RF_DISINTEGRATE2)))
 	{
 		RB_CalcDisintegrateColors( (float *)tess.svars.colors );
@@ -2142,6 +2168,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 
 
 			R_BindSceneViewImage();
+			R_BindProjectorImage();
 
 			//
 			// draw
@@ -2150,6 +2177,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 
 
 			R_UnbindSceneViewImage();
+			R_UnbindProjectorImage();
 		}
 	}
 }
@@ -2374,6 +2402,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, &colorGen, tess.xstages[0], &tess.xstages[0]->forceUseNormal);
 
 	R_BindSceneViewImage();
+	R_BindProjectorImage();
 
 	//
 	// call special shade routine
@@ -2382,7 +2411,8 @@ void RB_StageIteratorVertexLitTexture( void )
 	GL_State( tess.xstages[0]->stateBits );
 	R_DrawElements( input->numIndexes, input->indexes );
 
-	R_UnbindSceneViewImage();
+	R_UnbindSceneViewImage(); 
+	R_UnbindProjectorImage();
 
 	// 
 	// now do any dynamic lighting needed
@@ -2614,7 +2644,7 @@ void RB_EndSurface( qboolean projecting ) {
 		return;
 	}
 
-	if ( tess.shader == tr.shadowShader ) {
+	if ( tess.shader == tr.shadowShader || tess.shader == tr.projectorshadowShader ) {
 		RB_ShadowTessEnd();
 		return;
 	}

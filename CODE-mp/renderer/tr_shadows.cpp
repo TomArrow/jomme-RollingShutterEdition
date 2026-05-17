@@ -135,6 +135,7 @@ void RB_ShadowTessEnd( void ) {
 	int		numTris;
 	vec3_t	lightDir; 
 	float	expandLength = 512;
+	vec3_t projectorPos;
 
 	// TODO Depth Fail ("Carmack's Reverse")?
 	// TODO reject normals that align with the shadow/light direction, so we don't shadow undersides of stuff (looks bad)
@@ -148,7 +149,14 @@ void RB_ShadowTessEnd( void ) {
 		return;
 	}
 
-	if (g_bRenderZPrepass) {
+	if (g_bRenderZPrepass && !g_bRenderProjectorPrepass) {
+		return;
+	}
+
+	if (g_bRenderProjectorPrepass && tess.shader != tr.projectorshadowShader) {
+		return;
+	}
+	else if (!g_bRenderProjectorPrepass && tess.shader != tr.shadowShader) {
 		return;
 	}
 
@@ -157,9 +165,34 @@ void RB_ShadowTessEnd( void ) {
 	//expandLength = backEnd.ori.origin[2] - backEnd.currentEntity->e.shadowPlane + 64 + 50; // TA: let's go distance to shadowplane, plus playerheight, plus a bit extra so some angles are covered. don't go 512 units like in the original so we don't cast shadows through 200 walls. TODO restrict normals too so we don't draw on undersides of geometry we stand on. meh, doesnt rly work.
 
 	// project vertexes away from light direction
-	for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-		VectorMA( tess.xyz[i], -expandLength, lightDir, tess.xyz[i+tess.numVertexes] );
+	if (g_bRenderProjectorPrepass) {
+		if (backEnd.currentEntity == &tr.worldEntity) {
+			VectorCopy(tr.projector.pos, projectorPos);
+		}
+		else {
+			vec3_t tmp;
+			VectorSubtract(tr.projector.pos, backEnd.currentEntity->e.origin, tmp);
+
+			projectorPos[0] = DotProduct(tmp, backEnd.currentEntity->e.axis[0]);
+			projectorPos[1] = DotProduct(tmp, backEnd.currentEntity->e.axis[1]);
+			projectorPos[2] = DotProduct(tmp, backEnd.currentEntity->e.axis[2]);
+		}
+		VectorCopy(projectorPos,lightDir);
+		VectorNormalize(lightDir);
+		for (i = 0; i < tess.numVertexes; i++) {
+			vec3_t projDir;
+			VectorSubtract(projectorPos, tess.xyz[i], projDir);
+			VectorNormalize(projDir);
+			VectorMA(tess.xyz[i], -expandLength, projDir, tess.xyz[i + tess.numVertexes]);
+		}
 	}
+	else
+	{
+		for (i = 0; i < tess.numVertexes; i++) {
+			VectorMA(tess.xyz[i], -expandLength, lightDir, tess.xyz[i + tess.numVertexes]);
+		}
+	}
+
 
 	// decide which triangles face the light
 	Com_Memset( numEdgeDefs, 0, 4 * tess.numVertexes );
@@ -170,6 +203,7 @@ void RB_ShadowTessEnd( void ) {
 		vec3_t	d1, d2, normal;
 		float	*v1, *v2, *v3;
 		float	d;
+		vec3_t projDir;
 
 		i1 = tess.indexes[ i*3 + 0 ];
 		i2 = tess.indexes[ i*3 + 1 ];
@@ -183,7 +217,19 @@ void RB_ShadowTessEnd( void ) {
 		VectorSubtract( v3, v1, d2 );
 		CrossProduct( d1, d2, normal );
 
-		d = DotProduct( normal, lightDir );
+		if (g_bRenderProjectorPrepass) {
+			vec3_t avg = { 0,0,0 };
+			VectorAdd(avg, tess.xyz[i1],avg);
+			VectorAdd(avg, tess.xyz[i2],avg);
+			VectorAdd(avg, tess.xyz[i3],avg);
+			VectorScale(avg, 0.3333333333f, avg);
+			VectorSubtract(projectorPos, avg, projDir);
+			VectorNormalize(projDir);
+			d = DotProduct(normal, projDir);
+		}
+		else {
+			d = DotProduct(normal, lightDir);
+		}
 		if ( d > 0 ) {
 			facing[ i ] = 1;
 		} else {
@@ -253,15 +299,20 @@ overlap and double darken.
 =================
 */
 void RB_ShadowFinish( void ) {
-	if ( r_shadows->integer != 2 ) {
+	if ( r_shadows->integer != 2 && (!r_fboGLSLProjector || !r_fboGLSLProjector->integer) ) {
 		return;
 	}
 	if ( glConfig.stencilBits < 4 ) {
 		return;
 	}
-	if (g_bRenderZPrepass) {
+	if (g_bRenderZPrepass && !g_bRenderProjectorPrepass) {
 		return;
 	}
+
+	if (g_bRenderProjectorPrepass) {
+		R_FrameBuffer_SetDrawingShadowPrepass(qtrue,qtrue,qfalse);
+	}
+
 	qglEnable( GL_STENCIL_TEST );
 	qglStencilFunc( GL_NOTEQUAL, 0, 255 );
 
@@ -285,6 +336,7 @@ void RB_ShadowFinish( void ) {
 	//qglVertex3f( -100, -100, -10 );
 	//qglEnd ();
 
+
 	qglBegin( GL_TRIANGLES );
 	qglVertex3f( -100, 100, -10 );
 	qglVertex3f( 100, 100, -10 );
@@ -297,6 +349,10 @@ void RB_ShadowFinish( void ) {
 
 	qglColor4f(1,1,1,1);
 	qglDisable( GL_STENCIL_TEST );
+
+	if (g_bRenderProjectorPrepass) {
+		R_FrameBuffer_SetDrawingShadowPrepass(qfalse,qfalse,(qboolean)(r_fboGLSLProjector && r_fboGLSLProjector->integer > 1));
+	}
 }
 
 

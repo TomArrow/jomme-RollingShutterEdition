@@ -65,14 +65,15 @@
 
 #define MULTIATTACH 1
 
-GLenum attachment1[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_NONE };
-GLenum attachment2[2] = { GL_COLOR_ATTACHMENT1_EXT , GL_NONE };
-GLenum attachment1and2[2] = { GL_COLOR_ATTACHMENT0_EXT , GL_COLOR_ATTACHMENT1_EXT };
+GLenum attachment1[3] = { GL_COLOR_ATTACHMENT0_EXT , GL_NONE, GL_NONE };
+GLenum attachment2[3] = { GL_COLOR_ATTACHMENT1_EXT , GL_NONE, GL_NONE };
+GLenum attachment3[3] = { GL_COLOR_ATTACHMENT2_EXT , GL_NONE, GL_NONE };
+GLenum attachment1and2[3] = { GL_COLOR_ATTACHMENT0_EXT , GL_COLOR_ATTACHMENT1_EXT, GL_NONE };
 
 extern bool g_SSBOsSupported;
 extern ssboSupport_t g_SSBOProperties;
 
-#define NUM_TEXTURE_SAMPLERS 31  // 28 = cloud image, 29 = sceneview image, 30 = sceneview secondary color buffer
+#define NUM_TEXTURE_SAMPLERS 31  // 27 = projector shadows, 28 = cloud image, 29 = sceneview image, 30 = sceneview secondary color buffer
 
 typedef struct uniformLocations_t {
 	GLint viewOriginUniform;
@@ -342,7 +343,7 @@ R_GLSL* fishEyeShader = NULL;
 R_GLSL* fishEyeShaderTess = NULL;
 //GLuint tmpPBOtexture;
 
-
+void R_SetCorrectDrawBuffers();
 
 void R_FrameBuffer_ReloadGLSL() {
 	fbo.reloadGLSL = qtrue;
@@ -833,7 +834,7 @@ qboolean R_FrameBuffer_SetProjection2D(qboolean is2D) {
 	fbo.drawing2D = is2D;
 
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -842,6 +843,8 @@ qboolean R_FrameBuffer_SetProjection2D(qboolean is2D) {
 
 #endif
 }
+
+
 
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX, float fovY, int jitterIndex, int jitterTotalFrames) {
 #ifdef HAVE_GLES
@@ -1185,6 +1188,57 @@ void R_SetGL2DSize (int width, int height) {
 	//R_FrameBuffer_DeactivateFisheye();
 }
 
+void R_BindOwnAttachmentAsTexture(int index, bool makeMipMaps, int attachment) {
+#ifdef HAVE_GLES
+	//TODO
+#else
+
+	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+		return;
+	}
+	if (attachment < 2) {
+		return;
+	}
+
+	GLuint sourceBuffer = fbo.main->tertiaryColor;
+	switch (attachment) {
+		default:
+			return;
+		case 2: 
+			sourceBuffer = fbo.main->tertiaryColor;
+			break;
+	}
+
+	if (glState.currenttextures[glState.currenttmu] != sourceBuffer) {
+		//if (r_fboGLSLFastPreview->integer && !tr.captureIsActive) {
+
+		//	qglBindTexture(GL_TEXTURE_2D, tr.defaultImage->texnum);
+		//	glState.currenttextures[glState.currenttmu] = tr.defaultImage->texnum;
+		//}
+		//else 
+		{
+
+			qglBindTexture(GL_TEXTURE_2D, sourceBuffer);
+			glState.currenttextures[glState.currenttmu] = sourceBuffer;
+
+			if (attachment == 2) {
+				if (makeMipMaps && fbo.main->tertiaryMipmapsGenerated) {
+					qglGenerateMipmap(GL_TEXTURE_2D);
+					fbo.main->tertiaryMipmapsGenerated = qtrue;
+				}
+			}
+			//else {
+			//	if (makeMipMaps && !(fbo.extraViewsMipMapsGenerated & (1 << index))) {
+			//		qglGenerateMipmap(GL_TEXTURE_2D);
+			//		fbo.extraViewsMipMapsGenerated |= (1 << index);
+			//	}
+			//}
+		}
+	};
+
+#endif
+}
+
 
 void R_BindSceneViewImage( int index, bool makeMipMaps, int attachment) {
 #ifdef HAVE_GLES
@@ -1258,6 +1312,66 @@ void R_DrawQuad( GLuint tex, int width, int height, bool forceMakeMipmaps = fals
 		qglBindTexture(GL_TEXTURE_2D, oldTex);
 		glState.currenttextures[0] = oldTex;
 	}
+#endif
+}
+
+
+
+qboolean R_FrameBuffer_SetDrawingShadowPrepass(qboolean doingthat, qboolean clear, qboolean display) {
+#ifdef HAVE_GLES
+	//TODO
+	return qfalse;
+#else
+	float c;
+	if (!fishEyeShader || !fishEyeShader->IsWorking())
+		return qfalse;
+
+	if (doingthat != fbo.drawingShadowPrepass) {
+		fbo.main->tertiaryMipmapsGenerated = qfalse;
+	}
+
+	fbo.drawingShadowPrepass = doingthat;
+
+	if (clear) {
+		// Clear the buffer so we get the correct shadow info
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment3);
+#else
+		qglDrawBuffer(GL_COLOR_ATTACHMENT2_EXT);
+#endif
+		qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		qglClear(GL_COLOR_BUFFER_BIT);
+	}
+
+
+#if MULTIATTACH
+	R_SetCorrectDrawBuffers();
+#else
+	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
+
+	if (!fbo.drawingShadowPrepass && display) {
+		R_FrameBuffer_TempDeactivateFisheye();
+#if MULTIATTACH
+		qglDrawBuffers(2, attachment1);
+#else
+		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
+		c = 1.0f;
+		qglColor4f(c, c, c, 1);
+		GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHTEST_DISABLE);
+		R_SetGL2DSize(glConfig.vidWidth, glConfig.vidHeight);
+		R_DrawQuad(fbo.main->tertiaryColor, glConfig.vidWidth, glConfig.vidHeight);
+		R_FrameBuffer_ReactivateFisheye();
+#if MULTIATTACH
+		R_SetCorrectDrawBuffers();
+#else
+		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#endif
+	}
+
+	return qtrue;
+
 #endif
 }
 
@@ -1550,7 +1664,7 @@ frameBufferData_t* R_FrameBufferCreate( int width, int height, int flags, int su
 	}
 	/* Attach the color buffer */
 	
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 3; i++) {
 		GLuint* renderBuffer = &buffer->color;
 		GLenum attachment = GL_COLOR_ATTACHMENT0_EXT;
 		if (i == 1) {
@@ -1560,7 +1674,17 @@ frameBufferData_t* R_FrameBufferCreate( int width, int height, int flags, int su
 			}
 			else {
 				buffer->secondaryColor = 0;
-				break;
+				continue;
+			}
+		}
+		if (i == 2) {
+			if (flags & FB_TERTIARYBUFFER) {
+				renderBuffer = &buffer->tertiaryColor; 
+				attachment = GL_COLOR_ATTACHMENT2_EXT;
+			}
+			else {
+				buffer->tertiaryColor = 0;
+				continue;
 			}
 		}
 
@@ -1980,7 +2104,7 @@ void R_FrameBuffer_Init( void ) {
 	}
 
 	//create our main frame buffer
-	fbo.main = R_FrameBufferCreate( width, height, flags | FB_SECONDARYBUFFER,superSampleMultiplier );
+	fbo.main = R_FrameBufferCreate( width, height, flags | FB_SECONDARYBUFFER | FB_TERTIARYBUFFER,superSampleMultiplier );
 	fbo.exposure = R_FrameBufferCreate( width, height, flags,superSampleMultiplier );
 	fbo.postprocessing = R_FrameBufferCreate( width, height, flags | FB_MIPMAP | FB_MAGLINEAR, superSampleMultiplier ); // need mipmaps here because we rely on them for a kind of softening effect
 
@@ -2114,7 +2238,7 @@ void R_FrameBuffer_StartFrame( void ) {
 		qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 	}
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2201,8 +2325,18 @@ void R_FrameBuffer_StartFrame( void ) {
 #endif
 }
 
+void R_SetCorrectDrawBuffers() {
 
-
+	GLenum attachments[3] = { GL_COLOR_ATTACHMENT0_EXT , GL_NONE, GL_NONE };
+	if (!fbo.drawing2D) {
+		attachments[1] = GL_COLOR_ATTACHMENT1_EXT;
+	}
+	if (fbo.drawingShadowPrepass) {
+		attachments[2] = GL_COLOR_ATTACHMENT2_EXT;
+	}
+	//qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	qglDrawBuffers(3, attachments);
+}
 
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 #ifdef HAVE_GLES
@@ -2233,7 +2367,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-		qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+		R_SetCorrectDrawBuffers();
 #else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2284,7 +2418,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		// do i need to bindframebuffer main again here? let's say yes. if not, revert this. i added this long after the pbo version of this was no longer in use, if it ever was
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-		qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+		R_SetCorrectDrawBuffers();
 #else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2333,7 +2467,7 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-		qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+		R_SetCorrectDrawBuffers();
 #else
 		qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2380,7 +2514,7 @@ qboolean R_FrameBuffer_EndHDRRead() {
 	
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2411,7 +2545,7 @@ void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex) {
 	qglClear(GL_COLOR_BUFFER_BIT);
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2458,7 +2592,7 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 	//Reset fbo
 	qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2516,7 +2650,7 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWr
 		R_DrawQuad(	fbo.blur->color, glConfig.vidWidth, glConfig.vidHeight );
 	}
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #endif
 
 	R_FrameBuffer_ReactivateFisheye();
@@ -2524,6 +2658,8 @@ qboolean R_FrameBuffer_Blur( float scale, int frame, int total, qboolean forceWr
 	return qtrue;
 #endif
 }
+
+
 
 qboolean R_FrameBuffer_SaveSceneView( int index ) {
 #ifdef HAVE_GLES
@@ -2563,7 +2699,7 @@ qboolean R_FrameBuffer_SaveSceneView( int index ) {
 	//Reset fbo
 	qglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo.main->fbo );
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #else
 	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 #endif
@@ -2653,7 +2789,7 @@ qboolean R_FrameBuffer_ApplyExposure( ) { // really kinda useless unless you wan
 	R_DrawQuad(	fbo.exposure->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #endif
 
 	R_FrameBuffer_ReactivateFisheye();
@@ -2714,7 +2850,7 @@ qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 
 #if MULTIATTACH
-	qglDrawBuffers(2, fbo.drawing2D ? attachment1 : attachment1and2);
+	R_SetCorrectDrawBuffers();
 #endif
 
 	R_FrameBuffer_ReactivateFisheye();

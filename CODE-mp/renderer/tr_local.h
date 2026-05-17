@@ -19,6 +19,7 @@ extern size_t voxelGridSize;
 
 
 extern bool g_bRenderZPrepass;
+extern bool g_bRenderProjectorPrepass;
 extern bool g_bRenderedZPrepass;
 
 extern const bool trueBool;
@@ -1306,6 +1307,7 @@ typedef struct {
 	shader_t				*defaultShader;
 	shader_t				*shadowShader;
 	shader_t				*projectionShadowShader;
+	shader_t				*projectorshadowShader;
 
 	shader_t				*flareShader;
 	shader_t				*sunShader;
@@ -1993,7 +1995,7 @@ void RB_BeginSurface(shader_t *shader, int fogNum );
 void RB_RedoSurface(shader_t* shader);
 void RB_EndSurface(qboolean projecting = qfalse);
 void RB_CheckOverflow( int verts, int indexes );
-#define RB_CHECKOVERFLOW(v,i) if (tess.numVertexes + (v) >= SHADER_MAX_VERTEXES/2 && tess.shader == tr.shadowShader || tess.numVertexes + (v) >= SHADER_MAX_VERTEXES || tess.numIndexes + (i) >= SHADER_MAX_INDEXES ) {RB_CheckOverflow(v,i);}
+#define RB_CHECKOVERFLOW(v,i) if (tess.numVertexes + (v) >= SHADER_MAX_VERTEXES/2 && (tess.shader == tr.shadowShader || tess.shader == tr.projectorshadowShader) || tess.numVertexes + (v) >= SHADER_MAX_VERTEXES || tess.numIndexes + (i) >= SHADER_MAX_INDEXES ) {RB_CheckOverflow(v,i);}
 
 void RB_StageIteratorGeneric( void );
 void RB_StageIteratorSky( void );
@@ -2518,16 +2520,19 @@ extern bool g_bTextureRectangleHack;
 #define FB_MAGLINEAR	 		0x80		//Force linear upscaling
 #define FB_REPEATEDGE	 		0x100		//Force linear upscaling
 #define FB_SECONDARYBUFFER 		0x200		//Have a secondary color buffer for depth and stuff
+#define FB_TERTIARYBUFFER 		0x400		//Have a tertiary color buffer for prepass shadows
 
 typedef struct {
 	GLuint 	fbo;
 	GLuint	color;					//Color in a texture
 	GLuint	secondaryColor;			//Secondary renderbuffer for camera distance and other things.
+	GLuint	tertiaryColor;			//Tertiary renderbuffer for prepass 
 	GLuint	packed;					//Packed depth/stencil texture
 	GLuint	depth;					//depth render buffer
 	GLuint	stencil;				//stencil render buffer
 	unsigned int flags;				//the creation flags
 	int		width, height;			//Size of the buffer
+	qboolean tertiaryMipmapsGenerated;
 } frameBufferData_t;
 
 typedef struct {
@@ -2603,6 +2608,7 @@ typedef struct {
 	std::vector<doubleFrameBufferData_t> rollingShutterBuffers;
 	qboolean fishEyeActive;
 	qboolean drawing2D;
+	qboolean drawingShadowPrepass;
 	int fishEyeTempDisabled;
 	int screenWidth, screenHeight;
 	fishEyeData_t fishEyeData;
@@ -2646,11 +2652,13 @@ qboolean R_FrameBuffer_RollingShutterCapture(int bufferIndex, int offset, int he
 void R_FrameBuffer_RollingShutterFlipDoubleBuffer(int bufferIndex);
 //Try to do an fbo blur
 qboolean R_FrameBuffer_Blur(float scale, int frame, int total, qboolean forceWriteback);
-void	R_BindSceneViewImage(int index, bool makeMipMaps, int attachment = 0);
+void	R_BindSceneViewImage(int index, bool makeMipMaps, int attachment = 0); 
+void R_BindOwnAttachmentAsTexture(int index, bool makeMipMaps, int attachment);
 qboolean R_FrameBuffer_SaveSceneView(int index);
 qboolean R_FrameBuffer_ApplyExposure();
 qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source= HDRCONVSOURCE_MAINFBO, int param=0);
 qboolean R_FrameBuffer_SetProjection2D(qboolean is2D);
+qboolean R_FrameBuffer_SetDrawingShadowPrepass(qboolean doingthat, qboolean clear, qboolean display);
 qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D,vec_t* dofJitter3D, vec_t* voxelshadowJitter3D, vec_t* dlightJitter3D, float dofFocus, float dofRadius, float fovX,float fovY, int jitterIndex,int jitterTotalFrames);
 qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness = NULL, const   bool* isLightmap = NULL, const  bool* isWorldBrush=NULL, const   bool* isSaber = NULL, const   int* alphaFunc = NULL, const  float* alphaFuncValue = NULL, const  bool* simpleLighting = NULL, const   bool* noLighting = NULL, const   bool* zPrepass = NULL, const shaderStage_t* stageInfoForMultipass = NULL);
 qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir = NULL, const bool* isModel = NULL, surfaceType_t* surfaceType = NULL, const int* stageColorGen = NULL, const shaderStage_t* stage= NULL, const qboolean* stageForceNormal = NULL, const bool* nocull = NULL, const byte* shaderStyles = NULL, unsigned int* stateBitsRaw =NULL,unsigned int* stateBitsApplied =NULL, const bool* isGore=NULL);

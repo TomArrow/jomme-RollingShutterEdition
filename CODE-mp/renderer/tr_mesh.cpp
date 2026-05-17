@@ -463,6 +463,14 @@ void R_AddMD3Surfaces( trRefEntity_t *ent ) {
 			R_AddDrawSurf( (surfaceType_t *)surface, tr.shadowShader, 0, qfalse );
 		}
 
+		if ( !personalModel
+			&& r_fboGLSLProjector && r_fboGLSLProjector->integer //&& g_bRenderProjectorPrepass
+			&& fogNum == 0
+			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
+			&& shader->sort == SS_OPAQUE ) {
+			R_AddDrawSurf( (surfaceType_t *)surface, tr.projectorshadowShader, 0, qfalse );
+		}
+
 		// projection shadows work fine with personal models
 		if ( r_shadows->integer == 3
 			&& fogNum == 0
