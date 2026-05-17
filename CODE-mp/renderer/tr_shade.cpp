@@ -2697,8 +2697,30 @@ void RB_EndSurface( qboolean projecting ) {
 	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !projecting && !backEnd.projection2D) {
 		fboUniformsEx.projectorActive = qtrue;
 		R_FrameBuffer_SetDynamicUniforms3();
+
+		qglPushMatrix();
+
+		qglLoadMatrixf(backEnd.viewParms.world.modelMatrix);
+
+		qglEnable(GL_CLIP_PLANE2);
+		qglClipPlane(GL_CLIP_PLANE2,tr.projector.clipPlanes[0]);
+		qglEnable(GL_CLIP_PLANE3);
+		qglClipPlane(GL_CLIP_PLANE3,tr.projector.clipPlanes[1]);
+		qglEnable(GL_CLIP_PLANE4);
+		qglClipPlane(GL_CLIP_PLANE4,tr.projector.clipPlanes[2]);
+		qglEnable(GL_CLIP_PLANE5);
+		qglClipPlane(GL_CLIP_PLANE5,tr.projector.clipPlanes[3]);
+
+		qglPopMatrix();
+
 		RB_RedoSurface(tr.projector.shader);
 		RB_EndSurface(qtrue);
+
+		qglDisable(GL_CLIP_PLANE2);
+		qglDisable(GL_CLIP_PLANE3);
+		qglDisable(GL_CLIP_PLANE4);
+		qglDisable(GL_CLIP_PLANE5);
+
 		fboUniformsEx.projectorActive = qfalse;
 		R_FrameBuffer_SetDynamicUniforms3();
 		//tess.currentStageIteratorFunc();

@@ -1370,6 +1370,13 @@ typedef struct {
 		float				fov[2];
 		float				modelMatrix[16];
 		float				projectionMatrix[16];
+#define CLIP_PLANE_RIGHT 0
+#define CLIP_PLANE_LEFT 1
+#define CLIP_PLANE_BOTTOM 2
+#define CLIP_PLANE_TOP 3
+#define CLIP_PLANE_FAR 4
+#define CLIP_PLANE_NEAR 5
+		GLdouble			clipPlanes[6][4];
 	} projector;
 	deformStage_t			mmeWorldDeform;
 	int						mmeWorldBlend;

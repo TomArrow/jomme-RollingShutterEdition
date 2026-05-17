@@ -660,11 +660,12 @@ static void R_UpdateProjectorMatrix(void) {
 
 	tr.projector.projectionMatrix[2] = 0;
 	tr.projector.projectionMatrix[6] = 0;
-	if (r_zinvert->integer) {
-		tr.projector.projectionMatrix[10] = -(zNear) / depth;
-		tr.projector.projectionMatrix[14] = -zFar * zNear / depth;
-	}
-	else {
+	//if (r_zinvert->integer) {
+	//	tr.projector.projectionMatrix[10] = -(zNear) / depth;
+	//	tr.projector.projectionMatrix[14] = -zFar * zNear / depth;
+	//}
+	//else 
+	{
 		tr.projector.projectionMatrix[10] = -(zFar + zNear) / depth;
 		tr.projector.projectionMatrix[14] = -2 * zFar * zNear / depth;
 	}
@@ -673,6 +674,38 @@ static void R_UpdateProjectorMatrix(void) {
 	tr.projector.projectionMatrix[7] = 0;
 	tr.projector.projectionMatrix[11] = -1;
 	tr.projector.projectionMatrix[15] = 0;
+
+#define SETCLIPPLANE(a,b,c,d,e) (tr.projector.clipPlanes[a][b] = tr.projector.projectionMatrix[c] d tr.projector.projectionMatrix[e])
+
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 0, 3, -, 0);
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 1, 7, -, 4);
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 2, 11, -, 8);
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 3, 15, -, 12);
+
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 0, 3, +, 0);
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 1, 7, +, 4);
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 2, 11, +, 8);
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 3, 15, +, 12);
+
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 0, 3, +, 1);
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 1, 7, +, 5);
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 2, 11, +, 9);
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 3, 15, +, 13);
+
+	SETCLIPPLANE(CLIP_PLANE_TOP, 0, 3, -, 1);
+	SETCLIPPLANE(CLIP_PLANE_TOP, 1, 7, -, 5);
+	SETCLIPPLANE(CLIP_PLANE_TOP, 2, 11, -, 9);
+	SETCLIPPLANE(CLIP_PLANE_TOP, 3, 15, -, 13);
+
+	SETCLIPPLANE(CLIP_PLANE_FAR, 0, 3, -, 2);
+	SETCLIPPLANE(CLIP_PLANE_FAR, 1, 7, -, 6);
+	SETCLIPPLANE(CLIP_PLANE_FAR, 2, 11, -, 10);
+	SETCLIPPLANE(CLIP_PLANE_FAR, 3, 15, -, 14);
+
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 0, 3, +, 2);
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 1, 7, +, 6);
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 2, 11, +, 10);
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 3, 15, +, 14);
 }
 
 
