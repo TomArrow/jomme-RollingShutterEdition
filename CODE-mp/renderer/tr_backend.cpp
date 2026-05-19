@@ -246,11 +246,16 @@ void GL_State( unsigned int stateBits )
 	unsigned int rawStateBits = stateBits;
 	unsigned int diff;
 
-	if (g_bRenderStencilTestedSky || g_bRenderProjector) {
+	if (g_bRenderStencilTestedSky /*|| g_bRenderProjector*/) {
 		// the sky is already stencil tested
 		// depth test will just potentially mess with stuff
-		// new: also disable depth test for projector rendering because the gl_clipDistance creates z-fighting.
+		// //// actually nvm: new: also disable depth test for projector rendering because the gl_clipDistance creates z-fighting.
 		stateBits |= GLS_DEPTHTEST_DISABLE;
+	}
+
+	if (g_bRenderProjector) {
+		// dont let this one write to depth
+		stateBits &= ~(GLS_DEPTHMASK_TRUE);
 	}
 
 	if (r_fboGLSL->integer && ENABLEGLSL && r_fboGLSLThermalVision->integer == 3 && !backEnd.projection2D) {

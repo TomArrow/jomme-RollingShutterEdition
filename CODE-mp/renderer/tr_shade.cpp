@@ -2702,7 +2702,7 @@ void RB_EndSurface( qboolean projecting ) {
 
 
 	// do an additional pass for the projector shader (ye ik, disgusting)
-	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !projecting && !backEnd.projection2D && !tess.shader->defaultShader && tess.shader != tr.defaultShader && tess.shader->sort < SS_BLEND0 &&
+	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && tr.projector.shader && !tess.shader->isSky && !g_bRenderZPrepass && !g_bRenderProjectorPrepass && !projecting && !backEnd.projection2D && !tess.shader->defaultShader && tess.shader != tr.defaultShader && tess.shader->sort < SS_BLEND0 &&
 		 !( // if stage 0 has some kind of transparency, let's not do this, as transparent images usually don't cover the entire area, but the projector would, looking fugly.
 			 (tess.xstages[0]->stateBits & (GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS)) &&
 			((tess.xstages[0]->stateBits & (GLS_SRCBLEND_BITS) != GLS_SRCBLEND_ONE) || (tess.xstages[0]->stateBits & (GLS_DSTBLEND_BITS) != GLS_DSTBLEND_ZERO))
@@ -2711,38 +2711,25 @@ void RB_EndSurface( qboolean projecting ) {
 		fboUniformsEx.projectorActive = qtrue;
 		R_FrameBuffer_SetDynamicUniforms3();
 
-		//qglMatrixMode(GL_MODELVIEW);
-		//qglPushMatrix();
-		//qglLoadIdentity();
 		R_UpdateProjectorClipPlanesEye();
 
-		//qglLoadMatrixf(backEnd.viewParms.world.modelMatrix);
-
-		//GLdouble test[4] = {0,0,1,0};
-		//qglClipPlane(GL_CLIP_PLANE0, test);
 		qglEnable(GL_CLIP_DISTANCE0);
 		qglEnable(GL_CLIP_DISTANCE1);
 		qglEnable(GL_CLIP_DISTANCE2);
 		qglEnable(GL_CLIP_DISTANCE3);
-		//qglEnable(GL_CLIP_DISTANCE4);
-		//qglEnable(GL_CLIP_DISTANCE5);
-		//qglClipPlane(GL_CLIP_PLANE3,tr.projector.clipPlanes[1]);
-		//qglEnable(GL_CLIP_PLANE4);
-		//qglClipPlane(GL_CLIP_PLANE4,tr.projector.clipPlanes[2]);
-		//qglEnable(GL_CLIP_PLANE5);
-		//qglClipPlane(GL_CLIP_PLANE5,tr.projector.clipPlanes[3]);
 
-		//qglPopMatrix();
-
-		//qglEnable(GL_POLYGON_OFFSET_FILL);
-		//qglPolygonOffset(r_offsetFactor->value, r_offsetUnits->value);
+		qglEnable(GL_POLYGON_OFFSET_FILL);
+		qglPolygonOffset(r_offsetFactor->value, r_offsetUnits->value);
 
 		g_bRenderProjector = true;
 
+		// TODO carmack's reverse so we can be inside the shadow safely.
 		RB_RedoSurface(tr.projector.shader);
 		RB_EndSurface(qtrue);
 
 		g_bRenderProjector = false;
+
+		qglDisable(GL_POLYGON_OFFSET_FILL);
 
 		qglDisable(GL_CLIP_DISTANCE0);
 		qglDisable(GL_CLIP_DISTANCE1);
