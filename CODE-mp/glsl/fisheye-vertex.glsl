@@ -151,6 +151,7 @@ void equirectangular()
 		pointVec = (gl_ModelViewMatrix * gl_Vertex).xyz;
 		gl_Position = vec4(pointVec, 1.0);
 	}
+	gl_ClipVertex = gl_Position;
 	//gl_Position = equirect_getPos(pointVec); // TODO Reinstate this IF geometry shader is not available.
 
 	pureVertexCoords = gl_Vertex;

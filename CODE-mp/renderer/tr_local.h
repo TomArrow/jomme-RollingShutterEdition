@@ -1369,14 +1369,17 @@ typedef struct {
 		vec3_t				ang;
 		float				fov[2];
 		float				modelMatrix[16];
+		float				modelMatrixInverse[16];
 		float				projectionMatrix[16];
+		float				projectionMatrixForClipPlanes[16];
 #define CLIP_PLANE_RIGHT 0
 #define CLIP_PLANE_LEFT 1
 #define CLIP_PLANE_BOTTOM 2
 #define CLIP_PLANE_TOP 3
 #define CLIP_PLANE_FAR 4
 #define CLIP_PLANE_NEAR 5
-		GLdouble			clipPlanes[6][4];
+		GLfloat				clipPlanesWorld[6][4];
+		GLfloat				clipPlanes[6][4];
 	} projector;
 	deformStage_t			mmeWorldDeform;
 	int						mmeWorldBlend;
@@ -1740,12 +1743,15 @@ void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, int64_t fogIndex, 
 #define	CULL_OUT	2		// completely outside the clipping planes
 void R_LocalNormalToWorld (vec3_t local, vec3_t world);
 void R_LocalPointToWorld (vec3_t local, vec3_t world);
+void R_InvertMatrix(float* sourcemat, float* destmat);
 void R_WorldNormalToEntity (vec3_t localVec, vec3_t world); 
 int R_CullLocalBox (vec3_t bounds[2]);
 int R_CullPointAndRadius( vec3_t origin, float radius );
 int R_CullLocalPointAndRadius( vec3_t origin, float radius );
 
 void myGlMultMatrix(const float* a, const float* b, float* out);
+void myGlMultMatrixV2(const float* a, const float* b, float* out);
+qboolean __gluInvertMatrixf(const float m[16], float invOut[16]);
 extern float	s_flipMatrix[16];
 
 void R_RotateForEntity( const trRefEntity_t *ent, const viewParms_t *viewParms, orientationr_t *ori );
@@ -1803,6 +1809,7 @@ void	GL_Cull( int cullType );
 void	RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty);
 void	RE_UploadCinematic (int cols, int rows, const byte *data, int client, qboolean dirty);
 
+void		R_UpdateProjectorClipPlanesEye();
 void		RE_BeginFrame( stereoFrame_t stereoFrame );
 void		RE_BeginRegistration( glconfig_t *glconfig );
 void		RE_LoadWorldMap( const char *mapname );

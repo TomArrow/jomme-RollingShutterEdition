@@ -44,14 +44,14 @@ bool g_bRenderStencilTestedSky = false;
 bool g_bTextureRectangleHack = false;
 #endif
 
-static float	s_flipMatrix[16] = {
+//static float	s_flipMatrix[16] = {
 	// convert from our coordinate system (looking down X)
 	// to OpenGL's coordinate system (looking down -Z)
-	0, 0, -1, 0,
-	-1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 0, 1
-};
+//	0, 0, -1, 0,
+//	-1, 0, 0, 0,
+//	0, 1, 0, 0,
+//	0, 0, 0, 1
+//};
 
 #ifndef DEDICATED
 
@@ -246,9 +246,10 @@ void GL_State( unsigned int stateBits )
 	unsigned int rawStateBits = stateBits;
 	unsigned int diff;
 
-	if (g_bRenderStencilTestedSky) {
+	if (g_bRenderStencilTestedSky || g_bRenderProjector) {
 		// the sky is already stencil tested
 		// depth test will just potentially mess with stuff
+		// new: also disable depth test for projector rendering because the gl_clipDistance creates z-fighting.
 		stateBits |= GLS_DEPTHTEST_DISABLE;
 	}
 
@@ -778,6 +779,22 @@ void RB_BeginDrawingView (void) {
 		qglClipPlane (GL_CLIP_PLANE0, plane2);
 		qglEnable (GL_CLIP_PLANE0);
 	} else {
+		/*float	plane[4];
+		double	plane2[4];
+
+		plane[0] = 0;
+		plane[1] = 1;
+		plane[2] = 0;
+		plane[3] = 0;
+
+		plane2[0] = DotProduct(backEnd.viewParms.ori.axis[0], plane);
+		plane2[1] = DotProduct(backEnd.viewParms.ori.axis[1], plane);
+		plane2[2] = DotProduct(backEnd.viewParms.ori.axis[2], plane);
+		plane2[3] = DotProduct(plane, backEnd.viewParms.ori.origin) - plane[3];
+
+		qglLoadMatrixf(s_flipMatrix);
+		qglClipPlane(GL_CLIP_PLANE0, plane2);
+		qglEnable(GL_CLIP_PLANE0);*/
 		qglDisable (GL_CLIP_PLANE0);
 	}
 }

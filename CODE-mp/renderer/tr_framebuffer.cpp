@@ -109,6 +109,8 @@ typedef struct uniformLocations_t {
 	GLint soundDeformSampleRateUniform;
 	GLint soundDeformSampleCountUniform;
 
+	GLint clipPlanesUniform[6];
+
 	GLint projectorModelViewMatrixUniform;
 	GLint projectorProjectionMatrixUniform;
 	GLint projectorPosUniform;
@@ -444,6 +446,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->soundDeformSampleRateUniform, fbo.soundDeformSampleRate);
 		qglUniform1i(uniformLocationsTess->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
 
+		for (int i = 0; i < 6; i++) {
+			qglUniform4fv(uniformLocationsTess->clipPlanesUniform[i], 1, tr.projector.clipPlanes[i]);
+		}
+
 		qglUniformMatrix4fv(uniformLocationsTess->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
 		qglUniformMatrix4fv(uniformLocationsTess->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
 		qglUniform3fv(uniformLocationsTess->projectorPosUniform, 1, tr.projector.pos);
@@ -569,6 +575,10 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniformMatrix4fv(uniformLocations->worldModelViewMatrixUniform, 1, GL_FALSE, backEnd.viewParms.world.modelMatrix);
 		qglUniform1i(uniformLocations->soundDeformSampleRateUniform, fbo.soundDeformSampleRate);
 		qglUniform1i(uniformLocations->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
+
+		for (int i = 0; i < 6; i++) {
+			qglUniform4fv(uniformLocations->clipPlanesUniform[i], 1, tr.projector.clipPlanes[i]);
+		}
 
 		qglUniformMatrix4fv(uniformLocations->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
 		qglUniformMatrix4fv(uniformLocations->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
@@ -1800,6 +1810,10 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->worldModelViewMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldModelViewMatrixUniform");
 		locs->soundDeformSampleRateUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleRateUniform");
 		locs->soundDeformSampleCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleCountUniform");
+
+		for (int j = 0; j < 6; j++) {
+			locs->clipPlanesUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("clipPlanesUniform[%d]",j));
+		}
 
 		locs->projectorModelViewMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorModelViewMatrixUniform");
 		locs->projectorProjectionMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorProjectionMatrixUniform");

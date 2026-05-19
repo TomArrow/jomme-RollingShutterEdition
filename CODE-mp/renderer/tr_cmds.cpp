@@ -556,6 +556,87 @@ static int parseVec2(const char* text, float* out) {
 	return matches;
 }
 
+void R_UpdateProjectorClipPlanesEye() {
+	// had to randomly flip some signs around to make this baseline work.
+	// TODO review this someday and make it actually consistent and logically sound
+	for (int i = 0; i < 6; i++) {
+		float* plane = &tr.projector.clipPlanesWorld[i][0];
+		vec4_t tmp;
+		tmp[0] = DotProduct(backEnd.viewParms.ori.axis[0], plane);
+		tmp[1] = DotProduct(backEnd.viewParms.ori.axis[1], plane);
+		tmp[2] = DotProduct(backEnd.viewParms.ori.axis[2], plane);
+		tmp[3] = (-DotProduct(plane, backEnd.viewParms.ori.origin) - plane[3]);
+		tr.projector.clipPlanes[i][0] = (-tmp[1]);
+		tr.projector.clipPlanes[i][1] = (tmp[2]);
+		tr.projector.clipPlanes[i][2] = (-tmp[0]);
+		tr.projector.clipPlanes[i][3] = (-tmp[3]);
+	}
+	R_FrameBuffer_SetDynamicUniforms3();
+}
+
+static int columnRowNormal[16] = {
+	0,1,2,3,
+	4,5,6,7,
+	8,9,10,11,
+	12,13,14,15
+};
+static int columnRowInvert[16] = {
+	0,4,8,12,
+	1,5,9,13,
+	2,6,10,14,
+	3,7,11,15
+};
+
+static void R_UpdateProjectorClipPlanes() {
+	int i;
+	myGlMultMatrix(tr.projector.modelMatrix, tr.projector.projectionMatrix, tr.projector.projectionMatrixForClipPlanes);
+#define SETCLIPPLANE(a,b,c,d,e,f) (tr.projector.clipPlanesWorld[a][b] = c tr.projector.projectionMatrixForClipPlanes[d] e tr.projector.projectionMatrixForClipPlanes[f])
+
+
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 0, -, 3, +, 0);
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 1, -, 7, +, 4);
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 2, -, 11, +, 8);
+	SETCLIPPLANE(CLIP_PLANE_RIGHT, 3, -, 15, +, 12);
+	
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 0, -, 3, -, 0);
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 1, -, 7, -, 4);
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 2, -, 11, -, 8);
+	SETCLIPPLANE(CLIP_PLANE_LEFT, 3, -, 15, -, 12);
+
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 0, -, 3, +, 1);
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 1, -, 7, +, 5);
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 2, -, 11, +, 9);
+	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 3, -, 15, +, 13);
+
+	SETCLIPPLANE(CLIP_PLANE_TOP, 0, -, 3, -, 1);
+	SETCLIPPLANE(CLIP_PLANE_TOP, 1, -, 7, -, 5);
+	SETCLIPPLANE(CLIP_PLANE_TOP, 2, -, 11, -, 9);
+	SETCLIPPLANE(CLIP_PLANE_TOP, 3, -, 15, -, 13);
+
+	// these 2 dont work:
+	// the above ones were already bullshit random flipping around signs till it worked
+	// and these i dont really need so i didnt bother fixing them up
+	// the whole math everywhere here is a giant confused heap of trash :)
+	SETCLIPPLANE(CLIP_PLANE_FAR, 0, +, 3, -, 2);
+	SETCLIPPLANE(CLIP_PLANE_FAR, 1, +, 7, -, 6);
+	SETCLIPPLANE(CLIP_PLANE_FAR, 2, +, 11, -, 10);
+	SETCLIPPLANE(CLIP_PLANE_FAR, 3, +, 15, -, 14);
+
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 0, +, 3, +, 2);
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 1, +, 7, +, 6);
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 2, +, 11, +, 10);
+	SETCLIPPLANE(CLIP_PLANE_NEAR, 3, +, 15, +, 14);
+
+	for (i = 0; i < 6; i++) {
+		tr.projector.clipPlanesWorld[i][3] /= VectorNormalize(tr.projector.clipPlanesWorld[i]);
+
+	}
+	//tr.projector.clipPlanesWorld[2][0] = 0;
+	//tr.projector.clipPlanesWorld[2][1] = 1;
+	//tr.projector.clipPlanesWorld[2][2] = 0;
+	//tr.projector.clipPlanesWorld[2][3] = 1744;
+}
+
 static void R_UpdateProjectorModelMatrix() {
 
 	float	viewerMatrix[16];
@@ -586,6 +667,10 @@ static void R_UpdateProjectorModelMatrix() {
 	// convert from our coordinate system (looking down X)
 	// to OpenGL's coordinate system (looking down -Z)
 	myGlMultMatrix(viewerMatrix, s_flipMatrix, tr.projector.modelMatrix);
+
+	__gluInvertMatrixf(tr.projector.modelMatrix,tr.projector.modelMatrixInverse);
+
+	R_UpdateProjectorClipPlanes();
 }
 
 static void R_UpdateProjectorMatrix(void) {
@@ -675,37 +760,8 @@ static void R_UpdateProjectorMatrix(void) {
 	tr.projector.projectionMatrix[11] = -1;
 	tr.projector.projectionMatrix[15] = 0;
 
-#define SETCLIPPLANE(a,b,c,d,e) (tr.projector.clipPlanes[a][b] = tr.projector.projectionMatrix[c] d tr.projector.projectionMatrix[e])
+	R_UpdateProjectorClipPlanes();
 
-	SETCLIPPLANE(CLIP_PLANE_RIGHT, 0, 3, -, 0);
-	SETCLIPPLANE(CLIP_PLANE_RIGHT, 1, 7, -, 4);
-	SETCLIPPLANE(CLIP_PLANE_RIGHT, 2, 11, -, 8);
-	SETCLIPPLANE(CLIP_PLANE_RIGHT, 3, 15, -, 12);
-
-	SETCLIPPLANE(CLIP_PLANE_LEFT, 0, 3, +, 0);
-	SETCLIPPLANE(CLIP_PLANE_LEFT, 1, 7, +, 4);
-	SETCLIPPLANE(CLIP_PLANE_LEFT, 2, 11, +, 8);
-	SETCLIPPLANE(CLIP_PLANE_LEFT, 3, 15, +, 12);
-
-	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 0, 3, +, 1);
-	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 1, 7, +, 5);
-	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 2, 11, +, 9);
-	SETCLIPPLANE(CLIP_PLANE_BOTTOM, 3, 15, +, 13);
-
-	SETCLIPPLANE(CLIP_PLANE_TOP, 0, 3, -, 1);
-	SETCLIPPLANE(CLIP_PLANE_TOP, 1, 7, -, 5);
-	SETCLIPPLANE(CLIP_PLANE_TOP, 2, 11, -, 9);
-	SETCLIPPLANE(CLIP_PLANE_TOP, 3, 15, -, 13);
-
-	SETCLIPPLANE(CLIP_PLANE_FAR, 0, 3, -, 2);
-	SETCLIPPLANE(CLIP_PLANE_FAR, 1, 7, -, 6);
-	SETCLIPPLANE(CLIP_PLANE_FAR, 2, 11, -, 10);
-	SETCLIPPLANE(CLIP_PLANE_FAR, 3, 15, -, 14);
-
-	SETCLIPPLANE(CLIP_PLANE_NEAR, 0, 3, +, 2);
-	SETCLIPPLANE(CLIP_PLANE_NEAR, 1, 7, +, 6);
-	SETCLIPPLANE(CLIP_PLANE_NEAR, 2, 11, +, 10);
-	SETCLIPPLANE(CLIP_PLANE_NEAR, 3, 15, +, 14);
 }
 
 

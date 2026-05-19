@@ -16,6 +16,8 @@ varying out vec3 vertexNormal;
 out vec3 debugColor;
 out vec3 texUVTransform[2];
 
+out float gl_ClipDistance[6];
+
 //in vec4 geomTexCoord[3];
 in geomTexCoord_interface {
 	vec4 coord[TEXTURE_COUNT/2];
@@ -29,6 +31,8 @@ in vec4 gl_TexCoordIn[3][1];
 in mat4x4 projectionMatrix[3];
 
 uniform mat4x4 worldModelViewMatrixUniform;
+
+uniform vec4 clipPlanesUniform[6];
 
 in mat4x4 worldModelViewMatrixReverse[3];
 out mat4x4 worldModelViewMatrixReverseGeom;
@@ -342,6 +346,12 @@ void standard(vec3 myNormal){
 	for (int i = 0; i < 3; i++)
 	{
 		gl_Position = outPos[i];
+		//gl_ClipVertex = gl_Position;
+		for(int j=0;j<6;j++){
+			gl_ClipDistance[j] = dot(clipPlanesUniform[j],eyeSpaceCoords[i]);
+			//gl_ClipDistance[j] = dot(clipPlanesUniform[j],vec4(eyeSpaceCoords[i].xyz,1.0f));
+			//gl_ClipDistance[j] = dot(clipPlanesUniform[j].xyz,eyeSpaceCoords[i].xyz)+clipPlanesUniform[j].w;
+		}
 		SETTEXCOORDS
 		eyeSpaceCoordsGeom = eyeSpaceCoords[i];
 		pureVertexCoordsGeom = pureVertexCoords[i];
@@ -456,6 +466,7 @@ void equirect(){
 		for (int i = 0; i < 3; i++)
 		{
 			gl_Position = positions[i];
+			//gl_ClipVertex = gl_Position;
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
 			SETTEXCOORDS
 			vertColor = color[i];
@@ -478,6 +489,7 @@ void equirect(){
 				if (thisPosition.x <= 0) thisPosition.x += 2.0;
 			}
 			gl_Position = thisPosition;
+			//gl_ClipVertex = gl_Position;
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
 			SETTEXCOORDS
 			vertColor = color[i];
@@ -496,6 +508,7 @@ void equirect(){
 				if (thisPosition.x > 0) thisPosition.x -= 2.0;
 			}
 			gl_Position = thisPosition;
+			//gl_ClipVertex = gl_Position;
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
 			SETTEXCOORDS
 			vertColor = color[i];
@@ -621,6 +634,7 @@ void fisheye(){
 		for (int i = 0; i < 3; i++)
 		{
 			gl_Position = positions[i];
+			//gl_ClipVertex = gl_Position;
 			//gl_TexCoord[0] = gl_TexCoordIn[i][0];
 			SETTEXCOORDS
 			vertColor = color[i];

@@ -393,6 +393,16 @@ typedef void (APIENTRY * PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, 
 
 #define GL_MAX_VERTEX_ATTRIBS 0x8869
 
+
+#define GL_CLIP_DISTANCE0 0x3000
+#define GL_CLIP_DISTANCE1 0x3001
+#define GL_CLIP_DISTANCE2 0x3002
+#define GL_CLIP_DISTANCE3 0x3003
+#define GL_CLIP_DISTANCE4 0x3004
+#define GL_CLIP_DISTANCE5 0x3005
+#define GL_CLIP_DISTANCE6 0x3006
+#define GL_CLIP_DISTANCE7 0x3007
+
 /* Already in glext.h
 typedef void (APIENTRY *PFNGLCOMBINERPARAMETERFVNVPROC) (GLenum pname,const GLfloat *params);
 typedef void (APIENTRY *PFNGLCOMBINERPARAMETERIVNVPROC) (GLenum pname,const GLint *params);
@@ -934,6 +944,7 @@ extern GLint(APIENTRYP qglGetUniformLocation) (GLuint, const GLchar*);
 extern void (APIENTRYP qglUniform1f) (GLint, GLfloat);
 extern void (APIENTRYP qglUniform2f) (GLint, GLfloat, GLfloat);
 extern void (APIENTRYP qglUniform3fv) (GLint, GLsizei, const GLfloat*);
+extern void (APIENTRYP qglUniform4fv) (GLint, GLsizei, const GLfloat*);
 extern void (APIENTRYP qglUniformMatrix4fv) (GLint, GLsizei, GLboolean, const GLfloat*);
 extern void (APIENTRYP qglUniform1i) (GLint, GLint);
 extern void (APIENTRYP qglUniform1ui) (GLint, GLuint);

@@ -1542,6 +1542,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	bool haveVertLightDir = haveVertexLightDirectionUniform > 0 || projectorActiveUniform>0;
 	vec3 projectorLightDir = - normalize(worldPixel-projectorPosUniform);
 
+	#define PROJECTOR_DEBUG 0
 	if(projectorActiveUniform > 0){
 		//vec2 shadowBufferCoords = gl_FragCoord.xy / textureSize(text_in[27],0);
 		//vec4 shadowBuffer = textureLod(text_in[27],shadowBufferCoords,0);
@@ -1551,7 +1552,11 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		//}
 		// untested, but i figure its something like this...
 		if(shadowBuffer.x != 0){
+		#if PROJECTOR_DEBUG
+			outFragColor = vec4(0,1,0,1);
+		#else
 			outFragColor = vec4(0);
+		#endif
 			isinvisible = true;
 			return true; // ok? why do light calc for shit that isnt even visible
 		}
@@ -1559,14 +1564,22 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		vec4 clipSpace = projectorProjectionMatrixUniform*projectorEyePixel;
 		if(clipSpace.w >= 0)
 		{
+		#if PROJECTOR_DEBUG
+			outFragColor = vec4(0,0,1,1);
+		#else
 			outFragColor = vec4(0);
+		#endif
 			isinvisible = true;
 			return true; // ok? why do light calc for shit that isnt even visible
 		}
 		clipSpace.xyz /= clipSpace.w;
 		if(clipSpace.x < -1 || clipSpace.x > 1 || clipSpace.y < -1 || clipSpace.y > 1)
 		{
+		#if PROJECTOR_DEBUG
+			outFragColor = vec4(1,0,0,1);
+		#else
 			outFragColor = vec4(0);
+		#endif
 			isinvisible = true;
 			return true; // ok? why do light calc for shit that isnt even visible
 		}

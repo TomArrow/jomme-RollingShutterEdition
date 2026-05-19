@@ -2711,20 +2711,31 @@ void RB_EndSurface( qboolean projecting ) {
 		fboUniformsEx.projectorActive = qtrue;
 		R_FrameBuffer_SetDynamicUniforms3();
 
-		qglPushMatrix();
+		//qglMatrixMode(GL_MODELVIEW);
+		//qglPushMatrix();
+		//qglLoadIdentity();
+		R_UpdateProjectorClipPlanesEye();
 
-		qglLoadMatrixf(backEnd.viewParms.world.modelMatrix);
+		//qglLoadMatrixf(backEnd.viewParms.world.modelMatrix);
 
-		qglEnable(GL_CLIP_PLANE2);
-		qglClipPlane(GL_CLIP_PLANE2,tr.projector.clipPlanes[0]);
-		qglEnable(GL_CLIP_PLANE3);
-		qglClipPlane(GL_CLIP_PLANE3,tr.projector.clipPlanes[1]);
-		qglEnable(GL_CLIP_PLANE4);
-		qglClipPlane(GL_CLIP_PLANE4,tr.projector.clipPlanes[2]);
-		qglEnable(GL_CLIP_PLANE5);
-		qglClipPlane(GL_CLIP_PLANE5,tr.projector.clipPlanes[3]);
+		//GLdouble test[4] = {0,0,1,0};
+		//qglClipPlane(GL_CLIP_PLANE0, test);
+		qglEnable(GL_CLIP_DISTANCE0);
+		qglEnable(GL_CLIP_DISTANCE1);
+		qglEnable(GL_CLIP_DISTANCE2);
+		qglEnable(GL_CLIP_DISTANCE3);
+		//qglEnable(GL_CLIP_DISTANCE4);
+		//qglEnable(GL_CLIP_DISTANCE5);
+		//qglClipPlane(GL_CLIP_PLANE3,tr.projector.clipPlanes[1]);
+		//qglEnable(GL_CLIP_PLANE4);
+		//qglClipPlane(GL_CLIP_PLANE4,tr.projector.clipPlanes[2]);
+		//qglEnable(GL_CLIP_PLANE5);
+		//qglClipPlane(GL_CLIP_PLANE5,tr.projector.clipPlanes[3]);
 
-		qglPopMatrix();
+		//qglPopMatrix();
+
+		//qglEnable(GL_POLYGON_OFFSET_FILL);
+		//qglPolygonOffset(r_offsetFactor->value, r_offsetUnits->value);
 
 		g_bRenderProjector = true;
 
@@ -2733,10 +2744,12 @@ void RB_EndSurface( qboolean projecting ) {
 
 		g_bRenderProjector = false;
 
-		qglDisable(GL_CLIP_PLANE2);
-		qglDisable(GL_CLIP_PLANE3);
-		qglDisable(GL_CLIP_PLANE4);
-		qglDisable(GL_CLIP_PLANE5);
+		qglDisable(GL_CLIP_DISTANCE0);
+		qglDisable(GL_CLIP_DISTANCE1);
+		qglDisable(GL_CLIP_DISTANCE2);
+		qglDisable(GL_CLIP_DISTANCE3);
+		qglDisable(GL_CLIP_DISTANCE4);
+		qglDisable(GL_CLIP_DISTANCE5);
 
 		fboUniformsEx.projectorActive = qfalse;
 		R_FrameBuffer_SetDynamicUniforms3();
