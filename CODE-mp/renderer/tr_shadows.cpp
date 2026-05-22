@@ -191,6 +191,18 @@ void RB_ShadowTessEnd( void ) {
 
 	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
 
+	if (tess.shader == tr.shadowShader && r_shadows->integer == 4) {
+		if (backEnd.currentEntity == &tr.worldEntity) {
+			VectorCopy(tr.sunDirection, lightDir);
+		}
+		else {
+			lightDir[0] = DotProduct(tr.sunDirection, backEnd.currentEntity->e.axis[0]);
+			lightDir[1] = DotProduct(tr.sunDirection, backEnd.currentEntity->e.axis[1]);
+			lightDir[2] = DotProduct(tr.sunDirection, backEnd.currentEntity->e.axis[2]);
+			VectorNormalize(lightDir);
+		}
+	}
+
 	//expandLength = backEnd.ori.origin[2] - backEnd.currentEntity->e.shadowPlane + 64 + 50; // TA: let's go distance to shadowplane, plus playerheight, plus a bit extra so some angles are covered. don't go 512 units like in the original so we don't cast shadows through 200 walls. TODO restrict normals too so we don't draw on undersides of geometry we stand on. meh, doesnt rly work.
 
 	// project vertexes away from light direction
@@ -360,7 +372,7 @@ overlap and double darken.
 =================
 */
 void RB_ShadowFinish( void ) {
-	if ( r_shadows->integer != 2 && (!r_fboGLSLProjector || !r_fboGLSLProjector->integer) ) {
+	if ( r_shadows->integer != 2 && r_shadows->integer != 4 && (!r_fboGLSLProjector || !r_fboGLSLProjector->integer) ) {
 		return;
 	}
 	if ( glConfig.stencilBits < 4 ) {

@@ -115,6 +115,10 @@ static qboolean	R_CullSurface( surfaceType_t *surface, shader_t *shader ) {
 		return qfalse;
 	}
 
+	if (r_shadows->integer == 4) {
+		return qfalse;
+	}
+
 	if ( shader->cullType == CT_TWO_SIDED ) {
 		return qfalse;
 	}
@@ -318,8 +322,13 @@ static void R_AddWorldSurface( msurface_t *surf, int dlightBits ) {
 
 	R_AddDrawSurf( surf->data, shader, surf->fogIndex, dlightBits );
 
-	if (r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer && *surf->data == SF_FACE) {
-		R_AddDrawSurf(surf->data, tr.projectorshadowShader, surf->fogIndex, dlightBits);
+	if (*surf->data == SF_FACE && !shader->isSky) {
+		if (r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer) {
+			R_AddDrawSurf(surf->data, tr.projectorshadowShader, surf->fogIndex, dlightBits);
+		}
+		if (r_shadows->integer == 4) {
+			R_AddDrawSurf(surf->data, tr.shadowShader, surf->fogIndex, dlightBits);
+		}
 	}
 }
 
@@ -470,7 +479,8 @@ R_RecursiveWorldNode
 ================
 */
 static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits ) {
-	qboolean doingWorldShadows = (qboolean)(r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer);
+	qboolean doingWorldShadowsProjector = (qboolean)(r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer);
+	qboolean doingWorldShadows = (qboolean)(r_shadows->integer == 4);
 	do {
 		int			newDlights[2];
 
@@ -482,7 +492,7 @@ static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits )
 		// if the bounding volume is outside the frustum, nothing
 		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
 
-		if ( !r_nocull->integer && !doingWorldShadows && !(tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) ) {
+		if ( !r_nocull->integer && !doingWorldShadows && !doingWorldShadowsProjector && !(tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) ) {
 			int		r;
 
 			if ( planeBits & 1 ) {

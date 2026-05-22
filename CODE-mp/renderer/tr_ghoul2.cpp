@@ -2494,7 +2494,7 @@ void RenderSurfaces(CRenderSurface &RS) //also ended up just ripping right from 
 		// stencil shadows can't do personal models unless I polyhedron clip
 		//using z-fail now so can do personal models -rww
 		if ( /*!RS.personalModel
-			&& */r_shadows->integer == 2 
+			&& */(r_shadows->integer == 2 || r_shadows->integer == 4)
 //			&& RS.fogNum == 0
 			//&& (RS.renderfx & RF_SHADOW_PLANE )
 			&& !(RS.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
