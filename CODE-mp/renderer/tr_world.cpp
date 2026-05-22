@@ -470,7 +470,7 @@ R_RecursiveWorldNode
 ================
 */
 static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits ) {
-
+	qboolean doingWorldShadows = (qboolean)(r_fboGLSLProjector && r_fboGLSLProjector->integer && r_fboGLSLProjectorWorldShadow->integer);
 	do {
 		int			newDlights[2];
 
@@ -482,7 +482,7 @@ static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits )
 		// if the bounding volume is outside the frustum, nothing
 		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
 
-		if ( !r_nocull->integer && !(tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) ) {
+		if ( !r_nocull->integer && !doingWorldShadows && !(tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) ) {
 			int		r;
 
 			if ( planeBits & 1 ) {

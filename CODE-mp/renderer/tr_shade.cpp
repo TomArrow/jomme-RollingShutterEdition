@@ -357,7 +357,10 @@ static void DrawTris (shaderCommands_t *input) {
 	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
 	
 	qglDepthRange(0, 0);
-	
+
+	if (r_showtris->integer & 0x8) {
+		GL_Cull(CT_TWO_SIDED);
+	}
 
 	if (!( r_showtris->integer & 0x2) ) {
 		qglDisableClientState (GL_COLOR_ARRAY);

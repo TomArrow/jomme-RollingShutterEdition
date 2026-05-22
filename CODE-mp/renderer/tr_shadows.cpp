@@ -37,6 +37,34 @@ void R_AddEdgeDef( int i1, int i2, int facing ) {
 	numEdgeDefs[ i1 ]++;
 }
 
+
+void R_RenderShadowCaps( void ) {
+	int		i;
+	int		numTris;
+	numTris = tess.numIndexes / 3;
+
+	qglBegin(GL_TRIANGLES);
+	for (i = 0; i < numTris; i++) {
+		int		i1, i2, i3;
+
+		if (!facing[i]) {
+			continue;
+		}
+
+		i1 = tess.indexes[i * 3 + 0];
+		i2 = tess.indexes[i * 3 + 1];
+		i3 = tess.indexes[i * 3 + 2];
+
+		qglVertex3fv(tess.xyz[i1]);
+		qglVertex3fv(tess.xyz[i2]);
+		qglVertex3fv(tess.xyz[i3]);
+		qglVertex3fv(tess.xyz[i3 + tess.numVertexes]);
+		qglVertex3fv(tess.xyz[i2 + tess.numVertexes]);
+		qglVertex3fv(tess.xyz[i1 + tess.numVertexes]);		
+	}
+	qglEnd();
+}
+
 void R_RenderShadowEdges( void ) {
 	int		i;
 
@@ -135,7 +163,8 @@ void RB_ShadowTessEnd( void ) {
 	int		numTris;
 	vec3_t	lightDir; 
 	float	expandLength = 512;
-	vec3_t projectorPos;
+	vec3_t projectorPos; 
+	qboolean	zFail = (qboolean)(r_stencilShadowZFail->integer && glConfig.depthClamp);
 
 	// TODO Depth Fail ("Carmack's Reverse")?
 	// TODO reject normals that align with the shadow/light direction, so we don't shadow undersides of stuff (looks bad)
@@ -256,29 +285,60 @@ void RB_ShadowTessEnd( void ) {
 	qglEnable( GL_STENCIL_TEST );
 	qglStencilFunc( GL_ALWAYS, 1, 255 );
 
-	// mirrors have the culling order reversed
-	if ( backEnd.viewParms.isMirror ) {
-		qglCullFace( GL_FRONT );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
+	if (zFail) {
+		qglDepthFunc(GL_LESS); // TODO why do i have to do this? I think my caps are being done incorrectly..
+		// mirrors have the culling order reversed
+		if ( backEnd.viewParms.isMirror ) {
+			qglCullFace( GL_BACK );
+			qglStencilOp( GL_KEEP, GL_INCR, GL_KEEP );
 
-		R_RenderShadowEdges();
+			R_RenderShadowCaps();
+			R_RenderShadowEdges();
 
-		qglCullFace( GL_BACK );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
+			qglCullFace( GL_FRONT );
+			qglStencilOp( GL_KEEP, GL_DECR, GL_KEEP );
 
-		R_RenderShadowEdges();
-	} else {
-		qglCullFace( GL_BACK );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
+			R_RenderShadowCaps();
+			R_RenderShadowEdges();
+		} else {
+			qglCullFace( GL_FRONT );
+			qglStencilOp( GL_KEEP, GL_INCR, GL_KEEP );
 
-		R_RenderShadowEdges();
+			R_RenderShadowCaps();
+			R_RenderShadowEdges();
 
-		qglCullFace( GL_FRONT );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
+			qglCullFace( GL_BACK );
+			qglStencilOp( GL_KEEP, GL_DECR, GL_KEEP );
 
-		R_RenderShadowEdges();
+			R_RenderShadowCaps();
+			R_RenderShadowEdges();
+		}
+		qglDepthFunc(GL_LEQUAL);
 	}
+	else {
+		// mirrors have the culling order reversed
+		if ( backEnd.viewParms.isMirror ) {
+			qglCullFace( GL_FRONT );
+			qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
 
+			R_RenderShadowEdges();
+
+			qglCullFace( GL_BACK );
+			qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
+
+			R_RenderShadowEdges();
+		} else {
+			qglCullFace( GL_BACK );
+			qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
+
+			R_RenderShadowEdges();
+
+			qglCullFace( GL_FRONT );
+			qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
+
+			R_RenderShadowEdges();
+		}
+	}
 
 	// reenable writing to the color buffer
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );

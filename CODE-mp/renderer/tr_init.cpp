@@ -174,6 +174,7 @@ cvar_t	*r_styleOnly;
 cvar_t	*r_uiFullScreen;
 cvar_t	*r_shadows;
 cvar_t	*r_stencilSky;
+cvar_t	*r_stencilShadowZFail;
 cvar_t	*r_stencilShadowColor;
 cvar_t	*r_shadowRange;
 cvar_t	*r_flares;
@@ -1133,6 +1134,7 @@ void R_Register( void )
 	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_CHEAT);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", 0 );
 	r_stencilSky = ri.Cvar_Get("r_stencilSky", "1", CVAR_ARCHIVE);
+	r_stencilShadowZFail = ri.Cvar_Get("r_stencilShadowZFail ", "1", CVAR_ARCHIVE);
 	r_shadowRange = ri.Cvar_Get("r_shadowRange", "1000", 0);
 	r_stencilShadowColor = ri.Cvar_Get("r_stencilShadowColor", "0.6", CVAR_ARCHIVE);
 	r_stencilShadowColor->modified = qtrue;
