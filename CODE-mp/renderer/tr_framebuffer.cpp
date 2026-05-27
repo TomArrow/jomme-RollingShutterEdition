@@ -447,7 +447,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocationsTess->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
 
 		for (int i = 0; i < 6; i++) {
-			qglUniform4fv(uniformLocationsTess->clipPlanesUniform[i], 1, tr.projector.clipPlanes[i]);
+			qglUniform4fv(uniformLocationsTess->clipPlanesUniform[i], 1, fboUniformsEx.clipPlanes[i]);
 		}
 
 		qglUniformMatrix4fv(uniformLocationsTess->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
@@ -577,7 +577,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		qglUniform1i(uniformLocations->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
 
 		for (int i = 0; i < 6; i++) {
-			qglUniform4fv(uniformLocations->clipPlanesUniform[i], 1, tr.projector.clipPlanes[i]);
+			qglUniform4fv(uniformLocations->clipPlanesUniform[i], 1, fboUniformsEx.clipPlanes[i]);
 		}
 
 		qglUniformMatrix4fv(uniformLocations->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);

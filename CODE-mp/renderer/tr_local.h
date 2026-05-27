@@ -1810,7 +1810,7 @@ void	GL_Cull( int cullType );
 void	RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty);
 void	RE_UploadCinematic (int cols, int rows, const byte *data, int client, qboolean dirty);
 
-void		R_UpdateProjectorClipPlanesEye();
+void		R_UpdateProjectorClipPlanesEye(int planesmask);
 void		RE_BeginFrame( stereoFrame_t stereoFrame );
 void		RE_BeginRegistration( glconfig_t *glconfig );
 void		RE_LoadWorldMap( const char *mapname );
@@ -2640,6 +2640,7 @@ typedef struct {
 	unsigned int	textRectBitmask;
 	int				lightmapNums[31];
 	qboolean		projectorActive;
+	GLfloat			clipPlanes[6][4];
 } fboExtraUniforms_t;
 
 extern fboExtraUniforms_t fboUniformsEx;

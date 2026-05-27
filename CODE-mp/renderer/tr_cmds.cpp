@@ -556,7 +556,7 @@ static int parseVec2(const char* text, float* out) {
 	return matches;
 }
 
-void R_UpdateProjectorClipPlanesEye() {
+void R_UpdateProjectorClipPlanesEye(int planesmask) {
 	// had to randomly flip some signs around to make this baseline work.
 	// TODO review this someday and make it actually consistent and logically sound
 	for (int i = 0; i < 6; i++) {
@@ -570,6 +570,10 @@ void R_UpdateProjectorClipPlanesEye() {
 		tr.projector.clipPlanes[i][1] = (tmp[2]);
 		tr.projector.clipPlanes[i][2] = (-tmp[0]);
 		tr.projector.clipPlanes[i][3] = (-tmp[3]);
+		if (planesmask & (1 << i))
+		{
+			Vector4Copy(tr.projector.clipPlanes[i],fboUniformsEx.clipPlanes[i]);
+		}
 	}
 	R_FrameBuffer_SetDynamicUniforms3();
 }

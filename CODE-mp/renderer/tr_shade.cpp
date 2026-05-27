@@ -2714,7 +2714,7 @@ void RB_EndSurface( qboolean projecting ) {
 		fboUniformsEx.projectorActive = qtrue;
 		R_FrameBuffer_SetDynamicUniforms3();
 
-		R_UpdateProjectorClipPlanesEye();
+		R_UpdateProjectorClipPlanesEye((1 << 0)| (1 << 1)| (1 << 2)| (1 << 3));
 
 		qglEnable(GL_CLIP_DISTANCE0);
 		qglEnable(GL_CLIP_DISTANCE1);
@@ -2738,12 +2738,19 @@ void RB_EndSurface( qboolean projecting ) {
 		qglDisable(GL_CLIP_DISTANCE1);
 		qglDisable(GL_CLIP_DISTANCE2);
 		qglDisable(GL_CLIP_DISTANCE3);
-		qglDisable(GL_CLIP_DISTANCE4);
-		qglDisable(GL_CLIP_DISTANCE5);
+
+		// AMD doesn't respect glDisable(GL_CLIP_DISTANCEN)
+		VectorClear(fboUniformsEx.clipPlanes[0]);
+		fboUniformsEx.clipPlanes[0][3] = 1;
+		VectorClear(fboUniformsEx.clipPlanes[1]);
+		fboUniformsEx.clipPlanes[1][3] = 1;
+		VectorClear(fboUniformsEx.clipPlanes[2]);
+		fboUniformsEx.clipPlanes[2][3] = 1;
+		VectorClear(fboUniformsEx.clipPlanes[3]);
+		fboUniformsEx.clipPlanes[3][3] = 1;
 
 		fboUniformsEx.projectorActive = qfalse;
 		R_FrameBuffer_SetDynamicUniforms3();
-		//tess.currentStageIteratorFunc();
 	}
 	// clear shader so we can tell we don't have any unclosed surfaces
 	tess.numIndexes = 0;
