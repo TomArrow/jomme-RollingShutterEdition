@@ -290,6 +290,41 @@ void R_TransformClipToWindow( const vec4_t clip, const viewParms_t *view, vec4_t
 }
 
 
+
+
+void R_ActivateClipPlane(int index, vec4_t plane, qboolean updateUni) {
+	GLdouble planeD[4];
+	Vector4Copy(plane, planeD); 
+	qglLoadMatrixf(s_flipMatrix);
+	qglClipPlane(GL_CLIP_PLANE0 + index, planeD);
+	qglEnable(GL_CLIP_PLANE0 + index);
+	if (r_fboGLSL->integer && ENABLEGLSL) {
+		// GLSL stuff needs CLIP_DISTANCE instead
+		qglEnable(GL_CLIP_DISTANCE0 + index);
+		// here s_flipMatrix is not applied automatically so we need to do it by hand
+
+		fboUniformsEx.clipPlanes[index][0] = (-plane[1]);
+		fboUniformsEx.clipPlanes[index][1] = (plane[2]);
+		fboUniformsEx.clipPlanes[index][2] = (-plane[0]);
+		fboUniformsEx.clipPlanes[index][3] = (plane[3]);
+		//Vector4Copy(plane,fboUniformsEx.clipPlanes[index]);
+		if (updateUni) {
+			R_FrameBuffer_SetDynamicUniforms3();
+		}
+	}
+}
+void R_DeActivateClipPlane(int index, qboolean updateUni) {
+	qglDisable(GL_CLIP_PLANE0 + index);
+	if (r_fboGLSL->integer && ENABLEGLSL) {
+		// GLSL stuff needs CLIP_DISTANCE instead
+		qglDisable(GL_CLIP_DISTANCE0 + index);
+		VectorClear(fboUniformsEx.clipPlanes[index]); // AMD doesnt respect glDisable(GL_CLIP_DISTANCEN) so we need to just set it so it always passes.
+		fboUniformsEx.clipPlanes[index][3] = 1;
+		if (updateUni) {
+			R_FrameBuffer_SetDynamicUniforms3();
+		}
+	}
+}
 /*
 ==========================
 myGlMultMatrix

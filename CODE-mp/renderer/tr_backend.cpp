@@ -768,7 +768,7 @@ void RB_BeginDrawingView (void) {
 	// clip to the plane of the portal
 	if ( backEnd.viewParms.isPortal ) {
 		float	plane[4];
-		double	plane2[4];
+		float	plane2[4];
 
 		plane[0] = backEnd.viewParms.portalPlane.normal[0];
 		plane[1] = backEnd.viewParms.portalPlane.normal[1];
@@ -780,26 +780,12 @@ void RB_BeginDrawingView (void) {
 		plane2[2] = DotProduct (backEnd.viewParms.ori.axis[2], plane);
 		plane2[3] = DotProduct (plane, backEnd.viewParms.ori.origin) - plane[3];
 
-		qglLoadMatrixf( s_flipMatrix );
-		qglClipPlane (GL_CLIP_PLANE0, plane2);
-		qglEnable (GL_CLIP_PLANE0);
+		//qglLoadMatrixf( s_flipMatrix );
+		//qglClipPlane (GL_CLIP_PLANE0, plane2);
+		//qglEnable (GL_CLIP_PLANE0);
+
+		R_ActivateClipPlane(4,plane2,qtrue);
 	} else {
-		/*float	plane[4];
-		double	plane2[4];
-
-		plane[0] = 0;
-		plane[1] = 1;
-		plane[2] = 0;
-		plane[3] = 0;
-
-		plane2[0] = DotProduct(backEnd.viewParms.ori.axis[0], plane);
-		plane2[1] = DotProduct(backEnd.viewParms.ori.axis[1], plane);
-		plane2[2] = DotProduct(backEnd.viewParms.ori.axis[2], plane);
-		plane2[3] = DotProduct(plane, backEnd.viewParms.ori.origin) - plane[3];
-
-		qglLoadMatrixf(s_flipMatrix);
-		qglClipPlane(GL_CLIP_PLANE0, plane2);
-		qglEnable(GL_CLIP_PLANE0);*/
 		qglDisable (GL_CLIP_PLANE0);
 	}
 }
@@ -1156,7 +1142,8 @@ void	RB_SetGL2D (void) {
 			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
 	qglDisable( GL_CULL_FACE );
-	qglDisable( GL_CLIP_PLANE0 );
+	//qglDisable( GL_CLIP_PLANE0 );
+	R_DeActivateClipPlane(4, qtrue);
 
 	R_FrameBuffer_DeactivateFisheye();
 
@@ -2138,7 +2125,8 @@ void EndPixelShader()
 
 static inline void RB_BlurGlowTexture()
 {
-	qglDisable (GL_CLIP_PLANE0);
+	//qglDisable (GL_CLIP_PLANE0);
+	R_DeActivateClipPlane(4, qtrue);
 	GL_Cull( CT_TWO_SIDED );
 	qglDisable( GL_DEPTH_TEST );
 
@@ -2315,7 +2303,8 @@ static inline void RB_BlurGlowTexture()
 // Draw the glow blur over the screen additively.
 static inline void RB_DrawGlowOverlay()
 {
-	qglDisable (GL_CLIP_PLANE0);
+	//qglDisable (GL_CLIP_PLANE0);
+	R_DeActivateClipPlane(4, qtrue);
 	GL_Cull( CT_TWO_SIDED );
 	qglDisable( GL_DEPTH_TEST ); 
 

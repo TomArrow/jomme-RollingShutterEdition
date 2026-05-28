@@ -399,7 +399,8 @@ void RB_RenderFlares (void) {
 	}
 
 	if ( backEnd.viewParms.isPortal ) {
-		qglDisable (GL_CLIP_PLANE0);
+		//qglDisable (GL_CLIP_PLANE0);
+		R_DeActivateClipPlane(4, qtrue);
 	}
 
 	qglPushMatrix();

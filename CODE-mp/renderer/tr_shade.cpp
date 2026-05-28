@@ -2734,20 +2734,10 @@ void RB_EndSurface( qboolean projecting ) {
 
 		qglDisable(GL_POLYGON_OFFSET_FILL);
 
-		qglDisable(GL_CLIP_DISTANCE0);
-		qglDisable(GL_CLIP_DISTANCE1);
-		qglDisable(GL_CLIP_DISTANCE2);
-		qglDisable(GL_CLIP_DISTANCE3);
-
-		// AMD doesn't respect glDisable(GL_CLIP_DISTANCEN)
-		VectorClear(fboUniformsEx.clipPlanes[0]);
-		fboUniformsEx.clipPlanes[0][3] = 1;
-		VectorClear(fboUniformsEx.clipPlanes[1]);
-		fboUniformsEx.clipPlanes[1][3] = 1;
-		VectorClear(fboUniformsEx.clipPlanes[2]);
-		fboUniformsEx.clipPlanes[2][3] = 1;
-		VectorClear(fboUniformsEx.clipPlanes[3]);
-		fboUniformsEx.clipPlanes[3][3] = 1;
+		R_DeActivateClipPlane(0, qfalse);
+		R_DeActivateClipPlane(1, qfalse);
+		R_DeActivateClipPlane(2, qfalse);
+		R_DeActivateClipPlane(3, qfalse);
 
 		fboUniformsEx.projectorActive = qfalse;
 		R_FrameBuffer_SetDynamicUniforms3();
