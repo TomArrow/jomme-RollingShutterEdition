@@ -131,10 +131,21 @@ void R_RenderShadowEdges( void ) {
 			// if it doesn't share the edge with another front facing
 			// triangle, it is a sil edge
 			if ( hit[ 1 ] == 0 ) {
-				qglBegin( GL_TRIANGLE_STRIP );
+				//qglBegin( GL_TRIANGLE_STRIP );
+				//qglVertex3fv( tess.xyz[ i ] );
+				//qglVertex3fv( tess.xyz[ i + tess.numVertexes ] );
+				//qglVertex3fv( tess.xyz[ i2 ] );
+				//qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
+				//qglEnd();
+				
+				// changing from GL_TRIANGLE_STRIP appears (?) to alleviate some weird crashes om AMD drivers where RAM usage insanely explodes to tens of GB in a few seconds, as well as invalid memory access crashes...
+				qglBegin( GL_TRIANGLES );
 				qglVertex3fv( tess.xyz[ i ] );
 				qglVertex3fv( tess.xyz[ i + tess.numVertexes ] );
 				qglVertex3fv( tess.xyz[ i2 ] );
+				
+				qglVertex3fv( tess.xyz[ i2 ] );
+				qglVertex3fv( tess.xyz[ i + tess.numVertexes ] );
 				qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
 				qglEnd();
 				c_edges++;
