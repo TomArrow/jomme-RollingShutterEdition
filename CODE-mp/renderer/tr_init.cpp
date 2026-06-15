@@ -173,6 +173,9 @@ cvar_t	*r_vertexLight;
 cvar_t	*r_styleOnly;
 cvar_t	*r_uiFullScreen;
 cvar_t	*r_shadows;
+cvar_t	*r_shadowSunDirOverride;
+cvar_t	*r_shadowSunDegrees;
+cvar_t	*r_shadowSunElevation;
 cvar_t	*r_stencilSky;
 cvar_t	*r_stencilShadowZFail;
 cvar_t	*r_stencilShadowColor;
@@ -1133,6 +1136,10 @@ void R_Register( void )
 	r_lockpvs = ri.Cvar_Get ("r_lockpvs", "0", CVAR_CHEAT);
 	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_CHEAT);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", 0 );
+	r_shadowSunDirOverride = ri.Cvar_Get( "r_shadowSunDirOverride", "0", CVAR_ARCHIVE);
+	r_shadowSunDegrees = ri.Cvar_Get( "r_shadowSunDegrees", "-35", CVAR_ARCHIVE);
+	r_shadowSunElevation = ri.Cvar_Get( "r_shadowSunElevation", "25", CVAR_ARCHIVE);
+	r_shadowSunDegrees->modified = r_shadowSunElevation->modified = qtrue;
 	r_stencilSky = ri.Cvar_Get("r_stencilSky", "1", CVAR_ARCHIVE);
 	r_stencilShadowZFail = ri.Cvar_Get("r_stencilShadowZFail ", "1", CVAR_ARCHIVE);
 	r_shadowRange = ri.Cvar_Get("r_shadowRange", "1000", 0);
@@ -1258,6 +1265,14 @@ void R_Init( void ) {
 #ifndef DEDICATED
 	Com_Memset( &tess, 0, sizeof( tess ) );
 #endif
+
+	if (r_stencilShadowColor) {
+		r_stencilShadowColor->modified = qtrue; // cringe xd
+	}
+	if (r_shadowSunDegrees && r_shadowSunElevation) {
+		r_shadowSunDegrees->modified = qtrue; // cringe xd
+		r_shadowSunElevation->modified = qtrue; // cringe xd
+	}
 
 	if (r_fboGLSLFogColor) {
 		r_fboGLSLFogColor->modified = qtrue; // cringe xd

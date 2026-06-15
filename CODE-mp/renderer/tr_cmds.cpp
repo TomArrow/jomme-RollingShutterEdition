@@ -768,6 +768,21 @@ static void R_UpdateProjectorMatrix(void) {
 
 }
 
+const double c_DEG2RADMULT = M_PI / 180.0;
+const double c_RAD2DEGMULT = 180.0 / M_PI;
+inline double radians_to_degrees(double radians) {
+	return radians * c_RAD2DEGMULT;
+}
+inline double degrees_to_radians(double degrees) {
+	return degrees * c_DEG2RADMULT;
+}
+void R_CalculateSunDirVec(float degrees, float elevation, vec3_t dirOut) {
+	float theta = degrees_to_radians(degrees);
+	float phi = degrees_to_radians(elevation);
+	dirOut[0] = cosf(theta) * cosf(phi);
+	dirOut[1] = sinf(theta) * cosf(phi);
+	dirOut[2] = sinf(phi);
+}
 
 
 /*
@@ -1028,6 +1043,12 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			Vector4Set(tr.stencilShadowColor,0.6f,0.6f,0.6f,1.0f);
 		}
 		r_stencilShadowColor->modified = qfalse;
+	}
+
+	if (r_shadowSunDegrees->modified || r_shadowSunElevation->modified) {
+		R_CalculateSunDirVec(r_shadowSunDegrees->value, r_shadowSunElevation->value, tr.shadowSunDirectionOverride);
+		r_shadowSunDegrees->modified = qfalse;
+		r_shadowSunElevation->modified = qfalse;
 	}
 
 	//

@@ -1414,6 +1414,7 @@ typedef struct {
 	qboolean captureIsActive; // Really just for the normal DMA sound to check if it should use a low quality resampler. Also maybe for quickjitter.
 
 	vec4_t					stencilShadowColor;
+	vec3_t					shadowSunDirectionOverride;
 } trGlobals_t;
 
 
@@ -1597,6 +1598,9 @@ extern	cvar_t	*r_shownormals;					// draws wireframe normals
 extern	cvar_t	*r_clear;						// force screen clear every frame
 
 extern	cvar_t	*r_shadows;						// controls shadows: 0 = none, 1 = blur, 2 = stencil, 3 = black planar projection
+extern	cvar_t	*r_shadowSunDirOverride;
+extern	cvar_t	*r_shadowSunDegrees;
+extern	cvar_t	*r_shadowSunElevation;
 extern	cvar_t	*r_stencilSky;					// use stencils to allow drawing multiple skies without overlap issues
 extern	cvar_t	*r_stencilShadowZFail;			// use z-fail for stencil shadows
 extern	cvar_t	*r_stencilShadowColor;			// color of stencil shadows

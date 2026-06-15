@@ -203,13 +203,20 @@ void RB_ShadowTessEnd( void ) {
 	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
 
 	if (tess.shader == tr.shadowShader && r_shadows->integer == 4) {
-		if (backEnd.currentEntity == &tr.worldEntity) {
-			VectorCopy(tr.sunDirection, lightDir);
+		vec3_t sunDirection;
+		if (!r_shadowSunDirOverride->integer) {
+			VectorCopy(tr.sunDirection, sunDirection);
 		}
 		else {
-			lightDir[0] = DotProduct(tr.sunDirection, backEnd.currentEntity->e.axis[0]);
-			lightDir[1] = DotProduct(tr.sunDirection, backEnd.currentEntity->e.axis[1]);
-			lightDir[2] = DotProduct(tr.sunDirection, backEnd.currentEntity->e.axis[2]);
+			VectorCopy(tr.shadowSunDirectionOverride, sunDirection);
+		}
+		if (backEnd.currentEntity == &tr.worldEntity) {
+			VectorCopy(sunDirection, lightDir);
+		}
+		else {
+			lightDir[0] = DotProduct(sunDirection, backEnd.currentEntity->e.axis[0]);
+			lightDir[1] = DotProduct(sunDirection, backEnd.currentEntity->e.axis[1]);
+			lightDir[2] = DotProduct(sunDirection, backEnd.currentEntity->e.axis[2]);
 			VectorNormalize(lightDir);
 		}
 	}
