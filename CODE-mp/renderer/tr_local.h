@@ -1604,6 +1604,7 @@ extern	cvar_t	*r_shadowSunElevation;
 extern	cvar_t	*r_stencilSky;					// use stencils to allow drawing multiple skies without overlap issues
 extern	cvar_t	*r_stencilShadowZFail;			// use z-fail for stencil shadows
 extern	cvar_t	*r_stencilShadowColor;			// color of stencil shadows
+extern	cvar_t	*r_stencilShadowInverse;		// apply shadowcolor to unshadowed areas
 extern	cvar_t	*r_flares;						// light flares
 
 extern	cvar_t	*r_intensity;

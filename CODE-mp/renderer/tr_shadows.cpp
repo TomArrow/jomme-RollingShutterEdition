@@ -405,7 +405,12 @@ void RB_ShadowFinish( void ) {
 	}
 
 	qglEnable( GL_STENCIL_TEST );
-	qglStencilFunc( GL_NOTEQUAL, 0, 255 );
+	if (r_stencilShadowInverse->integer) {
+		qglStencilFunc(GL_EQUAL, 0, 255);
+	}
+	else {
+		qglStencilFunc(GL_NOTEQUAL, 0, 255);
+	}
 
 	//qglDisable (GL_CLIP_PLANE0);
 	R_DeActivateClipPlane(4, qtrue);
