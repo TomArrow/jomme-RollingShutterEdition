@@ -1545,6 +1545,8 @@ static void GLW_InitExtensions( qboolean createFakeContext = qfalse )
 
 	qglGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &glConfig.maxVertexAttributes);
 
+	ri.Printf(PRINT_ALL, "...GL_MAX_VERTEX_ATTRIBS: %d\n", glConfig.maxVertexAttributes);
+
 	// GL_ARB_multitexture
 	qglMultiTexCoord2fARB = NULL;
 	qglActiveTextureARB = NULL;

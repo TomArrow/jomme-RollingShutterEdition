@@ -40,7 +40,7 @@ out mat4x4 worldModelViewMatrixReverseGeom;
 out vec3 normal;
 out vec3 worldNormal;
 
-out varying vec2 my_TexCoord[TEXTURE_COUNT];
+varying out vec2 my_TexCoord[TEXTURE_COUNT];
 
 #define SETATTRIBS lightDir = geomTexAttr[i].attribs[0];ambientLight = geomTexAttr[i].attribs[1];vertexNormal = geomTexAttr[i].attribs[2];
 

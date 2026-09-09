@@ -1,7 +1,7 @@
 #pragma once
 #include "tr_local.h"
 
-#define MAX_SHADER_ERROR_LOG_LENGTH 2048
+#define MAX_SHADER_ERROR_LOG_LENGTH 32768
 
 typedef enum glslShaderType_s {
 	GLSLSHAD_PERLIN = (1<<0),

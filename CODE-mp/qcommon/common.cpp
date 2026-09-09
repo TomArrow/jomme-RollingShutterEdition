@@ -13,7 +13,7 @@
 qboolean demo15detected = qfalse;
 qboolean ntModDetected = qfalse;
 
-#define	MAXPRINTMSG	4096
+#define	MAXPRINTMSG	32768
 
 #define MAX_NUM_ARGVS	50
 
@@ -144,7 +144,7 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
 	if ( rd_buffer ) {

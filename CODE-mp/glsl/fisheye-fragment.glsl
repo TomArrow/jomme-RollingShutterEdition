@@ -1,4 +1,4 @@
-#version 400 compatibility
+#version 420 compatibility
 #define VOXELSTUFF 1
 #extension GL_ARB_shader_storage_buffer_object : enable
 #extension GL_ARB_shader_group_vote : enable

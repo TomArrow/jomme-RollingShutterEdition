@@ -187,7 +187,7 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 bool R_GLSL::hasErrored(GLuint glId, char* filename, bool isProgram) {
 
 	GLint tmp;
-	char errorMessage[MAX_SHADER_ERROR_LOG_LENGTH];
+	static char errorMessage[MAX_SHADER_ERROR_LOG_LENGTH];
 	if (!isProgram) {
 		qglGetShaderiv(glId, GL_COMPILE_STATUS,&tmp);
 		if (!tmp) {
