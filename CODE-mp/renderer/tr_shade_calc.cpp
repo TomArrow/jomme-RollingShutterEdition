@@ -943,7 +943,7 @@ void RB_CalcFogTexCoords( float *st ) {
 
 		st[0] = s;
 		st[1] = t;
-		st += 2;
+		st += TEXCOORDS_ADVANCE;
 	}
 }
 
@@ -961,7 +961,7 @@ void RB_CalcEnvironmentTexCoords( float *st ) {
 	v = tess.xyz[0];
 	normal = tess.normal[0];
 
-	for (i = 0 ; i < tess.numVertexes ; i++, v += 4, normal += 4, st += 2 ) {
+	for (i = 0 ; i < tess.numVertexes ; i++, v += 4, normal += 4, st += TEXCOORDS_ADVANCE) {
 		VectorSubtract (backEnd.ori.viewOrigin, v, viewer);
 		VectorNormalizeFast (viewer);
 
@@ -985,7 +985,7 @@ void RB_CalcTurbulentTexCoords( const waveForm_t *wf, float *st ) {
 
 	now = (wf->phase + /*tess.shaderTime*/tr.refdef.time * 0.001 * wf->frequency + tr.refdef.timeFraction * 0.001 * wf->frequency);
 
-	for ( i = 0; i < tess.numVertexes; i++, st += 2 ) {
+	for ( i = 0; i < tess.numVertexes; i++, st += TEXCOORDS_ADVANCE) {
 		float s = st[0];
 		float t = st[1];
 
@@ -1001,7 +1001,7 @@ void RB_CalcTurbulentTexCoords( const waveForm_t *wf, float *st ) {
 */
 void RB_CalcScaleTexCoords( const float scale[2], float *st ) {
 	int i;
-	for ( i = 0; i < tess.numVertexes; i++, st += 2 ) {
+	for ( i = 0; i < tess.numVertexes; i++, st += TEXCOORDS_ADVANCE) {
 		st[0] *= scale[0];
 		st[1] *= scale[1];
 	}
@@ -1044,9 +1044,9 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 		p[0] = tess.xyz[tess.indexes[i]];
 		p[1] = tess.xyz[tess.indexes[i+1]];
 		p[2] = tess.xyz[tess.indexes[i+2]];
-		st[0] = stAll + tess.indexes[i]*2;
-		st[1] = stAll + tess.indexes[i+1]*2;
-		st[2] = stAll + tess.indexes[i+2]*2;
+		st[0] = stAll + tess.indexes[i] * TEXCOORDS_ADVANCE;
+		st[1] = stAll + tess.indexes[i+1] * TEXCOORDS_ADVANCE;
+		st[2] = stAll + tess.indexes[i+2] * TEXCOORDS_ADVANCE;
 		//VectorAdd(tess.normal[tess.indexes[i]],normal,normal);
 		//VectorAdd(tess.normal[tess.indexes[i+1]],normal,normal);
 		//VectorAdd(tess.normal[tess.indexes[i+2]],normal,normal);
@@ -1094,7 +1094,7 @@ void RB_CalcScrollTexCoords( const float scrollSpeed[2], float *st ) {
 	adjustedScrollS = adjustedScrollS - floor( adjustedScrollS );
 	adjustedScrollT = adjustedScrollT - floor( adjustedScrollT );
 
-	for ( i = 0; i < tess.numVertexes; i++, st += 2 ) {
+	for ( i = 0; i < tess.numVertexes; i++, st += TEXCOORDS_ADVANCE) {
 		st[0] += adjustedScrollS;
 		st[1] += adjustedScrollT;
 	}
@@ -1105,7 +1105,7 @@ void RB_CalcScrollTexCoords( const float scrollSpeed[2], float *st ) {
 */
 void RB_CalcTransformTexCoords( const texModInfo_t *tmi, float *st  ) {
 	int i;
-	for ( i = 0; i < tess.numVertexes; i++, st += 2 ) {
+	for ( i = 0; i < tess.numVertexes; i++, st += TEXCOORDS_ADVANCE) {
 		float s = st[0];
 		float t = st[1];
 		st[0] = s * tmi->matrix[0][0] + t * tmi->matrix[1][0] + tmi->translate[0];

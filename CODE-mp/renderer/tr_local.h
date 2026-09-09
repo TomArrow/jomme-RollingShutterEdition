@@ -1946,11 +1946,31 @@ TESSELATOR/SHADER DECLARATIONS
 typedef byte color4ub_t[4];
 typedef float color4f_t[4];
 
+#define TEXCOORDS_PACKING 1
+#if TEXCOORDS_PACKING
+#define TEXCOORDS_ADVANCE 4
+#define TEXCOORDSPTR(a,b) (((float*)(a)[(b)/2])+(((b)&1)*2))
+#define TEXCOORDSATTRIBPTR(a,b) (((float*)(a)[(b)/2]))
+#define TEXCOORDSATTRIBNUM(a) ((a)/2+1)
+#define TEXCOORDS_SHIFT 2 // for surfacesprites stuff
+#else
+#define TEXCOORDS_ADVANCE 2
+#define TEXCOORDSPTR(a,b) ((float*)(a)[(b)])
+#define TEXCOORDSATTRIBPTR(a,b) (((float*)(a)[(b)]))
+#define TEXCOORDSATTRIBNUM(a) (a)
+#define TEXCOORDS_SHIFT 1
+#endif
+#define TEXCOORDS_STRIDE (TEXCOORDS_ADVANCE * sizeof(float))
+
 typedef struct stageVars
 {
 	color4f_t	colors[SHADER_MAX_VERTEXES];
 	color4f_t	colorsScaled[SHADER_MAX_VERTEXES];
+#if TEXCOORDS_PACKING
+	vec4_t		texcoords[NUM_TEXTURE_BUNDLES / 2][SHADER_MAX_VERTEXES]; // we do basically a vec4 packing for opengl, otherwise max attrib limit will hit on nvidia
+#else
 	vec2_t		texcoords[NUM_TEXTURE_BUNDLES][SHADER_MAX_VERTEXES];
+#endif
 } stageVars_t;
 
 #define	NUM_TEX_COORDS		(MAXLIGHTMAPS_REAL+1)

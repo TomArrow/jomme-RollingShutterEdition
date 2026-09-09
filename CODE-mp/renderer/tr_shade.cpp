@@ -37,10 +37,10 @@ static void APIENTRY R_ArrayElementDiscrete( GLint index ) {
 	qglColor4f(tess.svars.colors[index][0]/255.0f, tess.svars.colors[index][1] / 255.0f, tess.svars.colors[index][2] / 255.0f, tess.svars.colors[index][3] / 255.0f);
 	//qglColor4ubv( tess.svars.colors[ index ] );
 	if ( glState.currenttmu ) {
-		qglMultiTexCoord2fARB( 0, tess.svars.texcoords[ 0 ][ index ][0], tess.svars.texcoords[ 0 ][ index ][1] );
-		qglMultiTexCoord2fARB( 1, tess.svars.texcoords[ 1 ][ index ][0], tess.svars.texcoords[ 1 ][ index ][1] );
+		qglMultiTexCoord2fARB( 0, TEXCOORDSPTR(tess.svars.texcoords[ 0 ], index )[0], TEXCOORDSPTR(tess.svars.texcoords[ 0 ], index )[1] );
+		qglMultiTexCoord2fARB( 1, TEXCOORDSPTR(tess.svars.texcoords[ 1 ], index )[0], TEXCOORDSPTR(tess.svars.texcoords[ 1 ], index )[1] );
 	} else {
-		qglTexCoord2fv( tess.svars.texcoords[ 0 ][ index ] );
+		qglTexCoord2fv( TEXCOORDSPTR(tess.svars.texcoords[ 0 ], index ) );
 	}
 	qglVertex3fv( tess.xyz[ index ] );
 }
@@ -555,7 +555,7 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			GL_SelectTexture(2+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX); // was 6. but want maxlightmaps 4->12. so 4+2 -> 12+2
 			qglEnable(GL_TEXTURE_2D);
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+			qglTexCoordPointer(2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(input->svars.texcoords,i));
 			R_BindAnimatedImage(&pStage->bundle[i], qtrue);
 			break;
 		}
@@ -569,22 +569,22 @@ static void R_BindStyleLightmapsEtc(shaderStage_t* pStage,shaderCommands_t* inpu
 			// so we can use all the spare texture samplers instead of binding endless amounts of lightmaps and deluxemaps for a million styles to them.
 			// however we still need the texcoords, and we are limited in how many vertexattribs we can have so that still limits our total style count.
 			fboUniformsEx.lightmapNums[i] = pStage->bundle[i].image[0]->lightmapNum;
-			qglEnableVertexAttribArray(i + 8);
-			qglVertexAttribPointer(i + 8, 2, GL_FLOAT, qfalse, 0, input->svars.texcoords[i]);
+			qglEnableVertexAttribArray(TEXCOORDSATTRIBNUM(i) + 8);
+			qglVertexAttribPointer(TEXCOORDSATTRIBNUM(i) + 8, TEXCOORDS_ADVANCE, GL_FLOAT, qfalse, TEXCOORDS_STRIDE, TEXCOORDSATTRIBPTR(input->svars.texcoords,i));
 #else
 			GL_SelectTexture(i);
 			qglEnable(GL_TEXTURE_2D);
 			qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			qglEnableVertexAttribArray(i+8);
-			qglVertexAttribPointer(i+8, 2, GL_FLOAT, qfalse, 0, input->svars.texcoords[i]);
-			//qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+			qglEnableVertexAttribArray(TEXCOORDSATTRIBNUM(i) +8);
+			qglVertexAttribPointer(TEXCOORDSATTRIBNUM(i) +8, TEXCOORDS_ADVANCE, GL_FLOAT, qfalse, TEXCOORDS_STRIDE, TEXCOORDSATTRIBPTR(input->svars.texcoords, i));
+			//qglTexCoordPointer(2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(input->svars.texcoords,i));
 			R_BindAnimatedImage(&pStage->bundle[i]);
 
 			if (pStage->bundle[i].isLightmap && pStage->bundle[i].deluxeMapImage[0]) {
 				GL_SelectTexture(i+1+ NUM_GLSL_EXTRA_LIGHTMAPS_MAX); // was 5. but want maxlightmaps 4->12. so 4+1 -> 12+1
 				qglEnable(GL_TEXTURE_2D);
 				qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				//qglTexCoordPointer(2, GL_FLOAT, 0, input->svars.texcoords[i]);
+				//qglTexCoordPointer(2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(input->svars.texcoords,i));
 				R_BindAnimatedImage(&pStage->bundle[i],qtrue);
 			}
 #endif
@@ -629,7 +629,7 @@ static void R_UnbindStyleLightmapsEtc(shaderStage_t* pStage, shaderCommands_t* i
 		if (pStage->bundle[i].image[0]) {
 #ifdef LIGHTMAP_ARRAY 
 			fboUniformsEx.lightmapNums[i] = -1;
-			qglDisableVertexAttribArray(i + 8);
+			qglDisableVertexAttribArray(TEXCOORDSATTRIBNUM(i) + 8);
 #else
 			GL_SelectTexture(i);
 			qglDisable(GL_TEXTURE_2D);
@@ -687,7 +687,7 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 	// base
 	//
 	GL_SelectTexture( 0 );
-	qglTexCoordPointer( 2, GL_FLOAT, 0, input->svars.texcoords[0] );
+	qglTexCoordPointer( 2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(input->svars.texcoords,0) );
 	R_BindAnimatedImage( &pStage->bundle[0] );
 
 	//
@@ -703,7 +703,7 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 		GL_TexEnv( tess.shader->multitextureEnv );
 	}
 
-	qglTexCoordPointer( 2, GL_FLOAT, 0, input->svars.texcoords[1] );
+	qglTexCoordPointer( 2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(input->svars.texcoords,1) );
 
 	R_BindAnimatedImage( &pStage->bundle[1] );
 
@@ -1482,7 +1482,7 @@ static void RB_FogPass( void ) {
 	//qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, tess.svars.colors );
 
 	qglEnableClientState( GL_TEXTURE_COORD_ARRAY);
-	qglTexCoordPointer( 2, GL_FLOAT, 0, tess.svars.texcoords[0] );
+	qglTexCoordPointer( 2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(tess.svars.texcoords,0) );
 
 	fog = tr.world->fogs + tess.fogNum;
 
@@ -1491,7 +1491,7 @@ static void RB_FogPass( void ) {
 		//* ( int * )&tess.svars.colors[i] = fog->colorInt;
 	}
 
-	RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[0] );
+	RB_CalcFogTexCoords( TEXCOORDSPTR(tess.svars.texcoords,0) );
 
 	GL_Bind( tr.fogImage );
 
@@ -1865,120 +1865,143 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 	int		i;
 	int		b;
     float	*texcoords;
+	float	*texcoordsbase;
 
 	for ( b = 0; b < NUM_TEXTURE_BUNDLES; b++ ) {
 		int tm;
 
-        texcoords = (float *)tess.svars.texcoords[b];
+		texcoordsbase = TEXCOORDSPTR(tess.svars.texcoords, b);
+        texcoords = texcoordsbase;
 		//
 		// generate the texture coordinates
 		//
 		switch ( pStage->bundle[b].tcGen )
 		{
 		case TCGEN_IDENTITY:
+#if TEXCOORDS_PACKING
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
+				texcoords[0] = 0;
+				texcoords[1] = 0;
+			}
+#else
 			Com_Memset( tess.svars.texcoords[b], 0, sizeof( float ) * 2 * tess.numVertexes );
+#endif
 			break;
 		case TCGEN_TEXTURE:
+#if TEXCOORDS_PACKING
+			for ( i = 0 ; i < tess.numVertexes ; i++, texcoords += TEXCOORDS_ADVANCE) {
+				texcoords[0] = tess.texCoords[i][0][0];
+				texcoords[1] = tess.texCoords[i][0][1];
+			}
+#else
 			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
 				tess.svars.texcoords[b][i][0] = tess.texCoords[i][0][0];
 				tess.svars.texcoords[b][i][1] = tess.texCoords[i][0][1];
 			}
+#endif
 			break;
 		case TCGEN_LIGHTMAP:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
+			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+= TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][1][0];
 				texcoords[1] = tess.texCoords[i][1][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP1:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
+			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+= TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][2][0];
 				texcoords[1] = tess.texCoords[i][2][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP2:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
+			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+= TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][3][0];
 				texcoords[1] = tess.texCoords[i][3][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP3:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
+			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+= TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][4][0];
 				texcoords[1] = tess.texCoords[i][4][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP4:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][5][0];
 				texcoords[1] = tess.texCoords[i][5][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP5:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][6][0];
 				texcoords[1] = tess.texCoords[i][6][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP6:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][7][0];
 				texcoords[1] = tess.texCoords[i][7][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP7:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][8][0];
 				texcoords[1] = tess.texCoords[i][8][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP8:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][9][0];
 				texcoords[1] = tess.texCoords[i][9][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP9:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][10][0];
 				texcoords[1] = tess.texCoords[i][10][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP10:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][11][0];
 				texcoords[1] = tess.texCoords[i][11][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP11:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][12][0];
 				texcoords[1] = tess.texCoords[i][12][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP12:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][13][0];
 				texcoords[1] = tess.texCoords[i][13][1];
 			}
 			break;
 		case TCGEN_LIGHTMAP13:
-			for (i = 0; i < tess.numVertexes; i++, texcoords += 2) {
+			for (i = 0; i < tess.numVertexes; i++, texcoords += TEXCOORDS_ADVANCE) {
 				texcoords[0] = tess.texCoords[i][14][0];
 				texcoords[1] = tess.texCoords[i][14][1];
 			}
 			break;
 		case TCGEN_VECTOR:
+#if TEXCOORDS_PACKING
+			for ( i = 0 ; i < tess.numVertexes ; i++, texcoords += TEXCOORDS_ADVANCE) {
+				texcoords[0] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[0] );
+				texcoords[1] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[1] );
+			}
+#else
 			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
 				tess.svars.texcoords[b][i][0] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[0] );
 				tess.svars.texcoords[b][i][1] = DotProduct( tess.xyz[i], pStage->bundle[b].tcGenVectors[1] );
 			}
+#endif
 			break;
 		case TCGEN_FOG:
-			RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[b] );
+			RB_CalcFogTexCoords( texcoordsbase );
 			break;
 		case TCGEN_ENVIRONMENT_MAPPED:
-			RB_CalcEnvironmentTexCoords( ( float * ) tess.svars.texcoords[b] );
+			RB_CalcEnvironmentTexCoords( texcoordsbase );
 			break;
 		case TCGEN_BAD:
 			return;
@@ -1996,42 +2019,42 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 
 			case TMOD_TURBULENT:
 				RB_CalcTurbulentTexCoords( &pStage->bundle[b].texMods[tm].wave, 
-						                 ( float * ) tess.svars.texcoords[b] );
+						                 texcoordsbase );
 				break;
 
 			case TMOD_ENTITY_TRANSLATE:
 				RB_CalcScrollTexCoords( backEnd.currentEntity->e.shaderTexCoord,
-									 ( float * ) tess.svars.texcoords[b] );
+									 texcoordsbase );
 				break;
 
 			case TMOD_SCROLL:
 				RB_CalcScrollTexCoords( pStage->bundle[b].texMods[tm].scroll,
-										 ( float * ) tess.svars.texcoords[b] );
+										 texcoordsbase );
 				break;
 
 			case TMOD_SCALE:
 				RB_CalcScaleTexCoords( pStage->bundle[b].texMods[tm].scale,
-									 ( float * ) tess.svars.texcoords[b] );
+									 texcoordsbase );
 				break;
 
 			case TMOD_PARALLAX:
 				RB_CalcParallaxTexCoords( pStage->bundle[b].texMods[tm].scale[0],
-									 ( float * ) tess.svars.texcoords[b] );
+									 texcoordsbase );
 				break;
 			
 			case TMOD_STRETCH:
 				RB_CalcStretchTexCoords( &pStage->bundle[b].texMods[tm].wave, 
-						               ( float * ) tess.svars.texcoords[b] );
+						              texcoordsbase );
 				break;
 
 			case TMOD_TRANSFORM:
 				RB_CalcTransformTexCoords( &pStage->bundle[b].texMods[tm],
-						                 ( float * ) tess.svars.texcoords[b] );
+						                 texcoordsbase );
 				break;
 
 			case TMOD_ROTATE:
 				RB_CalcRotateTexCoords( pStage->bundle[b].texMods[tm].rotateSpeed,
-										( float * ) tess.svars.texcoords[b] );
+										texcoordsbase );
 				break;
 
 			default:
@@ -2153,7 +2176,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 		{
 			if ( !setArraysOnce )
 			{
-				qglTexCoordPointer( 2, GL_FLOAT, 0, input->svars.texcoords[0] );
+				qglTexCoordPointer( 2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(input->svars.texcoords,0) );
 			}
 
 			//
@@ -2263,7 +2286,7 @@ void RB_StageIteratorGeneric( void )
 		//qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, tess.svars.colors );
 
 		qglEnableClientState( GL_TEXTURE_COORD_ARRAY);
-		qglTexCoordPointer( 2, GL_FLOAT, 0, tess.svars.texcoords[0] );
+		qglTexCoordPointer( 2, GL_FLOAT, TEXCOORDS_STRIDE, TEXCOORDSPTR(tess.svars.texcoords,0) );
 	}
 
 	//

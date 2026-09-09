@@ -666,8 +666,8 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		VectorCopy(input->lightdir[curvert], ld1);
 		//l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
-		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
-		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
+		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT));
+		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT)+1);
 		winddiff1[0] = SSVertWindDir[curvert][0];
 		winddiff1[1] = SSVertWindDir[curvert][1];
 		windforce1 = SSVertWindForce[curvert];
@@ -692,8 +692,8 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		VectorCopy(input->lightdir[curvert], ld2);
 		//l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
-		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
-		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
+		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT));
+		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT)+1);
 		winddiff2[0] = SSVertWindDir[curvert][0];
 		winddiff2[1] = SSVertWindDir[curvert][1];
 		windforce2 = SSVertWindForce[curvert];
@@ -718,8 +718,8 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		VectorCopy(input->lightdir[curvert], ld3);
 		//l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
-		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
-		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
+		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT));
+		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT)+1);
 		winddiff3[0] = SSVertWindDir[curvert][0];
 		winddiff3[1] = SSVertWindDir[curvert][1];
 		windforce3 = SSVertWindForce[curvert];
@@ -1022,8 +1022,8 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		VectorCopy(input->lightdir[curvert], ld1);
 		//l1 = input->vertexColorsRaw[curvert][2];
 		a1 = SSVertAlpha[curvert];
-		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
-		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
+		fog1[0] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT));
+		fog1[1] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT)+1);
 
 		curvert = input->indexes[curindex+1];
 		VectorCopy(input->xyz[curvert], v2);
@@ -1035,8 +1035,8 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		VectorCopy(input->lightdir[curvert], ld2);
 		//l2 = input->vertexColorsRaw[curvert][2];
 		a2 = SSVertAlpha[curvert];
-		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
-		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
+		fog2[0] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT));
+		fog2[1] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT)+1);
 
 		curvert = input->indexes[curindex+2];
 		VectorCopy(input->xyz[curvert], v3);
@@ -1048,8 +1048,8 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 		VectorCopy(input->lightdir[curvert], ld3);
 		//l3 = input->vertexColorsRaw[curvert][2];
 		a3 = SSVertAlpha[curvert];
-		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<<1));
-		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<<1)+1);
+		fog3[0] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT));
+		fog3[1] = *((float *)(tess.svars.texcoords[0])+(curvert<< TEXCOORDS_SHIFT)+1);
 
 		if (a1 <= 0.0 && a2 <= 0.0 && a3 <= 0.0)
 		{
