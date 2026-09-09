@@ -1,4 +1,4 @@
-#version 400 compatibility
+#version 420 compatibility
 #extension GL_ARB_tessellation_shader : enable
 
 #define TEXTURE_COUNT 14
@@ -164,7 +164,7 @@ void main()
 
 
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-	for(int c=0;c<TEXTURE_COUNT;c++){
+	for(int c=0;c<TEXTURE_COUNT/2;c++){
 		vertexTexCoord[gl_InvocationID].coord[c] = texCoord[gl_InvocationID].coord[c];
 	}
 	//vertexTexCoord[gl_InvocationID].coord[0] = texCoord[gl_InvocationID].coord[0];
@@ -173,6 +173,14 @@ void main()
 	//vertexTexCoord[gl_InvocationID].coord[3] = texCoord[gl_InvocationID].coord[3];
 	//vertexTexCoord[gl_InvocationID].coord[4] = texCoord[gl_InvocationID].coord[4];
 	//vertexTexCoord[gl_InvocationID].coord[5] = texCoord[gl_InvocationID].coord[5];
+	//vertexTexCoord[gl_InvocationID].coord[6] = texCoord[gl_InvocationID].coord[6];
+	//vertexTexCoord[gl_InvocationID].coord[7] = texCoord[gl_InvocationID].coord[7];
+	//vertexTexCoord[gl_InvocationID].coord[8] = texCoord[gl_InvocationID].coord[8];
+	//vertexTexCoord[gl_InvocationID].coord[9] = texCoord[gl_InvocationID].coord[9];
+	//ertexTexCoord[gl_InvocationID].coord[10] = texCoord[gl_InvocationID].coord[10];
+	//vertexTexCoord[gl_InvocationID].coord[11] = texCoord[gl_InvocationID].coord[11];
+	//vertexTexCoord[gl_InvocationID].coord[12] = texCoord[gl_InvocationID].coord[12];
+	//vertexTexCoord[gl_InvocationID].coord[13] = texCoord[gl_InvocationID].coord[13];
 	for(int i=0;i<VEC3_ATTRIBUTE_COUNT;i++){
 		vertexTexAttr[gl_InvocationID].attribs[i] = texAttr[gl_InvocationID].attribs[i];
 	}
