@@ -943,6 +943,7 @@ static void Upload32( T *picData,
 		if (lightmap >= 0 && lightmap < tr.numLightmaps && tr.doLightmapArray) {
 			R_InitLightmapArray(*pformat,1,width,height,tr.numLightmaps);
 			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,width), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original so to not completely mess up the normal pipeline, but just make it tiny.
+			//qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, width, height, 0, GL_RGBA, sourceDataFormat, picData); // in some situations we get fkd if we dont have the proper img there? lightmap on texture 0.
 			qglDisable(GL_TEXTURE_2D);
 
 			// actual image data goes into the array

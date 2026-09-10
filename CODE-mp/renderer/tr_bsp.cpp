@@ -352,6 +352,10 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 			}
 		}
 
+		if (tr.numLightmaps == 0 && tr.deluxeMapping && realLightmapCount > 0) {
+			realLightmapCount++; // the deluxe never gets directly referenced itself.
+		}
+
 		tr.numLightmaps = realLightmapCount;
 	}
 
