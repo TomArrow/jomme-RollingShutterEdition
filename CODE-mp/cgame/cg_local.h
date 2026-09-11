@@ -2068,6 +2068,7 @@ extern	vmCvar_t		cg_fpls;
 extern	vmCvar_t		cg_saberMarkCheapLights;
 extern	vmCvar_t		cg_saberDynamicMarks;
 extern	vmCvar_t		cg_saberDynamicMarkTime;
+extern	vmCvar_t		cg_saberMarkHiltTrace;
 
 extern	vmCvar_t		cg_saberContact;
 extern	vmCvar_t		cg_saberTrail;

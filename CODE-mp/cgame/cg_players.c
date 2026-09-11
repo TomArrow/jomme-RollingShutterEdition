@@ -6220,7 +6220,7 @@ void CG_SaberCompWork(vec3_t start, vec3_t end, int ownerNum)// , centity_t* own
 #define FX_USE_ALPHA		0x08000000
 const vec3_t container = { -8.0f, 8.0f, 8.0f };
 void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, refEntity_t *saber, int renderfx, int modelIndex, vec3_t origin, vec3_t angles, qboolean fromSaber, qboolean retracting) {
-	vec3_t	org_, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
+	vec3_t	org_,org_nudged, mid, end, v, axis_[3] = {0,0,0, 0,0,0, 0,0,0}; // shut the compiler up
 	vec3_t	basePos;
 	vec3_t	baseAxis[3];
 	float	traceFraction, traceFractionOther;
@@ -6235,7 +6235,7 @@ void CG_AddSaberBlade( localEntity_t* lent, centity_t *cent1, centity_t *scent, 
 	vec3_t futureAngles;
 	effectTrailArgStruct_t fx;
 	int scolor = 0;
-	vec3_t otherPos, otherDir, otherEnd;
+	vec3_t otherPos,otherPos_nudged, otherDir, otherEnd;
 	float dualLen = 0.7;
 	qboolean nonPlayer = !cent1 || cent1->currentState.number >= MAX_CLIENTS;
 	int thisPlayerSaberLength = nonPlayer ? SABER_LENGTH_MAX : cgs.clientinfo[cent1->currentState.number].saberLength;
@@ -6450,11 +6450,23 @@ Ghoul2 Insert Start
 	
 	VectorAdd( end, axis_[0], end );
 
+	// do the saber trace for sabermarks from 1/3 inside the saber. so that when it falls to the ground and is very close to the ground, we have a good chance of still cutting the floor
+	// TODO will this still cut even if saberlength is 0? cuz it shouldnt
+	org_nudged[0] = org_[0] - axis_[0][0] * 12.0f * cg_saberMarkHiltTrace.value;
+	org_nudged[1] = org_[1] - axis_[0][1] * 12.0f * cg_saberMarkHiltTrace.value;
+	org_nudged[2] = org_[2] - axis_[0][2] * 12.0f * cg_saberMarkHiltTrace.value;
+
 	if (*bolt2)
 	{
 		otherPos[0] = org_[0] - axis_[0][0]*12;
 		otherPos[1] = org_[1] - axis_[0][1]*12;
 		otherPos[2] = org_[2] - axis_[0][2]*12;
+
+		// do the saber trace for sabermarks from 1/3 inside the saber. so that when it falls to the ground and is very close to the ground, we have a good chance of still cutting the floor
+		otherPos_nudged[0] = org_[0] - axis_[0][0] * 12.0f * (1.0f - cg_saberMarkHiltTrace.value);
+		otherPos_nudged[1] = org_[1] - axis_[0][1] * 12.0f * (1.0f - cg_saberMarkHiltTrace.value);
+		otherPos_nudged[2] = org_[2] - axis_[0][2] * 12.0f * (1.0f - cg_saberMarkHiltTrace.value);
+
 
 		otherDir[0] = -axis_[0][0];
 		otherDir[1] = -axis_[0][1];
@@ -6463,6 +6475,7 @@ Ghoul2 Insert Start
 		VectorMA( otherPos, dualSaberLen*dualLen, otherDir, otherEnd );
 		VectorAdd( otherEnd, otherDir, otherEnd );
 	}
+
 
 	if (nonPlayer) {
 		if (!cent1 && lent) {
@@ -6544,11 +6557,11 @@ Ghoul2 Insert Start
 		{
 			if (i)
 			{//tracing from end to base
-				CG_Trace(&trace, end, NULL, NULL, org_, ENTITYNUM_NONE, MASK_SOLID);
+				CG_Trace(&trace, end, NULL, NULL, org_nudged, ENTITYNUM_NONE, MASK_SOLID);
 			}
 			else
 			{//tracing from base to end
-				CG_Trace(&trace, org_, NULL, NULL, end, ENTITYNUM_NONE, MASK_SOLID);
+				CG_Trace(&trace, org_nudged, NULL, NULL, end, ENTITYNUM_NONE, MASK_SOLID);
 				traceFraction = trace.fraction;
 			}
 
@@ -6659,7 +6672,7 @@ Ghoul2 Insert Start
 	{
 		for ( i = 0; i < 1; i++ )//was 2 because it would go through architecture and leave saber trails on either side of the brush - but still looks bad if we hit a corner, blade is still 8 longer than hit
 		{
-			CG_Trace( &trace, otherPos, NULL, NULL, otherEnd, ENTITYNUM_NONE, MASK_SOLID );
+			CG_Trace( &trace, otherPos_nudged, NULL, NULL, otherEnd, ENTITYNUM_NONE, MASK_SOLID );
 			traceFractionOther = trace.fraction;
 
 			if ( trace.fraction < 1.0f )

@@ -705,6 +705,7 @@ vmCvar_t	cg_fpls;
 vmCvar_t	cg_saberMarkCheapLights;
 vmCvar_t	cg_saberDynamicMarks;
 vmCvar_t	cg_saberDynamicMarkTime;
+vmCvar_t	cg_saberMarkHiltTrace; // 0 to 1. 1 = extend the trace throughout the entire handle, so a saber bouncing on ground still scuffs the ground.
 
 vmCvar_t	cg_saberContact;
 vmCvar_t	cg_saberTrail; // 1 = on. 2 = always when speed. 3= always. 4= always but short if not normal (cg_saberTrailTimeShort)
@@ -947,7 +948,7 @@ vmCvar_t	cg_trueRoll;
 vmCvar_t	cg_trueSaber;
 vmCvar_t	cg_trueSpin;
 
-vmCvar_t	cg_saberG2AnimSmoothCompensate;
+vmCvar_t	cg_saberG2AnimSmoothCompensate;;
 vmCvar_t	cg_r_ghoul2animsmooth;
 
 
@@ -1070,6 +1071,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_saberMarkCheapLights, "cg_saberMarkCheapLights", "5.0", NULL, 0 },
 	{ &cg_saberDynamicMarks, "cg_saberDynamicMarks", "0", NULL, 0 },
 	{ &cg_saberDynamicMarkTime, "cg_saberDynamicMarkTime", "60000", NULL, 0 },
+	{ &cg_saberMarkHiltTrace, "cg_saberMarkHiltTrace", "0.6", NULL, 0 },
 
 	{ &cg_saberContact, "cg_saberContact", "1", NULL, 0 },
 	{ &cg_saberTrail, "cg_saberTrail", "2", NULL, CVAR_ARCHIVE },
