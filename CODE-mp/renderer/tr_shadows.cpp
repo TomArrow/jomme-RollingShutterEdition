@@ -157,6 +157,36 @@ void R_RenderShadowEdges( void ) {
 #endif
 }
 
+const float goldenangle = M_PI * (3.0f - sqrtf(5.0f));
+// angle conversion code based on netradiant-custom by Garux
+// https://github.com/Garux/netradiant-custom/blob/master/tools/quake3/q3map2/light.cpp (CreateSunLight function)
+// rest is fermat spiral with a slight non-scientific modification for index 0
+static void R_SunDirJitter(vec3_t sunDir, float desiredradius) {
+	const double d = sqrt(sunDir[0] * sunDir[0] + sunDir[1] * sunDir[1]);
+	double angle = atan2(sunDir[1], sunDir[0]);
+	double elevation = atan2(sunDir[2], d);
+	desiredradius = degrees_to_radians(desiredradius);
+	jitterSegmentAdvanceInfo_t jsInfo;
+	R_MME_GetCGameJitterInfo(&jsInfo);
+	if (!jsInfo.isRecording || jsInfo.totalFrames <= 1) {
+		return;
+	}
+	int iters = jsInfo.totalFrames;
+	int i = jsInfo.currentIndex;
+
+	float c = 1.0f / sqrtf((float)iters - 1.0f); // total scaling factor to achieve desired radius based on total frames
+	float r = c * sqrtf((float)i) * desiredradius; // actual distance from center
+	float ang = goldenangle * (float)i;
+	angle += sinf(ang) * r;
+	if (i == 0) {
+		elevation += c * 0.8f * desiredradius; // 0 gets special treatment, else it ends up in an ugly spot
+	}
+	else {
+		elevation += cosf(ang) * r;
+	}
+	R_CalculateSunDirVec(angle,elevation,sunDir,qtrue);
+}
+
 /*
 =================
 RB_ShadowTessEnd
@@ -209,6 +239,9 @@ void RB_ShadowTessEnd( void ) {
 		}
 		else {
 			VectorCopy(tr.shadowSunDirectionOverride, sunDirection);
+		}
+		if (r_shadowSunDirJitter->value != 0.0f) {
+			R_SunDirJitter(sunDirection, r_shadowSunDirJitter->value);
 		}
 		if (backEnd.currentEntity == &tr.worldEntity) {
 			VectorCopy(sunDirection, lightDir);

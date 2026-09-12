@@ -176,6 +176,7 @@ cvar_t	*r_shadows;
 cvar_t	*r_shadowSunDirOverride;
 cvar_t	*r_shadowSunDegrees;
 cvar_t	*r_shadowSunElevation;
+cvar_t	*r_shadowSunDirJitter;
 cvar_t	*r_stencilSky;
 cvar_t	*r_stencilShadowZFail;
 cvar_t	*r_stencilShadowColor;
@@ -1140,6 +1141,7 @@ void R_Register( void )
 	r_shadowSunDirOverride = ri.Cvar_Get( "r_shadowSunDirOverride", "0", CVAR_ARCHIVE);
 	r_shadowSunDegrees = ri.Cvar_Get( "r_shadowSunDegrees", "-35", CVAR_ARCHIVE);
 	r_shadowSunElevation = ri.Cvar_Get( "r_shadowSunElevation", "25", CVAR_ARCHIVE);
+	r_shadowSunDirJitter = ri.Cvar_Get( "r_shadowSunDirJitter", "5.0", CVAR_ARCHIVE);
 	r_shadowSunDegrees->modified = r_shadowSunElevation->modified = qtrue;
 	r_stencilSky = ri.Cvar_Get("r_stencilSky", "1", CVAR_ARCHIVE);
 	r_stencilShadowZFail = ri.Cvar_Get("r_stencilShadowZFail ", "1", CVAR_ARCHIVE);

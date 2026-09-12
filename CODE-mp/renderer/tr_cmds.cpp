@@ -770,15 +770,19 @@ static void R_UpdateProjectorMatrix(void) {
 
 const double c_DEG2RADMULT = M_PI / 180.0;
 const double c_RAD2DEGMULT = 180.0 / M_PI;
-inline double radians_to_degrees(double radians) {
+double radians_to_degrees(double radians) {
 	return radians * c_RAD2DEGMULT;
 }
-inline double degrees_to_radians(double degrees) {
+double degrees_to_radians(double degrees) {
 	return degrees * c_DEG2RADMULT;
 }
-void R_CalculateSunDirVec(float degrees, float elevation, vec3_t dirOut) {
-	float theta = degrees_to_radians(degrees);
-	float phi = degrees_to_radians(elevation);
+void R_CalculateSunDirVec(float degrees, float elevation, vec3_t dirOut, qboolean isRadians) {
+	float theta = degrees;
+	float phi = elevation;
+	if (!isRadians) {
+		theta = degrees_to_radians(theta);
+		phi = degrees_to_radians(phi);
+	}
 	dirOut[0] = cosf(theta) * cosf(phi);
 	dirOut[1] = sinf(theta) * cosf(phi);
 	dirOut[2] = sinf(phi);

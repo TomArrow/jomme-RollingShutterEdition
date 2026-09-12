@@ -1601,6 +1601,7 @@ extern	cvar_t	*r_shadows;						// controls shadows: 0 = none, 1 = blur, 2 = sten
 extern	cvar_t	*r_shadowSunDirOverride;
 extern	cvar_t	*r_shadowSunDegrees;
 extern	cvar_t	*r_shadowSunElevation;
+extern	cvar_t	*r_shadowSunDirJitter;
 extern	cvar_t	*r_stencilSky;					// use stencils to allow drawing multiple skies without overlap issues
 extern	cvar_t	*r_stencilShadowZFail;			// use z-fail for stencil shadows
 extern	cvar_t	*r_stencilShadowColor;			// color of stencil shadows
@@ -1845,6 +1846,9 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 
 model_t		*R_AllocModel( void );
 
+double		radians_to_degrees(double radians);
+double		degrees_to_radians(double degrees);
+void		R_CalculateSunDirVec(float degrees, float elevation, vec3_t dirOut, qboolean isRadians=qfalse);
 
 typedef struct {
 	byte* ptr;
