@@ -2,6 +2,7 @@
 
 #include "tr_local.h"
 #include <chrono>
+#include <omp.h>
 
 /*
 
@@ -1572,19 +1573,7 @@ void R_StitchAllPatches( void ) {
 
 void R_SmoothPlanarNormals( void ) {
 
-	int i,j;
-	int numblended = 0;
-	srfSurfaceFace_t* face;
-	drawVert_t* dv;
 	float minAngleDot;
-
-	int i2, j2;
-	srfSurfaceFace_t* face2;
-	drawVert_t* dv2;
-	int pass;
-
-	vec3_t normalAvg;
-	float divisor;
 
 	if (r_smoothenPlanarNormals->value <= 0.0f) {
 		return;
@@ -1598,9 +1587,9 @@ void R_SmoothPlanarNormals( void ) {
 #if SPN_OPTIMIZATION
 	std::vector<srfSurfaceFace_t*>* faces = new std::vector<srfSurfaceFace_t*>[s_worldData.numShaders];
 
-	for (i = 0; i < s_worldData.numsurfaces; i++) {
+	for (int i = 0; i < s_worldData.numsurfaces; i++) {
 		//
-		face = (srfSurfaceFace_t*)s_worldData.surfaces[i].data;
+		srfSurfaceFace_t* face = (srfSurfaceFace_t*)s_worldData.surfaces[i].data;
 		// if this surface is not a face
 		if (face->surfaceType != SF_FACE)
 			continue;
@@ -1612,9 +1601,19 @@ void R_SmoothPlanarNormals( void ) {
 
 		faces[face->shaderNum].push_back(face);
 	}
-	
+
+	int numblended = 0;
+	#pragma omp parallel for reduction(+ : numblended) schedule(dynamic, 1)
 	for (int shader = 0; shader < s_worldData.numShaders; shader++) {
-		
+
+		drawVert_t* dv;
+		int j,j2;
+		drawVert_t* dv2;
+		int pass;
+
+		vec3_t normalAvg;
+		float divisor;
+
 		//for (i = 0; i < faces[shader].size(); i++) {
 		for (srfSurfaceFace_t* face : faces[shader]) {
 
@@ -1671,6 +1670,19 @@ void R_SmoothPlanarNormals( void ) {
 	delete[] faces;
 
 #else
+
+	int i, j;
+	int numblended = 0;
+	srfSurfaceFace_t* face;
+	drawVert_t* dv;
+
+	int i2, j2;
+	srfSurfaceFace_t* face2;
+	drawVert_t* dv2;
+	int pass;
+
+	vec3_t normalAvg;
+	float divisor;
 	for ( i = 0; i < s_worldData.numsurfaces; i++ ) {
 		//
 		face = (srfSurfaceFace_t *) s_worldData.surfaces[i].data;
