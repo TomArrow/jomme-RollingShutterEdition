@@ -1,6 +1,7 @@
 // tr_map.c
 
 #include "tr_local.h"
+#include <chrono>
 
 /*
 
@@ -1589,8 +1590,87 @@ void R_SmoothPlanarNormals( void ) {
 		return;
 	}
 
+	auto startTime = std::chrono::steady_clock::now();
+#define SPN_OPTIMIZATION 1
+
 	minAngleDot = cosf(DEG2RAD(r_smoothenPlanarNormals->value));
 
+#if SPN_OPTIMIZATION
+	std::vector<srfSurfaceFace_t*>* faces = new std::vector<srfSurfaceFace_t*>[s_worldData.numShaders];
+
+	for (i = 0; i < s_worldData.numsurfaces; i++) {
+		//
+		face = (srfSurfaceFace_t*)s_worldData.surfaces[i].data;
+		// if this surface is not a face
+		if (face->surfaceType != SF_FACE)
+			continue;
+
+		if (face->shaderNum < 0 || face->shaderNum >= s_worldData.numShaders) {
+			Com_Printf("R_SmoothPlanarNormals: Wonky shadernum. Skipping face.");
+			continue;
+		}
+
+		faces[face->shaderNum].push_back(face);
+	}
+	
+	for (int shader = 0; shader < s_worldData.numShaders; shader++) {
+		
+		//for (i = 0; i < faces[shader].size(); i++) {
+		for (srfSurfaceFace_t* face : faces[shader]) {
+
+			for (j = 0; j < face->numPoints; j++) {
+				dv = face->points + j;
+
+				if (dv->normalBlended) {
+					continue;
+				}
+
+				VectorClear(normalAvg);
+				divisor = 0;
+
+				// ok now find all points with a normal that's no more than r_smoothenPlanarNormals degrees different.
+				for (pass = 0; pass < 2; pass++) {
+					if (pass == 1) {
+						VectorDivide(normalAvg, divisor, normalAvg);
+					}
+
+					for (srfSurfaceFace_t* face2 : faces[shader]) {
+
+
+						for (j2 = 0; j2 < face2->numPoints; j2++) {
+							dv2 = face2->points + j2;
+
+							if (dv2->normalBlended) {
+								continue;
+							}
+							if (DotProduct(dv2->normal, dv->normal) < minAngleDot) {
+								continue;
+							}
+							if (DistanceSquared(dv->xyz, dv2->xyz) > 0.0001f * 0.0001f) {
+								continue;
+							}
+
+							// ok now find all points with a normal that's no more than r_smoothenPlanarNormals degrees different.
+							if (pass == 0) {
+								VectorAdd(dv2->normal, normalAvg, normalAvg);
+								divisor += 1.0f;
+								continue;
+							}
+
+							VectorCopy(normalAvg, dv2->normal);
+
+							dv2->normalBlended = qtrue;
+							numblended++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	delete[] faces;
+
+#else
 	for ( i = 0; i < s_worldData.numsurfaces; i++ ) {
 		//
 		face = (srfSurfaceFace_t *) s_worldData.surfaces[i].data;
@@ -1652,7 +1732,11 @@ void R_SmoothPlanarNormals( void ) {
 			}
 		}
 	}
-	ri.Printf( PRINT_ALL, "merged %d vertex normals\n", numblended);
+#endif
+
+	std::chrono::duration<double, std::milli> ms = std::chrono::steady_clock::now() - startTime;
+
+	ri.Printf( PRINT_ALL, "merged %d vertex normals in %f milliseconds\n", numblended, (float)ms.count());
 }
 
 /*
