@@ -21,7 +21,7 @@ void R_TransformDlights( int count, dlight_t *dl, orientationr_t *ori) {
 	int		i;
 	vec3_t	temp;
 
-	if ((r_fboGLSL->integer) && ENABLEGLSL && r_fboGLSLDLights->integer) {
+	if ((r_fboGLSL->integer) && ENABLEGLSL && !r_fboGLSLOff->integer && r_fboGLSLDLights->integer) {
 
 	}
 	else if (r_newDLights->integer)
@@ -146,7 +146,7 @@ static void R_GetCloudIntensity(vec3_t position, vec3_t sundirection, vec3_t int
 	vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom * vec4((haveDir ? direction.xyz : lightReferenceNormal.xyz), 0.0f));
 	float weight = clamp(dot(sundir, worldDirection.xyz) * 1.0f, 0.0f, 1.0f);
 	color.xyz *= ((1.0f - weight) * multBlur) + weight * mult;*/
-	if (!tr.cloudsImageExists || !(r_fboGLSL->integer && ENABLEGLSL) || !r_fboGLSLCloudShadowScale) {
+	if (!tr.cloudsImageExists || !(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) || !r_fboGLSLCloudShadowScale) {
 		VectorSet(intensity, 1.0f, 1.0f, 1.0f);
 		return;
 	}

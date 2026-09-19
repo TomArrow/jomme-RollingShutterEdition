@@ -228,6 +228,7 @@ cvar_t *r_convertToHDR;
 cvar_t *r_floatBuffer;
 cvar_t *r_fbo;
 cvar_t *r_fboGLSL;
+cvar_t *r_fboGLSLOff;
 cvar_t *r_fboGLSLNoiseFuckery;
 cvar_t *r_fboGLSLNoiseFuckeryLightmap; // 0 = as noise fuckery mode wishes, 1 = always on, 2 = always off
 cvar_t *r_fboGLSLNoiseFuckeryHDRIntensity;
@@ -809,7 +810,7 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 	if (!fishEyeShader || !fishEyeShader->IsWorking())
 		return qfalse;
 
-	if ( !(r_fboGLSL->integer && ENABLEGLSL)) {
+	if ( !(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		if (fbo.fishEyeActive) {
 			R_FrameBuffer_DeactivateFisheye();
 		}
@@ -865,7 +866,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 	if (!fishEyeShader || !fishEyeShader->IsWorking())
 		return qfalse;
 
-	if ( !(r_fboGLSL->integer && ENABLEGLSL)) {
+	if ( !(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		if (fbo.fishEyeActive) {
 			R_FrameBuffer_DeactivateFisheye();
 		}
@@ -898,7 +899,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms(const float* texAverageBrightness, con
 	return qfalse;
 #else
 	bool uniformsSet = false;
-	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		return qfalse;
 	}
 
@@ -985,7 +986,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms2(const bool* haveVertexLightDir, const
 	return qfalse;
 #else
 	bool uniformsSet = false;
-	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		return qfalse;
 	}
 
@@ -1050,7 +1051,7 @@ qboolean R_FrameBuffer_SetDynamicUniforms3() {
 	//TODO
 	return qfalse;
 #else
-	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		return qfalse;
 	}
 
@@ -1065,7 +1066,7 @@ qboolean R_FrameBuffer_SetMusicDeformData(float intensity, float time, float spr
 	//TODO
 	return qfalse;
 #else
-	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		return qfalse;
 	}
 
@@ -1204,7 +1205,7 @@ void R_BindOwnAttachmentAsTexture(int index, bool makeMipMaps, int attachment) {
 	//TODO
 #else
 
-	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		return;
 	}
 	if (attachment < 2) {
@@ -1259,7 +1260,7 @@ void R_BindSceneViewImage( int index, bool makeMipMaps, int attachment) {
 		return;
 	}
 
-	if (!(r_fboGLSL->integer && ENABLEGLSL)) {
+	if (!(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer)) {
 		return;
 	}
 
@@ -1996,6 +1997,7 @@ void R_FrameBuffer_Init( void ) {
 	memset(&fboUniformsEx, 0, sizeof(fboUniformsEx));
 	r_fbo = ri.Cvar_Get( "r_fbo", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSL = ri.Cvar_Get( "r_fboGLSL", "0", CVAR_ARCHIVE | CVAR_LATCH);
+	r_fboGLSLOff = ri.Cvar_Get( "r_fboGLSLOff", "0", CVAR_TEMP );
 	r_fboGLSLNoiseFuckery = ri.Cvar_Get( "r_fboGLSLNoiseFuckery", "5", CVAR_ARCHIVE);
 	r_fboGLSLNoiseFuckeryLightmap = ri.Cvar_Get( "r_fboGLSLNoiseFuckeryLightmap", "0", CVAR_ARCHIVE);
 	r_fboGLSLNoiseFuckeryLightmapIntensity = ri.Cvar_Get( "r_fboGLSLNoiseFuckeryLightmapIntensity", "1.0", CVAR_ARCHIVE);

@@ -17,7 +17,10 @@ static void CG_ResetEntity( centity_t *cent ) {
 	// if the previous snapshot this entity was updated in is at least
 	// an event window back in time then we can reset the previous event
 	//if ( cent->snapShotTime < cg.time - EVENT_VALID_MSEC ) {
-	if ( cent->snapShotTime < cg.snap->serverTime - EVENT_VALID_MSEC ) {
+	if (cg.time < cg.snap->serverTime) {
+		Com_Printf("CG_ResetEntity: WTF cg.time (%d) < cg.snap->serverTime (%d)\n",cg.time,cg.snap->serverTime);
+	}
+	if ( cent->snapShotTime < cg.time - EVENT_VALID_MSEC ) {
 		cent->previousEvent = 0;
 	}
 

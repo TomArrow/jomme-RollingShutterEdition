@@ -1343,7 +1343,7 @@ static void ProjectDlightTexture( void ) {
 		return;
 	}
 
-	if (( r_fboGLSL->integer) && ENABLEGLSL && r_fboGLSLDLights->integer) {
+	if (( r_fboGLSL->integer) && ENABLEGLSL && !r_fboGLSLOff->integer && r_fboGLSLDLights->integer) {
 		return;
 	}
 
@@ -1710,7 +1710,7 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 		}
 	}
 
-	if (ENABLEGLSL && r_fboGLSL->integer && r_fboGLSLThermalVision->integer > 0 && r_fboGLSLThermalVision->integer < 4 && pStage->heatMultSet) {
+	if (ENABLEGLSL && r_fboGLSL->integer && !r_fboGLSLOff->integer && r_fboGLSLThermalVision->integer > 0 && r_fboGLSLThermalVision->integer < 4 && pStage->heatMultSet) {
 		VectorScale(variousStuffMultiplier, pStage->heatMult, variousStuffMultiplier);
 	}
 

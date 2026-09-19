@@ -1528,6 +1528,7 @@ extern cvar_t	*r_ext_gamma_control;
 extern cvar_t	*r_ext_texenv_op;
 extern cvar_t	*r_ext_multitexture;
 extern cvar_t	*r_fboGLSL;
+extern cvar_t	*r_fboGLSLOff; // turn it off temporarily
 extern cvar_t	*r_fboGLSLDLights;
 extern cvar_t	*r_fboGLSLParallaxMapping;
 extern cvar_t	*r_fboGLSLThermalVision;

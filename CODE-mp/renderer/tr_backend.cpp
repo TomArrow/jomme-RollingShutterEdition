@@ -258,7 +258,7 @@ void GL_State( unsigned int stateBits )
 		stateBits &= ~(GLS_DEPTHMASK_TRUE);
 	}
 
-	if (r_fboGLSL->integer && ENABLEGLSL && r_fboGLSLThermalVision->integer == 3 && !backEnd.projection2D) {
+	if (r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer && r_fboGLSLThermalVision->integer == 3 && !backEnd.projection2D) {
 		if ((stateBits & GLS_DSTBLEND_ONE) && (stateBits & GLS_SRCBLEND_ONE)) {
 			// one of the image properties in thermal vision is intensity, the other is distance. using additive blending makes little sense.
 			// instead, we use glsl to set an appropriate alpha value for blending.
@@ -393,7 +393,7 @@ void GL_State( unsigned int stateBits )
 
 			qglEnable( GL_BLEND );
 			qglBlendFunci(0, srcFactor, dstFactor );
-			if (r_fboGLSL->integer && ENABLEGLSL) {
+			if (r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) {
 				qglBlendEquationi(1, GL_MIN); // secondary drawbuffer should keep the closest thing
 			}
 		}
@@ -581,7 +581,7 @@ static void SetFinalProjection( void ) {
 	dx += eyeJitter[0];
 	dy += eyeJitter[1];
 
-	if ( r_fboGLSL->integer && ENABLEGLSL) {
+	if ( r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) {
 
 		vec3_t pixelJitterOrigin = { (pixelJitter[0] * width) / backEnd.viewParms.viewportWidth,(pixelJitter[1] * height) / backEnd.viewParms.viewportHeight,0 }; // TODO: how, if at all, should we take fbo supersampling into account here?
 		vec3_t dofJitterOrigin = { eyeJitter[0],eyeJitter[1],0 };
@@ -786,7 +786,8 @@ void RB_BeginDrawingView (void) {
 
 		R_ActivateClipPlane(4,plane2,qtrue);
 	} else {
-		qglDisable (GL_CLIP_PLANE0);
+		//qglDisable (GL_CLIP_PLANE0);
+		R_DeActivateClipPlane(4, qtrue);
 	}
 }
 

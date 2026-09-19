@@ -942,7 +942,20 @@ static void Upload32( T *picData,
 #ifdef LIGHTMAP_ARRAY
 		if (lightmap >= 0 && lightmap < tr.numLightmaps && tr.doLightmapArray) {
 			R_InitLightmapArray(*pformat,1,width,height,tr.numLightmaps);
-			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,width), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original so to not completely mess up the normal pipeline, but just make it tiny.
+
+			// do a decent-ish small fallback with picmip, if we disable glsl temporarily with r_fboglsloff
+			int smolwidth = width;
+			int smolheight = height;
+			T* tmpCopy = new T[width*height*4];
+			memcpy(tmpCopy, picData, width * height * 4 * sizeof(T));
+			while ((smolwidth > 128 || smolheight > 128) && smolwidth >= 16 && smolheight >= 16) {
+				R_MipMap(tmpCopy, smolwidth, smolheight);
+				smolwidth /= 2;
+				smolheight /= 2;
+			}
+			qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, smolheight, smolheight, 0, GL_RGBA, sourceDataFormat, tmpCopy); // still generate the original so to not completely mess up the normal pipeline, but just make it tiny.
+			delete[] tmpCopy;
+			//qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, MIN(2,width), MIN(2,height), 0, GL_RGBA, sourceDataFormat, picData); // still generate the original so to not completely mess up the normal pipeline, but just make it tiny.
 			//qglTexImage2D(GL_TEXTURE_2D, 0, *pformat, width, height, 0, GL_RGBA, sourceDataFormat, picData); // in some situations we get fkd if we dont have the proper img there? lightmap on texture 0.
 			qglDisable(GL_TEXTURE_2D);
 

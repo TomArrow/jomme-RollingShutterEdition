@@ -217,8 +217,8 @@ void R_MME_SaveShot( mmeShot_t *shot, int width, int height, float fps, byte *in
 		R_MME_GetCGameJitterInfo(&jsInfo);
 
 		videoMeta.camera.blendFrames = jsInfo.totalFrames;
-		videoMeta.camera.fisheyeMode = (r_fboGLSL->integer && ENABLEGLSL) ? r_fboFishEye->integer : 0;
-		videoMeta.camera.fishEyeNormalBlend = (r_fboGLSL->integer && ENABLEGLSL) ? r_fboFishEyeNormalBlend->value : 0;
+		videoMeta.camera.fisheyeMode = (r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) ? r_fboFishEye->integer : 0;
+		videoMeta.camera.fishEyeNormalBlend = (r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) ? r_fboFishEyeNormalBlend->value : 0;
 		videoMeta.psClientNum = tr.refdef.psClientNum;
 
 		size_t stride = width * multiplier;

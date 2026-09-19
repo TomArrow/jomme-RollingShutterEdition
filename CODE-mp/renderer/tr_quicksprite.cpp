@@ -52,7 +52,7 @@ void CQuickSpriteSystem::Flush(void)
 #if TESTTRIANGLES
 	qboolean triangles = qtrue;
 #else
-	qboolean triangles = (qboolean)(r_fboGLSL->integer && ENABLEGLSL);
+	qboolean triangles = (qboolean)(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer);
 #endif
 	if (mNextVert==0)
 	{
@@ -193,7 +193,7 @@ void CQuickSpriteSystem::Add(float *pointdata, color4f_t color, vec3_t lightdir,
 #if TESTTRIANGLES
 	qboolean triangles = qtrue;
 #else
-	qboolean triangles = (qboolean)(r_fboGLSL->integer && ENABLEGLSL);
+	qboolean triangles = (qboolean)(r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer);
 #endif
 	int indexSkip = triangles ? 6 : 4;
 

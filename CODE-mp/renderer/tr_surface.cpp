@@ -408,7 +408,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	lightdir = tess.lightdir[ tess.numVertexes ];
 	colorRaw = tess.vertexColorsRaw[ tess.numVertexes ];
 	colorRawIndex = tess.numVertexes;
-	needsNormal = (qboolean)((r_fboGLSL->integer && ENABLEGLSL) || tess.shader->needsNormal);
+	needsNormal = (qboolean)((r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) || tess.shader->needsNormal);
 
 	for ( i = 0 ; i < srf->numVerts ; i++, dv++) 
 	{
