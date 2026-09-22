@@ -145,6 +145,162 @@ float gaussian_rand( vec2 n )
     return tmp + 0.5;
 }
 
+/*
+float colorSkinProbability_Reference(vec3 rgb){
+	const vec3 minsrgb = vec3(0.372549,0.156862,0.078431);
+	// first rgb check
+	if( any(lessThan(rgb,minsrgb))
+		|| rgb.r < max(0.058823+rgb.g,rgb.b)
+	){
+		return 0.0;
+	}
+	
+	// convert to hsv
+	// we skip the Cmax branch, we already know R is the highest component
+	const vec2 hsmax = vec2(50.0,0.45);
+	float delta = rgb.r-min(rgb.g,rgb.b);
+	vec2 hs = vec2(
+		60.0*mod((rgb.g-rgb.b)/delta,6.0),
+		delta/rgb.r - 0.23
+	);
+	if(all(lessThanEqual(hs,hsmax))){
+		return 1.0; // yup nice
+	}
+	
+	const vec3 ydot = vec3(0.299,0.587,0.114);
+	// y = r, Cb = g, Cr = b
+	float y = dot(rgb,ydot);
+	vec3 YCbCr = vec3(
+		y,
+		0.564*(rgb.b-y)+0.5,
+		0.713*(rgb.r-y)+0.5
+	);
+
+	const vec3 YCbCrMin = vec3(0.313725,0.333333,0.529411);
+	if( all(greaterThan(YCbCr,YCbCrMin))
+	 && YCbCr.b <= (1.5862*YCbCr.g)+0.078431
+	 && YCbCr.b >= (0.3448*YCbCr.g)+0.298850
+	 && YCbCr.b >= (-4.5652*YCbCr.g)+0.919863
+	 && YCbCr.b <= (-1.15*YCbCr.g)+1.183333
+	 && YCbCr.b <= (-2.2857*YCbCr.g)+1.697450
+	){
+		return 1.0;
+	}
+	
+	return 0.0;
+}
+float colorSkinProbability_Optimized(vec3 rgb){
+	const vec3 minsrgb = vec3(0.372549,0.156862,0.078431);
+	const vec3 hsmax = vec3(50.0,0.45,0.0);
+	const vec3 ydot = vec3(0.299,0.587,0.114);
+	const vec2 crMaxDot1 = vec2(0.3448,0.298850);
+	const vec2 crMaxDot2 = vec2(-4.5652,0.919863);
+	const vec2 crMinDot1 = vec2(1.5862,0.078431);
+	const vec2 crMinDot2 = vec2(-1.15,1.183333);
+	const vec2 crMinDot3 = vec2(-2.2857,1.697450);
+	
+	// first rgb check
+	if( any(lessThan(rgb,minsrgb))
+		|| rgb.r < max(0.058823+rgb.g,rgb.b)
+	){
+		return 0.0;
+	}
+	
+	// convert to hsv
+	// we skip the Cmax branch, we already know R is the highest component
+	float delta = rgb.r-min(rgb.g,rgb.b);
+	float s = delta/rgb.r - 0.23;
+	vec3 hs = vec3(60.0*mod((rgb.g-rgb.b)/delta,6.0),s,-s);
+	if(all(lessThanEqual(hs,hsmax))){
+		return 1.0;
+	}
+	
+	// y = r, Cb = g, Cr = b, 1 = a/w (just for the crMin/crMax dots)
+	float y = dot(rgb,ydot);
+	vec4 YCbCr = vec4(y,0.564*(rgb.b-y)+0.5,0.713*(rgb.r-y)+0.5,1.0);
+	
+	float crMin = max(dot(YCbCr.ga,crMaxDot1),dot(YCbCr.ga,crMaxDot2));
+	float crMax = min(dot(YCbCr.ga,crMinDot1),min(dot(YCbCr.ga,crMinDot2),dot(YCbCr.ga,crMinDot3)));
+
+	const vec3 YCbCrMin = vec3(0.313725,0.333333,0.529411);
+	if( all(greaterThan(YCbCr.xyz,YCbCrMin))
+	 && YCbCr.b <= crMax
+	 && YCbCr.b >= crMin
+	){
+		return 1.0;
+	}
+	
+	return 0.0;
+}
+
+
+*/
+
+// return 0-1 likelihood of a color being a skin color. 
+// based on
+// "Human Skin Detection Using RGB, HSV and YCbCr Color Models"
+// by S. Kolkur1, D. Kalbande2, P. Shimpi2, C. Bapat2, and J. Jatakia2
+//
+// with some totally non-scientific guesswork calculation to "feather" around the cutoff values
+// 
+// see above commented-out versions for something closer to the reference without the "feather"
+// (readable and "optimized" versions)
+//
+// TODO do fancy optimizations?
+float colorSkinProbability(vec3 rgb){
+	rgb = pow(rgb,vec3(0.45));
+	const vec3 minsrgb = vec3(0.372549,0.156862,0.078431);
+	const vec3 hsmax = vec3(50.0,0.45,0.0);
+	const vec3 ydot = vec3(0.299,0.587,0.114);
+	const vec2 crMaxDot1 = vec2(0.3448,0.298850);
+	const vec2 crMaxDot2 = vec2(-4.5652,0.919863);
+	const vec2 crMinDot1 = vec2(1.5862,0.078431);
+	const vec2 crMinDot2 = vec2(-1.15,1.183333);
+	const vec2 crMinDot3 = vec2(-2.2857,1.697450);
+	
+	// first rgb check
+	float rMin = max(0.058823+rgb.g,rgb.b);
+	if( any(lessThan(rgb,minsrgb))
+		|| rgb.r < rMin
+	){
+		return 0.0;
+	}
+	
+	float minDist = min(rgb.r-max(minsrgb.r,rMin),min(rgb.g-minsrgb.g,rgb.b-minsrgb.b));
+	float rMult = sqrt(minDist/1.0*8.0);
+	float mult = 0.0;
+	
+	// convert to hsv
+	// we skip the Cmax branch, we already know R is the highest component
+	float delta = rgb.r-min(rgb.g,rgb.b);
+	float s = delta/rgb.r - 0.23;
+	vec3 hs = vec3(60.0*mod((rgb.g-rgb.b)/delta,6.0),s,-s);
+	if(all(lessThanEqual(hs,hsmax))){
+		
+		float sDist = min(hsmax.g-hs.g,hs.g)/(hsmax.g)*4.0;
+		float hDist = (hsmax.r-hs.r)*4.0;
+		mult = max(mult,rMult*sqrt(min(sDist,hDist)));
+	}
+	
+	// y = r, Cb = g, Cr = b, 1 = a/w (just for the crMin/crMax dots)
+	float y = dot(rgb,ydot);
+	vec4 YCbCr = vec4(y,0.564*(rgb.b-y)+0.5,0.713*(rgb.r-y)+0.5,1.0);
+	
+	float crMin = max(dot(YCbCr.ga,crMaxDot1),dot(YCbCr.ga,crMaxDot2));
+	float crMax = min(dot(YCbCr.ga,crMinDot1),min(dot(YCbCr.ga,crMinDot2),dot(YCbCr.ga,crMinDot3)));
+
+	const vec3 YCbCrMin = vec3(0.313725,0.333333,0.529411);
+	if( all(greaterThan(YCbCr.xyz,YCbCrMin))
+	 && YCbCr.b <= crMax
+	 && YCbCr.b >= crMin
+	){
+		float crDist = min(crMax-YCbCr.b,YCbCr.b-crMin)/(crMax-crMin)*4.0;
+		
+		mult = max(mult,rMult*sqrt(crDist));
+	}
+	
+	return clamp(mult,0.0,1.0);
+}
 
 
 
