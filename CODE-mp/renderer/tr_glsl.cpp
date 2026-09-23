@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 
+int64_t boundShaderUniqueId = 0;
+
 R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShader, char* filenameTessellationEvaluationShader, char* filenameGeometryShader, char* filenameFragmentShader, qboolean noFragment) {
 
 	bool doGeometryShader = strlen(filenameGeometryShader) && glConfig.geometryShaderARBAvailable;
@@ -130,6 +132,7 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 
 		// Normal shader
 		shaderId[shaderbits] = qglCreateProgram();
+		uniqueShaderId[shaderbits] = uniqueIdCounter.fetch_add(1, std::memory_order_relaxed); 
 		ri.Printf(PRINT_WARNING, "DEBUG: Program shader (bits %d) id is %d.\n",shaderbits, (int)shaderId[shaderbits]);
 		qglAttachShader(shaderId[shaderbits], vertexShaderId);
 		if (doTessellationShader) {
@@ -157,6 +160,7 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 		if (hasErrored(shaderId[shaderbits], va("[shader program bits %d]",shaderbits), true)) {
 			qglDeleteProgram(shaderId[shaderbits]);
 			shaderId[shaderbits] = 0;
+			uniqueShaderId[shaderbits] = 0;
 			success = false;
 		}
 	}

@@ -75,126 +75,127 @@ extern ssboSupport_t g_SSBOProperties;
 
 #define NUM_TEXTURE_SAMPLERS 31  // 27 = projector shadows, 28 = cloud image, 29 = sceneview image, 30 = sceneview secondary color buffer
 
-typedef struct uniformLocations_t {
-	GLint viewOriginUniform;
-	GLint pixelJitterUniform;
-	GLint dofJitterUniform;
-	GLint dofFocusUniform;
-	GLint dofRadiusUniform;
-	GLint fishEyeModeUniform;
-	GLint fovXUniform;
-	GLint fovYUniform;
-	GLint pixelWidthUniform;
-	GLint pixelHeightUniform;
-	GLint jitterIndexUniform;
-	GLint jitterTotalFramesUniform;
-	GLint texAverageBrightnessUniform;
-	GLint isLightmapUniform;
-	GLint isWorldBrushUniform;
-	GLint isSaberUniform;
-	GLint parallaxMapLayersUniform;
-	GLint parallaxMapDepthUniform;
-	GLint parallaxMapGammaUniform;
-	GLint thermalVisionUniform;
-	GLint shaderDebugUniform;
-	GLint blurEarlyStageUniform;
-	GLint serverTimeUniform;
-	GLint serverTimeStartUniform;
-	GLint serverTimeFractionUniform;
-	GLint noiseFuckeryUniform;
-	GLint noiseFuckeryLightmapUniform;
-	GLint noiseFuckeryHDRIntensityUniform;
-	GLint noiseFuckeryLightmapIntensityUniform;
-	GLint worldModelViewMatrixUniform;
-	GLint soundDeformSampleRateUniform;
-	GLint soundDeformSampleCountUniform;
+class uniformLocations_t {
+public:
+	R_GLSL_Uniform viewOriginUniform;
+	R_GLSL_Uniform pixelJitterUniform;
+	R_GLSL_Uniform dofJitterUniform;
+	R_GLSL_Uniform dofFocusUniform;
+	R_GLSL_Uniform dofRadiusUniform;
+	R_GLSL_Uniform fishEyeModeUniform;
+	R_GLSL_Uniform fovXUniform;
+	R_GLSL_Uniform fovYUniform;
+	R_GLSL_Uniform pixelWidthUniform;
+	R_GLSL_Uniform pixelHeightUniform;
+	R_GLSL_Uniform jitterIndexUniform;
+	R_GLSL_Uniform jitterTotalFramesUniform;
+	R_GLSL_Uniform texAverageBrightnessUniform;
+	R_GLSL_Uniform isLightmapUniform;
+	R_GLSL_Uniform isWorldBrushUniform;
+	R_GLSL_Uniform isSaberUniform;
+	R_GLSL_Uniform parallaxMapLayersUniform;
+	R_GLSL_Uniform parallaxMapDepthUniform;
+	R_GLSL_Uniform parallaxMapGammaUniform;
+	R_GLSL_Uniform thermalVisionUniform;
+	R_GLSL_Uniform shaderDebugUniform;
+	R_GLSL_Uniform blurEarlyStageUniform;
+	R_GLSL_Uniform serverTimeUniform;
+	R_GLSL_Uniform serverTimeStartUniform;
+	R_GLSL_Uniform serverTimeFractionUniform;
+	R_GLSL_Uniform noiseFuckeryUniform;
+	R_GLSL_Uniform noiseFuckeryLightmapUniform;
+	R_GLSL_Uniform noiseFuckeryHDRIntensityUniform;
+	R_GLSL_Uniform noiseFuckeryLightmapIntensityUniform;
+	R_GLSL_Uniform worldModelViewMatrixUniform;
+	R_GLSL_Uniform soundDeformSampleRateUniform;
+	R_GLSL_Uniform soundDeformSampleCountUniform;
 
-	GLint clipPlanesUniform[6];
+	R_GLSL_Uniform clipPlanesUniform[6];
 
-	GLint projectorModelViewMatrixUniform;
-	GLint projectorProjectionMatrixUniform;
-	GLint projectorPosUniform;
-	GLint projectorActiveUniform;
+	R_GLSL_Uniform projectorModelViewMatrixUniform;
+	R_GLSL_Uniform projectorProjectionMatrixUniform;
+	R_GLSL_Uniform projectorPosUniform;
+	R_GLSL_Uniform projectorActiveUniform;
 
-	GLint soundDeformTimeUniform;
-	GLint soundDeformIntensityUniform;
-	GLint soundDeformSpreadSpeedUniform;
-	GLint soundDeformSampleAvgWidthUniform;
-	GLint soundDeformOriginUniform;
-	GLint soundDeformDistanceScaleUniform;
-	GLint soundDeformShortDistanceReductionUniform;
-	GLint soundDeformModeUniform;
+	R_GLSL_Uniform soundDeformTimeUniform;
+	R_GLSL_Uniform soundDeformIntensityUniform;
+	R_GLSL_Uniform soundDeformSpreadSpeedUniform;
+	R_GLSL_Uniform soundDeformSampleAvgWidthUniform;
+	R_GLSL_Uniform soundDeformOriginUniform;
+	R_GLSL_Uniform soundDeformDistanceScaleUniform;
+	R_GLSL_Uniform soundDeformShortDistanceReductionUniform;
+	R_GLSL_Uniform soundDeformModeUniform;
 
-	GLint alphaFuncUniform;
-	GLint alphaFuncValueUniform;
-	GLint renderFlagsUniform;
+	R_GLSL_Uniform alphaFuncUniform;
+	R_GLSL_Uniform alphaFuncValueUniform;
+	R_GLSL_Uniform renderFlagsUniform;
 
-	GLint zPrepassUniform;
+	R_GLSL_Uniform zPrepassUniform;
 
-	GLint deluxeMappingUniform;
+	R_GLSL_Uniform deluxeMappingUniform;
 
-	GLint text_in[NUM_TEXTURE_SAMPLERS];
-	GLint text_inArray31;
-	GLint stageImageBitmaskUniform;
-	GLint stageLightmapBitmaskUniform;
-	GLint bindingRectImageBitmaskUniform;
-	GLint multiTexModeUniform;
+	R_GLSL_Uniform text_in[NUM_TEXTURE_SAMPLERS];
+	R_GLSL_Uniform text_inArray31;
+	R_GLSL_Uniform stageImageBitmaskUniform;
+	R_GLSL_Uniform stageLightmapBitmaskUniform;
+	R_GLSL_Uniform bindingRectImageBitmaskUniform;
+	R_GLSL_Uniform multiTexModeUniform;
 
-	GLint haveVertexLightDirectionUniform;
-	GLint isModelUniform;
-	GLint surfaceTypeUniform;
-	GLint stageColorGenUniform;
-	GLint stageForceNormalUniform;
+	R_GLSL_Uniform haveVertexLightDirectionUniform;
+	R_GLSL_Uniform isModelUniform;
+	R_GLSL_Uniform surfaceTypeUniform;
+	R_GLSL_Uniform stageColorGenUniform;
+	R_GLSL_Uniform stageForceNormalUniform;
 
-	GLint stageTCGenUniform;
-	GLint stageHasTCModUniform;
-	GLint gigaTCGenUniform;
+	R_GLSL_Uniform stageTCGenUniform;
+	R_GLSL_Uniform stageHasTCModUniform;
+	R_GLSL_Uniform gigaTCGenUniform;
 
-	GLint rawStateBitsUniform;
-	GLint appliedStateBitsUniform;
+	R_GLSL_Uniform rawStateBitsUniform;
+	R_GLSL_Uniform appliedStateBitsUniform;
 
-	GLint cloudScaleUniform;
-	GLint cloudTimeScaleUniform;
-	GLint cloudPowerUniform;
-	GLint cloudIntensityCompensateUniform;
+	R_GLSL_Uniform cloudScaleUniform;
+	R_GLSL_Uniform cloudTimeScaleUniform;
+	R_GLSL_Uniform cloudPowerUniform;
+	R_GLSL_Uniform cloudIntensityCompensateUniform;
 
-	GLint myFogUniform;
-	GLint myFogColorUniform;
+	R_GLSL_Uniform myFogUniform;
+	R_GLSL_Uniform myFogColorUniform;
 
-	GLint dLightFastUniform;
-	GLint dLightJitterUniform;
-	GLint dLightVoxelShadowsUniform;
-	GLint dLightVoxelShadowJitterUniform;
-	GLint dLightVoxelShadowJitterMethodUniform;
-	GLint dLightIntensityUniform;
-	GLint dLightFastSkipThresholdUniform;
-	GLint dLightSpecIntensityUniform;
-	GLint dLightSpecGammaUniform;
-	GLint dLightSpecBaseReflectivityUniform;
-	GLint dLightSpecDistanceDecayUniform;
-	GLint dLightSpecDistanceMinUniform;
-	GLint dLightAddPowUniform;
-	GLint dLightAddPostPowMultUniform;
-	GLint dLightsCountUniform; 
-	GLint dLightsUniformOrigin[MAX_DLIGHTS];
-	GLint dLightsUniformColor[MAX_DLIGHTS];
-	GLint dLightsUniformRadius[MAX_DLIGHTS];
-	GLint dLightsUniformMindist[MAX_DLIGHTS];
-	GLint shadowLinesCountUniform;
-	GLint shadowLinesPoint1[MAX_SHADOWLINES];
-	GLint shadowLinesPoint2[MAX_SHADOWLINES];
-	GLint shadowLinesWidth[MAX_SHADOWLINES];
-	GLint shadowLinesA[MAX_SHADOWLINES];
-	GLint shadowLinesB[MAX_SHADOWLINES];
-	GLint cheapLightsCountUniform;
+	R_GLSL_Uniform dLightFastUniform;
+	R_GLSL_Uniform dLightJitterUniform;
+	R_GLSL_Uniform dLightVoxelShadowsUniform;
+	R_GLSL_Uniform dLightVoxelShadowJitterUniform;
+	R_GLSL_Uniform dLightVoxelShadowJitterMethodUniform;
+	R_GLSL_Uniform dLightIntensityUniform;
+	R_GLSL_Uniform dLightFastSkipThresholdUniform;
+	R_GLSL_Uniform dLightSpecIntensityUniform;
+	R_GLSL_Uniform dLightSpecGammaUniform;
+	R_GLSL_Uniform dLightSpecBaseReflectivityUniform;
+	R_GLSL_Uniform dLightSpecDistanceDecayUniform;
+	R_GLSL_Uniform dLightSpecDistanceMinUniform;
+	R_GLSL_Uniform dLightAddPowUniform;
+	R_GLSL_Uniform dLightAddPostPowMultUniform;
+	R_GLSL_Uniform dLightsCountUniform; 
+	R_GLSL_Uniform dLightsUniformOrigin[MAX_DLIGHTS];
+	R_GLSL_Uniform dLightsUniformColor[MAX_DLIGHTS];
+	R_GLSL_Uniform dLightsUniformRadius[MAX_DLIGHTS];
+	R_GLSL_Uniform dLightsUniformMindist[MAX_DLIGHTS];
+	R_GLSL_Uniform shadowLinesCountUniform;
+	R_GLSL_Uniform shadowLinesPoint1[MAX_SHADOWLINES];
+	R_GLSL_Uniform shadowLinesPoint2[MAX_SHADOWLINES];
+	R_GLSL_Uniform shadowLinesWidth[MAX_SHADOWLINES];
+	R_GLSL_Uniform shadowLinesA[MAX_SHADOWLINES];
+	R_GLSL_Uniform shadowLinesB[MAX_SHADOWLINES];
+	R_GLSL_Uniform cheapLightsCountUniform;
 
-	GLint worldReflectNormalMixUniform;
-	GLint worldReflectGradMultUniform;
-	GLint worldReflectPuddleThreshUniform;
-	GLint worldReflectMultiSampleUniform;
+	R_GLSL_Uniform worldReflectNormalMixUniform;
+	R_GLSL_Uniform worldReflectGradMultUniform;
+	R_GLSL_Uniform worldReflectPuddleThreshUniform;
+	R_GLSL_Uniform worldReflectMultiSampleUniform;
 
-	GLint shaderStylesUniform[MAXLIGHTMAPS_REAL];
-	GLint lightmapNumsUniform[NUM_TEXTURE_SAMPLERS];
+	R_GLSL_Uniform shaderStylesUniform[MAXLIGHTMAPS_REAL];
+	R_GLSL_Uniform lightmapNumsUniform[NUM_TEXTURE_SAMPLERS];
 };
 
 typedef enum {
@@ -415,128 +416,128 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 
 	if (tess) {
 
-		qglUniform3fv(uniformLocationsTess->viewOriginUniform, 1, tr.refdef.vieworg);
-		qglUniform3fv(uniformLocationsTess->pixelJitterUniform, 1, fbo.fishEyeData.pixelJitter3D);
-		qglUniform3fv(uniformLocationsTess->dofJitterUniform, 1, fbo.fishEyeData.dofJitter3D);
-		qglUniform1f(uniformLocationsTess->dofFocusUniform, fbo.fishEyeData.dofFocus);
-		qglUniform1f(uniformLocationsTess->dofRadiusUniform, fbo.fishEyeData.dofRadius);
-		qglUniform1i(uniformLocationsTess->fishEyeModeUniform, fishEye);
-		qglUniform1f(uniformLocationsTess->fovXUniform, fbo.fishEyeData.fovX);
-		qglUniform1f(uniformLocationsTess->fovYUniform, fbo.fishEyeData.fovY);
-		qglUniform1i(uniformLocationsTess->pixelWidthUniform, width*superSampleMultiplier);
-		qglUniform1i(uniformLocationsTess->pixelHeightUniform, height * superSampleMultiplier);
-		qglUniform1i(uniformLocationsTess->jitterIndexUniform, fbo.fishEyeData.jitterIndex);
-		qglUniform1i(uniformLocationsTess->jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
-		qglUniform1f(uniformLocationsTess->texAverageBrightnessUniform, fbo.fishEyeData.texAverageBrightness);
-		qglUniform1i(uniformLocationsTess->isLightmapUniform, fbo.fishEyeData.isLightmap ? 1 : 0);
-		qglUniform1i(uniformLocationsTess->isWorldBrushUniform, fbo.fishEyeData.isWorldBrush ? 1 : 0);
-		qglUniform1i(uniformLocationsTess->isSaberUniform, fbo.fishEyeData.isSaber ? 1 : 0);
-		qglUniform1i(uniformLocationsTess->parallaxMapLayersUniform, r_fboGLSLParallaxMappingLayers->integer);
-		qglUniform1f(uniformLocationsTess->parallaxMapDepthUniform, r_fboGLSLParallaxMappingDepth->value);
-		qglUniform1f(uniformLocationsTess->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
-		qglUniform1i(uniformLocationsTess->thermalVisionUniform, r_fboGLSLThermalVision->integer);
-		qglUniform1i(uniformLocationsTess->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
-		qglUniform1i(uniformLocationsTess->serverTimeUniform, backEnd.refdef.time);
-		qglUniform1i(uniformLocationsTess->serverTimeStartUniform, firstServerTime);
-		qglUniform1f(uniformLocationsTess->serverTimeFractionUniform, backEnd.refdef.timeFraction);
-		qglUniform1i(uniformLocationsTess->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
-		qglUniform1i(uniformLocationsTess->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
-		qglUniform1f(uniformLocationsTess->noiseFuckeryLightmapIntensityUniform, r_fboGLSLNoiseFuckeryLightmapIntensity->value);
-		qglUniform1f(uniformLocationsTess->noiseFuckeryHDRIntensityUniform, r_fboGLSLNoiseFuckeryHDRIntensity->value);
-		qglUniformMatrix4fv(uniformLocationsTess->worldModelViewMatrixUniform, 1, GL_FALSE, backEnd.viewParms.world.modelMatrix);
-		qglUniform1i(uniformLocationsTess->soundDeformSampleRateUniform, fbo.soundDeformSampleRate);
-		qglUniform1i(uniformLocationsTess->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
+		uniformLocationsTess->viewOriginUniform.set3fv( 1, tr.refdef.vieworg);
+		uniformLocationsTess->pixelJitterUniform.set3fv( 1, fbo.fishEyeData.pixelJitter3D);
+		uniformLocationsTess->dofJitterUniform.set3fv( 1, fbo.fishEyeData.dofJitter3D);
+		uniformLocationsTess->dofFocusUniform.set1f( fbo.fishEyeData.dofFocus);
+		uniformLocationsTess->dofRadiusUniform.set1f( fbo.fishEyeData.dofRadius);
+		uniformLocationsTess->fishEyeModeUniform.set1i( fishEye);
+		uniformLocationsTess->fovXUniform.set1f( fbo.fishEyeData.fovX);
+		uniformLocationsTess->fovYUniform.set1f( fbo.fishEyeData.fovY);
+		uniformLocationsTess->pixelWidthUniform.set1i( width*superSampleMultiplier);
+		uniformLocationsTess->pixelHeightUniform.set1i( height * superSampleMultiplier);
+		uniformLocationsTess->jitterIndexUniform.set1i( fbo.fishEyeData.jitterIndex);
+		uniformLocationsTess->jitterTotalFramesUniform.set1i( fbo.fishEyeData.jitterTotalFrames);
+		uniformLocationsTess->texAverageBrightnessUniform.set1f( fbo.fishEyeData.texAverageBrightness);
+		uniformLocationsTess->isLightmapUniform.set1i( fbo.fishEyeData.isLightmap ? 1 : 0);
+		uniformLocationsTess->isWorldBrushUniform.set1i( fbo.fishEyeData.isWorldBrush ? 1 : 0);
+		uniformLocationsTess->isSaberUniform.set1i( fbo.fishEyeData.isSaber ? 1 : 0);
+		uniformLocationsTess->parallaxMapLayersUniform.set1i( r_fboGLSLParallaxMappingLayers->integer);
+		uniformLocationsTess->parallaxMapDepthUniform.set1f( r_fboGLSLParallaxMappingDepth->value);
+		uniformLocationsTess->parallaxMapGammaUniform.set1f( r_fboGLSLParallaxMappingGamma->value);
+		uniformLocationsTess->thermalVisionUniform.set1i( r_fboGLSLThermalVision->integer);
+		uniformLocationsTess->shaderDebugUniform.set1i( r_fboGLSLShaderDebug->integer);
+		uniformLocationsTess->serverTimeUniform.set1i( backEnd.refdef.time);
+		uniformLocationsTess->serverTimeStartUniform.set1i( firstServerTime);
+		uniformLocationsTess->serverTimeFractionUniform.set1f( backEnd.refdef.timeFraction);
+		uniformLocationsTess->noiseFuckeryUniform.set1i( r_fboGLSLNoiseFuckery->integer);
+		uniformLocationsTess->noiseFuckeryLightmapUniform.set1i( r_fboGLSLNoiseFuckeryLightmap->integer);
+		uniformLocationsTess->noiseFuckeryLightmapIntensityUniform.set1f( r_fboGLSLNoiseFuckeryLightmapIntensity->value);
+		uniformLocationsTess->noiseFuckeryHDRIntensityUniform.set1f( r_fboGLSLNoiseFuckeryHDRIntensity->value);
+		uniformLocationsTess->worldModelViewMatrixUniform.setMatrix4fv( 1, GL_FALSE, backEnd.viewParms.world.modelMatrix);
+		uniformLocationsTess->soundDeformSampleRateUniform.set1i( fbo.soundDeformSampleRate);
+		uniformLocationsTess->soundDeformSampleCountUniform.set1i( fbo.soundDeformSampleCount);
 
 		for (int i = 0; i < 6; i++) {
-			qglUniform4fv(uniformLocationsTess->clipPlanesUniform[i], 1, fboUniformsEx.clipPlanes[i]);
+			uniformLocationsTess->clipPlanesUniform[i].set4fv( 1, fboUniformsEx.clipPlanes[i]);
 		}
 
-		qglUniformMatrix4fv(uniformLocationsTess->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
-		qglUniformMatrix4fv(uniformLocationsTess->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
-		qglUniform3fv(uniformLocationsTess->projectorPosUniform, 1, tr.projector.pos);
-		qglUniform1i(uniformLocationsTess->projectorActiveUniform, fboUniformsEx.projectorActive);
+		uniformLocationsTess->projectorModelViewMatrixUniform.setMatrix4fv( 1, GL_FALSE, tr.projector.modelMatrix);
+		uniformLocationsTess->projectorProjectionMatrixUniform.setMatrix4fv( 1, GL_FALSE, tr.projector.projectionMatrix);
+		uniformLocationsTess->projectorPosUniform.set3fv( 1, tr.projector.pos);
+		uniformLocationsTess->projectorActiveUniform.set1i( fboUniformsEx.projectorActive);
 
-		qglUniform1f(uniformLocationsTess->soundDeformTimeUniform, fbo.musicDeformData.time);
-		qglUniform1f(uniformLocationsTess->soundDeformIntensityUniform, fbo.musicDeformData.intensity);
-		qglUniform1f(uniformLocationsTess->soundDeformSpreadSpeedUniform, fbo.musicDeformData.spreadSpeed);
-		qglUniform1i(uniformLocationsTess->soundDeformSampleAvgWidthUniform, fbo.musicDeformData.sampleAvgWidth);
-		qglUniform3fv(uniformLocationsTess->soundDeformOriginUniform, 1, fbo.musicDeformData.origin);
-		qglUniform1f(uniformLocationsTess->soundDeformDistanceScaleUniform, fbo.musicDeformData.distanceScale);
-		qglUniform1f(uniformLocationsTess->soundDeformShortDistanceReductionUniform, fbo.musicDeformData.shortDistanceReduction);
-		qglUniform1i(uniformLocationsTess->soundDeformModeUniform, fbo.musicDeformData.mode);
+		uniformLocationsTess->soundDeformTimeUniform.set1f( fbo.musicDeformData.time);
+		uniformLocationsTess->soundDeformIntensityUniform.set1f( fbo.musicDeformData.intensity);
+		uniformLocationsTess->soundDeformSpreadSpeedUniform.set1f( fbo.musicDeformData.spreadSpeed);
+		uniformLocationsTess->soundDeformSampleAvgWidthUniform.set1i( fbo.musicDeformData.sampleAvgWidth);
+		uniformLocationsTess->soundDeformOriginUniform.set3fv( 1, fbo.musicDeformData.origin);
+		uniformLocationsTess->soundDeformDistanceScaleUniform.set1f( fbo.musicDeformData.distanceScale);
+		uniformLocationsTess->soundDeformShortDistanceReductionUniform.set1f( fbo.musicDeformData.shortDistanceReduction);
+		uniformLocationsTess->soundDeformModeUniform.set1i( fbo.musicDeformData.mode);
 
-		qglUniform1i(uniformLocationsTess->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
-		qglUniform1f(uniformLocationsTess->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
-		qglUniform1i(uniformLocationsTess->renderFlagsUniform, fbo.fishEyeData.renderFlags | extraRenderFlags);
+		uniformLocationsTess->alphaFuncUniform.set1i( fbo.fishEyeData.alphaFunc);
+		uniformLocationsTess->alphaFuncValueUniform.set1f( fbo.fishEyeData.alphaFuncValue);
+		uniformLocationsTess->renderFlagsUniform.set1i( fbo.fishEyeData.renderFlags | extraRenderFlags);
 
-		qglUniform1i(uniformLocationsTess->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
+		uniformLocationsTess->zPrepassUniform.set1i( fbo.fishEyeData.doingZPrepass);
 
-		qglUniform1i(uniformLocationsTess->deluxeMappingUniform, tr.deluxeMapping);
+		uniformLocationsTess->deluxeMappingUniform.set1i( tr.deluxeMapping);
 
-		qglUniform1i(uniformLocationsTess->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
-		qglUniform1i(uniformLocationsTess->isModelUniform, fbo.fishEyeData.isModel ? 1 : 0);
-		qglUniform1i(uniformLocationsTess->surfaceTypeUniform, (int)fbo.fishEyeData.surfaceType);
-		qglUniform1i(uniformLocationsTess->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
-		qglUniform1i(uniformLocationsTess->stageForceNormalUniform, fbo.fishEyeData.stageForceNormal);
+		uniformLocationsTess->haveVertexLightDirectionUniform.set1i( fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
+		uniformLocationsTess->isModelUniform.set1i( fbo.fishEyeData.isModel ? 1 : 0);
+		uniformLocationsTess->surfaceTypeUniform.set1i( (int)fbo.fishEyeData.surfaceType);
+		uniformLocationsTess->stageColorGenUniform.set1i( fbo.fishEyeData.stageColorGen);
+		uniformLocationsTess->stageForceNormalUniform.set1i( fbo.fishEyeData.stageForceNormal);
 
-		qglUniform1i(uniformLocationsTess->stageTCGenUniform, fbo.fishEyeData.stageTCGen);
-		qglUniform1i(uniformLocationsTess->stageHasTCModUniform, fbo.fishEyeData.stageHasTCMod);
-		qglUniform1i(uniformLocationsTess->gigaTCGenUniform, r_fboGLSLGigaTCGen->integer);
+		uniformLocationsTess->stageTCGenUniform.set1i( fbo.fishEyeData.stageTCGen);
+		uniformLocationsTess->stageHasTCModUniform.set1i( fbo.fishEyeData.stageHasTCMod);
+		uniformLocationsTess->gigaTCGenUniform.set1i( r_fboGLSLGigaTCGen->integer);
 
-		qglUniform1ui(uniformLocationsTess->rawStateBitsUniform, fbo.fishEyeData.stateBitsRaw);
-		qglUniform1ui(uniformLocationsTess->appliedStateBitsUniform, fbo.fishEyeData.stateBitsApplied);
+		uniformLocationsTess->rawStateBitsUniform.set1ui( fbo.fishEyeData.stateBitsRaw);
+		uniformLocationsTess->appliedStateBitsUniform.set1ui( fbo.fishEyeData.stateBitsApplied);
 
-		qglUniform1i(uniformLocationsTess->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
-		qglUniform1i(uniformLocationsTess->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
-		qglUniform1ui(uniformLocationsTess->bindingRectImageBitmaskUniform, fboUniformsEx.textRectBitmask);
-		qglUniform1i(uniformLocationsTess->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
+		uniformLocationsTess->stageImageBitmaskUniform.set1i( fbo.fishEyeData.stageImageBitmask);
+		uniformLocationsTess->stageLightmapBitmaskUniform.set1i( fbo.fishEyeData.stageLightmapBitmask);
+		uniformLocationsTess->bindingRectImageBitmaskUniform.set1ui( fboUniformsEx.textRectBitmask);
+		uniformLocationsTess->multiTexModeUniform.set1i( fbo.fishEyeData.multiTexMode);
 
-		qglUniform1f(uniformLocationsTess->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
-		qglUniform1f(uniformLocationsTess->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
-		qglUniform1f(uniformLocationsTess->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
-		qglUniform1f(uniformLocationsTess->cloudIntensityCompensateUniform, intensityCompensateFactor);
+		uniformLocationsTess->cloudScaleUniform.set1f( r_fboGLSLCloudShadowScale->value);
+		uniformLocationsTess->cloudTimeScaleUniform.set1f( r_fboGLSLCloudShadowTimeScale->value);
+		uniformLocationsTess->cloudPowerUniform.set1f( r_fboGLSLCloudShadowPower->value);
+		uniformLocationsTess->cloudIntensityCompensateUniform.set1f( intensityCompensateFactor);
 
-		qglUniform1f(uniformLocationsTess->myFogUniform, r_fboGLSLFog->value);
-		qglUniform3fv(uniformLocationsTess->myFogColorUniform, 1, tr.fboGLSLFogColor);
+		uniformLocationsTess->myFogUniform.set1f( r_fboGLSLFog->value);
+		uniformLocationsTess->myFogColorUniform.set3fv( 1, tr.fboGLSLFogColor);
 
-		qglUniform1f(uniformLocationsTess->worldReflectNormalMixUniform, r_fboGLSLWorldReflectNormalMix->value);
-		qglUniform1f(uniformLocationsTess->worldReflectGradMultUniform, r_fboGLSLWorldReflectGradMult->value);
-		qglUniform1f(uniformLocationsTess->worldReflectPuddleThreshUniform, r_fboGLSLWorldReflectPuddleTresh->value);
-		qglUniform1i(uniformLocationsTess->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
+		uniformLocationsTess->worldReflectNormalMixUniform.set1f( r_fboGLSLWorldReflectNormalMix->value);
+		uniformLocationsTess->worldReflectGradMultUniform.set1f( r_fboGLSLWorldReflectGradMult->value);
+		uniformLocationsTess->worldReflectPuddleThreshUniform.set1f( r_fboGLSLWorldReflectPuddleTresh->value);
+		uniformLocationsTess->worldReflectMultiSampleUniform.set1i( r_fboGLSLWorldReflectMultiSample->integer);
 
-		qglUniform1i(uniformLocationsTess->dLightFastUniform, r_fboGLSLDLightsFast->integer);
-		qglUniform1i(uniformLocationsTess->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
-		qglUniform3fv(uniformLocationsTess->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
-		qglUniform1i(uniformLocationsTess->dLightVoxelShadowJitterMethodUniform, mme_voxelShadowLightQuickJitterMethod->integer);
-		qglUniform3fv(uniformLocationsTess->dLightJitterUniform, 1, fbo.fishEyeData.dlightJitter3D);
-		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer?  backEnd.refdef.num_dlights : 0);
-		qglUniform1f(uniformLocationsTess->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
-		qglUniform1f(uniformLocationsTess->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
-		qglUniform1f(uniformLocationsTess->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
-		qglUniform1f(uniformLocationsTess->dLightSpecDistanceDecayUniform, r_fboGLSLDLightsSpecDistanceDecay->value);
-		qglUniform1f(uniformLocationsTess->dLightSpecDistanceMinUniform, r_fboGLSLDLightsSpecDistanceMinUniform->value);
-		qglUniform1f(uniformLocationsTess->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
-		qglUniform1f(uniformLocationsTess->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
-		qglUniform1f(uniformLocationsTess->dLightAddPowUniform, r_fboGLSLDLightsAddPow->value);
-		qglUniform1f(uniformLocationsTess->dLightAddPostPowMultUniform, r_fboGLSLDLightsAddPostPowMult->value);
-		//qglUniform3fv(uniformLocationsTess->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
-		qglUniform1i(uniformLocationsTess->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
-		qglUniform1i(uniformLocationsTess->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
+		uniformLocationsTess->dLightFastUniform.set1i( r_fboGLSLDLightsFast->integer);
+		uniformLocationsTess->dLightVoxelShadowsUniform.set1i( r_fboGLSLDLightsVoxelShadows->integer);
+		uniformLocationsTess->dLightVoxelShadowJitterUniform.set3fv( 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
+		uniformLocationsTess->dLightVoxelShadowJitterMethodUniform.set1i( mme_voxelShadowLightQuickJitterMethod->integer);
+		uniformLocationsTess->dLightJitterUniform.set3fv( 1, fbo.fishEyeData.dlightJitter3D);
+		uniformLocationsTess->dLightsCountUniform.set1i( r_fboGLSLDLights->integer?  backEnd.refdef.num_dlights : 0);
+		uniformLocationsTess->dLightSpecGammaUniform.set1f( r_fboGLSLDLightsSpecGamma->value);
+		uniformLocationsTess->dLightSpecIntensityUniform.set1f( r_fboGLSLDLightsSpecIntensity->value);
+		uniformLocationsTess->dLightSpecBaseReflectivityUniform.set1f( r_fboGLSLDLightsSpecBaseReflectivity->value);
+		uniformLocationsTess->dLightSpecDistanceDecayUniform.set1f( r_fboGLSLDLightsSpecDistanceDecay->value);
+		uniformLocationsTess->dLightSpecDistanceMinUniform.set1f( r_fboGLSLDLightsSpecDistanceMinUniform->value);
+		uniformLocationsTess->dLightIntensityUniform.set1f( r_fboGLSLDLightsIntensity->value);
+		uniformLocationsTess->dLightFastSkipThresholdUniform.set1f( r_fboGLSLDLightsFastSkipThreshold->value);
+		uniformLocationsTess->dLightAddPowUniform.set1f( r_fboGLSLDLightsAddPow->value);
+		uniformLocationsTess->dLightAddPostPowMultUniform.set1f( r_fboGLSLDLightsAddPostPowMult->value);
+		//uniformLocationsTess->dLightsUniform").set3fv( sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
+		uniformLocationsTess->shadowLinesCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		uniformLocationsTess->cheapLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			/*for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
-				qglUniform3fv(uniformLocationsTess->dLightsUniformOrigin[i], 1, backEnd.refdef.dlights[i].origin);
-				qglUniform3fv(uniformLocationsTess->dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
-				qglUniform1f(uniformLocationsTess->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
+				uniformLocationsTess->dLightsUniformOrigin[i].set3fv( 1, backEnd.refdef.dlights[i].origin);
+				uniformLocationsTess->dLightsUniformColor[i].set3fv( 1, backEnd.refdef.dlights[i].color);
+				uniformLocationsTess->dLightsUniformRadius[i].set1f( backEnd.refdef.dlights[i].radius);
 			}*/
 		}
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
-			qglUniform1i(uniformLocationsTess->text_in[i], i);
-			qglUniform1i(uniformLocationsTess->lightmapNumsUniform[i], fboUniformsEx.lightmapNums[i]);
+			uniformLocationsTess->text_in[i].set1i( i);
+			uniformLocationsTess->lightmapNumsUniform[i].set1i( fboUniformsEx.lightmapNums[i]);
 		}
-		qglUniform1i(uniformLocationsTess->text_inArray31, 31);
+		uniformLocationsTess->text_inArray31.set1i( 31);
 		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
-			qglUniform1i(uniformLocationsTess->shaderStylesUniform[i], fbo.fishEyeData.shaderStyles[i]);
+			uniformLocationsTess->shaderStylesUniform[i].set1i( fbo.fishEyeData.shaderStyles[i]);
 		}
 
 		if (fbo.fishEyeData.tessellationActive) {
@@ -545,129 +546,129 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		}
 	}
 	else {
-		qglUniform3fv(uniformLocations->viewOriginUniform, 1, tr.refdef.vieworg);
-		qglUniform3fv(uniformLocations->pixelJitterUniform, 1, fbo.fishEyeData.pixelJitter3D);
-		qglUniform3fv(uniformLocations->dofJitterUniform, 1, fbo.fishEyeData.dofJitter3D);
-		qglUniform1f(uniformLocations->dofFocusUniform, fbo.fishEyeData.dofFocus);
-		qglUniform1f(uniformLocations->dofRadiusUniform, fbo.fishEyeData.dofRadius);
-		qglUniform1i(uniformLocations->fishEyeModeUniform, fishEye);
-		qglUniform1f(uniformLocations->fovXUniform, fbo.fishEyeData.fovX);
-		qglUniform1f(uniformLocations->fovYUniform, fbo.fishEyeData.fovY);
-		qglUniform1i(uniformLocations->pixelWidthUniform, width * superSampleMultiplier);
-		qglUniform1i(uniformLocations->pixelHeightUniform, height * superSampleMultiplier);
-		qglUniform1i(uniformLocations->jitterIndexUniform, fbo.fishEyeData.jitterIndex);
-		qglUniform1i(uniformLocations->jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
-		qglUniform1f(uniformLocations->texAverageBrightnessUniform, fbo.fishEyeData.texAverageBrightness);
-		qglUniform1i(uniformLocations->isLightmapUniform, fbo.fishEyeData.isLightmap ? 1 : 0);
-		qglUniform1i(uniformLocations->isWorldBrushUniform, fbo.fishEyeData.isWorldBrush ? 1 : 0);
-		qglUniform1i(uniformLocations->isSaberUniform, fbo.fishEyeData.isSaber ? 1 : 0);
-		qglUniform1i(uniformLocations->parallaxMapLayersUniform, r_fboGLSLParallaxMappingLayers->integer);
-		qglUniform1f(uniformLocations->parallaxMapDepthUniform, r_fboGLSLParallaxMappingDepth->value);
-		qglUniform1f(uniformLocations->parallaxMapGammaUniform, r_fboGLSLParallaxMappingGamma->value);
-		qglUniform1i(uniformLocations->thermalVisionUniform, r_fboGLSLThermalVision->integer);
-		qglUniform1i(uniformLocations->shaderDebugUniform, r_fboGLSLShaderDebug->integer);
-		qglUniform1i(uniformLocations->serverTimeUniform, backEnd.refdef.time);
-		qglUniform1i(uniformLocations->serverTimeStartUniform, firstServerTime);
-		qglUniform1f(uniformLocations->serverTimeFractionUniform, backEnd.refdef.timeFraction);
-		qglUniform1i(uniformLocations->noiseFuckeryUniform, r_fboGLSLNoiseFuckery->integer);
-		qglUniform1i(uniformLocations->noiseFuckeryLightmapUniform, r_fboGLSLNoiseFuckeryLightmap->integer);
-		qglUniform1f(uniformLocations->noiseFuckeryLightmapIntensityUniform, r_fboGLSLNoiseFuckeryLightmapIntensity->value);
-		qglUniform1f(uniformLocations->noiseFuckeryHDRIntensityUniform, r_fboGLSLNoiseFuckeryHDRIntensity->value);
-		qglUniformMatrix4fv(uniformLocations->worldModelViewMatrixUniform, 1, GL_FALSE, backEnd.viewParms.world.modelMatrix);
-		qglUniform1i(uniformLocations->soundDeformSampleRateUniform, fbo.soundDeformSampleRate);
-		qglUniform1i(uniformLocations->soundDeformSampleCountUniform, fbo.soundDeformSampleCount);
+		uniformLocations->viewOriginUniform.set3fv( 1, tr.refdef.vieworg);
+		uniformLocations->pixelJitterUniform.set3fv( 1, fbo.fishEyeData.pixelJitter3D);
+		uniformLocations->dofJitterUniform.set3fv( 1, fbo.fishEyeData.dofJitter3D);
+		uniformLocations->dofFocusUniform.set1f( fbo.fishEyeData.dofFocus);
+		uniformLocations->dofRadiusUniform.set1f( fbo.fishEyeData.dofRadius);
+		uniformLocations->fishEyeModeUniform.set1i( fishEye);
+		uniformLocations->fovXUniform.set1f( fbo.fishEyeData.fovX);
+		uniformLocations->fovYUniform.set1f( fbo.fishEyeData.fovY);
+		uniformLocations->pixelWidthUniform.set1i( width * superSampleMultiplier);
+		uniformLocations->pixelHeightUniform.set1i( height * superSampleMultiplier);
+		uniformLocations->jitterIndexUniform.set1i( fbo.fishEyeData.jitterIndex);
+		uniformLocations->jitterTotalFramesUniform.set1i( fbo.fishEyeData.jitterTotalFrames);
+		uniformLocations->texAverageBrightnessUniform.set1f( fbo.fishEyeData.texAverageBrightness);
+		uniformLocations->isLightmapUniform.set1i( fbo.fishEyeData.isLightmap ? 1 : 0);
+		uniformLocations->isWorldBrushUniform.set1i( fbo.fishEyeData.isWorldBrush ? 1 : 0);
+		uniformLocations->isSaberUniform.set1i( fbo.fishEyeData.isSaber ? 1 : 0);
+		uniformLocations->parallaxMapLayersUniform.set1i( r_fboGLSLParallaxMappingLayers->integer);
+		uniformLocations->parallaxMapDepthUniform.set1f( r_fboGLSLParallaxMappingDepth->value);
+		uniformLocations->parallaxMapGammaUniform.set1f( r_fboGLSLParallaxMappingGamma->value);
+		uniformLocations->thermalVisionUniform.set1i( r_fboGLSLThermalVision->integer);
+		uniformLocations->shaderDebugUniform.set1i( r_fboGLSLShaderDebug->integer);
+		uniformLocations->serverTimeUniform.set1i( backEnd.refdef.time);
+		uniformLocations->serverTimeStartUniform.set1i( firstServerTime);
+		uniformLocations->serverTimeFractionUniform.set1f( backEnd.refdef.timeFraction);
+		uniformLocations->noiseFuckeryUniform.set1i( r_fboGLSLNoiseFuckery->integer);
+		uniformLocations->noiseFuckeryLightmapUniform.set1i( r_fboGLSLNoiseFuckeryLightmap->integer);
+		uniformLocations->noiseFuckeryLightmapIntensityUniform.set1f( r_fboGLSLNoiseFuckeryLightmapIntensity->value);
+		uniformLocations->noiseFuckeryHDRIntensityUniform.set1f( r_fboGLSLNoiseFuckeryHDRIntensity->value);
+		uniformLocations->worldModelViewMatrixUniform.setMatrix4fv( 1, GL_FALSE, backEnd.viewParms.world.modelMatrix);
+		uniformLocations->soundDeformSampleRateUniform.set1i( fbo.soundDeformSampleRate);
+		uniformLocations->soundDeformSampleCountUniform.set1i( fbo.soundDeformSampleCount);
 
 		for (int i = 0; i < 6; i++) {
-			qglUniform4fv(uniformLocations->clipPlanesUniform[i], 1, fboUniformsEx.clipPlanes[i]);
+			uniformLocations->clipPlanesUniform[i].set4fv( 1, fboUniformsEx.clipPlanes[i]);
 		}
 
-		qglUniformMatrix4fv(uniformLocations->projectorModelViewMatrixUniform, 1, GL_FALSE, tr.projector.modelMatrix);
-		qglUniformMatrix4fv(uniformLocations->projectorProjectionMatrixUniform, 1, GL_FALSE, tr.projector.projectionMatrix);
-		qglUniform3fv(uniformLocations->projectorPosUniform, 1, tr.projector.pos);
-		qglUniform1i(uniformLocations->projectorActiveUniform, fboUniformsEx.projectorActive);
+		uniformLocations->projectorModelViewMatrixUniform.setMatrix4fv( 1, GL_FALSE, tr.projector.modelMatrix);
+		uniformLocations->projectorProjectionMatrixUniform.setMatrix4fv( 1, GL_FALSE, tr.projector.projectionMatrix);
+		uniformLocations->projectorPosUniform.set3fv( 1, tr.projector.pos);
+		uniformLocations->projectorActiveUniform.set1i( fboUniformsEx.projectorActive);
 
-		qglUniform1f(uniformLocations->soundDeformTimeUniform, fbo.musicDeformData.time);
-		qglUniform1f(uniformLocations->soundDeformIntensityUniform, fbo.musicDeformData.intensity);
-		qglUniform1f(uniformLocations->soundDeformSpreadSpeedUniform, fbo.musicDeformData.spreadSpeed);
-		qglUniform1i(uniformLocations->soundDeformSampleAvgWidthUniform, fbo.musicDeformData.sampleAvgWidth);
-		qglUniform3fv(uniformLocations->soundDeformOriginUniform,1, fbo.musicDeformData.origin);
-		qglUniform1f(uniformLocations->soundDeformDistanceScaleUniform, fbo.musicDeformData.distanceScale);
-		qglUniform1f(uniformLocations->soundDeformShortDistanceReductionUniform, fbo.musicDeformData.shortDistanceReduction);
-		qglUniform1i(uniformLocations->soundDeformModeUniform, fbo.musicDeformData.mode);
+		uniformLocations->soundDeformTimeUniform.set1f( fbo.musicDeformData.time);
+		uniformLocations->soundDeformIntensityUniform.set1f( fbo.musicDeformData.intensity);
+		uniformLocations->soundDeformSpreadSpeedUniform.set1f( fbo.musicDeformData.spreadSpeed);
+		uniformLocations->soundDeformSampleAvgWidthUniform.set1i( fbo.musicDeformData.sampleAvgWidth);
+		uniformLocations->soundDeformOriginUniform.set3fv(1, fbo.musicDeformData.origin);
+		uniformLocations->soundDeformDistanceScaleUniform.set1f( fbo.musicDeformData.distanceScale);
+		uniformLocations->soundDeformShortDistanceReductionUniform.set1f( fbo.musicDeformData.shortDistanceReduction);
+		uniformLocations->soundDeformModeUniform.set1i( fbo.musicDeformData.mode);
 
-		qglUniform1i(uniformLocations->alphaFuncUniform, fbo.fishEyeData.alphaFunc);
-		qglUniform1f(uniformLocations->alphaFuncValueUniform, fbo.fishEyeData.alphaFuncValue);
-		qglUniform1i(uniformLocations->renderFlagsUniform, fbo.fishEyeData.renderFlags | extraRenderFlags);
+		uniformLocations->alphaFuncUniform.set1i( fbo.fishEyeData.alphaFunc);
+		uniformLocations->alphaFuncValueUniform.set1f( fbo.fishEyeData.alphaFuncValue);
+		uniformLocations->renderFlagsUniform.set1i( fbo.fishEyeData.renderFlags | extraRenderFlags);
 
-		qglUniform1i(uniformLocations->zPrepassUniform, fbo.fishEyeData.doingZPrepass);
+		uniformLocations->zPrepassUniform.set1i( fbo.fishEyeData.doingZPrepass);
 
-		qglUniform1i(uniformLocations->deluxeMappingUniform, tr.deluxeMapping);
+		uniformLocations->deluxeMappingUniform.set1i( tr.deluxeMapping);
 
-		qglUniform1i(uniformLocations->haveVertexLightDirectionUniform, fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
-		qglUniform1i(uniformLocations->isModelUniform, fbo.fishEyeData.isModel ? 1 : 0);
-		qglUniform1i(uniformLocations->surfaceTypeUniform, (int)fbo.fishEyeData.surfaceType);
-		qglUniform1i(uniformLocations->stageColorGenUniform, fbo.fishEyeData.stageColorGen);
-		qglUniform1i(uniformLocations->stageForceNormalUniform, fbo.fishEyeData.stageForceNormal);
+		uniformLocations->haveVertexLightDirectionUniform.set1i( fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
+		uniformLocations->isModelUniform.set1i( fbo.fishEyeData.isModel ? 1 : 0);
+		uniformLocations->surfaceTypeUniform.set1i( (int)fbo.fishEyeData.surfaceType);
+		uniformLocations->stageColorGenUniform.set1i( fbo.fishEyeData.stageColorGen);
+		uniformLocations->stageForceNormalUniform.set1i( fbo.fishEyeData.stageForceNormal);
 
-		qglUniform1i(uniformLocations->stageTCGenUniform, fbo.fishEyeData.stageTCGen);
-		qglUniform1i(uniformLocations->stageHasTCModUniform, fbo.fishEyeData.stageHasTCMod);
-		qglUniform1i(uniformLocations->gigaTCGenUniform, r_fboGLSLGigaTCGen->integer);
+		uniformLocations->stageTCGenUniform.set1i( fbo.fishEyeData.stageTCGen);
+		uniformLocations->stageHasTCModUniform.set1i( fbo.fishEyeData.stageHasTCMod);
+		uniformLocations->gigaTCGenUniform.set1i( r_fboGLSLGigaTCGen->integer);
 
-		qglUniform1ui(uniformLocations->rawStateBitsUniform, fbo.fishEyeData.stateBitsRaw);
-		qglUniform1ui(uniformLocations->appliedStateBitsUniform, fbo.fishEyeData.stateBitsApplied);
+		uniformLocations->rawStateBitsUniform.set1ui( fbo.fishEyeData.stateBitsRaw);
+		uniformLocations->appliedStateBitsUniform.set1ui( fbo.fishEyeData.stateBitsApplied);
 
-		qglUniform1i(uniformLocations->stageImageBitmaskUniform, fbo.fishEyeData.stageImageBitmask);
-		qglUniform1i(uniformLocations->stageLightmapBitmaskUniform, fbo.fishEyeData.stageLightmapBitmask);
-		qglUniform1ui(uniformLocations->bindingRectImageBitmaskUniform, fboUniformsEx.textRectBitmask);
-		qglUniform1i(uniformLocations->multiTexModeUniform, fbo.fishEyeData.multiTexMode);
+		uniformLocations->stageImageBitmaskUniform.set1i( fbo.fishEyeData.stageImageBitmask);
+		uniformLocations->stageLightmapBitmaskUniform.set1i( fbo.fishEyeData.stageLightmapBitmask);
+		uniformLocations->bindingRectImageBitmaskUniform.set1ui( fboUniformsEx.textRectBitmask);
+		uniformLocations->multiTexModeUniform.set1i( fbo.fishEyeData.multiTexMode);
 
-		qglUniform1f(uniformLocations->cloudScaleUniform, r_fboGLSLCloudShadowScale->value);
-		qglUniform1f(uniformLocations->cloudTimeScaleUniform, r_fboGLSLCloudShadowTimeScale->value);
-		qglUniform1f(uniformLocations->cloudPowerUniform, r_fboGLSLCloudShadowPower->value);
-		qglUniform1f(uniformLocations->cloudIntensityCompensateUniform, intensityCompensateFactor);
+		uniformLocations->cloudScaleUniform.set1f( r_fboGLSLCloudShadowScale->value);
+		uniformLocations->cloudTimeScaleUniform.set1f( r_fboGLSLCloudShadowTimeScale->value);
+		uniformLocations->cloudPowerUniform.set1f( r_fboGLSLCloudShadowPower->value);
+		uniformLocations->cloudIntensityCompensateUniform.set1f( intensityCompensateFactor);
 
-		qglUniform1f(uniformLocations->myFogUniform, r_fboGLSLFog->value);
-		qglUniform3fv(uniformLocations->myFogColorUniform, 1, tr.fboGLSLFogColor);
+		uniformLocations->myFogUniform.set1f( r_fboGLSLFog->value);
+		uniformLocations->myFogColorUniform.set3fv( 1, tr.fboGLSLFogColor);
 
-		qglUniform1f(uniformLocations->worldReflectNormalMixUniform, r_fboGLSLWorldReflectNormalMix->value);
-		qglUniform1f(uniformLocations->worldReflectGradMultUniform, r_fboGLSLWorldReflectGradMult->value);
-		qglUniform1f(uniformLocations->worldReflectPuddleThreshUniform, r_fboGLSLWorldReflectPuddleTresh->value);
-		qglUniform1i(uniformLocations->worldReflectMultiSampleUniform, r_fboGLSLWorldReflectMultiSample->integer);
+		uniformLocations->worldReflectNormalMixUniform.set1f( r_fboGLSLWorldReflectNormalMix->value);
+		uniformLocations->worldReflectGradMultUniform.set1f( r_fboGLSLWorldReflectGradMult->value);
+		uniformLocations->worldReflectPuddleThreshUniform.set1f( r_fboGLSLWorldReflectPuddleTresh->value);
+		uniformLocations->worldReflectMultiSampleUniform.set1i( r_fboGLSLWorldReflectMultiSample->integer);
 
-		qglUniform1i(uniformLocations->dLightFastUniform, r_fboGLSLDLightsFast->integer);
-		qglUniform1i(uniformLocations->dLightVoxelShadowsUniform, r_fboGLSLDLightsVoxelShadows->integer);
-		qglUniform3fv(uniformLocations->dLightVoxelShadowJitterUniform, 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
-		qglUniform1i(uniformLocations->dLightVoxelShadowJitterMethodUniform, mme_voxelShadowLightQuickJitterMethod->integer);
-		qglUniform3fv(uniformLocations->dLightJitterUniform,1, fbo.fishEyeData.dlightJitter3D);
-		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
-		qglUniform1f(uniformLocations->dLightSpecGammaUniform, r_fboGLSLDLightsSpecGamma->value);
-		qglUniform1f(uniformLocations->dLightSpecIntensityUniform, r_fboGLSLDLightsSpecIntensity->value);
-		qglUniform1f(uniformLocations->dLightSpecBaseReflectivityUniform, r_fboGLSLDLightsSpecBaseReflectivity->value);
-		qglUniform1f(uniformLocations->dLightSpecDistanceDecayUniform, r_fboGLSLDLightsSpecDistanceDecay->value);
-		qglUniform1f(uniformLocations->dLightSpecDistanceMinUniform, r_fboGLSLDLightsSpecDistanceMinUniform->value);
-		qglUniform1f(uniformLocations->dLightIntensityUniform, r_fboGLSLDLightsIntensity->value);
-		qglUniform1f(uniformLocations->dLightFastSkipThresholdUniform, r_fboGLSLDLightsFastSkipThreshold->value);
-		qglUniform1f(uniformLocations->dLightAddPowUniform, r_fboGLSLDLightsAddPow->value);
-		qglUniform1f(uniformLocations->dLightAddPostPowMultUniform, r_fboGLSLDLightsAddPostPowMult->value);
-		//qglUniform3fv(uniformLocations->dLightsUniform"), sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
-		qglUniform1i(uniformLocations->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
-		qglUniform1i(uniformLocations->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
+		uniformLocations->dLightFastUniform.set1i( r_fboGLSLDLightsFast->integer);
+		uniformLocations->dLightVoxelShadowsUniform.set1i( r_fboGLSLDLightsVoxelShadows->integer);
+		uniformLocations->dLightVoxelShadowJitterUniform.set3fv( 1, fbo.fishEyeData.dlightVoxelShadowJitter3D);
+		uniformLocations->dLightVoxelShadowJitterMethodUniform.set1i( mme_voxelShadowLightQuickJitterMethod->integer);
+		uniformLocations->dLightJitterUniform.set3fv(1, fbo.fishEyeData.dlightJitter3D);
+		uniformLocations->dLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
+		uniformLocations->dLightSpecGammaUniform.set1f( r_fboGLSLDLightsSpecGamma->value);
+		uniformLocations->dLightSpecIntensityUniform.set1f( r_fboGLSLDLightsSpecIntensity->value);
+		uniformLocations->dLightSpecBaseReflectivityUniform.set1f( r_fboGLSLDLightsSpecBaseReflectivity->value);
+		uniformLocations->dLightSpecDistanceDecayUniform.set1f( r_fboGLSLDLightsSpecDistanceDecay->value);
+		uniformLocations->dLightSpecDistanceMinUniform.set1f( r_fboGLSLDLightsSpecDistanceMinUniform->value);
+		uniformLocations->dLightIntensityUniform.set1f( r_fboGLSLDLightsIntensity->value);
+		uniformLocations->dLightFastSkipThresholdUniform.set1f( r_fboGLSLDLightsFastSkipThreshold->value);
+		uniformLocations->dLightAddPowUniform.set1f( r_fboGLSLDLightsAddPow->value);
+		uniformLocations->dLightAddPostPowMultUniform.set1f( r_fboGLSLDLightsAddPostPowMult->value);
+		//uniformLocations->dLightsUniform").set3fv( sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
+		uniformLocations->shadowLinesCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		uniformLocations->cheapLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			/*
 			for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
-				qglUniform3fv(uniformLocations.dLightsUniformOrigin[i], 1, backEnd.refdef.dlights[i].origin);
-				qglUniform3fv(uniformLocations.dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
-				qglUniform1f(uniformLocations.dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
+				uniformLocations.dLightsUniformOrigin[i].set3fv( 1, backEnd.refdef.dlights[i].origin);
+				uniformLocations.dLightsUniformColor[i].set3fv( 1, backEnd.refdef.dlights[i].color);
+				uniformLocations.dLightsUniformRadius[i].set1f( backEnd.refdef.dlights[i].radius);
 			}*/
 		}
 		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
-			qglUniform1i(uniformLocations->shaderStylesUniform[i],fbo.fishEyeData.shaderStyles[i]);
+			uniformLocations->shaderStylesUniform[i].set1i(fbo.fishEyeData.shaderStyles[i]);
 		}
-		qglUniform1i(uniformLocations->text_inArray31, 31);
+		uniformLocations->text_inArray31.set1i( 31);
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
-			qglUniform1i(uniformLocations->text_in[i], i);
-			qglUniform1i(uniformLocations->lightmapNumsUniform[i], fboUniformsEx.lightmapNums[i]);
+			uniformLocations->text_in[i].set1i( i);
+			uniformLocations->lightmapNumsUniform[i].set1i( fboUniformsEx.lightmapNums[i]);
 		}
 	}
 
@@ -698,31 +699,31 @@ qboolean R_FrameBuffer_SendDLightInfo() {
 
 	if (tess) {
 
-		qglUniform1i(uniformLocationsTess->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
-		qglUniform1i(uniformLocationsTess->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
-		qglUniform1i(uniformLocationsTess->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
+		uniformLocationsTess->dLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
+		uniformLocationsTess->shadowLinesCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		uniformLocationsTess->cheapLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
-				qglUniform3fv(uniformLocationsTess->dLightsUniformOrigin[i], 1, backEnd.refdef.dlights[i].origin);
-				qglUniform3fv(uniformLocationsTess->dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
-				qglUniform1f(uniformLocationsTess->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
-				qglUniform1f(uniformLocationsTess->dLightsUniformMindist[i], backEnd.refdef.dlights[i].mindist);
+				uniformLocationsTess->dLightsUniformOrigin[i].set3fv( 1, backEnd.refdef.dlights[i].origin);
+				uniformLocationsTess->dLightsUniformColor[i].set3fv( 1, backEnd.refdef.dlights[i].color);
+				uniformLocationsTess->dLightsUniformRadius[i].set1f( backEnd.refdef.dlights[i].radius);
+				uniformLocationsTess->dLightsUniformMindist[i].set1f( backEnd.refdef.dlights[i].mindist);
 			}
 		}
 
 	}
 	else {
-		qglUniform1i(uniformLocations->dLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
-		qglUniform1i(uniformLocations->shadowLinesCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
-		qglUniform1i(uniformLocations->cheapLightsCountUniform, r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
+		uniformLocations->dLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_dlights : 0);
+		uniformLocations->shadowLinesCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_shadowlines : 0);
+		uniformLocations->cheapLightsCountUniform.set1i( r_fboGLSLDLights->integer ? backEnd.refdef.num_cheaplights : 0);
 		if (r_fboGLSLDLights->integer) {
 			for (int i = 0; i < backEnd.refdef.num_dlights; i++) {
 
-				qglUniform3fv(uniformLocations->dLightsUniformOrigin[i], 1, backEnd.refdef.dlights[i].origin);
-				qglUniform3fv(uniformLocations->dLightsUniformColor[i], 1, backEnd.refdef.dlights[i].color);
-				qglUniform1f(uniformLocations->dLightsUniformRadius[i], backEnd.refdef.dlights[i].radius);
-				qglUniform1f(uniformLocations->dLightsUniformMindist[i], backEnd.refdef.dlights[i].mindist);
+				uniformLocations->dLightsUniformOrigin[i].set3fv( 1, backEnd.refdef.dlights[i].origin);
+				uniformLocations->dLightsUniformColor[i].set3fv( 1, backEnd.refdef.dlights[i].color);
+				uniformLocations->dLightsUniformRadius[i].set1f( backEnd.refdef.dlights[i].radius);
+				uniformLocations->dLightsUniformMindist[i].set1f( backEnd.refdef.dlights[i].mindist);
 			}
 		}
 	}
@@ -790,7 +791,7 @@ qboolean R_FrameBuffer_TempDeactivateFisheye(qboolean glfinish = qtrue) {
 			// Stuff like image just never refreshing, image flickering back and forth betweeen an earlier and later one. Just weird shit.
 			qglFinish(); 
 		}
-		qglUseProgram(0);
+		R_GLSL::UseProgram(0,0);
 		fbo.fishEyeActive = qfalse;
 		return qtrue;
 	}
@@ -821,7 +822,8 @@ static qboolean R_FrameBuffer_ReactivateFisheye() {
 
 		if (fbo.fishEyeTempDisabled-- == 1) {
 
-			qglUseProgram(fbo.fishEyeData.tessellationActive ? fishEyeShaderTess->ShaderIdByBits(R_FrameBuffer_GetShaderbits()) : fishEyeShader->ShaderIdByBits(R_FrameBuffer_GetShaderbits()));
+
+			(fbo.fishEyeData.tessellationActive ? fishEyeShaderTess : fishEyeShader)->UseThisProgram(R_FrameBuffer_GetShaderbits());
 			fbo.fishEyeActive = qtrue;
 
 			R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
@@ -873,7 +875,7 @@ qboolean R_FrameBuffer_ActivateFisheye(vec_t* pixelJitter3D, vec_t* dofJitter3D,
 		return qfalse;
 	}
 
-	qglUseProgram(fbo.fishEyeData.tessellationActive ? fishEyeShaderTess->ShaderIdByBits(R_FrameBuffer_GetShaderbits()) : fishEyeShader->ShaderIdByBits(R_FrameBuffer_GetShaderbits()));
+	(fbo.fishEyeData.tessellationActive ? fishEyeShaderTess : fishEyeShader)->UseThisProgram(R_FrameBuffer_GetShaderbits());
 	fbo.fishEyeActive = qtrue;
 
 	VectorCopy(dofJitter3D, fbo.fishEyeData.dofJitter3D);
@@ -1094,7 +1096,7 @@ qboolean R_FrameBuffer_DeactivateFisheye() {
 		return qfalse;
 
 
-	qglUseProgram(0);
+	R_GLSL::UseProgram(0,0);
 	fbo.fishEyeActive = qfalse;
 	//fbo.fishEyeTempDisabled = 0;
 
@@ -1779,135 +1781,135 @@ frameBufferData_t* R_FrameBufferCreate( int width, int height, int flags, int su
 
 static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* locs) {
 	for (int i = 0; i < GLSLSHAD_MAX; i++) {
-		locs->viewOriginUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "viewOriginUniform");
-		locs->pixelJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "pixelJitterUniform");
-		locs->dofJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dofJitterUniform");
-		locs->dofFocusUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dofFocusUniform");
-		locs->dofRadiusUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dofRadiusUniform");
-		locs->fishEyeModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "fishEyeModeUniform");
-		locs->fovXUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "fovXUniform");
-		locs->fovYUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "fovYUniform");
-		locs->pixelWidthUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "pixelWidthUniform");
-		locs->pixelHeightUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "pixelHeightUniform");
-		locs->jitterIndexUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "jitterIndexUniform");
-		locs->jitterTotalFramesUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "jitterTotalFramesUniform");
-		locs->texAverageBrightnessUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "texAverageBrightnessUniform");
-		locs->isLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isLightmapUniform");
-		locs->isWorldBrushUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isWorldBrushUniform");
-		locs->isSaberUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isSaberUniform");
-		locs->parallaxMapLayersUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapLayersUniform");
-		locs->parallaxMapDepthUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapDepthUniform");
-		locs->parallaxMapGammaUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "parallaxMapGammaUniform");
-		locs->thermalVisionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "thermalVisionUniform");
-		locs->shaderDebugUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shaderDebugUniform");
-		locs->blurEarlyStageUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "blurEarlyStageUniform");
-		locs->serverTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeUniform");
-		locs->serverTimeStartUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeStartUniform");
-		locs->serverTimeFractionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "serverTimeFractionUniform");
-		locs->noiseFuckeryUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryUniform");
-		locs->noiseFuckeryLightmapUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapUniform");
-		locs->noiseFuckeryLightmapIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapIntensityUniform");
-		locs->noiseFuckeryHDRIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryHDRIntensityUniform");
-		locs->worldModelViewMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldModelViewMatrixUniform");
-		locs->soundDeformSampleRateUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleRateUniform");
-		locs->soundDeformSampleCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleCountUniform");
+		locs->viewOriginUniform.getUniformLocation(program->ShaderIdByBits(i), "viewOriginUniform");
+		locs->pixelJitterUniform.getUniformLocation(program->ShaderIdByBits(i), "pixelJitterUniform");
+		locs->dofJitterUniform.getUniformLocation(program->ShaderIdByBits(i), "dofJitterUniform");
+		locs->dofFocusUniform.getUniformLocation(program->ShaderIdByBits(i), "dofFocusUniform");
+		locs->dofRadiusUniform.getUniformLocation(program->ShaderIdByBits(i), "dofRadiusUniform");
+		locs->fishEyeModeUniform.getUniformLocation(program->ShaderIdByBits(i), "fishEyeModeUniform");
+		locs->fovXUniform.getUniformLocation(program->ShaderIdByBits(i), "fovXUniform");
+		locs->fovYUniform.getUniformLocation(program->ShaderIdByBits(i), "fovYUniform");
+		locs->pixelWidthUniform.getUniformLocation(program->ShaderIdByBits(i), "pixelWidthUniform");
+		locs->pixelHeightUniform.getUniformLocation(program->ShaderIdByBits(i), "pixelHeightUniform");
+		locs->jitterIndexUniform.getUniformLocation(program->ShaderIdByBits(i), "jitterIndexUniform");
+		locs->jitterTotalFramesUniform.getUniformLocation(program->ShaderIdByBits(i), "jitterTotalFramesUniform");
+		locs->texAverageBrightnessUniform.getUniformLocation(program->ShaderIdByBits(i), "texAverageBrightnessUniform");
+		locs->isLightmapUniform.getUniformLocation(program->ShaderIdByBits(i), "isLightmapUniform");
+		locs->isWorldBrushUniform.getUniformLocation(program->ShaderIdByBits(i), "isWorldBrushUniform");
+		locs->isSaberUniform.getUniformLocation(program->ShaderIdByBits(i), "isSaberUniform");
+		locs->parallaxMapLayersUniform.getUniformLocation(program->ShaderIdByBits(i), "parallaxMapLayersUniform");
+		locs->parallaxMapDepthUniform.getUniformLocation(program->ShaderIdByBits(i), "parallaxMapDepthUniform");
+		locs->parallaxMapGammaUniform.getUniformLocation(program->ShaderIdByBits(i), "parallaxMapGammaUniform");
+		locs->thermalVisionUniform.getUniformLocation(program->ShaderIdByBits(i), "thermalVisionUniform");
+		locs->shaderDebugUniform.getUniformLocation(program->ShaderIdByBits(i), "shaderDebugUniform");
+		locs->blurEarlyStageUniform.getUniformLocation(program->ShaderIdByBits(i), "blurEarlyStageUniform");
+		locs->serverTimeUniform.getUniformLocation(program->ShaderIdByBits(i), "serverTimeUniform");
+		locs->serverTimeStartUniform.getUniformLocation(program->ShaderIdByBits(i), "serverTimeStartUniform");
+		locs->serverTimeFractionUniform.getUniformLocation(program->ShaderIdByBits(i), "serverTimeFractionUniform");
+		locs->noiseFuckeryUniform.getUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryUniform");
+		locs->noiseFuckeryLightmapUniform.getUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapUniform");
+		locs->noiseFuckeryLightmapIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryLightmapIntensityUniform");
+		locs->noiseFuckeryHDRIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "noiseFuckeryHDRIntensityUniform");
+		locs->worldModelViewMatrixUniform.getUniformLocation(program->ShaderIdByBits(i), "worldModelViewMatrixUniform");
+		locs->soundDeformSampleRateUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleRateUniform");
+		locs->soundDeformSampleCountUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleCountUniform");
 
 		for (int j = 0; j < 6; j++) {
-			locs->clipPlanesUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("clipPlanesUniform[%d]",j));
+			locs->clipPlanesUniform[j].getUniformLocation(program->ShaderIdByBits(i), va("clipPlanesUniform[%d]",j));
 		}
 
-		locs->projectorModelViewMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorModelViewMatrixUniform");
-		locs->projectorProjectionMatrixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorProjectionMatrixUniform");
-		locs->projectorPosUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorPosUniform");
-		locs->projectorActiveUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "projectorActiveUniform");
+		locs->projectorModelViewMatrixUniform.getUniformLocation(program->ShaderIdByBits(i), "projectorModelViewMatrixUniform");
+		locs->projectorProjectionMatrixUniform.getUniformLocation(program->ShaderIdByBits(i), "projectorProjectionMatrixUniform");
+		locs->projectorPosUniform.getUniformLocation(program->ShaderIdByBits(i), "projectorPosUniform");
+		locs->projectorActiveUniform.getUniformLocation(program->ShaderIdByBits(i), "projectorActiveUniform");
 
-		locs->soundDeformTimeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformTimeUniform");
-		locs->soundDeformIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformIntensityUniform");
-		locs->soundDeformSpreadSpeedUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSpreadSpeedUniform");
-		locs->soundDeformSampleAvgWidthUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleAvgWidthUniform");
-		locs->soundDeformOriginUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformOriginUniform");
-		locs->soundDeformDistanceScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformDistanceScaleUniform");
-		locs->soundDeformShortDistanceReductionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformShortDistanceReductionUniform");
-		locs->soundDeformModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "soundDeformModeUniform");
+		locs->soundDeformTimeUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformTimeUniform");
+		locs->soundDeformIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformIntensityUniform");
+		locs->soundDeformSpreadSpeedUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformSpreadSpeedUniform");
+		locs->soundDeformSampleAvgWidthUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformSampleAvgWidthUniform");
+		locs->soundDeformOriginUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformOriginUniform");
+		locs->soundDeformDistanceScaleUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformDistanceScaleUniform");
+		locs->soundDeformShortDistanceReductionUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformShortDistanceReductionUniform");
+		locs->soundDeformModeUniform.getUniformLocation(program->ShaderIdByBits(i), "soundDeformModeUniform");
 
-		locs->alphaFuncUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "alphaFuncUniform");
-		locs->alphaFuncValueUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "alphaFuncValueUniform");
-		locs->renderFlagsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "renderFlagsUniform");
+		locs->alphaFuncUniform.getUniformLocation(program->ShaderIdByBits(i), "alphaFuncUniform");
+		locs->alphaFuncValueUniform.getUniformLocation(program->ShaderIdByBits(i), "alphaFuncValueUniform");
+		locs->renderFlagsUniform.getUniformLocation(program->ShaderIdByBits(i), "renderFlagsUniform");
 
-		locs->zPrepassUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "zPrepassUniform");
+		locs->zPrepassUniform.getUniformLocation(program->ShaderIdByBits(i), "zPrepassUniform");
 
-		locs->deluxeMappingUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "deluxeMappingUniform");
+		locs->deluxeMappingUniform.getUniformLocation(program->ShaderIdByBits(i), "deluxeMappingUniform");
 
-		locs->haveVertexLightDirectionUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
-		locs->isModelUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "isModelUniform");
-		locs->surfaceTypeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "surfaceTypeUniform");
-		locs->stageColorGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageColorGenUniform");
-		locs->stageForceNormalUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageForceNormalUniform");
+		locs->haveVertexLightDirectionUniform.getUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
+		locs->isModelUniform.getUniformLocation(program->ShaderIdByBits(i), "isModelUniform");
+		locs->surfaceTypeUniform.getUniformLocation(program->ShaderIdByBits(i), "surfaceTypeUniform");
+		locs->stageColorGenUniform.getUniformLocation(program->ShaderIdByBits(i), "stageColorGenUniform");
+		locs->stageForceNormalUniform.getUniformLocation(program->ShaderIdByBits(i), "stageForceNormalUniform");
 
-		locs->stageTCGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageTCGenUniform");
-		locs->stageHasTCModUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageHasTCModUniform");
-		locs->gigaTCGenUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "gigaTCGenUniform");
+		locs->stageTCGenUniform.getUniformLocation(program->ShaderIdByBits(i), "stageTCGenUniform");
+		locs->stageHasTCModUniform.getUniformLocation(program->ShaderIdByBits(i), "stageHasTCModUniform");
+		locs->gigaTCGenUniform.getUniformLocation(program->ShaderIdByBits(i), "gigaTCGenUniform");
 
-		locs->rawStateBitsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "rawStateBitsUniform");
-		locs->appliedStateBitsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "appliedStateBitsUniform");
+		locs->rawStateBitsUniform.getUniformLocation(program->ShaderIdByBits(i), "rawStateBitsUniform");
+		locs->appliedStateBitsUniform.getUniformLocation(program->ShaderIdByBits(i), "appliedStateBitsUniform");
 
-		locs->stageImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
-		locs->stageLightmapBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
-		locs->bindingRectImageBitmaskUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "bindingRectImageBitmaskUniform");
-		locs->multiTexModeUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
+		locs->stageImageBitmaskUniform.getUniformLocation(program->ShaderIdByBits(i), "stageImageBitmaskUniform");
+		locs->stageLightmapBitmaskUniform.getUniformLocation(program->ShaderIdByBits(i), "stageLightmapBitmaskUniform");
+		locs->bindingRectImageBitmaskUniform.getUniformLocation(program->ShaderIdByBits(i), "bindingRectImageBitmaskUniform");
+		locs->multiTexModeUniform.getUniformLocation(program->ShaderIdByBits(i), "multiTexModeUniform");
 
 		for (int j = 0; j < NUM_TEXTURE_SAMPLERS; j++) {
-			locs->text_in[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("text_in[%d]",j));
-			locs->lightmapNumsUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("lightmapNumsUniform[%d]",j));
+			locs->text_in[j].getUniformLocation(program->ShaderIdByBits(i), va("text_in[%d]",j));
+			locs->lightmapNumsUniform[j].getUniformLocation(program->ShaderIdByBits(i), va("lightmapNumsUniform[%d]",j));
 		}
-		locs->text_inArray31 = qglGetUniformLocation(program->ShaderIdByBits(i), "text_inArray31");
+		locs->text_inArray31.getUniformLocation(program->ShaderIdByBits(i), "text_inArray31");
 
-		locs->cloudScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudScaleUniform");
-		locs->cloudTimeScaleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudTimeScaleUniform");
-		locs->cloudPowerUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudPowerUniform");
-		locs->cloudIntensityCompensateUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cloudIntensityCompensateUniform");
+		locs->cloudScaleUniform.getUniformLocation(program->ShaderIdByBits(i), "cloudScaleUniform");
+		locs->cloudTimeScaleUniform.getUniformLocation(program->ShaderIdByBits(i), "cloudTimeScaleUniform");
+		locs->cloudPowerUniform.getUniformLocation(program->ShaderIdByBits(i), "cloudPowerUniform");
+		locs->cloudIntensityCompensateUniform.getUniformLocation(program->ShaderIdByBits(i), "cloudIntensityCompensateUniform");
 
-		locs->myFogUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "myFogUniform");
-		locs->myFogColorUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "myFogColorUniform");
+		locs->myFogUniform.getUniformLocation(program->ShaderIdByBits(i), "myFogUniform");
+		locs->myFogColorUniform.getUniformLocation(program->ShaderIdByBits(i), "myFogColorUniform");
 
-		locs->dLightFastUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastUniform");
-		locs->dLightJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightJitterUniform");
-		locs->dLightVoxelShadowsUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowsUniform");
-		locs->dLightVoxelShadowJitterUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowJitterUniform");
-		locs->dLightVoxelShadowJitterMethodUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowJitterMethodUniform");
-		locs->dLightSpecGammaUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecGammaUniform");
-		locs->dLightSpecIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecIntensityUniform");
-		locs->dLightSpecBaseReflectivityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecBaseReflectivityUniform");
-		locs->dLightSpecDistanceDecayUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecDistanceDecayUniform");
-		locs->dLightSpecDistanceMinUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightSpecDistanceMinUniform");
-		locs->dLightIntensityUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightIntensityUniform");
-		locs->dLightsCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightsCountUniform");
-		locs->dLightFastSkipThresholdUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightFastSkipThresholdUniform");
-		locs->dLightAddPowUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightAddPowUniform");
-		locs->dLightAddPostPowMultUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "dLightAddPostPowMultUniform");
+		locs->dLightFastUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightFastUniform");
+		locs->dLightJitterUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightJitterUniform");
+		locs->dLightVoxelShadowsUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowsUniform");
+		locs->dLightVoxelShadowJitterUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowJitterUniform");
+		locs->dLightVoxelShadowJitterMethodUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightVoxelShadowJitterMethodUniform");
+		locs->dLightSpecGammaUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightSpecGammaUniform");
+		locs->dLightSpecIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightSpecIntensityUniform");
+		locs->dLightSpecBaseReflectivityUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightSpecBaseReflectivityUniform");
+		locs->dLightSpecDistanceDecayUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightSpecDistanceDecayUniform");
+		locs->dLightSpecDistanceMinUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightSpecDistanceMinUniform");
+		locs->dLightIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightIntensityUniform");
+		locs->dLightsCountUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightsCountUniform");
+		locs->dLightFastSkipThresholdUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightFastSkipThresholdUniform");
+		locs->dLightAddPowUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightAddPowUniform");
+		locs->dLightAddPostPowMultUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightAddPostPowMultUniform");
 		for (int j = 0; j < MAX_DLIGHTS; j++) {
-			locs->dLightsUniformColor[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].color",j));
-			locs->dLightsUniformOrigin[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].origin",j));
-			locs->dLightsUniformRadius[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].radius",j));
-			locs->dLightsUniformMindist[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].mindist",j));
+			locs->dLightsUniformColor[j].getUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].color",j));
+			locs->dLightsUniformOrigin[j].getUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].origin",j));
+			locs->dLightsUniformRadius[j].getUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].radius",j));
+			locs->dLightsUniformMindist[j].getUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].mindist",j));
 		}
 		for (int j = 0; j < MAXLIGHTMAPS_REAL; j++) {
-			locs->shaderStylesUniform[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shaderStylesUniform[%d]",j));
+			locs->shaderStylesUniform[j].getUniformLocation(program->ShaderIdByBits(i), va("shaderStylesUniform[%d]",j));
 		}
-		locs->shadowLinesCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "shadowLinesCountUniform");
-		locs->cheapLightsCountUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "cheapLightsCountUniform");
+		locs->shadowLinesCountUniform.getUniformLocation(program->ShaderIdByBits(i), "shadowLinesCountUniform");
+		locs->cheapLightsCountUniform.getUniformLocation(program->ShaderIdByBits(i), "cheapLightsCountUniform");
 		for (int j = 0; j < MAX_SHADOWLINES; j++) {
-			locs->shadowLinesPoint1[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].point1",j));
-			locs->shadowLinesPoint2[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].point2",j));
-			locs->shadowLinesWidth[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].width",j));
-			locs->shadowLinesA[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].a",j));
-			locs->shadowLinesB[j] = qglGetUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].b",j));
+			locs->shadowLinesPoint1[j].getUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].point1",j));
+			locs->shadowLinesPoint2[j].getUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].point2",j));
+			locs->shadowLinesWidth[j].getUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].width",j));
+			locs->shadowLinesA[j].getUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].a",j));
+			locs->shadowLinesB[j].getUniformLocation(program->ShaderIdByBits(i), va("shadowLinesUniform[%d].b",j));
 		}
 
-		locs->worldReflectNormalMixUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectNormalMixUniform");
-		locs->worldReflectGradMultUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectGradMultUniform");
-		locs->worldReflectPuddleThreshUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectPuddleThreshUniform");
-		locs->worldReflectMultiSampleUniform = qglGetUniformLocation(program->ShaderIdByBits(i), "worldReflectMultiSampleUniform");
+		locs->worldReflectNormalMixUniform.getUniformLocation(program->ShaderIdByBits(i), "worldReflectNormalMixUniform");
+		locs->worldReflectGradMultUniform.getUniformLocation(program->ShaderIdByBits(i), "worldReflectGradMultUniform");
+		locs->worldReflectPuddleThreshUniform.getUniformLocation(program->ShaderIdByBits(i), "worldReflectPuddleThreshUniform");
+		locs->worldReflectMultiSampleUniform.getUniformLocation(program->ShaderIdByBits(i), "worldReflectMultiSampleUniform");
 
 		locs++;
 	}
@@ -1918,7 +1920,7 @@ static void ReLoadGLSL() {
 	if (r_fboGLSL->integer && ENABLEGLSL) {
 
 		if (fbo.fishEyeActive) {
-			qglUseProgram(0);
+			R_GLSL::UseProgram(0,0);
 			wasActive = qtrue;
 			fbo.fishEyeActive = qfalse;
 		}
@@ -1970,7 +1972,7 @@ static void ReLoadGLSL() {
 				qglDrawElements = dllDrawElements = fishEyeDrawElements;
 				if (wasActive) {
 
-					qglUseProgram(fbo.fishEyeData.tessellationActive ? fishEyeShaderTess->ShaderIdByBits(R_FrameBuffer_GetShaderbits()) : fishEyeShader->ShaderIdByBits(R_FrameBuffer_GetShaderbits()));
+					(fbo.fishEyeData.tessellationActive ? fishEyeShaderTess : fishEyeShader)->UseThisProgram(R_FrameBuffer_GetShaderbits());
 					fbo.fishEyeActive = qtrue;
 
 					R_FrameBuffer_FishEyeSetUniforms(fbo.fishEyeData.tessellationActive);
@@ -2379,9 +2381,9 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		qglColor4f(1, 1, 1, 1);
 		GL_State(GLS_DEPTHTEST_DISABLE);
 		R_SetGL2DSize(glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(hdrPqShader->ShaderId(false,false));
+		hdrPqShader->UseThisProgram(0);
 		R_DrawQuad(fbo.rollingShutterBuffers[param].current->color, glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(0);
+		R_GLSL::UseProgram(0,0);
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
@@ -2429,9 +2431,9 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 
 		qglColor4f(1, 1, 1, 1);
 		GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO | GLS_DEPTHTEST_DISABLE);
-		qglUseProgram(hdrPqShader->ShaderId(false,false));
+		hdrPqShader->UseThisProgram(0);
 		R_DrawQuad(fbo.colorSpaceConv->color, glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(0); 
+		R_GLSL::UseProgram(0,0); 
 
 		// do i need to bindframebuffer main again here? let's say yes. if not, revert this. i added this long after the pbo version of this was no longer in use, if it ever was
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
@@ -2462,9 +2464,9 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 
 		qglColor4f(1, 1, 1, 1);
 		GL_State(GLS_DEPTHTEST_DISABLE);
-		qglUseProgram(hdrPqShader->ShaderId());
+		hdrPqShader->UseThisProgram(0);
 		R_DrawQuad(fbo.colorSpaceConv->color, glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(0);*/
+		R_GLSL::UseProgram(0,0);*/
 		
 		R_FrameBuffer_GenerateMainMipMaps();
 
@@ -2479,9 +2481,9 @@ qboolean R_FrameBuffer_HDRConvert(HDRConvertSource source, int param) {
 		GL_State(GLS_DEPTHTEST_DISABLE);
 
 		R_SetGL2DSize(glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(hdrPqShader->ShaderId(false,false));
+		hdrPqShader->UseThisProgram(0);
 		R_DrawQuad(fbo.main->color, glConfig.vidWidth, glConfig.vidHeight);
-		qglUseProgram(0);
+		R_GLSL::UseProgram(0,0);
 
 		qglBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo.main->fbo);
 #if MULTIATTACH
@@ -2855,16 +2857,16 @@ qboolean R_FrameBuffer_ApplyPostProcessing(qboolean didEarlyBlur) {
 	qglColor4f(1, 1, 1, 1);
 	GL_State(GLS_DEPTHTEST_DISABLE );
 	R_SetGL2DSize( glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier);
-	qglUseProgram(thermalPostProcessingShader->ShaderId(false, false));
-	qglUniform1i(uniformLocationsPostProcessing[0].thermalVisionUniform, r_fboGLSLThermalVision->integer);
-	qglUniform1i(uniformLocationsPostProcessing[0].shaderDebugUniform, r_fboGLSLShaderDebug->integer);
-	qglUniform1i(uniformLocationsPostProcessing[0].serverTimeUniform, backEnd.refdef.time);
-	qglUniform1f(uniformLocationsPostProcessing[0].serverTimeFractionUniform, backEnd.refdef.timeFraction);
-	qglUniform1i(uniformLocationsPostProcessing[0].jitterIndexUniform, fbo.fishEyeData.jitterIndex);
-	qglUniform1i(uniformLocationsPostProcessing[0].jitterTotalFramesUniform, fbo.fishEyeData.jitterTotalFrames);
-	qglUniform1i(uniformLocationsPostProcessing[0].blurEarlyStageUniform, didEarlyBlur ? 2 : 0);
+	thermalPostProcessingShader->UseThisProgram(0);
+	uniformLocationsPostProcessing[0].thermalVisionUniform.set1i( r_fboGLSLThermalVision->integer);
+	uniformLocationsPostProcessing[0].shaderDebugUniform.set1i( r_fboGLSLShaderDebug->integer);
+	uniformLocationsPostProcessing[0].serverTimeUniform.set1i( backEnd.refdef.time);
+	uniformLocationsPostProcessing[0].serverTimeFractionUniform.set1f( backEnd.refdef.timeFraction);
+	uniformLocationsPostProcessing[0].jitterIndexUniform.set1i( fbo.fishEyeData.jitterIndex);
+	uniformLocationsPostProcessing[0].jitterTotalFramesUniform.set1i( fbo.fishEyeData.jitterTotalFrames);
+	uniformLocationsPostProcessing[0].blurEarlyStageUniform.set1i( didEarlyBlur ? 2 : 0);
 	R_DrawQuad(	fbo.postprocessing->color, glConfig.vidWidth * superSampleMultiplier, glConfig.vidHeight * superSampleMultiplier,true);
-	qglUseProgram(0);
+	R_GLSL::UseProgram(0,0);
 	mipMapsAlreadyGeneratedThisFrame = qfalse;
 
 #if MULTIATTACH
