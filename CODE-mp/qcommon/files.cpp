@@ -2663,6 +2663,89 @@ void FS_TouchFile_f( void ) {
 	}
 }
 
+
+/*
+============
+FS_Which_f
+============
+*/
+static void FS_Which_f( void ) {
+	fileHandle_t	f;
+	searchpath_t	*search;
+	char			*filename;
+
+	filename = Cmd_Argv(1);
+
+	if ( !filename[0] ) {
+		Com_Printf( "Usage: which <file>\n" );
+		return;
+	}
+
+	// qpaths are not supposed to have a leading slash
+	if ( filename[0] == '/' || filename[0] == '\\' ) {
+		filename++;
+	}
+
+	// make absolutely sure that it can't back up the path.
+	// The searchpaths do guarantee that something will always
+	// be prepended, so we don't need to worry about "c:" or "//limbo"
+	if ( strstr( filename, ".." ) || strstr( filename, "::" ) ) {
+		return;
+	}
+
+	FS_FOpenFileRead( filename, &f, qfalse );
+
+	if ( !f ) {
+		Com_Printf( "File not found: \"%s\"\n", filename );
+		return;
+	}
+
+	// find file that would be opened by FS_FOpenFileRead taking all
+	// its quirks and special cases into account
+	if ( fsh[f].zipFile ) {
+		for ( search=fs_searchpaths; search; search=search->next ) {
+			if ( search->pack ) {
+				pack_t* pak = search->pack;
+
+				if ( fsh[f].handleFiles.file.z == pak->handle ) {
+					// found it!
+					Com_Printf( "File \"%s\" found in \"%s\"\n", filename, pak->pakFilename );
+					FS_FCloseFile( f );
+					return;
+				}
+			}
+		}
+		assert( 0 );
+	}
+
+	FS_FCloseFile( f );
+
+	// if it's not in pack, find any match outside of it
+	for ( search=fs_searchpaths; search; search=search->next ) {
+		if (search->dir) {
+			directory_t* dir = search->dir;
+
+			std::string netpath = FS_BuildOSPath( dir->path, dir->gamedir, filename );
+			FILE* filep = fopen(netpath.c_str(), "rb");
+
+			if ( filep ) {
+				fclose( filep );
+
+				char buf[MAX_OSPATH];
+				Com_sprintf( buf, sizeof( buf ), "%s%c%s", dir->path, PATH_SEP, dir->gamedir );
+				FS_ReplaceSeparators( buf );
+				Com_Printf( "File \"%s\" found at \"%s\"\n", filename, buf );
+				return;
+			}
+		}
+	}
+
+	assert( 0 );
+	Com_Printf( "File not found: \"%s\"\n", filename );
+}
+
+
+
 //===========================================================================
 
 
@@ -2907,6 +2990,7 @@ void FS_Shutdown( qboolean closemfp ) {
 	Cmd_RemoveCommand( "dir" );
 	Cmd_RemoveCommand( "fdir" );
 	Cmd_RemoveCommand( "touchFile" );
+	Cmd_RemoveCommand( "which" );
 
 #ifdef FS_MISSING
 	if (closemfp) {
@@ -3020,6 +3104,7 @@ static void FS_Startup( const char *gameName ) {
 	Cmd_AddCommand ("dir", FS_Dir_f );
 	Cmd_AddCommand ("fdir", FS_NewDir_f );
 	Cmd_AddCommand ("touchFile", FS_TouchFile_f );
+	Cmd_AddCommand ("which", FS_Which_f);
 
 	// print the current search paths
 	FS_Path_f();

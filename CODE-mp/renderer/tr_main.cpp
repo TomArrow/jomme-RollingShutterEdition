@@ -14,6 +14,12 @@ float	s_flipMatrix[16] = {
 	0, 0, 0, 1
 };
 
+int textureBytes[BPC_TYPES_COUNT] = {
+	1,
+	2,
+	4,
+	4
+};
 
 refimport_t	ri;
 

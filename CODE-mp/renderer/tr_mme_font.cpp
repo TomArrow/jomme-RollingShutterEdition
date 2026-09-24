@@ -406,7 +406,7 @@ void R_MME_RegisterFont(const char *fontName, int pointSize, mmeFontInfo_t *font
 			scaledSize = 256*256;
 			newSize = scaledSize * 4;
 			imageBuff = (unsigned char *)Z_Malloc(newSize, TAG_FONT);
-			textureImage_t picWrap;
+			textureImage_t picWrap{ 0 };
 			picWrap.bpc = BPC_8BIT;
 			picWrap.ptr = imageBuff;
 			left = 0;

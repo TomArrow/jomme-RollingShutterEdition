@@ -3814,7 +3814,7 @@ an external lightmap image and/or sets the index to a valid number
 ===============
 */
 
-#define EXTERNAL_LIGHTMAP   "lm_%04d.tga"    // THIS MUST BE IN SYNC WITH Q3MAP2
+#define EXTERNAL_LIGHTMAP   "lm_%04d"    // THIS MUST BE IN SYNC WITH Q3MAP2
 
 void R_FindLightmap(int* lightmapIndex) {
 	image_t* image;
@@ -3860,6 +3860,64 @@ void R_FindLightmap(int* lightmapIndex) {
 		tr.numLightmaps = *lightmapIndex + 1;
 	}
 	tr.lightmaps[*lightmapIndex] = image;
+}
+
+
+int R_FindLightmap_CheckOnly(int* lightmapIndex) {
+	image_t* image;
+	char fileName[MAX_QPATH];
+
+
+	// don't fool with bogus lightmap indexes
+	if (*lightmapIndex < 0) {
+		return 0;
+	}
+
+	// does this lightmap already exist?
+	if (*lightmapIndex < tr.numLightmaps && tr.lightmaps[*lightmapIndex] != NULL) {
+		assert(0);
+		return tr.lightmapAlpha ? 2 : 1; // meh, we shouldnt get here anyway. this function should be called before lightmaps are being actually loaded onto the GPU
+	}
+
+	// bail if no world dir
+	if (tr.worldDir == NULL) {
+		*lightmapIndex = LIGHTMAP_BY_VERTEX;
+		return 0;
+	}
+
+	// sync up render thread, because we're going to have to load an image
+	R_SyncRenderThread();
+
+	// attempt to load an external lightmap
+	sprintf(fileName, "%s/" EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex);
+	
+	textureImage_t picWrap{ 0 };
+	int width, height;
+	R_LoadImage(fileName, &picWrap, &width, &height);
+	if (picWrap.ptr == NULL) {                                    // if we dont get a successful load
+		return 0;                                        // bail
+	}
+
+	sprintf(fileName, "%s/" EXTERNAL_LIGHTMAP "_dist", tr.worldDir, *lightmapIndex);
+	
+	textureImage_t picWrap2{ 0 };
+	int width2, height2;
+	R_LoadImage(fileName, &picWrap2, &width2, &height2);
+	if (picWrap2.ptr == NULL) {                                    // if we dont get a successful load
+		ri.Free(picWrap.ptr);
+		return 1;                                        // bail
+	}
+
+	if (picWrap2.bpc != picWrap.bpc || width != width2 || height != height2) {
+		Com_Printf("^1R_FindLightmap_CheckOnly: Lightmap distance image %s has different bit depth or resolution than main lightmap image. Ignoring.\n", fileName);
+	}
+	else {
+		tr.lightmapAlpha = qtrue;
+	}
+
+	ri.Free(picWrap2.ptr);
+
+	return tr.lightmapAlpha ? 2 : 1; // meh, we shouldnt get here anyway. this function should be called before lightmaps are being actually loaded onto the GPU
 }
 
 

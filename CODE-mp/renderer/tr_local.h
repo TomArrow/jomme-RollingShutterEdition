@@ -198,8 +198,11 @@ enum TextureBitsPerChannel {
 	BPC_8BIT,
 	BPC_16BIT,
 	BPC_32BIT,
-	BPC_32FLOAT
+	BPC_32FLOAT,
+	BPC_TYPES_COUNT
 };
+
+extern int textureBytes[BPC_TYPES_COUNT];
 
 const textureMode_t* GetTextureMode(const char* name);
 
@@ -1314,9 +1317,11 @@ typedef struct {
 
 	int						numLightmaps;
 	image_t					*lightmaps[MAX_LIGHTMAPS];
+	qboolean				lightmapAlpha;
 	qboolean				hdrLightmap;
 	qboolean				deluxeMapping;
 	GLuint					lightmapArray;
+	int						lightmapArrayInternalFormat;
 	qboolean				doLightmapArray;
 	qboolean				haveVertLightDirs;
 
@@ -1851,9 +1856,11 @@ double		radians_to_degrees(double radians);
 double		degrees_to_radians(double degrees);
 void		R_CalculateSunDirVec(float degrees, float elevation, vec3_t dirOut, qboolean isRadians=qfalse);
 
+#define TEXTUREIMAGE_LM_FORCEALPHA (1<<0)
 typedef struct {
 	byte* ptr;
 	TextureBitsPerChannel bpc;
+	int		flags;
 } textureImage_t;
 
 void    	R_Init( void );

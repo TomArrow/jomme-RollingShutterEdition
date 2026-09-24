@@ -262,13 +262,13 @@ R_LoadLightmaps
 
 ===============
 */
-extern void R_FindLightmap(int* lightmapIndex);
+extern int R_FindLightmap_CheckOnly(int* lightmapIndex);
 #define	LIGHTMAP_SIZE	128
 static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	byte		*buf, *buf_p;
 	int			len;
 	MAC_STATIC byte		image[LIGHTMAP_SIZE*LIGHTMAP_SIZE*4];
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 	picWrap.bpc = BPC_8BIT;
 	picWrap.ptr = (byte*)image;
 	int			i, j;
@@ -284,6 +284,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	// we are about to upload textures
 	R_SyncRenderThread();
 
+	tr.lightmapAlpha = qfalse;
 	tr.hdrLightmap = qfalse;
 	tr.doLightmapArray = (qboolean)(r_fboGLSL->integer && ENABLEGLSL);
 
@@ -313,8 +314,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 				// we are using external lightmaps, but we only ever referenced index 0.
 				// so lets check if we can find an index 1.
 				int lightmapToFind = 1;
-				R_FindLightmap(&lightmapToFind);
-				if (tr.lightmaps[1] != NULL) {
+				if (R_FindLightmap_CheckOnly(&lightmapToFind)) {
 					realLightmapCount = 2;
 				}
 			}
@@ -347,8 +347,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 				// we are using external lightmaps, but we only ever referenced index 0.
 				// so lets check if we can find an index 1.
 				int lightmapToFind = 1;
-				R_FindLightmap(&lightmapToFind);
-				if (tr.lightmaps[1] == NULL) {
+				if (!R_FindLightmap_CheckOnly(&lightmapToFind)) {
 					tr.deluxeMapping = qfalse;
 				}
 			}
@@ -357,8 +356,21 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 		if (tr.numLightmaps == 0 && tr.deluxeMapping && realLightmapCount > 0) {
 			realLightmapCount++; // the deluxe never gets directly referenced itself.
 		}
-
+#ifdef LIGHTMAP_ARRAY
+		// check for lightmap alpha
+		// its done for the first 2 only. if it was compiled with it, its gonna exist for all lightmaps and/or all deluxemaps
+		if (tr.doLightmapArray) {
+			for (i = 0; i < min(2, realLightmapCount); i++) {
+				int lightmapToFind = i;
+				if (R_FindLightmap_CheckOnly(&lightmapToFind) > 1) {
+					tr.lightmapAlpha = qtrue;
+					Com_Printf("^3R_LoadLightmaps: Lightmap alpha is activated.\n");
+				}
+			}
+		}
+#endif
 		tr.numLightmaps = realLightmapCount;
+		
 	}
 
 	if (!tr.numLightmaps && realLightmapCount) {

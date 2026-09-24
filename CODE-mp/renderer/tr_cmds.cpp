@@ -422,7 +422,7 @@ void R_SampleFloatImage(floatTextureImage_t* image, vec2_t coords, vec3_t outCol
 static qboolean R_MME_LoadCloudsImage(const char* cloudsImagePatah) {
 
 	int width, height, pixelCount;
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 	tr.cloudsImageExists = qfalse;
 	R_LoadImage(cloudsImagePatah, &picWrap, &width, &height);
 	if (!picWrap.ptr) {

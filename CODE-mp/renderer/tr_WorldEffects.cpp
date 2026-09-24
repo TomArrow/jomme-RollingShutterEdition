@@ -355,7 +355,7 @@ private:
 
 	int				mWidth, mHeight;
 	//unsigned char	*mData;
-	textureImage_t mDataWrap;
+	textureImage_t mDataWrap{ 0 };
 
 	const	float	mSize;
 

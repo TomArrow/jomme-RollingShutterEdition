@@ -1400,6 +1400,8 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 #endif
 				//float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 				//return direction;
+				//color.xyz = vec3(direction.w*0.001f);
+				direction.w = 1.0f;
 				direction = (dirmat*direction);
 			} else {
 				direction = vec4((eyespacelightdir),1.0f);

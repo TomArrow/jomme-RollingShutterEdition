@@ -291,7 +291,7 @@ static void R_MME_ClearSuperRandomJitter(superRandomDofJitterControl_t* srJContr
 
 static qboolean R_MME_LoadDOFMask(float* jitterTable, int countNeeded, char* maskPath, superRandomDofJitterControl_t* superRandomDofJitterControl) {
 	int dofMaskWidth, dofMaskHeight;
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 	R_LoadImage(maskPath, &picWrap, &dofMaskWidth, &dofMaskHeight);
 	if (picWrap.ptr != NULL) {
 

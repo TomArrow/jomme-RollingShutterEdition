@@ -844,6 +844,10 @@ static void Upload32( T *picData,
 		
 	}
 
+	if (lightmap >= 0 && lightmap < tr.numLightmaps && tr.doLightmapArray && tr.lightmapAlpha && samples == 3) {
+		samples = 4;
+	}
+
 	bool isByte = std::is_same<T, byte>::value; // I don't think we should use texture compression for anything but byte
 
 	// select proper internal format
@@ -943,7 +947,7 @@ static void Upload32( T *picData,
 		if (lightmap >= 0 && lightmap < tr.numLightmaps && tr.doLightmapArray) {
 			R_InitLightmapArray(*pformat,1,width,height,tr.numLightmaps);
 
-			// do a decent-ish small fallback with picmip, if we disable glsl temporarily with r_fboglsloff
+			// do a decent-ish (read: mostly shit) small fallback with picmip, if we disable glsl temporarily with r_fboglsloff
 			int smolwidth = width;
 			int smolheight = height;
 			T* tmpCopy = new T[width*height*4];
@@ -2503,7 +2507,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	image_t	*image;
 	int		width, height;
 	//byte	*pic;
-	textureImage_t	picWrap;
+	textureImage_t	picWrap{ 0 };
 
 	if (!name 
 		|| com_dedicated->integer	// stop ghoul2 horribleness as regards image loading from server
@@ -2532,6 +2536,35 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
       return NULL;                                        // bail
 	}
 
+	if (lightmap > -1) {
+		// if available, load extra alpha channel
+		char fileName2[MAX_QPATH];
+		textureImage_t	picWrap2{ 0 };
+		int width2, height2;
+		Com_sprintf(fileName2, sizeof(fileName2), "%s_dist",name);
+		R_LoadImage(fileName2, &picWrap2, &width2, &height2);
+		if (picWrap2.ptr != NULL) {                                    // if we dont get a successful load
+
+			if (picWrap2.bpc != picWrap.bpc || width != width2 || height != height2) {
+				Com_Printf("^1R_FindImageFile: Lightmap distance image %s has different bit depth or resolution than main lightmap image. Ignoring.\n", fileName2);
+			}
+			else {
+				int pixelBytes = textureBytes[picWrap.bpc];
+				int pixels = width * height;
+				tr.lightmapAlpha = qtrue;
+				byte* data1 = picWrap.ptr + pixelBytes * 3, *data2 = picWrap2.ptr;
+				for (int p = 0; p < pixels; p++) {
+					// we copy over the red channel of the _dist file as alpha channel of the main file.
+					memcpy(data1,data2,pixelBytes);
+					data1 += pixelBytes * 4;
+					data2 += pixelBytes * 4;
+				}
+				picWrap.flags |= TEXTUREIMAGE_LM_FORCEALPHA;
+			}
+
+			ri.Free(picWrap2.ptr);                                // bail
+		}
+	}
 
 	// refuse to find any files not power of 2 dims...
 	//
@@ -2556,7 +2589,7 @@ R_CreateDlightImage
 static void R_CreateDlightImage( void ) {
 	int		width, height;
 	//byte	*pic;
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 
 	R_LoadImage("gfx/2d/dlight", &picWrap, &width, &height);
 	if (picWrap.ptr) {                                    
@@ -2660,7 +2693,7 @@ R_CreateFogImage
 static void R_CreateFogImage( void ) {
 	int		x,y;
 	//byte	*data;
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 	picWrap.bpc = BPC_8BIT;
 	float	g;
 	float	d;
@@ -2704,7 +2737,7 @@ R_CreateDefaultImage
 static void R_CreateDefaultImage( void ) {
 	int		x;
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 	picWrap.bpc = BPC_8BIT;
 	picWrap.ptr = (byte*)data;
 
@@ -2743,6 +2776,7 @@ void R_InitLightmapArray(int internalFormat, int mipLevelCount, int width, int h
 #ifdef LIGHTMAP_ARRAY
 	if (!tr.lightmapArray) {
 		tr.lightmapArray = 1024 + giTextureBindNum++;
+		tr.lightmapArrayInternalFormat = internalFormat;
 		qglDisable(GL_TEXTURE_2D);
 		qglEnable(GL_TEXTURE_2D_ARRAY);
 		qglBindTexture(GL_TEXTURE_2D_ARRAY, tr.lightmapArray);
@@ -2765,7 +2799,7 @@ R_CreateBuiltinImages
 void R_CreateBuiltinImages( void ) {
 	int		x,y;
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
-	textureImage_t picWrap;
+	textureImage_t picWrap{ 0 };
 	picWrap.bpc = BPC_8BIT;
 	picWrap.ptr = (byte*)data;
 
