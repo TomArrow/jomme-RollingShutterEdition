@@ -18,6 +18,9 @@ extern uint32_t voxelGridUpdated; // this is set to 0xffffffff so any module tha
 extern size_t voxelGridSize;
 
 
+#define EXTERNAL_LIGHTMAP   "%s/lm_%04d"    // THIS MUST BE IN SYNC WITH Q3MAP2
+
+
 extern bool g_bRenderZPrepass;
 extern bool g_bRenderProjectorPrepass;
 extern bool g_bRenderedZPrepass;

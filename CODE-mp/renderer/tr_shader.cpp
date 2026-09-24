@@ -3814,7 +3814,6 @@ an external lightmap image and/or sets the index to a valid number
 ===============
 */
 
-#define EXTERNAL_LIGHTMAP   "lm_%04d"    // THIS MUST BE IN SYNC WITH Q3MAP2
 
 void R_FindLightmap(int* lightmapIndex) {
 	image_t* image;
@@ -3841,7 +3840,7 @@ void R_FindLightmap(int* lightmapIndex) {
 	R_SyncRenderThread();
 
 	// attempt to load an external lightmap
-	sprintf(fileName, "%s/" EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex);
+	sprintf(fileName, EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex);
 	image = R_FindImageFile(fileName, qfalse, qfalse, qtrue, GL_CLAMP, *lightmapIndex);
 	if (image == NULL) {
 		*lightmapIndex = LIGHTMAP_BY_VERTEX;
@@ -3889,7 +3888,7 @@ int R_FindLightmap_CheckOnly(int* lightmapIndex) {
 	R_SyncRenderThread();
 
 	// attempt to load an external lightmap
-	sprintf(fileName, "%s/" EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex);
+	sprintf(fileName, EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex);
 	
 	textureImage_t picWrap{ 0 };
 	int width, height;
@@ -3898,7 +3897,7 @@ int R_FindLightmap_CheckOnly(int* lightmapIndex) {
 		return 0;                                        // bail
 	}
 
-	sprintf(fileName, "%s/" EXTERNAL_LIGHTMAP "_dist", tr.worldDir, *lightmapIndex);
+	sprintf(fileName, EXTERNAL_LIGHTMAP "_dist", tr.worldDir, *lightmapIndex);
 	
 	textureImage_t picWrap2{ 0 };
 	int width2, height2;

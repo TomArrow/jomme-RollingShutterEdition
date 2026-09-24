@@ -17,7 +17,13 @@
 //#define STBI_FREE(p)              Z_Free(p)
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h" // TinyEXR gets its zlib from this :/
 
+#define TINYEXR_USE_MINIZ 0
+#define TINYEXR_USE_STB_ZLIB 1
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr/tinyexr.h"
 
 #include "tr_local.h"
 #include "glext.h"
@@ -1938,6 +1944,62 @@ static void LoadRadiance( const char *filename, unsigned char **pic, int *width,
 	Z_Free(fbuffer);
 }
 
+static void LoadEXR( const char *filename, unsigned char **pic, int *width, int *height ) {
+
+	/* More stuff */
+	unsigned char* out;
+	byte* fbuffer;
+
+	fileHandle_t		h;
+	const int len = FS_FOpenFileRead(filename, &h, qfalse);
+	if (!h)
+	{
+		return;
+	}
+
+	fbuffer = (byte*)Z_Malloc(len + 4096, TAG_TEMP_WORKSPACE);
+	FS_Read(fbuffer, len, h);
+	FS_FCloseFile(h);
+
+	int channelCount;
+
+	const char* err = NULL;
+	float* data = NULL;
+	int status = LoadEXRFromMemory(&data, width, height, fbuffer, len, &err );
+	//float* data = stbi_loadf_from_memory(fbuffer, len, width, height, &channelCount, 4);
+
+	if (status != TINYEXR_SUCCESS) {
+		if (err) {
+			Com_Printf("EXR picture failed to load, possible reason: %s.\n", err);
+			FreeEXRErrorMessage(err); // release memory of error message.
+		}
+		else {
+			Com_Printf("EXR picture failed to load.\n");
+		}
+		*pic = nullptr;
+		return;
+	}
+	/*
+	if (channelCount != 4) {
+		Com_Printf("Radiance returned %d channels, I asked for 4!\n", channelCount); 
+		stbi_image_free(data);
+		*pic = nullptr;
+		return;
+	}*/
+
+	//Com_Printf("Loaded Radiance image with %d x %d pixels!\n", *width,*height);
+
+	int memoryAmount = (*width) * (*height) * 4 * 4;
+	out = (unsigned char*)ri.Malloc(memoryAmount, TAG_TEMP_WORKSPACE, qfalse);
+
+	*pic = out;
+	Com_Memcpy(out, data, memoryAmount);
+
+	free(data);
+
+	Z_Free(fbuffer);
+}
+
 
 static void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height ) {
   /* This struct contains the JPEG decompression parameters and pointers to
@@ -2461,6 +2523,14 @@ void R_LoadImage( const char *shortname, textureImage_t* picWrap, int *width, in
 
 
 	COM_StripExtension(shortname, name);
+	COM_DefaultExtension(name, sizeof(name), ".exr");
+	LoadEXR(name, &picWrap->ptr, width, height);				// try exr first (superior to radiance as no shared exponent)
+	if (picWrap->ptr) {
+		picWrap->bpc = BPC_32FLOAT;
+		return;
+	}
+
+	COM_StripExtension(shortname, name);
 	COM_DefaultExtension(name, sizeof(name), ".hdr");
 	LoadRadiance(name, &picWrap->ptr, width, height);            // try radiance first
 	if (picWrap->ptr) {
@@ -2536,12 +2606,19 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
       return NULL;                                        // bail
 	}
 
-	if (lightmap > -1) {
+	if (lightmap > -1 && tr.deluxeMapping) {
 		// if available, load extra alpha channel
 		char fileName2[MAX_QPATH];
 		textureImage_t	picWrap2{ 0 };
 		int width2, height2;
-		Com_sprintf(fileName2, sizeof(fileName2), "%s_dist",name);
+		int desiredChannel = 0;
+		if (!(lightmap & 1) && tr.worldDir) { // the even numbers get the uneven _dist, since we take a different channel from it. kinda shit but eh.
+			Com_sprintf(fileName2, sizeof(fileName2), EXTERNAL_LIGHTMAP "_dist", tr.worldDir, lightmap+1, name);
+			desiredChannel = 2; // for the base lightmap, we take directionality into alpha
+		}
+		else {
+			Com_sprintf(fileName2, sizeof(fileName2), "%s_dist", name);
+		}
 		R_LoadImage(fileName2, &picWrap2, &width2, &height2);
 		if (picWrap2.ptr != NULL) {                                    // if we dont get a successful load
 
@@ -2552,7 +2629,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 				int pixelBytes = textureBytes[picWrap.bpc];
 				int pixels = width * height;
 				tr.lightmapAlpha = qtrue;
-				byte* data1 = picWrap.ptr + pixelBytes * 3, *data2 = picWrap2.ptr;
+				byte* data1 = picWrap.ptr + pixelBytes * 3, *data2 = picWrap2.ptr + pixelBytes * desiredChannel;
 				for (int p = 0; p < pixels; p++) {
 					// we copy over the red channel of the _dist file as alpha channel of the main file.
 					memcpy(data1,data2,pixelBytes);
