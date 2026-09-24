@@ -1321,6 +1321,53 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 }
 #endif
 
+float distanceToLineProperMaybefastSquared(vec3 point, vec3 linePoint1, vec3 linePoint2);
+float shortestDistanceLinesSquared( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold);
+
+float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lightOrigin, float fastSkipThresMain){
+	bool sceneView = (renderFlagsUniform & RENDERFLAG_SCENEVIEW) > 0;
+	bool fastPreview = (renderFlagsUniform & RENDERFLAG_FASTPREVIEW) > 0;
+	bool fastLighting = sceneView || fastPreview; // can add additional options
+	int mainLightShadowLinesCalculated = 0;
+	int s =mainLightShadowLinesCalculated;
+	float shadowLineIntensity;
+	float shadowedIntensity = 1.0;
+	if(!fastLighting){
+		for(;s<shadowLinesCountUniform;s++){
+
+			if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
+				continue;
+			}
+
+			vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
+			float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
+			if(distanceToSL < 0) {
+				continue;
+			}
+
+			float shadowLineIntensity = (isModelUniform > 0 || stageForceNormalUniform > 0) ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
+
+			float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
+			if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,lightOrigin) > maxDistPoint*maxDistPoint*10.0f){
+				continue;
+			}
+
+			int type= 0;
+			float shadowLineWidthSquared = shadowLines[s].width*shadowLines[s].width;
+			float maxDistanceSquared = shortestDistanceLinesSquared(worldPixel,lightOrigin,shadowLines[s].point1.xyz,shadowLines[s].point2.xyz,type,shadowLines[s].width);
+			shadowedIntensity *= (1.0f-shadowLineIntensity) + shadowLineIntensity*clamp(maxDistanceSquared / shadowLineWidthSquared,0.0f,1.0f);
+
+			if(allInvocationsARB(shadowedIntensity < fastSkipThresMain)){
+				break;
+			}
+		}
+	}
+
+	return shadowedIntensity;
+}
+
+
+
 
 // direction mustt be in eye space and normalized
 vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided){
@@ -1374,15 +1421,19 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 	vec4 color;
 	vec4 direction = vec4(1.0f);
 	bool haveDir = false;
+	bool haveDist = true; // todo have a uniform inform us.
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		//return vec4(-vertexNormal,1.0f)*0.1f;
 		//vec2 thelod = textureQueryLod(sampler,lmtexcoord);
+		float directionality = 1.0f;
 #if LIGHTMAP_ARRAY
 		if((stageLightmapBitmaskUniform & (1<<sampler))>0){
 			color = texture(text_inArray31, vec3(lmtexcoord,LIGHTMAPNUM(sampler)));
 			//color = vec4(float(LIGHTMAPNUM(sampler))*0.02f);
 			//color = texture(text_inArray31, vec3(0.5f,0.5f,1));
+			directionality = color.w;
+			color.w = 1.0;
 		} else{
 			color = texture2D(text_in[sampler], lmtexcoord);
 		}
@@ -1392,6 +1443,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 		//return vec4(1.0f);
 		//return color;
 		if(havedeluxe || haveVertLightDir){
+			float lightDistance = 1000.0f;
 			if(havedeluxe){
 #if LIGHTMAP_ARRAY
 				direction = texture(text_inArray31, vec3(lmtexcoord,DELUXELIGHTMAPNUM(sampler,deluxeSampler)));
@@ -1401,6 +1453,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 				//float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 				//return direction;
 				//color.xyz = vec3(direction.w*0.001f);
+				lightDistance = direction.w;
 				direction.w = 1.0f;
 				direction = (dirmat*direction);
 			} else {
@@ -1439,7 +1492,19 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 
 			color *=alignment*alignment*alignment+specIntensityTotal;
 			color = max(vec4(0.0f),color);
-
+			
+			if(haveDist){
+				if(isinf(lightDistance)){
+					lightDistance = 10000.0;
+				}
+				vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(direction.xyz,0.0f));
+				vec3 lightPosGuess = worldPixel + worldDirection.xyz*lightDistance;
+				vec3 lightVectorWorldNorm = normalize(lightPosGuess - worldPixel);
+				float fastSkipThresMain = dLightFastSkipThresholdUniform/length(color.xyz);
+				directionality = directionality*directionality*directionality;
+				color.xyz*= (1.0f-directionality) + directionality*getShadowLineIntensity(worldPixel,lightVectorWorldNorm,lightPosGuess,fastSkipThresMain);
+			}
+			
 		}
 	}
 	color*=lightStyles[style]*MULTDIVIDE255;
@@ -1463,6 +1528,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 		}
 		
 	}
+
 	return color;
 }
 
