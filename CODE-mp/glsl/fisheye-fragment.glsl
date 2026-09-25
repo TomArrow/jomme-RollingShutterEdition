@@ -385,6 +385,18 @@ uniform float dLightSpecDistanceDecayUniform; // distance between light source a
 uniform float dLightSpecDistanceMinUniform; // no decay up to this distance
 uniform float dLightAddPowUniform;
 uniform float dLightAddPostPowMultUniform;
+
+uniform float modelBumpProximityFadeUniform;
+uniform float modelBumpProximityFadeTargetUniform;
+uniform float modelBumpProximitySkinFadeUniform;
+uniform float modelBumpProximitySkinFadeTargetUniform;
+uniform float modelBumpIntensityUniform;
+uniform float modelBumpIntensitySkinUniform;
+uniform float modelBumpIntensityFaceTexUniform;
+uniform float modelBumpIntensityFaceTexSkinUniform;
+uniform int textureIsFaceUniform; // texture name contains "head" or "face"
+uniform int haveLightmapDistDataUniform;
+
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
 
@@ -900,6 +912,21 @@ vec3 transformDLightForVoxelShadow(vec3 dlight, vec3 target){
 
 #endif
 
+float above1To2SoftApproach(float value) // the result of this will approach 2 but never reach it. perfection
+{
+    return (1.0f - 1.0f / (1.0f + pow(value, 0.833333333333333333f))) * 2.0f; // dont ask me why exactly 0.83333. i just aligned the two derivatives in le graphing calculator :)
+}
+
+float getNormalizedColorIntensity(vec3 color){
+	// old method that just cuts off
+	//return max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+	float normalized = max((color.x + color.y + color.z)*0.33333333f/texAverageBrightnessUniform,0.0f);
+
+
+
+	return 0.5f*above1To2SoftApproach(normalized*2.0f);
+}
+
 vec2 parallaxMap(float thelod,vec4 thegrad, vec2 rawUV){
 		vec2 uvCoords;
 		//uvCoords.s = dot(eyeSpaceCoordsGeom.xyz,texUVTransform[0]);
@@ -907,7 +934,7 @@ vec2 parallaxMap(float thelod,vec4 thegrad, vec2 rawUV){
 		//vec4 color = texture2D(0, my_TexCoord[0].st);
 		vec4 color = sampleTextureSafe(0, rawUV, thelod,thegrad);
 		//vec4 color = texture2D(text_in, uvCoords);
-		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+		float offset = 1.0f - getNormalizedColorIntensity(color.xyz);
 
 		vec3 offset3d =  normalize(eyeSpaceCoordsGeom.xyz)*parallaxMapDepthUniform * offset;
 		offset3d -= normal * dot(normal,offset3d); // project onto surface aka get rid of any 3d component that aligns with the normal of the surface
@@ -958,7 +985,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 			//vec4 color = texture2D(0, uvCoords);
 			vec4 color = sampleTextureSafe(0, uvCoords,thelod,thegrad);
 			oldtexDepth = texDepth;
-			texDepth = parallaxMapDepthUniform*(pow(max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f),gamma)-1.0f);
+			texDepth = parallaxMapDepthUniform*(pow(getNormalizedColorIntensity(color.xyz),gamma)-1.0f);
 			
 			float newLayerDepth = -(layerDepth * float(i));
 			if(texDepth > newLayerDepth){
@@ -993,10 +1020,10 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 
 		finalPosition = currentPlace;
 
-		//float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+		//float offset = 1.0f - getNormalizedColorIntensity(color.xyz);
 
 
-		//float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+		//float offset = 1.0f - getNormalizedColorIntensity(color.xyz);
 
 		//vec3 offset3d =  normalize(eyeSpaceCoordsGeom.xyz)*parallaxMapDepthUniform * offset;
 		//float depthHere = dot(normal,offset3d);
@@ -1421,7 +1448,8 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 	vec4 color;
 	vec4 direction = vec4(1.0f);
 	bool haveDir = false;
-	bool haveDist = true; // todo have a uniform inform us.
+	bool doDist = true;
+	bool haveDist = haveLightmapDistDataUniform > 0; // todo have a uniform inform us.
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		//return vec4(-vertexNormal,1.0f)*0.1f;
@@ -1432,7 +1460,11 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 			color = texture(text_inArray31, vec3(lmtexcoord,LIGHTMAPNUM(sampler)));
 			//color = vec4(float(LIGHTMAPNUM(sampler))*0.02f);
 			//color = texture(text_inArray31, vec3(0.5f,0.5f,1));
-			directionality = color.w;
+			if(haveDist){
+				directionality = color.w;
+			} else{
+				directionality = 1.0f;
+			}
 			color.w = 1.0;
 		} else{
 			color = texture2D(text_in[sampler], lmtexcoord);
@@ -1453,7 +1485,11 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 				//float baseMultiplier = 1.0f / max(0.00001,dot(normal,(direction).xyz));
 				//return direction;
 				//color.xyz = vec3(direction.w*0.001f);
-				lightDistance = direction.w;
+				if(haveDist){
+					lightDistance = direction.w;
+				} else{
+					lightDistance = 300.0f;
+				}
 				direction.w = 1.0f;
 				direction = (dirmat*direction);
 			} else {
@@ -1493,7 +1529,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 			color *=alignment*alignment*alignment+specIntensityTotal;
 			color = max(vec4(0.0f),color);
 			
-			if(haveDist){
+			if(doDist){
 				if(isinf(lightDistance)){
 					lightDistance = 10000.0;
 				}
@@ -1539,7 +1575,7 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		//vec4 color = texture2D(0, uvCoords);
 		vec4 color = sampleTextureSafe(0, uvCoords, thelod,thegrad);
 		//vec4 color = texture2D(text_in, uvCoords);
-		float offset = 1.0f - max(min((color.x + color.y + color.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+		float offset = 1.0f - getNormalizedColorIntensity(color.xyz);
 
 		//vec3 offset3d =  normalize(startPosition);
 		//vec3 normalComponent = referenceNormal * dot(referenceNormal,offset3d);
@@ -1556,14 +1592,14 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 		uvCoords.t = dot(transposedCoords,texUVTransform[1]);
 		//vec4 color2 = texture2D(0, uvCoords);
 		vec4 color2 = sampleTextureSafe(0, uvCoords, thelod,thegrad);
-		float offset2 = 1.0f - max(min((color2.x + color2.y + color2.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+		float offset2 = 1.0f - getNormalizedColorIntensity(color2.xyz);
 
 		vec3 transposedCoords2 = startPosition + normalize(cross(offset3d,referenceNormal))*0.1;
 		uvCoords.s = dot(transposedCoords2,texUVTransform[0]);
 		uvCoords.t = dot(transposedCoords2,texUVTransform[1]);
 		//vec4 color3 = texture2D(0, uvCoords);
 		vec4 color3 = sampleTextureSafe(0, uvCoords, thelod,thegrad);
-		float offset3 = 1.0f - max(min((color3.x + color3.y + color3.z)/3.0f/texAverageBrightnessUniform,1.0f),0.0f);
+		float offset3 = 1.0f - getNormalizedColorIntensity(color3.xyz);
 
 		vec3 place1 = startPosition - referenceNormal * offset;
 		vec3 place2 = transposedCoords - referenceNormal * offset2;

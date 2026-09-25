@@ -232,6 +232,8 @@ typedef struct image_s {
 	TextureBitsPerChannel bpc;
 	int			lightmapNum;
 
+	qboolean	isFaceTexture;
+
 } image_t;
 
 //===============================================================================
@@ -462,6 +464,7 @@ typedef struct {
 	byte			vertexLightmap;
 	byte			isVideoMap;
 	qboolean		isHackPortal;
+	qboolean		hasFaceImage;
 } textureBundle_t;
 
 #define NUM_GLSL_EXTRA_LIGHTMAPS_MAX 14
@@ -505,6 +508,10 @@ typedef struct {
 
 	qboolean		isAdditiveGlow;			// kind of automated way to guess if a stage is meant to be just an additive overlay like for lights on a wall, so we can scale its intensity
 	qboolean		hasHackPortal;			// this is a special hacky portal (tommyternal feature), to allow additive portals and shenanigans like that
+	qboolean		hasFaceImage;			// image containing "face" or "head"
+
+	float			averageBrightnessLevel;
+	vec3_t			averageColor;
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -633,7 +640,11 @@ Ghoul2 Insert End
 	qboolean hasLightmapStage;
 
 	qboolean isWorldShader; // UGLY hack.
-	qboolean		hasHackPortal;
+	qboolean hasHackPortal;
+	qboolean hasFaceImageStage;
+
+	float			averageBrightnessLevel;
+	vec3_t			averageColor;
 } shader_t;
 
 typedef struct shaderState_s {
@@ -1112,6 +1123,9 @@ Ghoul2 Insert Start
 */
 	mdxmHeader_t *mdxm;				// only if type == MOD_GL2M which is a GHOUL II Mesh file NOT a GHOUL II animation file
 	mdxaHeader_t *mdxa;				// only if type == MOD_GL2A which is a GHOUL II Animation file
+
+	float			averageBrightnessLevel;
+	vec3_t			averageColor;
 /*
 Ghoul2 Insert End
 */
@@ -2234,6 +2248,8 @@ public:
 
 	bool			deletable= true; // if coming from rsstorage, we set this to false so debug doesnt explode when trying to delete static storage. idk what the logic behind rsstorage is. - TA
 
+	float			averageBrightnessLevel = 0.0f;
+
 #ifdef _G2_GORE
 	CRenderableSurface& operator= (const CRenderableSurface& src)
 	{
@@ -2250,6 +2266,8 @@ public:
 	CRenderableSurface() :
 		ident(SF_MDX),
 		boneCache(0),
+		averageBrightnessLevel(0),
+		deletable(false),
 #ifdef _G2_GORE
 		surfaceData(0),
 		alternateTex(0),
@@ -2267,6 +2285,8 @@ public:
 		surfaceData = 0;
 		alternateTex = 0;
 		goreChain = 0;
+		averageBrightnessLevel = 0;
+		deletable = false;
 	}
 #endif
 };
@@ -2683,6 +2703,9 @@ typedef struct {
 	int				lightmapNums[31];
 	qboolean		projectorActive;
 	GLfloat			clipPlanes[6][4];
+	qboolean		isFaceTexture;
+	qboolean		averageBrightnessOverrideActive;
+	float			averageBrightnessOverride;
 } fboExtraUniforms_t;
 
 extern fboExtraUniforms_t fboUniformsEx;

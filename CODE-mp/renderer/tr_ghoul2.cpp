@@ -2553,6 +2553,7 @@ void RenderSurfaces(CRenderSurface &RS) //also ended up just ripping right from 
 			CRenderableSurface *newSurf = new CRenderableSurface;
 			newSurf->surfaceData = surface;
 			newSurf->boneCache = RS.boneCache;
+			newSurf->averageBrightnessLevel = RS.currentModel->averageBrightnessLevel; // allow to override a surface shader brightness level with the global model one to achieve better drawing consistency
 			R_AddDrawSurf( (surfaceType_t *)newSurf, (shader_t *)shader, RS.fogNum, qfalse );
 
 #ifdef _G2_GORE
@@ -4269,6 +4270,10 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 	int					size;
 	mdxmSurfHierarchy_t	*surfInfo;
 
+	float samples = 0;
+	float brightnessSum = 0;
+	vec3_t colorSum{ 0 };
+
 #if 0
 	int					k;
 	int					frameSize;
@@ -4381,11 +4386,22 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 			surfInfo->shaderIndex = sh->index;
 		}
 
+		if (sh->averageBrightnessLevel) {
+			brightnessSum += sh->averageBrightnessLevel;
+			VectorAdd(colorSum, sh->averageColor, colorSum);
+			samples++;
+		}
+
 		RE_RegisterModels_StoreShaderRequest(mod_name, &surfInfo->shader[0], &surfInfo->shaderIndex);		
 
 		// find the next surface
 		surfInfo = (mdxmSurfHierarchy_t *)( (byte *)surfInfo + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surfInfo->numChildren ] ));
   	}
+
+	if (samples) {
+		mod->averageBrightnessLevel = brightnessSum / samples;
+		VectorScale(colorSum, 1.0f / samples, mod->averageColor);
+	}
 	
 	// swap all the LOD's	(we need to do the middle part of this even for intel, because of shader reg and err-check)
 	lod = (mdxmLOD_t *) ( (byte *)mdxm + mdxm->ofsLODs );

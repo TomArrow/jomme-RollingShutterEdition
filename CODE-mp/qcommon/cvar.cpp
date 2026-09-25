@@ -190,6 +190,7 @@ typedef struct autoAliasPreset_s {
 } autoAliasPreset_t;
 
 autoAliasPreset_t autoAliases[] = {
+	{"r_fboGLSLModelBump","mbump_"},
 	{"r_fboGLSLDlights","dlite_"},
 	{"r_fboGLSL","glsl_"},
 	{"r_fbo","fbo_"},

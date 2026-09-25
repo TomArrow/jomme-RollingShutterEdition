@@ -181,6 +181,16 @@ public:
 	R_GLSL_Uniform dLightsUniformColor[MAX_DLIGHTS];
 	R_GLSL_Uniform dLightsUniformRadius[MAX_DLIGHTS];
 	R_GLSL_Uniform dLightsUniformMindist[MAX_DLIGHTS];
+	R_GLSL_Uniform modelBumpProximityFadeUniform;
+	R_GLSL_Uniform modelBumpProximityFadeTargetUniform;
+	R_GLSL_Uniform modelBumpProximitySkinFadeUniform;
+	R_GLSL_Uniform modelBumpProximitySkinFadeTargetUniform;
+	R_GLSL_Uniform modelBumpIntensityUniform;
+	R_GLSL_Uniform modelBumpIntensitySkinUniform;
+	R_GLSL_Uniform modelBumpIntensityFaceTexUniform;
+	R_GLSL_Uniform modelBumpIntensityFaceTexSkinUniform;
+	R_GLSL_Uniform textureIsFaceUniform;
+	R_GLSL_Uniform haveLightmapDistDataUniform;
 	R_GLSL_Uniform shadowLinesCountUniform;
 	R_GLSL_Uniform shadowLinesPoint1[MAX_SHADOWLINES];
 	R_GLSL_Uniform shadowLinesPoint2[MAX_SHADOWLINES];
@@ -246,6 +256,14 @@ cvar_t *r_fboGLSLDLightsSpecBaseReflectivity;
 cvar_t *r_fboGLSLDLightsSpecDistanceDecay;
 cvar_t *r_fboGLSLDLightsSpecDistanceMinUniform;
 cvar_t *r_fboGLSLDLightsFastSkipThreshold;
+cvar_t *r_fboGLSLModelBumpProximityFade;
+cvar_t *r_fboGLSLModelBumpProximityFadeTarget;
+cvar_t *r_fboGLSLModelBumpProximitySkinFade;
+cvar_t *r_fboGLSLModelBumpProximitySkinFadeTarget;
+cvar_t *r_fboGLSLModelBumpIntensity;
+cvar_t *r_fboGLSLModelBumpIntensitySkin;
+cvar_t* r_fboGLSLModelBumpIntensityFaceTex;
+cvar_t *r_fboGLSLModelBumpIntensityFaceTexSkin;
 cvar_t *r_fboGLSLFastPreview;
 cvar_t *r_fboGLSLParallaxMapping;
 cvar_t *r_fboGLSLParallaxMappingIntensity;
@@ -339,7 +357,7 @@ extern int progressOvershoot;
 extern float drift;
 
 fbo_t fbo; 
-fboExtraUniforms_t fboUniformsEx; // extra uniforms
+fboExtraUniforms_t fboUniformsEx{ 0 }; // extra uniforms
 
 
 R_GLSL* thermalPostProcessingShader = NULL;
@@ -414,6 +432,12 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		intensityCompensateFactor = 1.0f + (intensityCompensateFactor - 1.0f) * r_fboGLSLCloudIntensityCompensate->value;
 	}
 
+	float texAverageBrightness = fbo.fishEyeData.texAverageBrightness;
+	if (fboUniformsEx.averageBrightnessOverrideActive && fboUniformsEx.averageBrightnessOverride) {
+		// we override this for ghoul2 playermodels to have better consistency in drawing, since different textures can be parts of the same surface visually whilst having different brightness levels, thus leading to sometimes very inconsistent drawing results
+		texAverageBrightness = fboUniformsEx.averageBrightnessOverride;
+	}
+
 	if (tess) {
 
 		uniformLocationsTess->viewOriginUniform.set3fv( 1, tr.refdef.vieworg);
@@ -428,7 +452,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		uniformLocationsTess->pixelHeightUniform.set1i( height * superSampleMultiplier);
 		uniformLocationsTess->jitterIndexUniform.set1i( fbo.fishEyeData.jitterIndex);
 		uniformLocationsTess->jitterTotalFramesUniform.set1i( fbo.fishEyeData.jitterTotalFrames);
-		uniformLocationsTess->texAverageBrightnessUniform.set1f( fbo.fishEyeData.texAverageBrightness);
+		uniformLocationsTess->texAverageBrightnessUniform.set1f( texAverageBrightness );
 		uniformLocationsTess->isLightmapUniform.set1i( fbo.fishEyeData.isLightmap ? 1 : 0);
 		uniformLocationsTess->isWorldBrushUniform.set1i( fbo.fishEyeData.isWorldBrush ? 1 : 0);
 		uniformLocationsTess->isSaberUniform.set1i( fbo.fishEyeData.isSaber ? 1 : 0);
@@ -531,6 +555,16 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 				uniformLocationsTess->dLightsUniformRadius[i].set1f( backEnd.refdef.dlights[i].radius);
 			}*/
 		}
+		uniformLocationsTess->modelBumpProximityFadeUniform.set1f(r_fboGLSLModelBumpProximityFade->value);
+		uniformLocationsTess->modelBumpProximityFadeTargetUniform.set1f(r_fboGLSLModelBumpProximityFadeTarget->value);
+		uniformLocationsTess->modelBumpProximitySkinFadeUniform.set1f(r_fboGLSLModelBumpProximitySkinFade->value);
+		uniformLocationsTess->modelBumpProximitySkinFadeTargetUniform.set1f(r_fboGLSLModelBumpProximitySkinFadeTarget->value);
+		uniformLocationsTess->modelBumpIntensityUniform.set1f(r_fboGLSLModelBumpIntensity->value);
+		uniformLocationsTess->modelBumpIntensitySkinUniform.set1f(r_fboGLSLModelBumpIntensitySkin->value);
+		uniformLocationsTess->modelBumpIntensityFaceTexUniform.set1f(r_fboGLSLModelBumpIntensityFaceTex->value);
+		uniformLocationsTess->modelBumpIntensityFaceTexSkinUniform.set1f(r_fboGLSLModelBumpIntensityFaceTexSkin->value);
+		uniformLocationsTess->textureIsFaceUniform.set1i(fboUniformsEx.isFaceTexture);
+		uniformLocationsTess->haveLightmapDistDataUniform.set1i(tr.lightmapAlpha);
 		for (int i = 0; i < NUM_TEXTURE_SAMPLERS; i++) {
 			uniformLocationsTess->text_in[i].set1i( i);
 			uniformLocationsTess->lightmapNumsUniform[i].set1i( fboUniformsEx.lightmapNums[i]);
@@ -558,7 +592,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		uniformLocations->pixelHeightUniform.set1i( height * superSampleMultiplier);
 		uniformLocations->jitterIndexUniform.set1i( fbo.fishEyeData.jitterIndex);
 		uniformLocations->jitterTotalFramesUniform.set1i( fbo.fishEyeData.jitterTotalFrames);
-		uniformLocations->texAverageBrightnessUniform.set1f( fbo.fishEyeData.texAverageBrightness);
+		uniformLocations->texAverageBrightnessUniform.set1f( texAverageBrightness );
 		uniformLocations->isLightmapUniform.set1i( fbo.fishEyeData.isLightmap ? 1 : 0);
 		uniformLocations->isWorldBrushUniform.set1i( fbo.fishEyeData.isWorldBrush ? 1 : 0);
 		uniformLocations->isSaberUniform.set1i( fbo.fishEyeData.isSaber ? 1 : 0);
@@ -662,6 +696,16 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 				uniformLocations.dLightsUniformRadius[i].set1f( backEnd.refdef.dlights[i].radius);
 			}*/
 		}
+		uniformLocations->modelBumpProximityFadeUniform.set1f(r_fboGLSLModelBumpProximityFade->value);
+		uniformLocations->modelBumpProximityFadeTargetUniform.set1f(r_fboGLSLModelBumpProximityFadeTarget->value);
+		uniformLocations->modelBumpProximitySkinFadeUniform.set1f(r_fboGLSLModelBumpProximitySkinFade->value);
+		uniformLocations->modelBumpProximitySkinFadeTargetUniform.set1f(r_fboGLSLModelBumpProximitySkinFadeTarget->value);
+		uniformLocations->modelBumpIntensityUniform.set1f(r_fboGLSLModelBumpIntensity->value);
+		uniformLocations->modelBumpIntensitySkinUniform.set1f(r_fboGLSLModelBumpIntensitySkin->value);
+		uniformLocations->modelBumpIntensityFaceTexUniform.set1f(r_fboGLSLModelBumpIntensityFaceTex->value);
+		uniformLocations->modelBumpIntensityFaceTexSkinUniform.set1f(r_fboGLSLModelBumpIntensityFaceTexSkin->value);
+		uniformLocations->textureIsFaceUniform.set1i(fboUniformsEx.isFaceTexture);
+		uniformLocations->haveLightmapDistDataUniform.set1i(tr.lightmapAlpha);
 		for (int i = 0; i < MAXLIGHTMAPS_REAL; i++) {
 			uniformLocations->shaderStylesUniform[i].set1i(fbo.fishEyeData.shaderStyles[i]);
 		}
@@ -1893,6 +1937,16 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 			locs->dLightsUniformRadius[j].getUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].radius",j));
 			locs->dLightsUniformMindist[j].getUniformLocation(program->ShaderIdByBits(i), va("dLightsUniform[%d].mindist",j));
 		}
+		locs->modelBumpProximityFadeUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpProximityFadeUniform");
+		locs->modelBumpProximityFadeTargetUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpProximityFadeTargetUniform");
+		locs->modelBumpProximitySkinFadeUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpProximitySkinFadeUniform");
+		locs->modelBumpProximitySkinFadeTargetUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpProximitySkinFadeTargetUniform");
+		locs->modelBumpIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpIntensityUniform");
+		locs->modelBumpIntensitySkinUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpIntensitySkinUniform");
+		locs->modelBumpIntensityFaceTexUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpIntensityFaceTexUniform");
+		locs->modelBumpIntensityFaceTexSkinUniform.getUniformLocation(program->ShaderIdByBits(i), "modelBumpIntensityFaceTexSkinUniform");
+		locs->textureIsFaceUniform.getUniformLocation(program->ShaderIdByBits(i), "textureIsFaceUniform");
+		locs->haveLightmapDistDataUniform.getUniformLocation(program->ShaderIdByBits(i), "haveLightmapDistDataUniform");
 		for (int j = 0; j < MAXLIGHTMAPS_REAL; j++) {
 			locs->shaderStylesUniform[j].getUniformLocation(program->ShaderIdByBits(i), va("shaderStylesUniform[%d]",j));
 		}
@@ -2034,6 +2088,14 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLDLightsAddPow = ri.Cvar_Get( "r_fboGLSLDLightsAddPow", "0.7", CVAR_ARCHIVE);
 	r_fboGLSLDLightsAddPostPowMult = ri.Cvar_Get( "r_fboGLSLDLightsAddPostPowMult", "0.8", CVAR_ARCHIVE);
 	r_fboGLSLDLightsFastSkipThreshold = ri.Cvar_Get( "r_fboGLSLDLightsFastSkipThreshold", "0.00001", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpProximityFade = ri.Cvar_Get( "r_fboGLSLModelBumpProximityFade", "0", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpProximityFadeTarget = ri.Cvar_Get("r_fboGLSLModelBumpProximityFadeTarget", "0.1", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpProximitySkinFade = ri.Cvar_Get( "r_fboGLSLModelBumpProximitySkinFade", "0", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpProximitySkinFadeTarget = ri.Cvar_Get( "r_fboGLSLModelBumpProximitySkinFadeTarget", "0.1", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpIntensity = ri.Cvar_Get( "r_fboGLSLModelBumpIntensity", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpIntensitySkin = ri.Cvar_Get( "r_fboGLSLModelBumpIntensitySkin", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpIntensityFaceTex = ri.Cvar_Get( "r_fboGLSLModelBumpIntensityFaceTex", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpIntensityFaceTexSkin = ri.Cvar_Get( "r_fboGLSLModelBumpIntensityFaceTexSkin", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLFastPreview = ri.Cvar_Get( "r_fboGLSLFastPreview", "1", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSLGigaTCGen = ri.Cvar_Get( "r_fboGLSLGigaTCGen", "1", CVAR_ARCHIVE);

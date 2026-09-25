@@ -61,6 +61,7 @@ bool g_bTextureRectangleHack = false;
 void GL_Bind( image_t *image ) {
 	int texnum;
 	float averageBrightness;
+	qboolean isFaceTex = qfalse;
 
 	if ( !image ) {
 		ri.Printf( PRINT_WARNING, "GL_Bind: NULL image\n" );
@@ -69,6 +70,7 @@ void GL_Bind( image_t *image ) {
 	} else {
 		texnum = image->texnum;
 		averageBrightness = image->averageBrightnessLevel;
+		isFaceTex = image->isFaceTexture;
 	}
 
 	if ( r_nobind->integer && tr.dlightImage ) {		// performance evaluation option
@@ -85,6 +87,7 @@ void GL_Bind( image_t *image ) {
 		glState.currenttextures[glState.currenttmu] = texnum;
 		qglBindTexture (GL_TEXTURE_2D, texnum);
 		if (r_fboGLSLParallaxMapping && r_fboGLSLParallaxMapping->integer && glState.currenttmu == 0) {
+			fboUniformsEx.isFaceTexture = isFaceTex;
 			R_FrameBuffer_SetDynamicUniforms(&averageBrightness);
 		}
 	}
@@ -811,6 +814,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	int				oldSceneView;
 	int64_t			oldSurfaceType = SF_BAD;
 	int				oldWorldSurfaceCategory = -2;
+	float			oldAverageBrightnessLevel = 0;
 	int64_t			dlighted, oldDlighted;
 	int				depthRange, oldDepthRange;
 	int				i;
@@ -914,6 +918,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 		bool goreStatusChanged = *drawSurf->surface != oldSurfaceType && (*drawSurf->surface == SF_MDX_GORE || oldSurfaceType == SF_MDX_GORE);
 		int worldSurfaceCategory = entityNum == REFENTITYNUM_WORLD ? (std::clamp(*drawSurf->surface, SF_GRID, SF_POLY) - SF_GRID) : -1;
+		float averageBrightnessLevel = (entityNum != REFENTITYNUM_WORLD && *drawSurf->surface == SF_MDX) ? ((CRenderableSurface*)drawSurf->surface)->averageBrightnessLevel : 0; // this is for a model-wide override for consistency of drawing instead of doing it per shader/surface
+		bool averageBrightnessLevelOverrideChanged = averageBrightnessLevel != oldAverageBrightnessLevel;
 		bool worldSurfaceCategoryChanged = worldSurfaceCategory != oldWorldSurfaceCategory;
 		qboolean useSceneViewTexture = (qboolean)(backEnd.viewParms.haveWorldSceneView && entityNum == REFENTITYNUM_WORLD && shader->isWorldShader || backEnd.refdef.entities[entityNum].e.useSceneViewTexture);
 		int sceneViewTexture = (backEnd.viewParms.haveWorldSceneView && entityNum == REFENTITYNUM_WORLD && shader->isWorldShader) ? backEnd.viewParms.worldSceneView : backEnd.refdef.entities[entityNum].e.sceneViewTexture;
@@ -924,7 +930,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// change the tess parameters if needed
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
-		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted || goreStatusChanged || worldSurfaceCategoryChanged
+		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted || goreStatusChanged || averageBrightnessLevelOverrideChanged || worldSurfaceCategoryChanged
 			|| ( entityNum != oldEntityNum && (!shader->entityMergable || sceneViewTextureChanged || usedSceneViewTextureChanged)) ) {
 			if (oldShader != NULL) {
 #ifdef __MACOS__	// crutch up the mac's limited buffer queue size
@@ -963,7 +969,9 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			R_FrameBuffer_SetDynamicUniforms2(NULL,NULL, drawSurf->surface); // again this is kinda cringe since different surface types can share a mergable shader. we'll just have to interrupt tess whenever a distinction becomes relevant for glsl (like with worldSurfaceCategoryChanged)
 		}
 
-		if (goreStatusChanged) {
+		if (goreStatusChanged || averageBrightnessLevelOverrideChanged) {
+			fboUniformsEx.averageBrightnessOverrideActive = (qboolean)(averageBrightnessLevel != 0.0f);
+			fboUniformsEx.averageBrightnessOverride = averageBrightnessLevel;
 			R_FrameBuffer_SetDynamicUniforms2(NULL, NULL, NULL, NULL,NULL, NULL, NULL,NULL,NULL,NULL, (*drawSurf->surface == SF_MDX_GORE) ? &trueBool : &falseBool);
 		}
 
@@ -1023,6 +1031,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 			oldSurfaceType = *drawSurf->surface;
 			oldWorldSurfaceCategory = worldSurfaceCategory;
+			oldAverageBrightnessLevel = averageBrightnessLevel;
 
 			qglLoadMatrixf( backEnd.ori.modelMatrix ); 
 
@@ -1076,7 +1085,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		qglDepthRange (0, 1);
 	}
 
-
+	fboUniformsEx.averageBrightnessOverrideActive = qfalse;
+	fboUniformsEx.averageBrightnessOverride = 0.0f;
 	R_FrameBuffer_SetDynamicUniforms2(NULL, &falseBool, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &falseBool); // set gore to false again
 
 #if 0

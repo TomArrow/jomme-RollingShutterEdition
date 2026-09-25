@@ -1332,6 +1332,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 	qboolean depthMaskExplicit = qfalse;
 
 	stage->active = qtrue;
+	stage->hasFaceImage = qfalse;
 
 	while ( 1 )
 	{
@@ -3075,6 +3076,14 @@ static qboolean CollapseMultitexture( void ) {
 	stages[0].stateBits &= ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
 	stages[0].stateBits |= collapse[i].multitextureBlend;
 	stages[0].multitextureEnv = collapse[i].multitextureEnv;
+	stages[0].hasFaceImage = (qboolean)(stages[0].hasFaceImage || stages[1].hasFaceImage);
+	bool needAveraging = stages[0].averageBrightnessLevel && stages[1].averageBrightnessLevel;
+	stages[0].averageBrightnessLevel = stages[0].averageBrightnessLevel + stages[1].averageBrightnessLevel;
+	VectorAdd(stages[0].averageColor, stages[1].averageColor, stages[0].averageColor);
+	if (needAveraging) {
+		stages[0].averageBrightnessLevel *= 0.5f;
+		VectorScale(stages[0].averageColor, 0.5f, stages[0].averageColor);
+	}
 	if (cgenFinal) {
 		stages[0].rgbGen = cgenFinal;
 	}
@@ -3330,9 +3339,15 @@ static shader_t *FinishShader( void ) {
 	int				stage, lmStage;
 	qboolean		hasLightmapStage;
 	qboolean		vertexLightmap;
+	qboolean		hasFaceImageStage;
 
 	hasLightmapStage = qfalse;
 	vertexLightmap = qfalse;
+	hasFaceImageStage = qfalse;
+
+	float samples = 0;
+	float brightnessSum = 0;
+	vec3_t colorSum{ 0 };
 
 	//
 	// set sky stuff appropriate
@@ -3341,6 +3356,39 @@ static shader_t *FinishShader( void ) {
 		shader.sort = SS_ENVIRONMENT;
 		tr.sunSurfaceLight = shader.surfaceLight;
 		VectorCopy(shader.lightColor, tr.sunAmbient);
+	}
+
+	// check averagebrightnesslevels and stuff
+	for (stage = 0; stage < MAX_SHADER_STAGES; stage++)
+	{
+		shaderStage_t* pStage = &stages[stage];
+		if (!pStage->active)
+		{
+			break;
+		}
+		float samples = 0;
+		float brightnessSum = 0;
+		vec3_t colorSum{ 0 };
+		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+			textureBundle_t* bundle = &pStage->bundle[i];
+			for (int j = 0; j < MAX_IMAGE_ANIMATIONS; j++) {
+				if (!bundle->image[j]) {
+					break;
+				}
+				if (bundle->image[j]->averageBrightnessLevel) {
+					brightnessSum += bundle->image[j]->averageBrightnessLevel;
+					VectorAdd(colorSum, bundle->image[j]->averageColor, colorSum);
+					samples++;
+				}
+				if (bundle->image[j]->isFaceTexture) {
+					pStage->hasFaceImage = qtrue;
+				}
+			}
+		}
+		if (samples) {
+			pStage->averageBrightnessLevel = brightnessSum / samples;
+			VectorScale(colorSum, 1.0f / samples, pStage->averageColor);
+		}
 	}
 
 	//
@@ -3490,6 +3538,16 @@ static shader_t *FinishShader( void ) {
 			continue;
 		}
 
+		if (pStage->hasFaceImage) {
+			hasFaceImageStage = qtrue;
+		}
+
+		if (pStage->averageBrightnessLevel) {
+			brightnessSum += pStage->averageBrightnessLevel;
+			VectorAdd(colorSum, pStage->averageColor, colorSum);
+			samples++;
+		}
+
 		//
 		// default texture coordinate generation
 		//
@@ -3584,6 +3642,11 @@ static shader_t *FinishShader( void ) {
 		}
 	}
 
+	if (samples) {
+		shader.averageBrightnessLevel = brightnessSum / samples;
+		VectorScale(colorSum, 1.0f / samples, shader.averageColor);
+	}
+
 	if (stage > 1) {
 		// if the last stage is additive and its not the only stage, consider this as a kind of glow overlay and let us amplify its intensity later for hdr purposes
 		shaderStage_t* pStage = &stages[stage-1];
@@ -3611,6 +3674,7 @@ static shader_t *FinishShader( void ) {
 	}
 
 	shader.hasLightmapStage = hasLightmapStage;
+	shader.hasFaceImageStage = hasFaceImageStage;
 
 	// there are times when you will need to manually apply a sort to
 	// opaque alpha tested shaders that have later blend passes

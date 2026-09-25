@@ -2652,6 +2652,20 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	}
 
 	image = R_CreateImage( ( char * ) name, &picWrap, width, height, mipmap, allowPicmip, allowTC, glWrapClampMode, lightmap );
+
+	if ((strstr(name, "face") || strstr(name, "head"))) {
+		const char* s = name;
+		const char* ss = s;
+		while (ss = strchr(ss,'/')) {
+			ss++;
+			s = ss;
+		}
+		// only do this if the face/head is in the actual filename, ignoring the path
+		if (strstr(s, "face") || strstr(s, "head")) {
+			image->isFaceTexture = qtrue;
+		}
+	}
+
 	ri.Free( picWrap.ptr );
 	return image;
 }
