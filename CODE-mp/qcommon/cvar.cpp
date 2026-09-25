@@ -18,6 +18,7 @@ int			cvar_numIndexes;
 
 #define FILE_HASH_SIZE		256
 static	cvar_t*		hashTable[FILE_HASH_SIZE];
+static	cvar_t*		hashTableAlias[FILE_HASH_SIZE];
 
 cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force);
 
@@ -76,6 +77,12 @@ cvar_t *Cvar_FindVar( const char *var_name ) {
 	
 	for (var=hashTable[hash] ; var ; var=var->hashNext) {
 		if (!Q_stricmp(var_name, var->name)) {
+			return var;
+		}
+	}
+
+	for (var=hashTableAlias[hash] ; var ; var=var->hashNextAlias) {
+		if (!Q_stricmp(var_name, var->alias)) {
 			return var;
 		}
 	}
@@ -166,9 +173,29 @@ void	Cvar_CommandCompletion( void(*callback)(const char *s, const char* content)
 		else {
 			callback(cvar->name, cvar->string);
 		}
+		if (cvar->alias) {
+			if (cvar->latchedString) {
+				callback(cvar->alias, va("%s (latched:%s)", cvar->string, cvar->latchedString));
+			}
+			else {
+				callback(cvar->alias, cvar->string);
+			}
+		}
 	}
 }
 
+typedef struct autoAliasPreset_s {
+	const char* prefix;
+	const char* replacement;
+} autoAliasPreset_t;
+
+autoAliasPreset_t autoAliases[] = {
+	{"r_fboGLSLDlights","dlite_"},
+	{"r_fboGLSL","glsl_"},
+	{"r_fbo","fbo_"},
+};
+
+const int autoAliasesCount = sizeof(autoAliases) / sizeof(autoAliases[0]);
 
 /*
 ============
@@ -262,6 +289,23 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 	var->value = atof (var->string);
 	var->integer = atoi(var->string);
 	var->resetString = CopyString( var_value );
+	
+	var->alias = NULL;
+	for (int i = 0; i < autoAliasesCount; i++) {
+		autoAliasPreset_t* autoAlias = &autoAliases[i];
+		if (!Q_stricmpn(var->name, autoAlias->prefix, strlen(autoAlias->prefix))) {
+			int newStrSize = strlen(var->name) - strlen(autoAlias->prefix) + strlen(autoAlias->replacement) + 1;
+			char* newString = new char[newStrSize];
+			Com_sprintf(newString, newStrSize, "%s%s", autoAlias->replacement, var->name + strlen(autoAlias->prefix));
+			var->alias = CopyString(newString);
+			delete[] newString;
+
+			hash = generateHashValue(var->alias);
+			var->hashNextAlias = hashTableAlias[hash];
+			hashTableAlias[hash] = var;
+			break;
+		}
+	}
 
 	// link the variable in
 	var->next = cvar_vars;
