@@ -1424,11 +1424,23 @@ float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lig
 
 
 // direction mustt be in eye space and normalized
-vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, float modelBumpIntensity){
+vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided){
 	
 	//return vec4(1.0f);
 	vec3 maybeMirroredLightNormal =  twoSided && dot(referenceNormal,direction) < 0 ? -lightNormal : lightNormal;
-	if(dot(direction,referenceNormal)<0 && !twoSided) return vec4(0.0f);
+	// REMEMBER: IF WE SEE SHIMMER ON DARK SIDES OF OBJECTS, PUT A VERSION OF THIS BACK.
+	float intensity = 1.0f;
+	float referenceAlignment = dot(direction,referenceNormal);
+	if(referenceAlignment<0 && !twoSided){
+		if(referenceAlignment<-0.5){
+			return vec4(0.0f);
+		}
+		// fade out towards back
+		// cutting off hard leads to ugly seam due to calculateTextureNormal basically adding "noise" to the normal
+		// and thus no longer allowing us to have such a nice cutoff point.
+		// on the other hand, just allowing anything leads to shimmer on backsides of objects
+		intensity = (referenceAlignment+0.5f) * 2.0f; 
+	}
 	//if((stageLightmapBitmaskUniform & (1<<2))>0)
 	{
 		
@@ -1453,11 +1465,13 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
 			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/max(0.02f,totalDist);
 
-			ambientFactor = 1.0f - (   (1.0f-ambientFactor) * modelBumpIntensity );
-			color.xyz *= (1.0f-ambientFactor)*alignment*alignment*alignment+modelBumpIntensity*specIntensityTotal + ambientFactor;
+			//ambientFactor = 1.0f - (   (1.0f-ambientFactor) * modelBumpIntensity );
+			//color.xyz *= (1.0f-ambientFactor)*alignment*alignment*alignment+modelBumpIntensity*specIntensityTotal + ambientFactor;
+			color.xyz *= (1.0f-ambientFactor)*alignment*alignment*alignment+specIntensityTotal + ambientFactor;
 			//color.xyz = vec3(totalDist);
 			//color *= alignment*alignment*alignment+specIntensityTotal;
 			//color *= 100.0f;
+			color.xyz *= intensity;
 
 		//}
 	}
@@ -1635,7 +1649,11 @@ vec3 calculateTextureNormal(vec2 uvCoords, vec3 startPosition, vec3 referenceNor
 
 		//vec3 crossed = cross(place2-place1,place3-place1);
 		//return dot(crossed,crossed) > 0? -normalize(crossed) : vec3(0.0f);
-		return -normalize(cross(place2-place1,place3-place1));
+		vec3 newNormal = -normalize(cross(place2-place1,place3-place1));
+		if(isModelUniform > 0){
+			return mix(referenceNormal,newNormal,getModelBumpIntensity(color.xyz,length(startPosition)));
+		}
+		return newNormal;
 }
 
 
@@ -2567,11 +2585,10 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		//	gl_FragColor.x = 1.0f;
 		//}
 		//return;
-		float modelBumpIntensity = getModelBumpIntensity(outFragColor.xyz,viewerDistance);
-		vec4 multnew = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,modelBumpIntensity);
+		vec4 multnew = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
 		vertexLitMult = mix(vertexLitMult,multnew,isSimpleTCGenEnv ? 0.75f:1.0f);
 		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0){ // TODO fix this for flag?
-			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,modelBumpIntensity).xyz * MULTDIVIDE255;
+			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided).xyz * MULTDIVIDE255;
 		}
 		//vertexLitMult = vec4(lightDir*0.5f+vec3(0.5f),1.0f);
 		outFragColor.xyz -= boringShadowSubtractVal;
