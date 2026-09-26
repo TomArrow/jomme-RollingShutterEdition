@@ -2094,8 +2094,8 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLModelBumpProximitySkinFadeTarget = ri.Cvar_Get( "r_fboGLSLModelBumpProximitySkinFadeTarget", "0.1", CVAR_ARCHIVE);
 	r_fboGLSLModelBumpIntensity = ri.Cvar_Get( "r_fboGLSLModelBumpIntensity", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLModelBumpIntensitySkin = ri.Cvar_Get( "r_fboGLSLModelBumpIntensitySkin", "1.0", CVAR_ARCHIVE);
-	r_fboGLSLModelBumpIntensityFaceTex = ri.Cvar_Get( "r_fboGLSLModelBumpIntensityFaceTex", "1.0", CVAR_ARCHIVE);
-	r_fboGLSLModelBumpIntensityFaceTexSkin = ri.Cvar_Get( "r_fboGLSLModelBumpIntensityFaceTexSkin", "1.0", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpIntensityFaceTex = ri.Cvar_Get( "r_fboGLSLModelBumpIntensityFaceTex", "0.25", CVAR_ARCHIVE);
+	r_fboGLSLModelBumpIntensityFaceTexSkin = ri.Cvar_Get( "r_fboGLSLModelBumpIntensityFaceTexSkin", "0.2", CVAR_ARCHIVE);
 	r_fboGLSLFastPreview = ri.Cvar_Get( "r_fboGLSLFastPreview", "1", CVAR_ARCHIVE);
 	r_fboGLSLParallaxMapping = ri.Cvar_Get( "r_fboGLSLParallaxMapping", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_fboGLSLGigaTCGen = ri.Cvar_Get( "r_fboGLSLGigaTCGen", "1", CVAR_ARCHIVE);

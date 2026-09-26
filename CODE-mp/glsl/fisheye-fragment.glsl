@@ -145,6 +145,19 @@ float gaussian_rand( vec2 n )
     return tmp + 0.5;
 }
 
+
+
+uniform float modelBumpProximityFadeUniform;
+uniform float modelBumpProximityFadeTargetUniform;
+uniform float modelBumpProximitySkinFadeUniform;
+uniform float modelBumpProximitySkinFadeTargetUniform;
+uniform float modelBumpIntensityUniform;
+uniform float modelBumpIntensitySkinUniform;
+uniform float modelBumpIntensityFaceTexUniform;
+uniform float modelBumpIntensityFaceTexSkinUniform;
+uniform int textureIsFaceUniform; // texture name contains "head" or "face"
+uniform int haveLightmapDistDataUniform;
+
 /*
 float colorSkinProbability_Reference(vec3 rgb){
 	const vec3 minsrgb = vec3(0.372549,0.156862,0.078431);
@@ -302,7 +315,31 @@ float colorSkinProbability(vec3 rgb){
 	return clamp(mult,0.0,1.0);
 }
 
+float getModelBumpIntensity(vec3 color, float dist){
+	float value = 1.0f;
+	float skinValue = 0.0f;
+	bool modelBumpProximitySkinFade = modelBumpProximitySkinFadeUniform > 0 && dist < modelBumpProximitySkinFadeUniform;
+	bool needSkinValue = textureIsFaceUniform > 0 && modelBumpIntensityFaceTexSkinUniform != 1.0f || modelBumpIntensitySkinUniform != 1.0f || modelBumpProximitySkinFade;
+	if(needSkinValue){
+		skinValue = colorSkinProbability(color);
+	}
 
+	value *= modelBumpIntensityUniform;
+	if(modelBumpProximityFadeUniform > 0 && dist < modelBumpProximityFadeUniform){
+		value *= mix(modelBumpProximityFadeTargetUniform,1.0,dist/modelBumpProximityFadeUniform);
+	}
+	if(textureIsFaceUniform > 0){
+		value *= modelBumpIntensityFaceTexUniform;
+		value *= (1.0f-skinValue) + skinValue * modelBumpIntensityFaceTexSkinUniform; // skin color sensitive
+	}
+
+	// skin color sensitive:
+	value *= (1.0f-skinValue) + skinValue * modelBumpIntensitySkinUniform;
+	if(modelBumpProximitySkinFade){
+		value *= (1.0f-skinValue) + skinValue * mix( modelBumpProximitySkinFadeTargetUniform, 1.0, dist/modelBumpProximitySkinFadeUniform ); 
+	}
+	return value;
+}
 
 uniform uint bindingRectImageBitmaskUniform;
 
@@ -386,16 +423,6 @@ uniform float dLightSpecDistanceMinUniform; // no decay up to this distance
 uniform float dLightAddPowUniform;
 uniform float dLightAddPostPowMultUniform;
 
-uniform float modelBumpProximityFadeUniform;
-uniform float modelBumpProximityFadeTargetUniform;
-uniform float modelBumpProximitySkinFadeUniform;
-uniform float modelBumpProximitySkinFadeTargetUniform;
-uniform float modelBumpIntensityUniform;
-uniform float modelBumpIntensitySkinUniform;
-uniform float modelBumpIntensityFaceTexUniform;
-uniform float modelBumpIntensityFaceTexSkinUniform;
-uniform int textureIsFaceUniform; // texture name contains "head" or "face"
-uniform int haveLightmapDistDataUniform;
 
 uniform int parallaxMapLayersUniform;
 uniform float parallaxMapGammaUniform;
@@ -1397,7 +1424,7 @@ float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lig
 
 
 // direction mustt be in eye space and normalized
-vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided){
+vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, float modelBumpIntensity){
 	
 	//return vec4(1.0f);
 	vec3 maybeMirroredLightNormal =  twoSided && dot(referenceNormal,direction) < 0 ? -lightNormal : lightNormal;
@@ -1426,7 +1453,8 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 			//vec3 addVal = color.xyz*specIntensity*dLightSpecIntensityUniform/totalDist;
 			float specIntensityTotal = 300.0f*specIntensity*dLightSpecIntensityUniform/max(0.02f,totalDist);
 
-			color.xyz *= (1.0f-ambientFactor)*alignment*alignment*alignment+specIntensityTotal + ambientFactor;
+			ambientFactor = 1.0f - (   (1.0f-ambientFactor) * modelBumpIntensity );
+			color.xyz *= (1.0f-ambientFactor)*alignment*alignment*alignment+modelBumpIntensity*specIntensityTotal + ambientFactor;
 			//color.xyz = vec3(totalDist);
 			//color *= alignment*alignment*alignment+specIntensityTotal;
 			//color *= 100.0f;
@@ -2539,10 +2567,11 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		//	gl_FragColor.x = 1.0f;
 		//}
 		//return;
-		vec4 multnew = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
+		float modelBumpIntensity = getModelBumpIntensity(outFragColor.xyz,viewerDistance);
+		vec4 multnew = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,modelBumpIntensity);
 		vertexLitMult = mix(vertexLitMult,multnew,isSimpleTCGenEnv ? 0.75f:1.0f);
 		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0){ // TODO fix this for flag?
-			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided).xyz * MULTDIVIDE255;
+			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,modelBumpIntensity).xyz * MULTDIVIDE255;
 		}
 		//vertexLitMult = vec4(lightDir*0.5f+vec3(0.5f),1.0f);
 		outFragColor.xyz -= boringShadowSubtractVal;
