@@ -140,6 +140,7 @@ typedef struct {
 	void	(*MMEGetCGameJitterInfo)(jitterSegmentAdvanceInfo_t* info);
 	void	(*ParseWaveformAlone)(char** text, waveForm_t* output);
 	float	(*EvalWaveForm)(const waveForm_t* wf);
+	void	(*GetShaderInfo)(int shaderNum, const char** shaderName, const char** shaderText);
 } refexport_t;
 
 //

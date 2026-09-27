@@ -1701,7 +1701,9 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.MMEGetCGameJitterInfo = R_MME_GetCGameJitterInfo;
 	re.FontRatioFix = RE_FontRatioFix;
 
-	re.DemoRandomSeed = R_DemoRandomSeed;
+	re.DemoRandomSeed = R_DemoRandomSeed; 
+	
+	re.GetShaderInfo = R_GetShaderInfo;
 
 	re.ParseWaveformAlone = ParseWaveformAlone;
 	re.EvalWaveForm = EvalWaveForm;

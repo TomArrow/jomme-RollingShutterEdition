@@ -1,6 +1,7 @@
 // cl_scrn.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "client.h"
+#include <algorithm>
 
 extern console_t con;
 qboolean	scr_initialized;		// ready to draw
@@ -10,6 +11,7 @@ cvar_t		*cl_debuggraph;
 cvar_t		*cl_graphheight;
 cvar_t		*cl_graphscale;
 cvar_t		*cl_graphshift;
+cvar_t		*cl_showShader;
 
 /*
 ================
@@ -343,11 +345,12 @@ Coordinates are at 640 by 480 virtual resolution
 void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor ) {
 	vec4_t		color;
 	const char	*s;
-	int			xx;
+	int			xx, yy;
 
 	// draw the colored text
 	s = string;
 	xx = x;
+	yy = y;
 	re.SetColor( setColor );
 	while ( *s ) {
 		if (Q_IsColorStringHex(s)) {
@@ -377,8 +380,17 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 			s += 2;
 			continue;
 		}
-		SCR_DrawSmallChar( xx, y, *s );
-		xx += SMALLCHAR_WIDTH;
+		if (*s == '\n') {
+			yy += SMALLCHAR_HEIGHT;
+			xx = x;
+		}
+		else if (*s == '\t') {
+			xx += SMALLCHAR_WIDTH * 4;
+		}
+		else {
+			SCR_DrawSmallChar(xx, yy, *s);
+			xx += SMALLCHAR_WIDTH;
+		}
 		s++;
 	}
 	re.SetColor( NULL );
@@ -535,13 +547,49 @@ void SCR_Init( void ) {
 	cl_debuggraph = Cvar_Get ("debuggraph", "0", CVAR_CHEAT);
 	cl_graphheight = Cvar_Get ("graphheight", "32", CVAR_CHEAT);
 	cl_graphscale = Cvar_Get ("graphscale", "1", CVAR_CHEAT);
-	cl_graphshift = Cvar_Get ("graphshift", "0", CVAR_CHEAT);
+	cl_graphshift = Cvar_Get ("graphshift", "0", CVAR_CHEAT); 
+	cl_showShader = Cvar_Get("cl_showShader", "0", CVAR_ARCHIVE);
 
 	scr_initialized = qtrue;
 }
 
 
 //=======================================================
+
+
+static void SCR_DrawShowShader() {
+	if (!cl_showShader->integer) {
+		return;
+	}
+	trace_t trace;
+	vec3_t org, to;
+	int shaderNum;
+	int level = cl_showShader->integer;
+	qboolean everything = (qboolean)(level > 0);
+	level = std::abs(level);
+
+	VectorCopy(cl.lastRefdef.vieworg, org);
+
+	VectorMA(org, 99999.0f, cl.lastRefdef.viewaxis[0], to);
+
+	// find target
+	CM_BoxTrace(&trace, org, to, NULL, NULL, 0, everything ? -1 : MASK_SOLID, qfalse, &shaderNum);
+	VectorCopy(trace.endpos, to);
+
+	if (shaderNum <= -1) {
+		return;
+	}
+
+	const char* shaderName = NULL, *shaderInfo = NULL;
+	re.GetShaderInfo(shaderNum, &shaderName, cl_showShader->integer > 1 ? &shaderInfo : NULL);
+
+	if (shaderName) {
+		SCR_DrawSmallStringExt(300, 120, va("shader: %s", shaderName), colorWhite, qfalse);
+	}
+	if (shaderInfo && cl_showShader->integer > 1) {
+		SCR_DrawSmallStringExt(300, 140, va("shadertext:\n%s", shaderInfo), colorWhite, qfalse);
+	}
+}
 
 /*
 ==================
@@ -616,6 +664,8 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( cls.keyCatchers & KEYCATCH_UI && uivm ) {
 		VM_Call(uivm, UI_REFRESH, (int)(cls.realtime + 0.5));
 	}
+
+	SCR_DrawShowShader();
 
 	// console draws next
 	Con_DrawConsole ();

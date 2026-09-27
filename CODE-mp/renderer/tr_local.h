@@ -1940,6 +1940,7 @@ void		R_ShaderList_f( void );
 void		R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
 void		R_DeActivateHackPortalTex();
 
+void		R_GetShaderInfo(int shaderNum, const char** shaderName, const char** shaderText);
 /*
 ====================================================================
 

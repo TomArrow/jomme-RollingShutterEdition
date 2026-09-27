@@ -450,6 +450,7 @@ void CM_TraceThroughPatch( traceWork_t *tw, cPatch_t *patch ) {
 
 	if ( tw->trace.fraction < oldFrac ) {
 		tw->trace.surfaceFlags = patch->surfaceFlags;
+		tw->surfaceShaderNum = patch->shaderNum;
 		tw->trace.contents = patch->contents;
 	}
 }
@@ -632,6 +633,7 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush ) {
 			tw->trace.fraction = enterFrac;
 			tw->trace.plane = *clipplane;
 			tw->trace.surfaceFlags = leadside->surfaceFlags;
+			tw->surfaceShaderNum = leadside->shaderNum;
 			tw->trace.contents = brush->contents;
 		}
 	}
@@ -1127,7 +1129,7 @@ CM_Trace
 */
 void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
 						  const vec3_t mins, const vec3_t maxs,
-						  clipHandle_t model, const vec3_t origin, int brushmask, int capsule, sphere_t *sphere ) {
+						  clipHandle_t model, const vec3_t origin, int brushmask, int capsule, sphere_t *sphere, int* shaderNum) {
 	int			i;
 	traceWork_t	tw;
 	vec3_t		offset;
@@ -1142,6 +1144,10 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
 	// fill in a default trace
 	Com_Memset( &tw, 0, sizeof(tw) );
 	tw.trace.fraction = 1;	// assume it goes the entire distance until shown otherwise
+	tw.surfaceShaderNum = -1;
+	if (shaderNum) {
+		*shaderNum = -1;
+	}
 	VectorCopy(origin, tw.modelOrigin);
 
 	if (!cm.numNodes) {
@@ -1337,6 +1343,10 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
                tw.trace.fraction == 1.0 ||
                VectorLengthSquared(tw.trace.plane.normal) > 0.9999);
 	*results = tw.trace;
+
+	if (shaderNum) {
+		*shaderNum = tw.surfaceShaderNum;
+	}
 }
 
 /*
@@ -1346,8 +1356,8 @@ CM_BoxTrace
 */
 void CM_BoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
 						  const vec3_t mins, const vec3_t maxs,
-						  clipHandle_t model, int brushmask, int capsule ) {
-	CM_Trace( results, start, end, mins, maxs, model, vec3_origin, brushmask, capsule, NULL );
+						  clipHandle_t model, int brushmask, int capsule, int* shaderNum) {
+	CM_Trace( results, start, end, mins, maxs, model, vec3_origin, brushmask, capsule, NULL, shaderNum);
 }
 
 /*
@@ -1361,7 +1371,7 @@ rotating entities
 void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
 						  const vec3_t mins, const vec3_t maxs,
 						  clipHandle_t model, int brushmask,
-						  const vec3_t origin, const vec3_t angles, int capsule ) {
+						  const vec3_t origin, const vec3_t angles, int capsule, int* shaderNum) {
 	trace_t		trace;
 	vec3_t		start_l, end_l;
 	qboolean	rotated;
@@ -1432,7 +1442,7 @@ void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t 
 	}
 
 	// sweep the box through the model
-	CM_Trace( &trace, start_l, end_l, symetricSize[0], symetricSize[1], model, origin, brushmask, capsule, &sphere );
+	CM_Trace( &trace, start_l, end_l, symetricSize[0], symetricSize[1], model, origin, brushmask, capsule, &sphere, shaderNum );
 
 	// if the bmodel was rotated and there was a collision
 	if ( rotated && trace.fraction != 1.0 ) {

@@ -131,6 +131,9 @@ typedef struct {
 
 	qboolean		submodelBypass;
 
+	refdef_t		lastRefdef;
+	int				lastRefDefFrameNumber;
+
 } clientActive_t;
 
 extern	clientActive_t		cl;
@@ -372,6 +375,8 @@ extern	cvar_t	*cl_showSend;
 extern	cvar_t	*cl_timeNudge;
 extern	cvar_t	*cl_showTimeDelta;
 extern	cvar_t	*cl_freezeDemo;
+
+extern	cvar_t	*cl_showShader;
 
 extern	cvar_t	*cl_drawRecording;
 

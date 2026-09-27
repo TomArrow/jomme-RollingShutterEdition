@@ -737,6 +737,14 @@ int CL_CgameSystemCalls( int *args ) {
 		re.AddAdditiveLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6) );
 		return 0;
 	case CG_R_RENDERSCENE:
+		if (cl.lastRefDefFrameNumber != com_frameNumber) {
+			// only do this on the first renderscene call.
+			// this is bravely assuming the first is the main thing.
+			// usually it is. first the main scene is drawn and MAYBE later some
+			// flags on scoreboard and such
+			cl.lastRefDefFrameNumber = com_frameNumber;
+			cl.lastRefdef = *(const refdef_t*)VMA(1);
+		}
 		re.RenderScene( (const refdef_t *)VMA(1) );
 		return 0;
 	case CG_R_APPLYPOSTPROCESSING:
