@@ -581,9 +581,10 @@ static void SCR_DrawShowShader() {
 	}
 
 	const char* shaderName = NULL, *shaderInfo = NULL;
-	re.GetShaderInfo(shaderNum, &shaderName, cl_showShader->integer > 1 ? &shaderInfo : NULL);
+	re.GetShaderInfo(shaderNum, &shaderName, cl_showShader->integer > 1 ? &shaderInfo : NULL, true);
 
 	if (shaderName) {
+		Q_strncpyz(cl.lastSeenShaderName,shaderName,sizeof(cl.lastSeenShaderName));
 		SCR_DrawSmallStringExt(300, 120, va("shader: %s", shaderName), colorWhite, qfalse);
 	}
 	if (shaderInfo && cl_showShader->integer > 1) {

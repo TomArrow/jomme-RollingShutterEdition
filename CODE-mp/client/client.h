@@ -133,6 +133,7 @@ typedef struct {
 
 	refdef_t		lastRefdef;
 	int				lastRefDefFrameNumber;
+	char			lastSeenShaderName[MAX_QPATH];
 
 } clientActive_t;
 

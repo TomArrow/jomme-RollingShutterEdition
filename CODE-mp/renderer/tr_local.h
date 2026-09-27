@@ -549,6 +549,7 @@ typedef struct shader_s {
 	char		name[MAX_QPATH];		// game path, including extension
 	int			lightmapIndex[MAXLIGHTMAPS_REAL];			// for a shader to match, both name and lightmapIndex must match
 	byte		styles[MAXLIGHTMAPS_REAL];
+	qboolean	mipRawImage, vertexLightmapWithAlpha; // to properly redo overrides?
 
 	int			index;					// this shader == tr.shaders[index]
 	int64_t		sortedIndex;			// this shader == tr.sortedShaders[sortedIndex]
@@ -1931,19 +1932,21 @@ qhandle_t		 RE_RegisterShaderNoMipHUD( const char *name );
 qhandle_t		 RE_RegisterShaderWithFlags(const char* name, int shaderFlags);
 qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte *styles, image_t *image, qboolean mipRawImage);
 
-shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage,qboolean vertexLightmapWithAlpha = qfalse );
+shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage,qboolean vertexLightmapWithAlpha = qfalse, shader_t* targetShader = NULL );
 shader_t	*R_GetShaderByHandle( qhandle_t hShader );
 shader_t	*R_GetShaderByState( int index, long *cycleTime );
 shader_t *R_FindShaderByName( const char *name );
 //mme
-char	*R_FindShaderText( const char *shadername );
+const char	*R_FindShaderText( const char *shadername );
 
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
 void		R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
 void		R_DeActivateHackPortalTex();
 
-void		R_GetShaderInfo(int shaderNum, const char** shaderName, const char** shaderText);
+void		R_GetShaderInfo(int shaderNum, const char** shaderName, const char** shaderText, bool colorShaderText);
+void		R_ShaderOverrides_Add(const char* shaderName, int stageIndex, const char* key, const char* value);
+void		R_ShaderOverrides_Remove(const char* shaderName, int stageIndex, const char* key);
 /*
 ====================================================================
 

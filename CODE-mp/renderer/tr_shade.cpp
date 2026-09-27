@@ -1730,7 +1730,7 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen, qboolean isHU
 		VectorScale(variousStuffMultiplier, r_LightBrightness->value, variousStuffMultiplier);
 	}
 
-	if (tess.shader->isWorldShader && pStage->isAdditiveGlow && r_additiveWorldGlow->value != 1.0f) {
+	if (tess.shader->isWorldShader && pStage->isAdditiveGlow && r_additiveWorldGlow->value != 1.0f && !pStage->rgbMult) {
 		VectorScale(variousStuffMultiplier, r_additiveWorldGlow->value, variousStuffMultiplier);
 	}
 	

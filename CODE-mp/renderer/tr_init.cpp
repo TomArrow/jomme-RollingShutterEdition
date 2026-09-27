@@ -1709,6 +1709,8 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.DemoRandomSeed = R_DemoRandomSeed; 
 	
 	re.GetShaderInfo = R_GetShaderInfo;
+	re.ShaderOverrides_Add = R_ShaderOverrides_Add;
+	re.ShaderOverrides_Remove = R_ShaderOverrides_Remove;
 
 	re.ParseWaveformAlone = ParseWaveformAlone;
 	re.EvalWaveForm = EvalWaveForm;

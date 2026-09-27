@@ -2506,6 +2506,64 @@ void CL_SetForcePowers_f( void ) {
 	return;
 }
 
+void CL_ShaderOverride_f(void) {
+	if (!cl.lastSeenShaderName[0] || !cl_showShader->integer) {
+		Com_Printf("Cannot add shaderoverride. Don't know what shader. Activate cl_showShader and point at the shader you want.\n");
+		return;
+	}
+	if (Cmd_Argc() < 2) {
+		Com_Printf("usage: shaderOverride [<stageIndex>] <key> [<value>]\n");
+		Com_Printf("Without stageindex, override is a shader override, not a stage override.\n");
+		return;
+	}
+	int stageIndex = -1;
+	char* arg;
+	int argIndex = 1;
+	arg = Cmd_Argv(argIndex);
+	if (*arg >= '0' && *arg <= '9') {
+		stageIndex = atoi(arg);
+		if (Cmd_Argc() < 3) {
+			Com_Printf("usage: shaderOverride [<stageIndex>] <key> [<value>]\n");
+			Com_Printf("Without stageindex, override is a shader override, not a stage override.\n");
+			return;
+		}
+		argIndex++;
+	}
+	arg = Cmd_Argv(argIndex);
+	char* arg2 = Cmd_ArgsFrom(argIndex+1); // we don't rly need to check if it exists. returns empty string otherwise anyway, which is fine for us
+
+	re.ShaderOverrides_Add(cl.lastSeenShaderName,stageIndex,arg,arg2);
+}
+void CL_ShaderOverrideRemove_f(void) {
+	if (!cl.lastSeenShaderName[0] || !cl_showShader->integer) {
+		Com_Printf("Cannot remove shaderoverride. Don't know what shader. Activate cl_showShader and point at the shader you want.\n");
+		return;
+	}
+	if (Cmd_Argc() < 2) {
+		Com_Printf("usage: shaderOverrideRemove [<stageIndex>] <key>\n");
+		Com_Printf("Without stageindex, override is a shader override, not a stage override.\n");
+		return;
+	}
+	int stageIndex = -1;
+	char* arg;
+	int argIndex = 1;
+	arg = Cmd_Argv(argIndex);
+	if (*arg >= '0' && *arg <= '9') {
+		stageIndex = atoi(arg);
+		if (Cmd_Argc() < 3) {
+			Com_Printf("usage: shaderOverrideRemove [<stageIndex>] <key>\n");
+			Com_Printf("Without stageindex, override is a shader override, not a stage override.\n");
+			return;
+		}
+		argIndex++;
+	}
+	arg = Cmd_Argv(argIndex);
+
+	re.ShaderOverrides_Remove(cl.lastSeenShaderName,stageIndex,arg);
+}
+
+
+
 #ifdef G2_COLLISION_ENABLED
 #define G2_VERT_SPACE_CLIENT_SIZE 256
 #endif
@@ -2680,6 +2738,9 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("demoList", CL_DemoList_f);
 	Cmd_AddCommand ("demoCut", CL_DemoCut_f);
 	Cmd_AddCommand ("demoListNext", CL_DemoListNext_f );
+
+	Cmd_AddCommand ("shaderOverride", CL_ShaderOverride_f );
+	Cmd_AddCommand ("shaderOverrideRemove", CL_ShaderOverrideRemove_f);
 
 	Cmd_AddCommand ("reloadGLSL", R_FrameBuffer_ReloadGLSL);
 

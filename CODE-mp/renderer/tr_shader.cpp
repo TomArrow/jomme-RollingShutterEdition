@@ -1,4 +1,12 @@
 #include "tr_local.h"
+#include <vector>
+#include <map>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
+
+#define	MAX_SHADER_FILES	4096
 
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
@@ -290,6 +298,424 @@ static long generateHashValue( const char *fname, const int size ) {
 	hash = (hash ^ (hash >> 10) ^ (hash >> 20));
 	hash &= (size-1);
 	return hash;
+}
+
+static const char* FindShaderInShaderText(const char* shadername, bool colorShaderText = false);
+
+bool comparecharsInsensitive(unsigned char a, unsigned char b) {
+	return std::tolower(a) < std::tolower(b);
+}
+struct CaseInsensitiveCompare {
+	bool operator() (std::string_view a, std::string_view b) const {
+		return std::lexicographical_compare(
+			a.begin(), a.end(),
+			b.begin(), b.end(),
+			comparecharsInsensitive
+		);
+	}
+};
+
+typedef std::map<string, string, CaseInsensitiveCompare> overridesMap;
+
+class ShaderOverride {
+public:
+	overridesMap overrides;
+	std::map<int, overridesMap> stageOverrides;
+	bool changed = true;
+};
+
+std::map<std::string,ShaderOverride> shaderOverrides;
+
+// before adding overrides, dont forget COM_StripExtension( shaderName, strippedName )
+void R_ShaderOverrides_Apply() {
+	for (auto& [name,data] : shaderOverrides) {
+		if (!data.changed) {
+			continue;
+		}
+		int hash = generateHashValue(name.c_str(),FILE_HASH_SIZE);
+		for (shader_t* sh = hashTable[hash]; sh; sh = sh->next) {
+			if (Q_stricmp(sh->name,name.c_str())) {
+				continue;
+			}
+
+			// make a copy of these since findshader can technically alter them.
+			int			lightmapIndex[MAXLIGHTMAPS_REAL];
+			byte		styles[MAXLIGHTMAPS_REAL];
+			memcpy(lightmapIndex,sh->lightmapIndex,sizeof(lightmapIndex));
+			memcpy(styles,sh->styles,sizeof(styles));
+
+			R_FindShader(name.c_str(), lightmapIndex, styles, sh->mipRawImage, sh->vertexLightmapWithAlpha, sh);
+		}
+		data.changed = false;
+	}
+}
+
+qboolean R_ShaderOverrideStage_Parse(ShaderOverride& shaderOverride, overridesMap& stageOverrides,const char** text, const char* shaderName, int stageNum) {
+	char* token;
+
+
+	while (1)
+	{
+		token = COM_ParseExt(text, qtrue);
+		if (!token[0])
+		{
+			ri.Printf(PRINT_WARNING, "WARNING: no concluding '}' in shader override %s stage %d\n", shaderName, stageNum);
+			return qfalse;
+		}
+
+		// end of shader definition
+		if (token[0] == '}')
+		{
+			break;
+		}
+		// stage definition
+		else if (token[0] == '{')
+		{
+			ri.Printf(PRINT_WARNING, "WARNING: unexpected '{' in shader override %s stage %d\n", shaderName, stageNum);
+			return qfalse;
+		}
+		else
+		{
+			std::string key = token;
+			std::stringstream restOfLine;
+			int parts = 0;
+			while (*(token = COM_ParseExt(text, qfalse))) {
+				if (parts > 0) {
+					restOfLine << " ";
+				}
+				restOfLine << token;
+				parts++;
+			}
+			stageOverrides[key] = restOfLine.str();
+			shaderOverride.changed = true;
+		}
+	}
+
+	return qtrue;
+	
+}
+qboolean R_ShaderOverride_Parse(ShaderOverride& shaderOverride,const char** text, const char* shaderName) {
+	char* token;
+	int stageCount = 0;
+
+	token = COM_ParseExt(text, qtrue);
+	if (token[0] != '{')
+	{
+		ri.Printf(PRINT_WARNING, "WARNING: expecting '{', found '%s' instead in shader override '%s'\n", token, shaderName);
+		return qfalse;
+	}
+
+	while (1)
+	{
+		token = COM_ParseExt(text, qtrue);
+		if (!token[0])
+		{
+			ri.Printf(PRINT_WARNING, "WARNING: no concluding '}' in shader override %s\n", shaderName);
+			return qfalse;
+		}
+
+		// end of shader definition
+		if (token[0] == '}')
+		{
+			break;
+		}
+		// stage definition
+		else if (token[0] == '{')
+		{
+			if (!R_ShaderOverrideStage_Parse(shaderOverride,shaderOverride.stageOverrides[stageCount],text,shaderName,stageCount))
+			{
+				return qfalse;
+			}
+			if (!shaderOverride.stageOverrides[stageCount].size()) {
+				shaderOverride.stageOverrides.erase(stageCount);
+			}
+			stageCount++;
+			continue;
+		}
+		else
+		{
+			std::string key = token;
+			std::stringstream restOfLine;
+			int parts = 0;
+			while (*(token = COM_ParseExt(text, qfalse))) {
+				if (parts > 0) {
+					restOfLine << " ";
+				}
+				restOfLine << token;
+				parts++;
+			}
+			shaderOverride.overrides[key] = restOfLine.str();
+			shaderOverride.changed = true;
+		}
+	}
+
+	return qtrue;
+	
+}
+
+qboolean R_ShaderOverrides_Parse(const char *s) {
+	const char* token;
+	char shaderName[MAX_QPATH];
+
+	do {
+		token = COM_ParseExt(&s, qtrue);
+		if (!token[0])
+		{
+			if (!s) {
+				return qtrue;
+			}
+			ri.Printf(PRINT_WARNING, "WARNING: missing name for shader override\n");
+			return qfalse;
+		}
+		Q_strncpyz(shaderName, token, sizeof(shaderName));
+		COM_StripExtension(shaderName, shaderName);
+
+		R_ShaderOverride_Parse(shaderOverrides[shaderName],&s, shaderName);
+	} while (s);
+	return qtrue;
+}
+
+void R_ShaderOverrides_Load(const char* path) {
+	char** shaderOverrideFiles;
+	char* buffer;
+	char* p;
+	int numShaderOverrideFiles;
+	int i;
+	char* oldp, * token, * hashMem;
+	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
+
+	long sum = 0;
+	// scan for shader files
+	shaderOverrideFiles = ri.FS_ListFiles(path, ".shaderOverrides", &numShaderOverrideFiles);
+
+	if (!shaderOverrideFiles || !numShaderOverrideFiles)
+	{
+		ri.Printf(PRINT_WARNING, "WARNING: no shader override files found\n");
+		return;
+	}
+
+	shaderOverrides.clear();
+
+	if (numShaderOverrideFiles > MAX_SHADER_FILES) {
+		numShaderOverrideFiles = MAX_SHADER_FILES;
+	}
+
+	// load and parse shader files
+	for (i = 0; i < numShaderOverrideFiles; i++)
+	{
+		char filename[MAX_QPATH];
+
+		Com_sprintf(filename, sizeof(filename), "%s/%s", path, shaderOverrideFiles[i]);
+		ri.Printf(PRINT_ALL, "...loading '%s'\n", filename);
+		int len = ri.FS_ReadFile(filename, (void**)&buffer);
+		if (!buffer) {
+			ri.Error(ERR_DROP, "Couldn't load %s", filename);
+		}
+		char* textBuffer = new char[len + 1];
+		if (!textBuffer) {
+			ri.Error(ERR_DROP, "Couldn't load %s (failed to create text buffer)", filename);
+		}
+		memcpy(textBuffer,buffer,len);
+		textBuffer[len] = '\0';
+
+		ri.FS_FreeFile((void*)buffer);
+
+		R_ShaderOverrides_Parse(textBuffer);
+
+		delete[] textBuffer;
+	}
+
+	ri.FS_FreeFileList(shaderOverrideFiles);
+
+
+	R_ShaderOverrides_Apply();
+}
+
+void R_ShaderOverrides_Persist() {
+	std::stringstream ss;
+	std::stringstream ssFull;
+	for (auto& [name, data] : shaderOverrides) {
+		ss << "\n" << name << "\n{";
+		
+		for (auto& [key, value] : data.overrides) {
+			ss << "\n\t" << key << " " << value;
+		}
+
+		int nextStage = 0;
+		for (auto& [stage, stageOverrides] : data.stageOverrides) {
+			for (; nextStage < stage; nextStage++) { // fill with empty stages to keep things consistent
+				ss << "\n\t{\n\t}";
+			}
+			ss << "\n\t{";
+			for (auto& [key, value] : stageOverrides) {
+				ss << "\n\t\t" << key << " " << value;
+			}
+			ss << "\n\t}";
+			nextStage++;
+		}
+
+		ss << "\n}\n";
+
+		const char* fullShaderText = FindShaderInShaderText(name.c_str());
+		if (fullShaderText) {
+			ssFull << "\n" << name << "\n" << fullShaderText << "\n";
+		}
+	}
+
+	fileHandle_t f = FS_FOpenFileWrite("shaderOverrides/auto.shaderOverrides");
+	if (!f) {
+		Com_Printf("Unable to persist shaderoverrides.\n");
+		return;
+	}
+
+	std::string overridesString = ss.str();
+	FS_Write(overridesString.c_str(), overridesString.size() + 1, f);
+
+	FS_FCloseFile(f);
+
+	// we dont really need this for loading, it's just for anyone who might wanna reuse the adjusted shader
+	f = FS_FOpenFileWrite("shaderOverrides/auto_applied.shader");
+	if (!f) {
+		Com_Printf("Unable to save applied shaderoverrides.\n");
+		return;
+	}
+
+	overridesString = ssFull.str();
+	FS_Write(overridesString.c_str(), overridesString.size() + 1, f);
+
+	FS_FCloseFile(f);
+
+	R_ShaderOverrides_Load("shaderOverrides");
+}
+
+
+void R_ShaderOverrides_Add(const char* shaderName, int stageIndex, const char* key, const char* value) {
+	char		strippedName[MAX_QPATH];
+	Q_strncpyz(strippedName, shaderName, sizeof(strippedName));
+	COM_StripExtension(strippedName,strippedName);
+	if (stageIndex < 0) {
+		shaderOverrides[strippedName].overrides[key] = value;
+		shaderOverrides[strippedName].changed = true;
+	}
+	else {
+		shaderOverrides[strippedName].stageOverrides[stageIndex][key] = value;
+		shaderOverrides[strippedName].changed = true;
+	}
+	R_ShaderOverrides_Apply();
+	R_ShaderOverrides_Persist();
+}
+
+void R_ShaderOverrides_Remove(const char* shaderName, int stageIndex, const char* key) {
+	char		strippedName[MAX_QPATH];
+	Q_strncpyz(strippedName, shaderName, sizeof(strippedName));
+	COM_StripExtension(strippedName, strippedName);
+	if (stageIndex < 0) {
+		if (shaderOverrides[strippedName].overrides.find(key) != shaderOverrides[strippedName].overrides.end()) {
+			shaderOverrides[strippedName].overrides.erase(key);
+		}
+		shaderOverrides[strippedName].changed = true;
+	}
+	else {
+		if (shaderOverrides[strippedName].stageOverrides[stageIndex].find(key) != shaderOverrides[strippedName].stageOverrides[stageIndex].end()) {
+			shaderOverrides[strippedName].stageOverrides[stageIndex].erase(key);
+		}
+		if (!shaderOverrides[strippedName].stageOverrides[stageIndex].size()) {
+			shaderOverrides[strippedName].stageOverrides.erase(stageIndex);
+		}
+		shaderOverrides[strippedName].changed = true;
+	}
+	R_ShaderOverrides_Apply();
+	if (!shaderOverrides[strippedName].overrides.size() && !shaderOverrides[strippedName].stageOverrides.size()) {
+		shaderOverrides.erase(strippedName);
+	}
+	R_ShaderOverrides_Persist();
+}
+
+const char* ApplyPossibleShaderTextOverrides(const char* name, const char* p, bool colorShaderText) {
+	auto shaderOverrideFind = shaderOverrides.find(name);
+	if (shaderOverrideFind == shaderOverrides.end()) {
+		return p;
+	}
+	ShaderOverride* shaderOverride = &shaderOverrideFind->second;
+	static std::string tmp = "";
+	std::stringstream ss;
+	const char** program = &p;
+	char* token;
+	int				depth;
+	bool hadNewLine = false;
+#define DOTABS if (hadNewLine) {\
+		for (int i = 0; i < depth; i++) {\
+			ss << "\t";\
+		}\
+		hadNewLine = false;\
+	}
+
+
+	int currentStage = -1;
+	depth = 0;
+	do {
+		retry:
+		token = COM_ParseExt(program, qfalse);
+		if (!*token) {
+			if (colorShaderText && depth) {
+				ss << " ^7";
+			}
+			ss << "\n";
+			hadNewLine = true;
+			if (*program) {
+				goto retry;
+			}
+		}
+		else if (token[1] == 0) {
+			if (token[0] == '{') {
+				if (depth == 1) {
+					// we are entering a stage.
+					currentStage++;
+					if (currentStage == 0) {
+						// stage 0. apply global overrides
+						for (auto [key, value] : shaderOverride->overrides) {
+							DOTABS
+							if (colorShaderText) {
+								ss << "^2" << key << " ^3" << value << "^7\n";
+							}
+							else {
+								ss << key << " " << value << "\n";
+							}
+							hadNewLine = true;
+						}
+					}
+				}
+				DOTABS
+				depth++;
+			}
+			else if (token[0] == '}') {
+
+				if (depth == 2) {
+					// we are exiting a stage
+					// check for overrides of this stage
+					auto stageOverrides = shaderOverride->stageOverrides.find(currentStage);
+					if (stageOverrides != shaderOverride->stageOverrides.end()) {
+						for (auto [key, value] : stageOverrides->second) {
+							DOTABS
+							if (colorShaderText) {
+								ss << "^2" << key << " ^3" << value << "^7\n";
+							}
+							else {
+								ss << key << " " << value << "\n";
+							}
+							hadNewLine = true;
+						}
+					}
+				}
+				depth--;
+			}
+		}
+		DOTABS
+		ss << token << " ";
+	} while (depth && *program);
+
+	tmp = ss.str();
+	return tmp.c_str();
 }
 
 void R_RemapShader(const char *shaderName, const char *newShaderName, const char *timeOffset) {
@@ -3132,13 +3558,55 @@ static void SortNewShader( void ) {
 	tr.sortedShaders[i+1] = newShader;
 }
 
+/*
+==============
+ReSortTargetShader
+
+Positions the overridden target shader in the tr.sortedShaders[]
+array so that the shader->sort key is sorted reletive to the other
+shaders.
+
+Sets shader->sortedIndex
+==============
+*/
+static void ReSortTargetShader( shader_t* targetShader ) {
+	int		i;
+	float	sort;
+	sort = targetShader->sort;
+
+	// pull it to an earlier place if needed
+	for (i = targetShader->sortedIndex - 1; i >= 0; i--) {
+		if (tr.sortedShaders[i]->sort <= sort) {
+			break;
+		}
+		tr.sortedShaders[i + 1] = tr.sortedShaders[i];
+		tr.sortedShaders[i + 1]->sortedIndex++;
+	}
+
+	targetShader->sortedIndex = i + 1;
+	tr.sortedShaders[i + 1] = targetShader;
+
+	// and push it to a later place if needed
+	for (i = targetShader->sortedIndex + 1; i <= (tr.numShaders-1); i++) {
+		if (tr.sortedShaders[i]->sort >= sort) {
+			break;
+		}
+		tr.sortedShaders[i - 1] = tr.sortedShaders[i];
+		tr.sortedShaders[i - 1]->sortedIndex++;
+	}
+
+	targetShader->sortedIndex = i - 1;
+	tr.sortedShaders[i - 1] = targetShader;
+
+}
+
 
 /*
 ====================
 GeneratePermanentShader
 ====================
 */
-static shader_t *GeneratePermanentShader( void ) {
+static shader_t *GeneratePermanentShader( shader_t* targetShader = NULL ) {
 	shader_t	*newShader;
 	int			i, b;
 	int			size, hash;
@@ -3148,7 +3616,12 @@ static shader_t *GeneratePermanentShader( void ) {
 		return tr.defaultShader;
 	}
 
-	newShader = (struct shader_s *)ri.Hunk_Alloc( sizeof( shader_t ), h_low );
+	if (targetShader) {
+		newShader = (struct shader_s*)ri.Hunk_AllocateTempMemory(sizeof(shader_t));
+	}
+	else {
+		newShader = (struct shader_s*)ri.Hunk_Alloc(sizeof(shader_t), h_low);
+	}
 
 	*newShader = shader;
 
@@ -3180,28 +3653,51 @@ static shader_t *GeneratePermanentShader( void ) {
 		newShader->fogPass = FP_LE;
 	}
 
-	tr.shaders[ tr.numShaders ] = newShader;
-	newShader->index = tr.numShaders;
-	
-	tr.sortedShaders[ tr.numShaders ] = newShader;
-	newShader->sortedIndex = tr.numShaders;
+	if (!targetShader) {
+		tr.shaders[tr.numShaders] = newShader;
+		newShader->index = tr.numShaders;
 
-	tr.numShaders++;
+		tr.sortedShaders[tr.numShaders] = newShader;
+		newShader->sortedIndex = tr.numShaders;
+
+		tr.numShaders++;
+	}
 
 	for ( i = 0 ; i < newShader->numUnfoggedPasses ; i++ ) {
 		if ( !stages[i].active ) {
 			break;
 		}
-		newShader->stages[i] = (shaderStage_t *)ri.Hunk_Alloc( sizeof( stages[i] ), h_low );
+		if (targetShader && targetShader->stages[i]) {
+			// already have this stage allocated. reuse it.
+			newShader->stages[i] = targetShader->stages[i];
+		}
+		else {
+			newShader->stages[i] = (shaderStage_t*)ri.Hunk_Alloc(sizeof(stages[i]), h_low);
+		}
 		*newShader->stages[i] = stages[i];
 
 		for ( b = 0 ; b < NUM_TEXTURE_BUNDLES ; b++ ) {
-			size = newShader->stages[i]->bundle[b].numTexMods * sizeof( texModInfo_t );
-			newShader->stages[i]->bundle[b].texMods = (texModInfo_t *)ri.Hunk_Alloc( size, h_low );
-			Com_Memcpy( newShader->stages[i]->bundle[b].texMods, stages[i].bundle[b].texMods, size );
+			size = newShader->stages[i]->bundle[b].numTexMods * sizeof(texModInfo_t);
+			if (targetShader && targetShader->stages[i] && targetShader->stages[i]->bundle[b].texMods && targetShader->stages[i]->bundle[b].numTexMods >= newShader->stages[i]->bundle[b].numTexMods) {
+				// already have enough texmods allocated. reuse it.
+				newShader->stages[i]->bundle[b].texMods = targetShader->stages[i]->bundle[b].texMods;
+			}
+			else {
+				newShader->stages[i]->bundle[b].texMods = (texModInfo_t*)ri.Hunk_Alloc(size, h_low);
+			}
+			Com_Memcpy(newShader->stages[i]->bundle[b].texMods, stages[i].bundle[b].texMods, size);
 		}
 	}
 
+	if (targetShader) {
+		newShader->index = targetShader->index;
+		newShader->sortedIndex = targetShader->sortedIndex;
+		newShader->next = targetShader->next;
+		*targetShader = *newShader;
+		ReSortTargetShader(targetShader);
+		ri.Hunk_FreeTempMemory(newShader);
+		return targetShader;
+	}
 	SortNewShader();
 
 	hash = generateHashValue(newShader->name, FILE_HASH_SIZE);
@@ -3335,7 +3831,7 @@ Returns a freshly allocated shader with all the needed info
 from the current global working shader
 =========================
 */
-static shader_t *FinishShader( void ) {
+static shader_t *FinishShader( shader_t* targetShader = NULL ) {
 	int				stage, lmStage;
 	qboolean		hasLightmapStage;
 	qboolean		vertexLightmap;
@@ -3742,7 +4238,7 @@ static shader_t *FinishShader( void ) {
 		shader.lastNonDetailStage = stage;
 	}
 
-	return GeneratePermanentShader();
+	return GeneratePermanentShader(targetShader);
 }
 
 //========================================================================================
@@ -3759,7 +4255,7 @@ return NULL if not found
 If found, it will return a valid shader
 =====================
 */
-static /*const*/ char *FindShaderInShaderText( const char *shadername ) {
+static const char *FindShaderInShaderText( const char *shadername, bool colorShaderText) {
 	char *token, *p;
 
 	int i, hash;
@@ -3770,7 +4266,7 @@ static /*const*/ char *FindShaderInShaderText( const char *shadername ) {
 		p = shaderTextHashTable[hash][i];
 		token = COM_ParseExt((const char **)&p, qtrue);
 		if ( !Q_stricmp( token, shadername ) ) {
-			return p;
+			return ApplyPossibleShaderTextOverrides(shadername,p, colorShaderText);
 		}
 	}
 
@@ -3788,7 +4284,7 @@ static /*const*/ char *FindShaderInShaderText( const char *shadername ) {
 		}
 
 		if ( !Q_stricmp( token, shadername ) ) {
-			return p;
+			return ApplyPossibleShaderTextOverrides(shadername,p, colorShaderText);
 		}
 		else {
 			// skip the definition
@@ -3800,7 +4296,7 @@ static /*const*/ char *FindShaderInShaderText( const char *shadername ) {
 }
 
 
-char *R_FindShaderText( const char *shadername ) {
+const char *R_FindShaderText( const char *shadername ) {
 	return FindShaderInShaderText( shadername );
 }
 
@@ -4010,9 +4506,12 @@ Other lightmapIndex values will have a lightmap stage created
 and src*dest blending applied with the texture, as apropriate for
 most world construction surfaces.
 
+targetShader: Specify if you wish to override an existing registered shader,
+e.g. due to shader overrides that you want to load in in realtime.
+
 ===============
 */
-shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean vertexLightmapWithAlpha)
+shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean vertexLightmapWithAlpha, shader_t* targetShader)
 {
 	char		strippedName[MAX_QPATH];
 	char		fileName[MAX_QPATH];
@@ -4049,14 +4548,17 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	//
 	// see if the shader is already loaded
 	//
-	for (sh = hashTable[hash]; sh; sh = sh->next) {
-		// NOTE: if there was no shader or image available with the name strippedName
-		// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
-		// have to check all default shaders otherwise for every call to R_FindShader
-		// with that same strippedName a new default shader is created.
-		if (IsShader(sh, strippedName, lightmapIndex, styles))
-		{
-			return sh;
+	if(!targetShader){
+		// if targetShader is specified, we wish to force a reload to overwrite the targetShader, so don't search for existing ones (we already know it exists anyway)
+		for (sh = hashTable[hash]; sh; sh = sh->next) {
+			// NOTE: if there was no shader or image available with the name strippedName
+			// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
+			// have to check all default shaders otherwise for every call to R_FindShader
+			// with that same strippedName a new default shader is created.
+			if (IsShader(sh, strippedName, lightmapIndex, styles))
+			{
+				return sh;
+			}
 		}
 	}
 
@@ -4072,6 +4574,8 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	Q_strncpyz(shader.name, strippedName, sizeof(shader.name));
 	memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
 	memcpy(shader.styles, styles, sizeof(shader.styles));
+	shader.mipRawImage = mipRawImage;
+	shader.vertexLightmapWithAlpha = vertexLightmapWithAlpha;
 	
 	for ( i = 0 ; i < MAX_SHADER_STAGES ; i++ ) {
 		stages[i].bundle[0].texMods = texMods[i];
@@ -4098,8 +4602,13 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 			// had errors, so use default shader
 			shader.defaultShader = qtrue;
 		}
-		sh = FinishShader();
+		sh = FinishShader(targetShader);
 		return sh;
+	}
+
+	if (targetShader) {
+		// no point in continuing since overrides only affect shader text for now.
+		return targetShader;
 	}
 
 
@@ -4110,13 +4619,13 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	COM_StripExtension(name,fileName);
 #ifdef DEDICATED
 	shader.defaultShader = qtrue;
-	return FinishShader();
+	return FinishShader(targetShader);
 #else
 	image = R_FindImageFile( fileName, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
 	if ( !image ) {
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image for shader %s\n", name );
 		shader.defaultShader = qtrue;
-		return FinishShader();
+		return FinishShader(targetShader);
 	}
 #endif //!DEDICATED
 	//
@@ -4185,10 +4694,10 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 	}
 
-	return FinishShader();
+	return FinishShader(targetShader);
 }
 
-void R_GetShaderInfo(int shaderNum, const char** shaderName, const char** shaderText) {
+void R_GetShaderInfo(int shaderNum, const char** shaderName, const char** shaderText, bool colorShaderText) {
 	if (!tr.world) {
 		return;
 	}
@@ -4203,7 +4712,7 @@ void R_GetShaderInfo(int shaderNum, const char** shaderName, const char** shader
 
 	if (shaderText) {
 		static char shaderBuffer[BIG_INFO_STRING]; // lul dumb idk but should be big enough for most
-		const char* text = FindShaderInShaderText(name);
+		const char* text = FindShaderInShaderText(name, colorShaderText);
 		if (text && *text) {
 			const char* end = text;
 			SkipBracedSection(&end);
@@ -4654,7 +5163,6 @@ Finds and loads all .shader files, combining them into
 a single large text block that can be scanned for shader names
 =====================
 */
-#define	MAX_SHADER_FILES	4096
 static void ScanAndLoadShaderFiles( const char *path )
 {
 	// Optionally allow to load shaders in jk2mv style order.
@@ -5055,6 +5563,8 @@ Ghoul2 Insert Start
 /*
 Ghoul2 Insert End
 */
+	R_ShaderOverrides_Load("shaderOverrides");
+
 	CreateInternalShaders();
 
 	ScanAndLoadShaderFiles("shaders");
