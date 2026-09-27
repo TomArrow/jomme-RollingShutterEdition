@@ -1039,7 +1039,9 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 	vec3_t side1, side2;
 	vec3_t normal = { 0,0,0 };
 	vec3_t uvTransformMatrix[2];
-	float zComp;
+	qboolean uvTransformMatrixDone = qfalse;
+	float zComp, align;
+	vec3_t oldNormal;
 	for (i = 0; i < tess.numIndexes; i += 3) {
 		p[0] = tess.xyz[tess.indexes[i]];
 		p[1] = tess.xyz[tess.indexes[i+1]];
@@ -1051,11 +1053,30 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 		//VectorAdd(tess.normal[tess.indexes[i+1]],normal,normal);
 		//VectorAdd(tess.normal[tess.indexes[i+2]],normal,normal);
 		//VectorScale(normal,1.0/3.0f,normal);
-		VectorSubtract(p[2],p[1],side1);
-		VectorSubtract(p[2],p[0],side2);
-		CrossProduct(side1, side2, normal);
-		VectorNormalize(normal);
-		makeUVTransformationMatrix(p[0],st[0],p[1],st[1],p[2],st[2],uvTransformMatrix);
+		if (r_parallaxTexCoordNormalMode->integer > 0) {
+			VectorSubtract(p[2], p[1], side1);
+			VectorSubtract(p[2], p[0], side2);
+			CrossProduct(side1, side2, normal);
+			VectorNormalize(normal);
+		}
+		if (r_parallaxTexCoordNormalMode->integer == 0) {
+			VectorCopy(tess.normal[tess.indexes[i]],normal);
+		}
+		else if (r_parallaxTexCoordNormalMode->integer == 1) {
+			align = DotProduct(tess.normal[tess.indexes[i]], normal);
+			if (align > 0.9f) { // consider the provided normal to be accurate and replace our calculated one with it for better accuracy
+				VectorCopy(tess.normal[tess.indexes[i]], normal);
+			}
+		}
+		else if (r_parallaxTexCoordNormalMode->integer >= 2) {
+			// keep calculated normal
+		}
+
+		if (r_parallaxTexCoordReuseMatrixThresh->value == 0.0f || DotProduct(normal, oldNormal) < r_parallaxTexCoordReuseMatrixThresh->value || !uvTransformMatrixDone) {
+			// try to reuse the transformation matrix if normal hasn't changed much, for better consistency.
+			makeUVTransformationMatrix(p[0], st[0], p[1], st[1], p[2], st[2], uvTransformMatrix);
+			uvTransformMatrixDone = qtrue;
+		}
 
 		vec2_t sanityCheck; // should be equal to st1
 		sanityCheck[0] = DotProduct(uvTransformMatrix[0], p[0]);
@@ -1071,10 +1092,18 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 			stOutTmp[tess.indexes[i + j]][0] = DotProduct(uvTransformMatrix[0], viewer);
 			stOutTmp[tess.indexes[i + j]][1] = DotProduct(uvTransformMatrix[1], viewer);
 		}
-
+		VectorCopy(normal, oldNormal);
 	}
 
-	memcpy(stAll,stOutTmp,tess.numVertexes*sizeof(vec2_t));
+#if TEXCOORDS_PACKING
+	for (i = 0; i < tess.numVertexes; i++) {
+		(stAll + i * TEXCOORDS_ADVANCE)[0] = stOutTmp[i][0];
+		(stAll + i * TEXCOORDS_ADVANCE)[1] = stOutTmp[i][1];
+	}
+#else
+	memcpy(stAll, stOutTmp, tess.numVertexes * sizeof(vec2_t));
+#endif
+
 
 }
 

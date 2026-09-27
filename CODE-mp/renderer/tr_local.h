@@ -1523,6 +1523,9 @@ extern	cvar_t	*r_facePlaneCull;		// enables culling of planar surfaces with back
 extern	cvar_t	*r_nocurves;
 extern	cvar_t	*r_showcluster;
 
+extern	cvar_t	*r_parallaxTexCoordNormalMode;
+extern	cvar_t	*r_parallaxTexCoordReuseMatrixThresh;
+
 extern cvar_t	*r_dlightStyle;
 extern cvar_t	*r_surfaceSprites;
 extern cvar_t	*r_surfaceWeather;

@@ -100,6 +100,9 @@ cvar_t	*r_facePlaneCull;
 cvar_t	*r_showcluster;
 cvar_t	*r_nocurves;
 
+cvar_t	*r_parallaxTexCoordNormalMode;
+cvar_t	*r_parallaxTexCoordReuseMatrixThresh;
+
 cvar_t	*r_dlightStyle;
 cvar_t	*r_surfaceSprites;
 cvar_t	*r_surfaceWeather;
@@ -1099,6 +1102,8 @@ void R_Register( void )
 	r_windPointY = ri.Cvar_Get ("r_windPointY", "0", 0);
 
 	r_nocurves = ri.Cvar_Get ("r_nocurves", "0", CVAR_CHEAT );
+	r_parallaxTexCoordNormalMode = ri.Cvar_Get ("r_parallaxTexCoordNormalMode", "0", CVAR_ARCHIVE );
+	r_parallaxTexCoordReuseMatrixThresh = ri.Cvar_Get ("r_parallaxTexCoordReuseMatrixThresh", "0.95", CVAR_ARCHIVE );
 	r_drawworld = ri.Cvar_Get ("r_drawworld", "1", CVAR_CHEAT );
 	r_lightmap = ri.Cvar_Get ("r_lightmap", "0", CVAR_CHEAT );
 	r_portalOnly = ri.Cvar_Get ("r_portalOnly", "0", CVAR_CHEAT );

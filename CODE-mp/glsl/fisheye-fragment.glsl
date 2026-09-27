@@ -1424,16 +1424,17 @@ float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lig
 
 
 // direction mustt be in eye space and normalized
-vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided){
+vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, vec3 lightNormal, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, bool allowDarken){
 	
 	//return vec4(1.0f);
 	vec3 maybeMirroredLightNormal =  twoSided && dot(referenceNormal,direction) < 0 ? -lightNormal : lightNormal;
 	// REMEMBER: IF WE SEE SHIMMER ON DARK SIDES OF OBJECTS, PUT A VERSION OF THIS BACK.
 	float intensity = 1.0f;
 	float referenceAlignment = dot(direction,referenceNormal);
+	vec4 oldColor = color;
 	if(referenceAlignment<0 && !twoSided){
 		if(referenceAlignment<-0.5){
-			return vec4(0.0f);
+			return allowDarken ?vec4(0.0f):color;
 		}
 		// fade out towards back
 		// cutting off hard leads to ugly seam due to calculateTextureNormal basically adding "noise" to the normal
@@ -1474,6 +1475,9 @@ vec4 getVertexLightIntensity(vec4 color, vec3 direction, vec3 referenceNormal, v
 			color.xyz *= intensity;
 
 		//}
+	}
+	if(!allowDarken){
+		color = max(color,oldColor);
 	}
 	return color;
 }
@@ -1842,7 +1846,8 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		//rawUVCoords = gl_TexCoord[0].st; // auto-generated (meh doesnt work)
 	}
 	
-	vec3 lightReferenceNormal = (isModelUniform > 0 || stageForceNormalUniform > 0 || surfaceTypeUniform == SF_GRID) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
+	// not sure about surfaceTypeUniform == SF_FACE rn, i did that cuz of my lil floorlight normals getting busted due to the thin strips
+	vec3 lightReferenceNormal = (isModelUniform > 0 || stageForceNormalUniform > 0 || surfaceTypeUniform == SF_GRID || surfaceTypeUniform == SF_FACE) ? normalize(mat3(gl_ModelViewMatrix)*normalize(vertexNormal)) : normal; // can be normal instead. trying vertexnormal so things are smoother
 	vec3 worldPixel = (worldModelViewMatrixReverseGeom*eyeSpaceCoordsGeom).xyz;
 		
 	bool haveVertLightDir = haveVertexLightDirectionUniform > 0 || projectorActiveUniform>0;
@@ -2008,6 +2013,15 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	//bool usesBlending = (appliedStateBitsUniform & GLS_SRCBLEND_BITS) > 0 && (appliedStateBitsUniform & GLS_DSTBLEND_BITS) > 0;
 
+	bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;// (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
+	bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;//(rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+	bool isDecal = (mult1 || mult2);
+
+	// a decal is multiplying what's behind it. let's not doubledip when it comes to applying lighting?
+	// also, if cgen is const, good chance we are dealing with a light or sth, not sth that's actually being lit
+	// so may as well just keep it as it is?
+	bool allowDarken = !isDecal && stageColorGenUniform != CGEN_CONST; 
+
 	if ((renderFlagsUniform & RENDERFLAG_NOLIGHTING) > 0){
 		if(thermalVision){
 			heatVision(outFragColor,vec3(0.0f),lightReferenceNormal);
@@ -2028,9 +2042,9 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			//bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
 			//bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
 			//bool isDecal = (mult1 || mult2) && alphaFuncUniform > 0;
-			bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;// (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
-			bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;//(rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
-			bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
+			//bool mult1 = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR;// (rawStateBitsUniform & GLS_SRCBLEND_DST_COLOR) > 0;
+			//bool mult2 = (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR;//(rawStateBitsUniform & GLS_DSTBLEND_SRC_COLOR) > 0;
+			//bool isDecal = (mult1 || mult2);// && alphaFuncUniform > 0;
 			
 			float decalSub = (mult1 && mult2) ? 0.5f : 1.0f;
 			if(isDecal){
@@ -2585,10 +2599,10 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		//	gl_FragColor.x = 1.0f;
 		//}
 		//return;
-		vec4 multnew = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided);
+		vec4 multnew = getVertexLightIntensity(vertexLitMult,eyeSpaceLightdir,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,allowDarken);
 		vertexLitMult = mix(vertexLitMult,multnew,isSimpleTCGenEnv ? 0.75f:1.0f);
 		if(stageColorGenUniform == CGEN_LIGHTING_DIFFUSE || stageForceNormalUniform > 0){ // TODO fix this for flag?
-			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided).xyz * MULTDIVIDE255;
+			vertexLitMult.xyz += getVertexLightIntensity(vec4(ambientLight,1.0),lightReferenceNormal,lightReferenceNormal,lightNormal,viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,allowDarken).xyz * MULTDIVIDE255;
 		}
 		//vertexLitMult = vec4(lightDir*0.5f+vec3(0.5f),1.0f);
 		outFragColor.xyz -= boringShadowSubtractVal;
@@ -2617,7 +2631,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		if((stageLightmapBitmaskUniform & 2) >0){
 			color2 = getLightmapIntensity(haveVertLightDir,1,16,my_TexCoord[1].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,0,worldPixel);
 		} else{
-			color2 = texture2D(text_in[16], my_TexCoord[1].st);
+			color2 = texture2D(text_in[1], my_TexCoord[1].st);
 		}
 		//color2.xyz *= (stageLightmapBitmaskUniform & 2) > 0 ? lightStyles[0].xyz*MULTDIVIDE255 : vec3(1.0f);
 		color2.xyz += (stageLightmapBitmaskUniform & 2) > 0 ? lightmapStyleAdd.xyz : vec3(0.0f);
@@ -2790,6 +2804,32 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	return true;
 
 }
+
+
+void simplepath(void){
+	bool multitex = (stageImageBitmaskUniform & 2) > 0;
+	vec4 outFragColor = texture2D(text_in[0], my_TexCoord[0].st);
+	if(multitex){
+		
+		vec4 color2 = texture2D(text_in[1], my_TexCoord[1].st);
+		switch(multiTexModeUniform){
+				case MYGL_ADD:
+					outFragColor += color2;
+				break;
+				case MYGL_MODULATE:
+					outFragColor *= color2;
+				break;
+				case MYGL_REPLACE:
+					outFragColor = color2;
+				break;
+			}
+
+
+	}
+	outFragColor *= vertColor;
+	gl_FragData[0] = outFragColor;
+}
+
 
 
 void main(void){
