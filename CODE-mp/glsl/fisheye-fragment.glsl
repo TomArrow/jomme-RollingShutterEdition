@@ -102,7 +102,7 @@ uniform int jitterTotalFramesUniform;
 uniform int serverTimeStartUniform;
 uniform int serverTimeUniform;
 uniform float serverTimeFractionUniform;
-#define FLOATSERVERTIME ((float(serverTimeUniform)+serverTimeFractionUniform)*1000.0f)
+#define FLOATSERVERTIME_PERLIN ((float(serverTimeUniform)+serverTimeFractionUniform)*0.001f)
 
 
 
@@ -1065,7 +1065,7 @@ vec2 parallaxMapSteep(inout vec3 finalPosition, float thelod, vec4 thegrad){
 vec3 perlinNoiseVariation1(){ // Looks a bit like marble?
 	vec3 res;
 	vec4 coords = pureVertexCoordsGeom/2.0;
-	float timeVal =  FLOATSERVERTIME*2.5;
+	float timeVal =  FLOATSERVERTIME_PERLIN*2.5;
     coords.w = timeVal;
 	res.xyz = vec3( snoise(coords/10.0f));
 	res.xyz += vec3( snoise(coords/20.0f));
@@ -1101,7 +1101,7 @@ vec3 perlinNoiseVariation2(){
 
 float perlinNoiseHelper(vec4 coords){
     float val;
-    coords.w = FLOATSERVERTIME*10.0;
+    coords.w = FLOATSERVERTIME_PERLIN*10.0;
 	//val = ( snoise(pureVertexCoordsGeom/10.0))/128.0;
 	//val += ( snoise(pureVertexCoordsGeom/20.0))/64.0;
 	//val += ( snoise(pureVertexCoordsGeom/40.0))/32.0;
@@ -1125,7 +1125,7 @@ float perlinNoiseHelper(vec4 coords){
 }
 float perlinNoiseHelper2(vec4 coords){
     float val;
-	float timeVal =  FLOATSERVERTIME*100.0;
+	float timeVal =  FLOATSERVERTIME_PERLIN*100.0;
     coords.w = timeVal/128.0;
 	val = ( snoise(coords/10.0))/128.0;
     coords.w = timeVal/64.0;
@@ -1234,7 +1234,7 @@ vec3 perlinNoiseVariation4(){
 vec3 perlinNoiseVariation5(vec4 coords){ 
 	vec3 res;
 	float val,val2;
-	float timeVal =  FLOATSERVERTIME*2.5;
+	float timeVal =  FLOATSERVERTIME_PERLIN*2.5;
     coords.w = timeVal;
 	val = ( snoise(coords/0.078125))/16384.0;
 	val += ( snoise(coords/0.15625))/8192.0;
@@ -1275,7 +1275,7 @@ vec3 perlinNoiseVariation5(vec4 coords){
 vec3 perlinNoiseVariation6(vec4 coords){ 
 	vec3 res;
 	float val,val2;
-	float timeVal =  FLOATSERVERTIME*2.5;
+	float timeVal =  FLOATSERVERTIME_PERLIN*2.5;
     coords.w = timeVal/16384.0;
 	val = abs( snoise(coords/0.078125))/16384.0;
     coords.w = timeVal/8192.0;
@@ -1320,7 +1320,7 @@ vec3 perlinNoiseVariation6(vec4 coords){
 vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){ 
 	vec3 res;
 	float val,val2;
-	float timeVal =  FLOATSERVERTIME*200.0;
+	float timeVal =  FLOATSERVERTIME_PERLIN*200.0;
 	const int layers = 10;
 
 	float viewdist = distance(coords.xyz,vieworg);
@@ -2057,10 +2057,13 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 #ifdef PERLINFUCKERY
 	//{
-		outFragColor.x =1;
+		bool zeroIsLightmap = (stageLightmapBitmaskUniform & 1) > 0;// isLightmapUniform > 0
+		bool kindaAdditive = (rawStateBitsUniform & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE;// && (rawStateBitsUniform & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE;
+		//outFragColor.x =1;
 		vec4 startCooords = pureVertexCoordsGeom*0.25;
-		if(isWorldBrushUniform > 0 && isLightmapUniform == 0 && perlinFuckery > 0){
+		if(isWorldBrushUniform > 0 && !zeroIsLightmap && perlinFuckery > 0){
 			//gl_FragColor.xyz+=pureVertexCoordsGeom.xyz/1000.0f; 
+			vec3 oldFragColor = outFragColor.xyz;
 			switch(perlinFuckery){
 				case 1:
 			outFragColor.xyz = perlinNoiseVariation1();
@@ -2087,8 +2090,11 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 			} else if(noiseFuckeryHDRIntensityUniform != 0.0){
 				outFragColor.xyz = outFragColor.xyz*(1.0-noiseFuckeryHDRIntensityUniform)+(noiseFuckeryHDRIntensityUniform*(outFragColor.xyz*HDRtoSRGB));
 			}
+			if(kindaAdditive){
+				outFragColor.xyz *= oldFragColor; 
+			}
 		}
-		if(isLightmapUniform > 0 && isWorldBrushUniform > 0 && perlinFuckery > 0){
+		if(zeroIsLightmap && isWorldBrushUniform > 0 && perlinFuckery > 0){
 			if(noiseFuckeryLightmapUniform == 0 && perlinFuckery!=3 && perlinFuckery!=1 || noiseFuckeryLightmapUniform == 2){
 				outFragColor.xyz = vec3(1.0,1.0,1.0);
 			}
@@ -2589,6 +2595,15 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 		baseColorForLighting.y = max(baseColorForLightingReal.y,addValueForLightmap.y);
 		baseColorForLighting.z = max(baseColorForLightingReal.z,addValueForLightmap.z);
 		addValueForLightmap *= baseColorForLighting;
+
+		if(isWorldBrushUniform > 0 && perlinFuckery > 0){
+			if(noiseFuckeryLightmapUniform == 0 && perlinFuckery!=3 && perlinFuckery!=1 || noiseFuckeryLightmapUniform == 2){
+				lightmapStyleAdd = vec4(0.0);
+			}
+			else if(perlinFuckery > 0 && noiseFuckeryLightmapIntensityUniform != 1.0) {
+				lightmapStyleAdd.xyz = vec3(0.0)*(1.0-noiseFuckeryLightmapIntensityUniform)+(noiseFuckeryLightmapIntensityUniform*lightmapStyleAdd.xyz);
+			}
+		}
 	}
 	
 	bool didThermal = false;
@@ -2630,6 +2645,14 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 	if(multitex){
 		if((stageLightmapBitmaskUniform & 2) >0){
 			color2 = getLightmapIntensity(haveVertLightDir,1,16,my_TexCoord[1].st,eyeSpaceLightdir,(stageLightmapBitmaskUniform & (1<<16)) > 0,lightNormal,lightmapReferenceNormal, deluxedirmat, viewerVectorNorm,specIntensitySchlickMult,viewerDistance,twoSided,0,worldPixel);
+			if(isWorldBrushUniform > 0 && perlinFuckery > 0){
+				if(noiseFuckeryLightmapUniform == 0 && perlinFuckery!=3 && perlinFuckery!=1 || noiseFuckeryLightmapUniform == 2){
+					color2 = vec4(1.0);
+				}
+				else if(perlinFuckery > 0 && noiseFuckeryLightmapIntensityUniform != 1.0) {
+					color2.xyz = vec3(1.0)*(1.0-noiseFuckeryLightmapIntensityUniform)+(noiseFuckeryLightmapIntensityUniform*color2.xyz);
+				}
+			}
 		} else{
 			color2 = texture2D(text_in[1], my_TexCoord[1].st);
 		}
