@@ -2531,7 +2531,7 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 
 	vec3 addValueForLightmap = addValue;
 
-	vec3 baseLightDir = lightDir;
+	vec3 baseLightDir = normalize(lightDir);
 	if(projectorActiveUniform>0){
 		baseLightDir = projectorLightDir;
 	}

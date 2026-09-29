@@ -1342,6 +1342,7 @@ typedef struct {
 	int						lightmapArrayInternalFormat;
 	qboolean				doLightmapArray;
 	qboolean				haveVertLightDirs;
+	int						vertLightDirType;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
@@ -1509,8 +1510,11 @@ extern cvar_t* r_skyboxRotate;			// Degrees on height axis to rotate skybox (to 
 extern	cvar_t	*r_newDLights;
 
 extern	cvar_t	*r_smoothenPlanarNormals; // angle value for smoothing planar normals for glsl to make maps smooother without needing to compile them differently
+extern	cvar_t	*r_smoothenPlanarNormalsLightdirs; 
+extern	cvar_t	*r_bspVertLightDirCalc;
 extern	cvar_t	*r_bspVertLightDirCalcRestrictDot; // vertex light dir will default to the vertex normal if the dot between light dir and the vertex normal is below this. the q3e reference value is 0.2
 extern	cvar_t	*r_bspVertLightDirCalcRestrictDotLow; // lower point for this. smoothly transition to normal instead of hard-cutting off.
+extern	cvar_t	*r_bspVertLightDirCalcRestrictDotEarly; //when doing the line fitting with subdivisions, whether we should apply the dotrestrict early. value 2 still does an additional restrict after
 extern	cvar_t	*r_alphaGenLightingSpecularHQ; // calc alphagen lightingspecular per vertex, not per 4 vertices.
 
 extern	cvar_t	*r_norefresh;			// bypasses the ref rendering
@@ -2125,6 +2129,7 @@ void R_DlightBmodel( bmodel_t *bmodel );
 void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent );
 void R_TransformDlights( int count, dlight_t *dl, orientationr_t *ori );
 int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
+void R_LightDirNormalModulate(vec3_t lightdir, vec3_t normal, float* directionality, float normalDotRestrict, float normalDotRestrictLow);
 int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world, float normalDotRestrict, float normalDotRestrictLow); // from quake3e
 void RE_SetLightStyle(int style, color4f_t color);
 

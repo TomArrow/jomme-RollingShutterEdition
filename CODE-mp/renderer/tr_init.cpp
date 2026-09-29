@@ -84,9 +84,12 @@ cvar_t	*r_autolodscalevalue;
 cvar_t	*r_newDLights;
 
 cvar_t	*r_smoothenPlanarNormals;
+cvar_t	*r_smoothenPlanarNormalsLightdirs;
 
+cvar_t	*r_bspVertLightDirCalc;
 cvar_t	*r_bspVertLightDirCalcRestrictDot;
 cvar_t	*r_bspVertLightDirCalcRestrictDotLow;
+cvar_t	*r_bspVertLightDirCalcRestrictDotEarly;
 cvar_t	*r_alphaGenLightingSpecularHQ;
 
 cvar_t	*r_norefresh;
@@ -1117,8 +1120,11 @@ void R_Register( void )
 	r_newDLights = ri.Cvar_Get ("r_newDLights", "0", 0);
 
 	r_smoothenPlanarNormals = ri.Cvar_Get( "r_smoothenPlanarNormals", "20", CVAR_LATCH|CVAR_ARCHIVE );
+	r_smoothenPlanarNormalsLightdirs = ri.Cvar_Get( "r_smoothenPlanarNormalsLightdirs", "1", CVAR_LATCH|CVAR_ARCHIVE );
+	r_bspVertLightDirCalc = ri.Cvar_Get( "r_bspVertLightDirCalc", "2", CVAR_LATCH|CVAR_ARCHIVE );
 	r_bspVertLightDirCalcRestrictDot = ri.Cvar_Get( "r_bspVertLightDirCalcRestrictDot", "0.2", CVAR_LATCH|CVAR_ARCHIVE );
 	r_bspVertLightDirCalcRestrictDotLow = ri.Cvar_Get( "r_bspVertLightDirCalcRestrictDotLow", "0.0", CVAR_LATCH|CVAR_ARCHIVE );
+	r_bspVertLightDirCalcRestrictDotEarly = ri.Cvar_Get( "r_bspVertLightDirCalcRestrictDotEarly", "0", CVAR_LATCH|CVAR_ARCHIVE );
 	r_alphaGenLightingSpecularHQ = ri.Cvar_Get( "r_alphaGenLightingSpecularHQ", "1", CVAR_LATCH|CVAR_ARCHIVE );
 
 	r_measureOverdraw = ri.Cvar_Get( "r_measureOverdraw", "0", CVAR_CHEAT );

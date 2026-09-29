@@ -447,6 +447,8 @@ void CL_AddReliableCommand( const char *cmd );
 
 void CL_StartHunkUsers( void );
 
+void CL_LoadingText(const char* fmt, ...);
+
 void CL_Disconnect_f (void);
 void CL_GetChallengePacket (void);
 void CL_Vid_Restart_f( void );

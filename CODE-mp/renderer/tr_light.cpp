@@ -1061,6 +1061,29 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 	ent->lightDir[2] = DotProduct( lightDir, ent->e.axis[2] );
 }
 
+void R_LightDirNormalModulate(vec3_t lightdir, vec3_t normal, float* directionality, float normalDotRestrict, float normalDotRestrictLow) {
+	float dot;
+
+	dot = DotProduct(lightdir, normal);
+	if (VectorLengthSquared(normal) == 0.0f || dot > normalDotRestrict) {
+	}
+	else {
+		dot = (dot - normalDotRestrictLow) / (normalDotRestrict - normalDotRestrictLow);
+		if (dot > 0.0f) {
+			vec3_t tmpLightDir;
+			//VectorScale(normal, (1.0f - dot), tmpLightDir);
+			//VectorMA(tmpLightDir, dot, lightdir, lightdir);
+			VectorLerp(dot,normal,lightdir,lightdir);
+		}
+		else {
+			VectorCopy(normal, lightdir);
+		}
+		if (directionality) {
+			*directionality = 0;
+		}
+	}
+}
+
 int R_LightDirForPoint(vec3_t point, vec3_t lightDir, vec3_t normal, float* directionality, world_t* world, float normalDotRestrict, float normalDotRestrictLow)
 {
 	trRefEntity_t ent;

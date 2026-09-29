@@ -749,6 +749,11 @@ static void CM_MakeVoxelGrid(const char* name) {
 	
 	if (FS_FileExists(voxelnameRLE)) {
 		Com_Printf("RLE voxels for %s exist\n", name);
+#ifndef DEDICATED
+		
+		CL_LoadingText( "loading RLE voxels");
+		
+#endif
 		fileHandle_t f;
 		int size = FS_FOpenFileRead(voxelnameRLE, &f, qtrue);
 		if (size > 8) {
@@ -791,8 +796,16 @@ static void CM_MakeVoxelGrid(const char* name) {
 
 			FS_FCloseFile(f);
 		}
+#ifndef DEDICATED
+		CL_LoadingText("%s",name);
+#endif
 		return;
 	} else if (FS_FileExists(voxelname)) {
+#ifndef DEDICATED
+		
+		CL_LoadingText( "loading voxels");
+		
+#endif
 		Com_Printf("voxels for %s exist\n", name);
 		fileHandle_t f;
 		int size = FS_FOpenFileRead(voxelname, &f, qtrue);
@@ -811,8 +824,20 @@ static void CM_MakeVoxelGrid(const char* name) {
 
 			FS_FCloseFile(f);
 		}
+#ifndef DEDICATED
+
+		CL_LoadingText("%s", name);
+		
+#endif
 		return;
 	}
+
+#ifndef DEDICATED
+	
+	CL_LoadingText( "generating map voxels");
+	
+#endif
+
 	EzBitmask<VOXELGRIDARRAYSIZE>* voxels = new EzBitmask<VOXELGRIDARRAYSIZE>();
 	
 	int minusPlus = VOXELGRIDRANGE;
@@ -843,6 +868,11 @@ static void CM_MakeVoxelGrid(const char* name) {
 #endif
 
 	for (int x = -minusPlus; x < minusPlus-3; x+=4) {
+		float percent = x - (-(float)minusPlus);
+		percent /= 2.0f*(float)VOXELGRIDRANGE;
+		percent *= 100.0f;
+
+		CL_LoadingText("generating voxel grid: %.2f percent", percent);
 		pos[0] = x * VOXELGRIDSTEPSIZE;
 		for (int y = -minusPlus; y < minusPlus-3; y+=4) {
 			pos[1] = y * VOXELGRIDSTEPSIZE;
@@ -915,6 +945,12 @@ static void CM_MakeVoxelGrid(const char* name) {
 	voxelGridSize = voxels->getDataSize();
 	voxelGridUpdated = 0xffffffff;
 
+#ifndef DEDICATED
+	
+	CL_LoadingText( "writing  map voxels");
+	
+#endif
+
 	fileHandle_t f = FS_FOpenFileWrite(voxelnameRLE);
 	if (f > 0) {
 
@@ -955,6 +991,12 @@ static void CM_MakeVoxelGrid(const char* name) {
 	}
 	delete voxels;
 	Com_Printf("voxels for %s generated\n",name);
+
+#ifndef DEDICATED
+
+	CL_LoadingText("%s", name);
+	
+#endif
 }
 
 // need a wrapper function around this because of multiple returns, need to ensure bool is correct...

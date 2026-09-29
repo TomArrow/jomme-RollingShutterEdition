@@ -2391,6 +2391,27 @@ void CL_StartHunkUsers( void ) {
 	}
 }
 
+
+void CL_LoadingText(const char* fmt, ...) {
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start(argptr, fmt);
+	vsnprintf(msg, sizeof(msg), fmt, argptr);
+	va_end(argptr);
+	if (cl.mSharedMemory && cgvm) {
+
+		char* target = (char*)cl.mSharedMemory;
+		Q_strncpyz(target, msg, 200); // i think its actually 2048 but cgame doesnt tell us :)
+		if (cgvm) {
+			VM_Call(cgvm, CG_LOADINGTEXT);
+		}
+	}
+	else {
+		Com_Printf("%s\n", msg);
+	}
+}
+
 /*
 ============
 CL_RefMalloc
@@ -2455,6 +2476,8 @@ void CL_InitRef( void ) {
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
 	ri.Cvar_VariableIntegerValue = Cvar_VariableIntegerValue;
+
+	ri.LoadingText = CL_LoadingText;
 
 	// cinematic stuff
 

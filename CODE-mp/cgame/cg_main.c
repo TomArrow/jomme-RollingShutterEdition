@@ -269,6 +269,10 @@ int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int a
 		cg.mMapChange = qtrue;
 		return 0;
 
+	case CG_LOADINGTEXT: // very disgusting i think and prolly doesn't work in qvm but this is my fucked up jomme :)
+		CG_LoadingStringUpdated();
+		return 0;
+
 	default:
 		CG_Error( "vmMain: unknown command %i", command );
 		break;

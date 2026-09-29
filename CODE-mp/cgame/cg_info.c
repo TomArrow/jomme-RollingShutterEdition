@@ -25,6 +25,15 @@ void CG_LoadingString( const char *s ) {
 	trap_UpdateScreen();
 }
 
+void CG_LoadingStringUpdated() {
+	if (!cg.infoScreenText[0]) { // only set if it its already set
+		return;
+	}
+	Q_strncpyz(cg.infoScreenText, (char*)cg.sharedBuffer, sizeof(cg.infoScreenText));
+
+	trap_UpdateScreen();
+}
+
 /*
 ===================
 CG_LoadingItem

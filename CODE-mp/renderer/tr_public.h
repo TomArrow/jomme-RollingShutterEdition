@@ -217,6 +217,8 @@ typedef struct {
 	int (*CM_PointContents)( const vec3_t p, clipHandle_t model );
 
 	qboolean (*S_MMEAviImport)(byte *out, int *size);
+
+	void	(*LoadingText)(const char* text, ...);
 } refimport_t;
 
 

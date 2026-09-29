@@ -426,6 +426,8 @@ typedef enum {
 
 	CG_MAP_CHANGE,
 
+	CG_LOADINGTEXT,
+
 } cgameExport_t;
 
 // CG_POINT_CONTENTS

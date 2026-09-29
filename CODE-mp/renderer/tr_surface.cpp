@@ -1378,6 +1378,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 	int			Bob;
 	int			numPoints;
 	int			dlightBits;
+	qboolean	needsNormal;
 
 	RB_CHECKOVERFLOW( surf->numPoints, surf->numIndices );
 
@@ -1400,7 +1401,9 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 
 	numPoints = surf->numPoints;
 
-	if ( tess.shader->needsNormal ) { // huh?
+	needsNormal = (qboolean)((r_fboGLSL->integer && ENABLEGLSL && !r_fboGLSLOff->integer) || tess.shader->needsNormal);
+
+	if ( needsNormal ) { // huh?
 		normal = surf->plane.normal;
 		for ( i = 0, ndx = tess.numVertexes; i < numPoints; i++, ndx++ ) {
 			VectorCopy( normal, tess.normal[ndx] );
