@@ -1007,11 +1007,15 @@ void RB_CalcScaleTexCoords( const float scale[2], float *st ) {
 	}
 }
 
-static void generateTransformationMatrixRow(vec3_t vec1i, vec3_t vec2i, vec3_t vec3i, float resultValue1, float resultValue2, float resultValue3, vec3_t transformVec) {
+inline float nonzero(float n) {
+	return n ? n : 0.001f;
+}
 
-	transformVec[0] = (vec2i[2] * vec3i[1] * resultValue1 - vec2i[1] * vec3i[2] * resultValue1 - vec1i[2] * vec3i[1] * resultValue2 + vec1i[1] * vec3i[2] * resultValue2 + vec1i[2] * vec2i[1] * resultValue3 - vec1i[1] * vec2i[2] * resultValue3) / (vec1i[2] * vec2i[1] * vec3i[0] - vec1i[1] * vec2i[2] * vec3i[0] - vec1i[2] * vec2i[0] * vec3i[1] + vec1i[0] * vec2i[2] * vec3i[1] + vec1i[1] * vec2i[0] * vec3i[2] - vec1i[0] * vec2i[1] * vec3i[2]);
-	transformVec[1] = (-vec2i[2] * vec3i[0] * resultValue1 + vec2i[0] * vec3i[2] * resultValue1 + vec1i[2] * vec3i[0] * resultValue2 - vec1i[0] * vec3i[2] * resultValue2 - vec1i[2] * vec2i[0] * resultValue3 + vec1i[0] * vec2i[2] * resultValue3) / (vec1i[2] * vec2i[1] * vec3i[0] - vec1i[1] * vec2i[2] * vec3i[0] - vec1i[2] * vec2i[0] * vec3i[1] + vec1i[0] * vec2i[2] * vec3i[1] + vec1i[1] * vec2i[0] * vec3i[2] - vec1i[0] * vec2i[1] * vec3i[2]);
-	transformVec[2] = (-vec2i[1] * vec3i[0] * resultValue1 + vec2i[0] * vec3i[1] * resultValue1 + vec1i[1] * vec3i[0] * resultValue2 - vec1i[0] * vec3i[1] * resultValue2 - vec1i[1] * vec2i[0] * resultValue3 + vec1i[0] * vec2i[1] * resultValue3) / (-vec1i[2] * vec2i[1] * vec3i[0] + vec1i[1] * vec2i[2] * vec3i[0] + vec1i[2] * vec2i[0] * vec3i[1] - vec1i[0] * vec2i[2] * vec3i[1] - vec1i[1] * vec2i[0] * vec3i[2] + vec1i[0] * vec2i[1] * vec3i[2]);
+void generateTransformationMatrixRow(vec3_t vec1i, vec3_t vec2i, vec3_t vec3i, float resultValue1, float resultValue2, float resultValue3, vec3_t transformVec) {
+
+	transformVec[0] = (vec2i[2] * vec3i[1] * resultValue1 - vec2i[1] * vec3i[2] * resultValue1 - vec1i[2] * vec3i[1] * resultValue2 + vec1i[1] * vec3i[2] * resultValue2 + vec1i[2] * vec2i[1] * resultValue3 - vec1i[1] * vec2i[2] * resultValue3) / nonzero(vec1i[2] * vec2i[1] * vec3i[0] - vec1i[1] * vec2i[2] * vec3i[0] - vec1i[2] * vec2i[0] * vec3i[1] + vec1i[0] * vec2i[2] * vec3i[1] + vec1i[1] * vec2i[0] * vec3i[2] - vec1i[0] * vec2i[1] * vec3i[2]);
+	transformVec[1] = (-vec2i[2] * vec3i[0] * resultValue1 + vec2i[0] * vec3i[2] * resultValue1 + vec1i[2] * vec3i[0] * resultValue2 - vec1i[0] * vec3i[2] * resultValue2 - vec1i[2] * vec2i[0] * resultValue3 + vec1i[0] * vec2i[2] * resultValue3) / nonzero(vec1i[2] * vec2i[1] * vec3i[0] - vec1i[1] * vec2i[2] * vec3i[0] - vec1i[2] * vec2i[0] * vec3i[1] + vec1i[0] * vec2i[2] * vec3i[1] + vec1i[1] * vec2i[0] * vec3i[2] - vec1i[0] * vec2i[1] * vec3i[2]);
+	transformVec[2] = (-vec2i[1] * vec3i[0] * resultValue1 + vec2i[0] * vec3i[1] * resultValue1 + vec1i[1] * vec3i[0] * resultValue2 - vec1i[0] * vec3i[1] * resultValue2 - vec1i[1] * vec2i[0] * resultValue3 + vec1i[0] * vec2i[1] * resultValue3) / nonzero(-vec1i[2] * vec2i[1] * vec3i[0] + vec1i[1] * vec2i[2] * vec3i[0] + vec1i[2] * vec2i[0] * vec3i[1] - vec1i[0] * vec2i[2] * vec3i[1] - vec1i[1] * vec2i[0] * vec3i[2] + vec1i[0] * vec2i[1] * vec3i[2]);
 
 }
 
@@ -1020,6 +1024,48 @@ static void makeUVTransformationMatrix(vec3_t vec1i, vec2_t vec1o, vec3_t vec2i,
 
 	generateTransformationMatrixRow(vec1i, vec2i, vec3i, vec1o[0], vec2o[0], vec3o[0], matrix[0]);
 	generateTransformationMatrixRow(vec1i, vec2i, vec3i, vec1o[1], vec2o[1], vec3o[1], matrix[1]);
+}
+
+void makeUVTransformationMatrixSafe(vec3_t vec1i, vec2_t vec1o, vec3_t vec2i, vec2_t vec2o, vec3_t vec3i, vec2_t vec3o, vec3_t normal, float matrix[16]) {
+	float planedist = DotProduct(vec1i, normal);
+	if (planedist < 10.0f && planedist > -10.0f) {
+		// we are risking the calculation blowing up in our face so add an extra stage.
+		// offset dangerous dimensions a bit
+		float add = planedist < 0 ? -10.0f : 10.0f;
+		vec3_t transposition;
+		VectorScale(normal, add, transposition);
+		float preTransform[16] = {
+			1,0,0,transposition[0],
+			0,1,0,transposition[1],
+			0,0,1,transposition[2],
+			0,0,0,1
+		};
+		vec3_t transposed[3];
+		VectorAdd(vec1i,transposition,transposed[0]);
+		VectorAdd(vec2i,transposition,transposed[1]);
+		VectorAdd(vec3i,transposition,transposed[2]);
+		generateTransformationMatrixRow(transposed[0], transposed[1], transposed[2], vec1o[0], vec2o[0], vec3o[0], &matrix[0]);
+		generateTransformationMatrixRow(transposed[0], transposed[1], transposed[2], vec1o[1], vec2o[1], vec3o[1], &matrix[4]);
+		VectorCopy(normal, &matrix[8]);
+		matrix[11] = -add;
+		float tmp[16];
+		memcpy(tmp,matrix,sizeof(tmp));
+		myGlMultMatrixV2(preTransform, tmp, matrix);
+		return;
+	}
+	generateTransformationMatrixRow(vec1i, vec2i, vec3i, vec1o[0], vec2o[0], vec3o[0], &matrix[0]);
+	generateTransformationMatrixRow(vec1i, vec2i, vec3i, vec1o[1], vec2o[1], vec3o[1], &matrix[4]);
+	VectorCopy(normal,&matrix[8]);
+}
+
+void applyMatrix(vec3_t myVec, float matrix[16], vec3_t result) {
+	result[0] = DotProduct(myVec, &matrix[0]) + matrix[3];
+	result[1] = DotProduct(myVec, &matrix[4]) + matrix[7];
+	result[2] = DotProduct(myVec, &matrix[8]) + matrix[11];
+}
+void applyMatrix3to2(vec3_t myVec, float matrix[16], vec3_t result) {
+	result[0] = DotProduct(myVec, &matrix[0]) + matrix[3];
+	result[1] = DotProduct(myVec, &matrix[4]) + matrix[7];
 }
 
 /*
@@ -1038,7 +1084,8 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 	vec3_t vec1, vec2;
 	vec3_t side1, side2;
 	vec3_t normal = { 0,0,0 };
-	vec3_t uvTransformMatrix[2];
+	//vec3_t uvTransformMatrix[2];
+	float uvTransformMatrix[16];
 	qboolean uvTransformMatrixDone = qfalse;
 	float zComp, align;
 	vec3_t oldNormal;
@@ -1072,15 +1119,19 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 			// keep calculated normal
 		}
 
+		//float planedist = DotProduct(normal, p[0]);
+
 		if (r_parallaxTexCoordReuseMatrixThresh->value == 0.0f || DotProduct(normal, oldNormal) < r_parallaxTexCoordReuseMatrixThresh->value || !uvTransformMatrixDone) {
 			// try to reuse the transformation matrix if normal hasn't changed much, for better consistency.
-			makeUVTransformationMatrix(p[0], st[0], p[1], st[1], p[2], st[2], uvTransformMatrix);
+			//makeUVTransformationMatrix(p[0], st[0], p[1], st[1], p[2], st[2], uvTransformMatrix);
+			makeUVTransformationMatrixSafe(p[0], st[0], p[1], st[1], p[2], st[2], normal, uvTransformMatrix);
 			uvTransformMatrixDone = qtrue;
 		}
 
-		vec2_t sanityCheck; // should be equal to st1
-		sanityCheck[0] = DotProduct(uvTransformMatrix[0], p[0]);
-		sanityCheck[1] = DotProduct(uvTransformMatrix[1], p[0]);
+		//vec2_t sanityCheck; // should be equal to st1
+		//applyMatrix3to2(p,uvTransformMatrix,sanityCheck);
+		//sanityCheck[0] = DotProduct(uvTransformMatrix[0], p[0]);
+		//sanityCheck[1] = DotProduct(uvTransformMatrix[1], p[0]);
 
 		for (j = 0; j < 3; j++) {
 			VectorSubtract(backEnd.ori.viewOrigin, p[j], viewer);
@@ -1089,8 +1140,9 @@ void RB_CalcParallaxTexCoords( const float offset, float *stAll ) {
 			zComp = DotProduct(viewer,normal);
 			VectorMA(viewer,-zComp,normal,viewer);
 			VectorAdd(p[j],viewer,viewer);
-			stOutTmp[tess.indexes[i + j]][0] = DotProduct(uvTransformMatrix[0], viewer);
-			stOutTmp[tess.indexes[i + j]][1] = DotProduct(uvTransformMatrix[1], viewer);
+			applyMatrix3to2(viewer, uvTransformMatrix, stOutTmp[tess.indexes[i + j]]);
+			//stOutTmp[tess.indexes[i + j]][0] = DotProduct(uvTransformMatrix[0], viewer);
+			//stOutTmp[tess.indexes[i + j]][1] = DotProduct(uvTransformMatrix[1], viewer);
 		}
 		VectorCopy(normal, oldNormal);
 	}

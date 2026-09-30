@@ -1490,6 +1490,16 @@ vec3 powVec(vec3 invec, float power){
 	);
 }
 
+vec3 srgbtolinear(vec3 inColor){
+
+	return mix(pow((inColor+0.055f)*(1.0f/1.055f),vec3(2.4f)),inColor*(1.0f/12.92f),lessThanEqual(inColor, vec3(0.04045f)));
+}
+vec3 lineartosrgb(vec3 inColor)
+{
+    return mix(vec3(1.055)*pow(inColor, vec3(1.0/2.4)) - vec3(0.055), inColor * vec3(12.92), lessThan(inColor, vec3(0.0031308)));
+}
+
+
 vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler, vec2 lmtexcoord, vec3 eyespacelightdir, bool havedeluxe, vec3 lightNormal, vec3 lightReferenceNormal, mat4 dirmat, vec3 viewerVectorNorm, float specIntensitySchlickMult,float viewerDistance, bool twoSided, int style, vec3 worldPixel){
 	vec4 color;
 	vec4 direction = vec4(1.0f);
@@ -1536,8 +1546,16 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 				} else{
 					lightDistance = 300.0f;
 				}
-				direction.w = 1.0f;
-				direction = (dirmat*direction);
+				direction.xyz = lineartosrgb(direction.xyz);
+				if(dot(direction.xyz,direction.xyz) == 0){
+					// fallback
+					color.r *= 4.0f;
+					direction = vec4((eyespacelightdir),1.0f);
+				} else{
+					direction.w = 1.0f;
+					direction = (dirmat*direction);
+				}
+				
 			} else {
 				direction = vec4((eyespacelightdir),1.0f);
 			}
@@ -1606,7 +1624,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 
 			vec4 worldDirection = normalize(worldModelViewMatrixReverseGeom*vec4(( haveDir? direction.xyz : lightReferenceNormal.xyz),0.0f));
 			float weight =  clamp(dot(sundir,worldDirection.xyz)*1.0f,0.0f,1.0f);
-			color.xyz *= powVec(((1.0f-weight)*multBlur) + weight*mult,cloudPowerUniform)*cloudIntensityCompensateUniform;
+			color.xyz *= pow(((1.0f-weight)*multBlur) + weight*mult,vec3(cloudPowerUniform))*cloudIntensityCompensateUniform;
 		}
 		
 	}
