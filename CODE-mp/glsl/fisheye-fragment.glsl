@@ -1430,7 +1430,7 @@ float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lig
 	}
 
 	if(gentleMode){
-		shadowedIntensity = mix(1.0,shadowedIntensity,clamp((lightVectorWorldNorm.z+0.2)/1.2,0.0,1.0)); // don't draw on top, draw less on sides
+		shadowedIntensity = mix(1.0,shadowedIntensity,clamp((lightVectorWorldNorm.z+1.0)*0.5,0.0,1.0)); // don't draw on top, draw less on sides
 	}
 
 	return shadowedIntensity;
