@@ -1081,6 +1081,8 @@ typedef struct {
 	char		*entityParsePoint;
 
 	qboolean	wantsStencilSkies;
+
+	qboolean	deluxeMapIsFake;
 } world_t;
 
 
@@ -1338,7 +1340,9 @@ typedef struct {
 	qboolean				lightmapAlpha;
 	qboolean				hdrLightmap;
 	qboolean				deluxeMapping;
+	qboolean				deluxeMappingFake; // for fake generated deluxemaps. some things won't work as nicely with them so account for it.
 	GLuint					lightmapArray;
+	qboolean				lightmapsStoredSRGB; // for non-float 8 bit lightmaps, we load them as sRGB, but that means we need to convert back to "sRGB" for the deluxemap to get the right value in the renderer
 	int						lightmapArrayInternalFormat;
 	qboolean				doLightmapArray;
 	qboolean				haveVertLightDirs;

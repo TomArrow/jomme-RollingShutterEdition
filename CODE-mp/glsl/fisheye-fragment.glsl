@@ -414,6 +414,7 @@ uniform int fishEyeModeUniform; //1= fisheye, 2=equirectangular
 uniform float texAverageBrightnessUniform;
 uniform float parallaxMapDepthUniform;
 uniform float dLightFastSkipThresholdUniform;
+uniform float dLightDeluxeShadowIntensityUniform;
 uniform float dLightIntensityUniform;
 uniform float dLightSpecIntensityUniform;
 uniform float dLightSpecGammaUniform;
@@ -469,6 +470,8 @@ uniform int renderFlagsUniform;
 uniform int zPrepassUniform;
 
 uniform int deluxeMappingUniform;
+uniform int deluxeMappingFakeUniform;
+uniform int deluxeMapsRGBUniform;
 
 uniform int haveVertexLightDirectionUniform;
 uniform int isModelUniform;
@@ -1378,7 +1381,8 @@ vec3 perlinNoiseVariation6Stack(vec4 coords,vec3 vieworg){
 float distanceToLineProperMaybefastSquared(vec3 point, vec3 linePoint1, vec3 linePoint2);
 float shortestDistanceLinesSquared( vec3 a0, vec3 a1, vec3 b0, vec3 b1,inout int type, float quitThreshold);
 
-float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lightOrigin, float fastSkipThresMain){
+// gentlemode is for when we don't have truly good usable lightdirs from a solid real deluxemap
+float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lightOrigin, float fastSkipThresMain, bool gentleMode){
 	bool sceneView = (renderFlagsUniform & RENDERFLAG_SCENEVIEW) > 0;
 	bool fastPreview = (renderFlagsUniform & RENDERFLAG_FASTPREVIEW) > 0;
 	bool fastLighting = sceneView || fastPreview; // can add additional options
@@ -1401,6 +1405,14 @@ float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lig
 
 			float shadowLineIntensity = (isModelUniform > 0 || stageForceNormalUniform > 0) ? clamp(distanceToSL,0.0f,10.0f)*0.1f : 1.0f;
 
+			if(gentleMode){
+				const float gentleIntensityDistanceScaler = 1.0f/300.0f;
+				// don't do any shadows further than 300 units away in gentle mode
+				shadowLineIntensity = mix(shadowLineIntensity,0.0,min(distanceToSL*gentleIntensityDistanceScaler,1.0f));
+			}
+
+			shadowLineIntensity *= dLightDeluxeShadowIntensityUniform;
+
 			float maxDistPoint = shadowLines[s].halfLineLength + shadowLines[s].width;
 			if(distanceToLineProperMaybefastSquared(shadowLines[s].middle.xyz,worldPixel,lightOrigin) > maxDistPoint*maxDistPoint*10.0f){
 				continue;
@@ -1415,6 +1427,10 @@ float getShadowLineIntensity(vec3 worldPixel,vec3 lightVectorWorldNorm, vec3 lig
 				break;
 			}
 		}
+	}
+
+	if(gentleMode){
+		shadowedIntensity = mix(1.0,shadowedIntensity,clamp((lightVectorWorldNorm.z+0.2)/1.2,0.0,1.0)); // don't draw on top, draw less on sides
 	}
 
 	return shadowedIntensity;
@@ -1546,11 +1562,18 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 				} else{
 					lightDistance = 300.0f;
 				}
-				direction.xyz = lineartosrgb(direction.xyz);
-				if(dot(direction.xyz,direction.xyz) == 0){
+				if(deluxeMapsRGBUniform > 0){
+					direction.xyz = lineartosrgb(direction.xyz);
+				}
+				if(direction.x == 0 && direction.y == 0 && direction.z == 0){
 					// fallback
-					color.r *= 4.0f;
-					direction = vec4((eyespacelightdir),1.0f);
+					if(haveVertLightDir){
+						direction = vec4((eyespacelightdir),1.0f);
+						//color.r *= 4.0f;
+					} else{
+						// don't see how that would ever happen under normal circumstances but oh well, nice debugging?
+						color.b *= 16.0f;
+					}
 				} else{
 					direction.w = 1.0f;
 					direction = (dirmat*direction);
@@ -1593,7 +1616,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 			color *=alignment*alignment*alignment+specIntensityTotal;
 			color = max(vec4(0.0f),color);
 			
-			if(doDist){
+			if(doDist && dLightDeluxeShadowIntensityUniform > 0){
 				if(isinf(lightDistance)){
 					lightDistance = 10000.0;
 				}
@@ -1602,7 +1625,7 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 				vec3 lightVectorWorldNorm = normalize(lightPosGuess - worldPixel);
 				float fastSkipThresMain = dLightFastSkipThresholdUniform/length(color.xyz);
 				directionality = directionality*directionality*directionality;
-				color.xyz*= (1.0f-directionality) + directionality*getShadowLineIntensity(worldPixel,lightVectorWorldNorm,lightPosGuess,fastSkipThresMain);
+				color.xyz*= (1.0f-directionality) + directionality*getShadowLineIntensity(worldPixel,lightVectorWorldNorm,lightPosGuess,fastSkipThresMain,deluxeMappingFakeUniform > 0 || !havedeluxe);
 			}
 			
 		}

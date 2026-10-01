@@ -284,6 +284,7 @@ static	void R_LoadLightmaps( lump_t *l, lump_t* surfs, const char *psMapName ) {
 	// we are about to upload textures
 	R_SyncRenderThread();
 
+	tr.lightmapsStoredSRGB = qfalse;
 	tr.lightmapAlpha = qfalse;
 	tr.hdrLightmap = qfalse;
 	tr.doLightmapArray = (qboolean)(r_fboGLSL->integer && ENABLEGLSL);
@@ -2649,6 +2650,7 @@ void R_LoadEntities( lump_t *l ) {
 	w->lightGridSize[2] = 128;
 
 	w->wantsStencilSkies = qfalse;
+	w->deluxeMapIsFake = qfalse;
 
 	p = (char *)(fileBase + l->fileofs);
 
@@ -2715,6 +2717,12 @@ void R_LoadEntities( lump_t *l ) {
 		// check for stencil sky
 		if (!Q_stricmp(keyname, "stencilsky") || !Q_stricmp(keyname, "_stencilsky")) {
 			w->wantsStencilSkies = (qboolean)atoi(value);
+			continue;
+		}
+
+		// check for a different grid size
+		if (!Q_stricmp(keyname, "fakedeluxemap") || !Q_stricmp(keyname, "_fakedeluxemap")) {
+			w->deluxeMapIsFake = (qboolean)atoi(value);
 			continue;
 		}
 	}
@@ -3081,6 +3089,9 @@ static void RE_LoadWorldMap_Actual( const char *name ) {
 	R_LoadSubmodels (&header->lumps[LUMP_MODELS]);
 	R_LoadVisibility( &header->lumps[LUMP_VISIBILITY] );
 	R_LoadEntities( &header->lumps[LUMP_ENTITIES] );
+	if (s_worldData.deluxeMapIsFake && tr.deluxeMapping) {
+		tr.deluxeMappingFake = s_worldData.deluxeMapIsFake;
+	}
 	R_LoadLightGrid( &header->lumps[LUMP_LIGHTGRID] );
 	R_LoadLightGridArray( &header->lumps[LUMP_LIGHTARRAY] );
 

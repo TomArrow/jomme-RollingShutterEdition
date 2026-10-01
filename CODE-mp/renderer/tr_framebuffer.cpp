@@ -133,6 +133,8 @@ public:
 	R_GLSL_Uniform zPrepassUniform;
 
 	R_GLSL_Uniform deluxeMappingUniform;
+	R_GLSL_Uniform deluxeMappingFakeUniform;
+	R_GLSL_Uniform deluxeMapsRGBUniform;
 
 	R_GLSL_Uniform text_in[NUM_TEXTURE_SAMPLERS];
 	R_GLSL_Uniform text_inArray31;
@@ -169,6 +171,7 @@ public:
 	R_GLSL_Uniform dLightVoxelShadowJitterMethodUniform;
 	R_GLSL_Uniform dLightIntensityUniform;
 	R_GLSL_Uniform dLightFastSkipThresholdUniform;
+	R_GLSL_Uniform dLightDeluxeShadowIntensityUniform;
 	R_GLSL_Uniform dLightSpecIntensityUniform;
 	R_GLSL_Uniform dLightSpecGammaUniform;
 	R_GLSL_Uniform dLightSpecBaseReflectivityUniform;
@@ -256,6 +259,7 @@ cvar_t *r_fboGLSLDLightsSpecBaseReflectivity;
 cvar_t *r_fboGLSLDLightsSpecDistanceDecay;
 cvar_t *r_fboGLSLDLightsSpecDistanceMinUniform;
 cvar_t *r_fboGLSLDLightsFastSkipThreshold;
+cvar_t *r_fboGLSLDLightsDeluxeShadowIntensity;
 cvar_t *r_fboGLSLModelBumpProximityFade;
 cvar_t *r_fboGLSLModelBumpProximityFadeTarget;
 cvar_t *r_fboGLSLModelBumpProximitySkinFade;
@@ -497,6 +501,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		uniformLocationsTess->zPrepassUniform.set1i( fbo.fishEyeData.doingZPrepass);
 
 		uniformLocationsTess->deluxeMappingUniform.set1i( tr.deluxeMapping);
+		uniformLocationsTess->deluxeMappingFakeUniform.set1i( tr.deluxeMappingFake);
+		uniformLocationsTess->deluxeMapsRGBUniform.set1i( tr.lightmapsStoredSRGB);
 
 		uniformLocationsTess->haveVertexLightDirectionUniform.set1i( fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
 		uniformLocationsTess->isModelUniform.set1i( fbo.fishEyeData.isModel ? 1 : 0);
@@ -542,6 +548,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		uniformLocationsTess->dLightSpecDistanceMinUniform.set1f( r_fboGLSLDLightsSpecDistanceMinUniform->value);
 		uniformLocationsTess->dLightIntensityUniform.set1f( r_fboGLSLDLightsIntensity->value);
 		uniformLocationsTess->dLightFastSkipThresholdUniform.set1f( r_fboGLSLDLightsFastSkipThreshold->value);
+		uniformLocationsTess->dLightDeluxeShadowIntensityUniform.set1f( r_fboGLSLDLightsDeluxeShadowIntensity->value );
 		uniformLocationsTess->dLightAddPowUniform.set1f( r_fboGLSLDLightsAddPow->value);
 		uniformLocationsTess->dLightAddPostPowMultUniform.set1f( r_fboGLSLDLightsAddPostPowMult->value);
 		//uniformLocationsTess->dLightsUniform").set3fv( sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
@@ -637,6 +644,8 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		uniformLocations->zPrepassUniform.set1i( fbo.fishEyeData.doingZPrepass);
 
 		uniformLocations->deluxeMappingUniform.set1i( tr.deluxeMapping);
+		uniformLocations->deluxeMappingFakeUniform.set1i(tr.deluxeMappingFake);
+		uniformLocations->deluxeMapsRGBUniform.set1i(tr.lightmapsStoredSRGB);
 
 		uniformLocations->haveVertexLightDirectionUniform.set1i( fbo.fishEyeData.haveVertexLightDirection ? 1 : 0);
 		uniformLocations->isModelUniform.set1i( fbo.fishEyeData.isModel ? 1 : 0);
@@ -682,6 +691,7 @@ qboolean R_FrameBuffer_FishEyeSetUniforms(qboolean tess) {
 		uniformLocations->dLightSpecDistanceMinUniform.set1f( r_fboGLSLDLightsSpecDistanceMinUniform->value);
 		uniformLocations->dLightIntensityUniform.set1f( r_fboGLSLDLightsIntensity->value);
 		uniformLocations->dLightFastSkipThresholdUniform.set1f( r_fboGLSLDLightsFastSkipThreshold->value);
+		uniformLocations->dLightDeluxeShadowIntensityUniform.set1f( r_fboGLSLDLightsDeluxeShadowIntensity->value );
 		uniformLocations->dLightAddPowUniform.set1f( r_fboGLSLDLightsAddPow->value);
 		uniformLocations->dLightAddPostPowMultUniform.set1f( r_fboGLSLDLightsAddPostPowMult->value);
 		//uniformLocations->dLightsUniform").set3fv( sizeof(dlight_t) / 4 / 4 * backEnd.refdef.num_dlights, (GLfloat*)&backEnd.refdef.dlights);
@@ -1883,6 +1893,8 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->zPrepassUniform.getUniformLocation(program->ShaderIdByBits(i), "zPrepassUniform");
 
 		locs->deluxeMappingUniform.getUniformLocation(program->ShaderIdByBits(i), "deluxeMappingUniform");
+		locs->deluxeMappingFakeUniform.getUniformLocation(program->ShaderIdByBits(i), "deluxeMappingFakeUniform");
+		locs->deluxeMapsRGBUniform.getUniformLocation(program->ShaderIdByBits(i), "deluxeMapsRGBUniform");
 
 		locs->haveVertexLightDirectionUniform.getUniformLocation(program->ShaderIdByBits(i), "haveVertexLightDirectionUniform");
 		locs->isModelUniform.getUniformLocation(program->ShaderIdByBits(i), "isModelUniform");
@@ -1929,6 +1941,7 @@ static void R_FrameBufferInitUniformLocs(R_GLSL* program,uniformLocations_t* loc
 		locs->dLightIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightIntensityUniform");
 		locs->dLightsCountUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightsCountUniform");
 		locs->dLightFastSkipThresholdUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightFastSkipThresholdUniform");
+		locs->dLightDeluxeShadowIntensityUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightDeluxeShadowIntensityUniform");
 		locs->dLightAddPowUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightAddPowUniform");
 		locs->dLightAddPostPowMultUniform.getUniformLocation(program->ShaderIdByBits(i), "dLightAddPostPowMultUniform");
 		for (int j = 0; j < MAX_DLIGHTS; j++) {
@@ -2088,6 +2101,7 @@ void R_FrameBuffer_Init( void ) {
 	r_fboGLSLDLightsAddPow = ri.Cvar_Get( "r_fboGLSLDLightsAddPow", "0.7", CVAR_ARCHIVE);
 	r_fboGLSLDLightsAddPostPowMult = ri.Cvar_Get( "r_fboGLSLDLightsAddPostPowMult", "0.8", CVAR_ARCHIVE);
 	r_fboGLSLDLightsFastSkipThreshold = ri.Cvar_Get( "r_fboGLSLDLightsFastSkipThreshold", "0.00001", CVAR_ARCHIVE);
+	r_fboGLSLDLightsDeluxeShadowIntensity = ri.Cvar_Get( "r_fboGLSLDLightsDeluxeShadowIntensity", "1.0", CVAR_ARCHIVE);
 	r_fboGLSLModelBumpProximityFade = ri.Cvar_Get( "r_fboGLSLModelBumpProximityFade", "0", CVAR_ARCHIVE);
 	r_fboGLSLModelBumpProximityFadeTarget = ri.Cvar_Get("r_fboGLSLModelBumpProximityFadeTarget", "0.1", CVAR_ARCHIVE);
 	r_fboGLSLModelBumpProximitySkinFade = ri.Cvar_Get( "r_fboGLSLModelBumpProximitySkinFade", "0", CVAR_ARCHIVE);

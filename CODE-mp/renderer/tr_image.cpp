@@ -2866,6 +2866,10 @@ R_InitLightmapArray
 void R_InitLightmapArray(int internalFormat, int mipLevelCount, int width, int height, int layerCount) {
 #ifdef LIGHTMAP_ARRAY
 	if (!tr.lightmapArray) {
+		// not rly caring much about the non lightarray route anymore since its 100% broken but 
+		// lightarray can only have one internalformat so if one lightmap is stored as srgb, every other is too.
+		// this is relevant for deluxemapping. we need to account for it.
+		tr.lightmapsStoredSRGB = (qboolean)(internalFormat >= GL_SRGB && internalFormat <= GL_SRGB8_ALPHA8);
 		tr.lightmapArray = 1024 + giTextureBindNum++;
 		tr.lightmapArrayInternalFormat = internalFormat;
 		qglDisable(GL_TEXTURE_2D);
