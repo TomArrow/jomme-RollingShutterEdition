@@ -1577,6 +1577,10 @@ vec4 getLightmapIntensity(bool haveVertLightDir, int sampler, int deluxeSampler,
 				} else{
 					direction.w = 1.0f;
 					direction = (dirmat*direction);
+					if(deluxeMappingFakeUniform > 0){
+						// smooth things out if they got wonky
+						direction.xyz = mix(lightReferenceNormal,direction.xyz,clamp(dot(lightReferenceNormal,direction.xyz)*5.0f,0.0f,1.0f));
+					}
 				}
 				
 			} else {
