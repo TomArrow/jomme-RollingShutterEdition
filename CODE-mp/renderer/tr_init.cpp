@@ -1,5 +1,21 @@
 // tr_init.c -- functions that are not called every frame
 
+#if _WIN32
+
+typedef enum _D3DKMT_SCHEDULINGPRIORITYCLASS
+{
+	D3DKMT_SCHEDULINGPRIORITYCLASS_IDLE = 0,
+	D3DKMT_SCHEDULINGPRIORITYCLASS_BELOW_NORMAL = 1,
+	D3DKMT_SCHEDULINGPRIORITYCLASS_NORMAL = 2,
+	D3DKMT_SCHEDULINGPRIORITYCLASS_ABOVE_NORMAL = 3,
+	D3DKMT_SCHEDULINGPRIORITYCLASS_HIGH = 4,
+	D3DKMT_SCHEDULINGPRIORITYCLASS_REALTIME = 5,
+} D3DKMT_SCHEDULINGPRIORITYCLASS;
+
+#include <Windows.h>
+#include <processthreadsapi.h>
+EXTERN_C _Check_return_ NTSTATUS APIENTRY D3DKMTSetProcessSchedulingPriorityClass(_In_ HANDLE, _In_ D3DKMT_SCHEDULINGPRIORITYCLASS);
+#endif
 
 #include "tr_local.h"
 #include <cmath>
@@ -1274,6 +1290,28 @@ void R_Init( void ) {
 	byte *ptr;
 
 	ri.Printf( PRINT_ALL, "----- R_Init -----\n" );
+
+
+#if _WIN32
+
+#if 0 // this doesn't really work. thought it would make the pc lag less during rendering but its hopeless.
+	ri.Printf( PRINT_ALL, "----- Trying to set GPU priority on Windows -----\n" );
+
+	NTSTATUS priorityResponse = D3DKMTSetProcessSchedulingPriorityClass(GetCurrentProcess(), D3DKMT_SCHEDULINGPRIORITYCLASS_IDLE);
+
+	int otherprio = 0;
+	if (!SetPriorityClass(GetCurrentProcess(), PROCESS_MODE_BACKGROUND_BEGIN)) {
+		otherprio = 1;
+		if (!SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS)) {
+			otherprio = 2;
+		}
+	}
+
+
+	ri.Printf( PRINT_ALL, "----- Returned %d, that's %s, otherprio %d, Continuing R_Init -----\n", (int)priorityResponse, (!priorityResponse) ? "good" : "bad", otherprio);
+#endif
+
+#endif
 
 	// clear all our internal state
 	Com_Memset( &tr, 0, sizeof( tr ) );
