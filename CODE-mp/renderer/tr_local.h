@@ -105,6 +105,9 @@ typedef struct dlightCheap_s {
 	int				filler2;
 } dlightCheap_t;
 
+
+#define LIGHTEXTRAINFO_FASTSKIPPOSSIBLE 0
+#define LIGHTEXTRAINFO_PLANEDIST 3
 typedef struct shadowline_s {
 	vec4_t			point1; // vec4 or alignment with opengl SSBO
 	vec4_t			point2; // vec4 or alignment with opengl SSBO
@@ -119,6 +122,13 @@ typedef struct shadowline_s {
 	float			halfLineLength;
 	vec4_t			middle;
 	vec4_t			lightdir;
+	vec4_t			parentPos;
+	vec4_t			lightDots[MAX_DLIGHTS];
+	vec4_t			lightExtraInfo[MAX_DLIGHTS]; // 0 = fast skip possible  3 = plane dist
+	int				parentIndex;
+	int				g;
+	int				h;
+	int				i;
 } shadowline_t;
 
 typedef struct windpoint_s {
@@ -2216,7 +2226,7 @@ void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *vert
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist ); 
 void RE_AddCheapLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );
 qboolean RE_GetShaderLightMultiplier(qhandle_t hshader, vec3_t color);
-void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
+void RE_AddShadowLineToScene(const vec3_t p1, const vec3_t p2,  const vec3_t parentPos, float width, float a, float b, int flags);
 void RE_AddWindPointToScene(const vec3_t origin, const vec3_t direction, float intensity, float radius);
 int RE_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const float* axis, int flags);
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist );

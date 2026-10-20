@@ -443,7 +443,7 @@ RE_AddShadowLineToScene
 
 =====================
 */
-void RE_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags ) {
+void RE_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, const vec3_t parentPos, float width, float a, float b, int flags ) {
 	shadowline_t	*sl;
 	vec4_t p1ToP2;
 
@@ -458,6 +458,7 @@ void RE_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width, flo
 
 	VectorCopy (p1, sl->point1);
 	VectorCopy (p2, sl->point2);
+	VectorCopy (parentPos, sl->parentPos);
 	VectorSubtract(p2, p1, p1ToP2);
 	VectorMA(p1,0.5f,p1ToP2,sl->middle);
 	sl->halfLineLength = VectorLength(p1ToP2)*0.5f;
@@ -612,8 +613,16 @@ static int cmpShadowLineViewOrgDistance(const void* a, const void* b) {
 		return -1;
 	}
 
-	dist1 = DistanceSquared(aa->middle,tr.refdef.vieworg);
-	dist2 = DistanceSquared(bb->middle,tr.refdef.vieworg);
+	// primary sort by parent pos. within same parent pos, by dist.
+	if (VectorCompare(aa->parentPos, bb->parentPos)) {
+		dist1 = DistanceSquared(aa->middle, tr.refdef.vieworg);
+		dist2 = DistanceSquared(bb->middle, tr.refdef.vieworg);
+
+		return dist1 - dist2;
+	}
+
+	dist1 = DistanceSquared(aa->parentPos,tr.refdef.vieworg);
+	dist2 = DistanceSquared(bb->parentPos,tr.refdef.vieworg);
 
 	return dist1 - dist2;
 }
@@ -791,7 +800,39 @@ void RE_RenderScene( const refdef_t *fd ) {
 		// sort by distance.
 		tr.refdef.num_shadowlines = MAX_SHADOWLINES;
 	}
+	int shadowLineParentIndex = 0;
 	for (int i = 0; i < tr.refdef.num_shadowlines; i++) {
+		if (i > 0 && !VectorCompare(tr.refdef.shadowlines[i].parentPos, tr.refdef.shadowlines[i - 1].parentPos)) {
+			shadowLineParentIndex++;
+		}
+
+		tr.refdef.shadowlines[i].parentIndex = shadowLineParentIndex;
+		for (int j = 0; j < tr.refdef.num_dlights; j++) {
+			vec3_t lightToParent, cutoffPlanePoint;
+			VectorSubtract(tr.refdef.shadowlines[i].parentPos, tr.refdef.dlights[j].origin, lightToParent);
+			float lightDist = VectorNormalize(lightToParent);
+			const float maxRadius = 64.0f; // just a bad guess. how far from our origin can our shadowlines span? its not just the hitbox, its also the shadowline width plus how far our arms/legs can stretch out...
+			if (lightDist < maxRadius) {
+				tr.refdef.shadowlines[i].lightExtraInfo[j][LIGHTEXTRAINFO_FASTSKIPPOSSIBLE] = qfalse;
+				continue;
+			}
+			tr.refdef.shadowlines[i].lightExtraInfo[j][LIGHTEXTRAINFO_FASTSKIPPOSSIBLE] = qtrue;
+			float minSkipAngle = asinf(maxRadius/lightDist); // find the angle we need to skim past the sphere of maxradius around the shadowline parent origin
+			float mindot = cosf(minSkipAngle);
+			
+			// this info will help us skip pixels that are hit by the light without passing through the sphere of the shadowline's influence
+			VectorCopy(lightToParent, tr.refdef.shadowlines[i].lightDots[j]);
+			tr.refdef.shadowlines[i].lightDots[j][3] = mindot;
+
+
+			VectorMA(tr.refdef.dlights[j].origin, (lightDist-maxRadius), lightToParent, cutoffPlanePoint);
+			float planedist = DotProduct(cutoffPlanePoint, lightToParent);
+
+			// this info will help us skip pixels that havent reached the sphere's line of influence yet, defined by using lightToParent as a plane equation's normal and -planedist as its dist/w component
+			tr.refdef.shadowlines[i].lightExtraInfo[j][LIGHTEXTRAINFO_PLANEDIST] = -planedist;
+		}
+		
+
 		if (tr.refdef.shadowlines[i].flags & 1) {
 			// foot shadow
 			R_LightDirForPoint(tr.refdef.shadowlines[i].middle, tr.refdef.shadowlines[i].lightdir,vec3_origin, tr.refdef.shadowlines[i].lightdir+3,tr.world,-99.0f,-99.0f);

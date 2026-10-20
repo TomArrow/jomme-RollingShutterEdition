@@ -327,7 +327,7 @@ void Cam_AddEntityShadowLines(centity_t* cent) {
 		p1[2] += DEFAULT_MAXS_2;
 		p1[2] += DEFAULT_MINS_2;
 
-		trap_R_AddShadowLineToScene(p1, p2, 20.0, 0, 0, 1);
+		trap_R_AddShadowLineToScene(p1, p2, cent->lerpOrigin, 20.0, 0, 0, 1);
 	}
 	else { // this is cool idea in theory but ... atm a bit slow and doesnt look quite right yet; edit: nvm
 
@@ -341,7 +341,7 @@ void Cam_AddEntityShadowLines(centity_t* cent) {
 		VectorCopy(cent->lerpOrigin, p1);
 		VectorCopy(cent->lerpOrigin, p2);
 		p1[2] += DEFAULT_MAXS_2;
-		trap_R_AddShadowLineToScene(p1, p2, 60.0, 400.0, 0, 2); // ambient occlusion thingie
+		trap_R_AddShadowLineToScene(p1, p2, cent->lerpOrigin, 60.0, 400.0, 0, 2); // ambient occlusion thingie
 
 
 		for (i = 0; i < SLB_SHADOW_LINE_BOLT_COUNT; i++) {
@@ -352,7 +352,7 @@ void Cam_AddEntityShadowLines(centity_t* cent) {
 		for (i = 0; i < SL_SHADOW_LINE_COUNT; i++) {
 			shadowLineType = shadowLineTypes + i;
 			if (!(cent->shadowLineBlacklist & (1<<i)) && !(cent->dism.cut & shadowLineDismemberBlocks[i]) && (shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
-				trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
+				trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], cent->lerpOrigin, shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
 			}
 		}
 
@@ -381,7 +381,7 @@ void Cam_AddGhoul2ShadowLines(refEntity_t* rent, int shadowLineBlackList, vec3_t
 	for (i = 0; i < SL_SHADOW_LINE_COUNT; i++) {
 		shadowLineType = shadowLineTypes + i;
 		if (!(shadowLineBlackList & (1<<i)) && !(dismCut & shadowLineDismemberBlocks[i]) && (shadowLineBoltPosKnown & (1 << shadowLineType->bolt1)) && shadowLineBoltPosKnown & (1 << shadowLineType->bolt2)) {
-			trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
+			trap_R_AddShadowLineToScene(shadowLineBoltPos[shadowLineType->bolt1], shadowLineBoltPos[shadowLineType->bolt2], rent->origin, shadowLineType->width, shadowLineType->a, shadowLineType->b, shadowLineType->flags);
 		}
 	}
 

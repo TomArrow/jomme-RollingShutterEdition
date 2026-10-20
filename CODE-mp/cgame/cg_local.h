@@ -2793,7 +2793,7 @@ void		trap_R_AddRefEntityToScene( const refEntity_t *re );
 void		trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts );
 void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int numPolys );
 void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b, float mindist, int cheap);
-void		trap_R_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags);
+void		trap_R_AddShadowLineToScene(const vec3_t p1, const vec3_t p2, const vec3_t parentPos, float width, float a, float b, int flags);
 int			trap_R_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const vec3_t axis[3], int flags);
 void		trap_R_AddWindPointToScene(const vec3_t org, const vec3_t direction, float force, float radius);
 

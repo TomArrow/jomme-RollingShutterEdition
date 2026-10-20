@@ -11,6 +11,8 @@
 
 #define TEXTURE_COUNT 14
 
+#define MAX_DLIGHTS 32
+
 #define TEXTUREGRAD 1
 
 #define PERLINFVCKERY 1
@@ -735,6 +737,8 @@ uniform dlight_t dLightsUniform[32];
 uniform int shaderStylesUniform[14];
 uniform int lightmapNumsUniform[32];
 
+#define SHADOWLINE_PARENTSKIPS 1
+
 struct shadowline_t {
 	vec4			point1;
 	vec4			point2;
@@ -749,6 +753,13 @@ struct shadowline_t {
 	float			halfLineLength;
 	vec4			middle;
 	vec4			lightdir; // for foot shadows
+	vec4			parentPos;
+	vec4			lightDots[MAX_DLIGHTS];
+	vec4			lightExtraInfo[MAX_DLIGHTS]; // 0 = fast skip possible  3 = plane dist
+	int				parentIndex;
+	int				fastSkipPossible;
+	int				h;
+	int				i;
 };
 
 uniform int shadowLinesCountUniform;
@@ -2414,6 +2425,14 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 				//vec3 lightVectorAbsNorm = normalize(lightVectorAbs);
 				int s =mainLightShadowLinesCalculated;
 				if(!fastLighting){
+
+#if SHADOWLINE_PARENTSKIPS
+					// for fast skip
+					vec3 lightToWorldNorm = normalize(worldPixel - dlightRawOrigin);
+					int lastshadowLineParent = -1;
+					bool lastParentSkipped = false;
+#endif
+
 					for(;s<shadowLinesCountUniform;s++){
 
 						if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
@@ -2422,6 +2441,21 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 						//if(dot(shadowLines[s].point2.xyz-worldPixel,normal) <=0.0 && dot(shadowLines[s].point1.xyz-worldPixel,normal) <=0.0){ // actually makes performance worse
 						//	continue;
 						//}
+
+#if SHADOWLINE_PARENTSKIPS
+						if(allInvocationsARB(
+							lastshadowLineParent == shadowLines[s].parentIndex && lastParentSkipped ||
+							shadowLines[s].lightExtraInfo[i].x > 0 && // skippable at all
+							(dot(lightToWorldNorm,shadowLines[s].lightDots[i].xyz) < shadowLines[s].lightDots[i].w // light-shadowlineparentsphere-cone angle skip
+							|| dot(worldPixel,shadowLines[s].lightDots[i].xyz) + shadowLines[s].lightExtraInfo[i].w < 0) // between light and shadowlineparentsphere sphere skip
+						)){
+							lastshadowLineParent = shadowLines[s].parentIndex;
+							lastParentSkipped = true;
+							continue;
+						}
+						lastshadowLineParent = shadowLines[s].parentIndex;
+						lastParentSkipped = false;
+#endif
 
 						//lightVector1 : pointing to light 
 						//
@@ -2515,12 +2549,35 @@ bool main_real(inout vec4 outFragColor, inout bool isinvisible)
 #endif
 					int s=mainLightShadowLinesCalculated;
 					if(!fastLighting){
+
+#if SHADOWLINE_PARENTSKIPS
+						// for fast skip
+						vec3 lightToWorldNorm = normalize(worldPixel - dlightRawOrigin);
+						int lastshadowLineParent = -1;
+						bool lastParentSkipped = false;
+#endif
+
 						for(;s<shadowLinesCountUniform;s++){
 
 							if(0 < (shadowLines[s].flags & 2)){ // this one's just used for some simplistic ambient occlusion
 								continue;
 							}
-						
+
+#if SHADOWLINE_PARENTSKIPS
+							if(allInvocationsARB(
+								lastshadowLineParent == shadowLines[s].parentIndex && lastParentSkipped ||
+								shadowLines[s].lightExtraInfo[i].x > 0 && // skippable at all
+								(dot(lightToWorldNorm,shadowLines[s].lightDots[i].xyz) < shadowLines[s].lightDots[i].w // light-shadowlineparentsphere-cone angle skip
+								|| dot(worldPixel,shadowLines[s].lightDots[i].xyz) + shadowLines[s].lightExtraInfo[i].w < 0) // between light and shadowlineparentsphere sphere skip
+							)){
+								lastshadowLineParent = shadowLines[s].parentIndex;
+								lastParentSkipped = true;
+								continue;
+							}
+							lastshadowLineParent = shadowLines[s].parentIndex;
+							lastParentSkipped = false;
+#endif
+
 							vec3 vecToSL = shadowLines[s].middle.xyz - worldPixel;
 							float distanceToSL = dot(lightVectorWorldNorm,vecToSL);
 							if(distanceToSL < 0) {

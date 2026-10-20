@@ -320,12 +320,12 @@ int		trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLig
 	return syscall( CG_R_LIGHTFORPOINT, point, ambientLight, directedLight, lightDir );
 }
 
-void	trap_R_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, float width, float a, float b, int flags) { 
+void	trap_R_AddShadowLineToScene( const vec3_t p1, const vec3_t p2, const vec3_t parentPos, float width, float a, float b, int flags) { 
 	// a, b reserved for shit I might need but not sure.
 	// Flags: 
 	// 1 for : use point1 for feet shadow
 	// 2 for : use for a bit of simplistic ambient occlusion on world. Player nearby: Make a lil shadowy thingie
-	syscall( CG_R_ADDSHADOWLINE, p1, p2, PASSFLOAT(width), PASSFLOAT(a), PASSFLOAT(b), flags);
+	syscall( CG_R_ADDSHADOWLINE, p1, p2, parentPos, PASSFLOAT(width), PASSFLOAT(a), PASSFLOAT(b), flags);
 }
 int		trap_R_AddViewToScene(const vec3_t origin, qboolean is360, qboolean copyAxis, const vec3_t axis[3], int flags) {
 	return syscall( CG_R_ADDVIEWTOSCENE, origin, is360, copyAxis, axis, flags);

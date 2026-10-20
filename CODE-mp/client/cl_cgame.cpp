@@ -726,7 +726,7 @@ int CL_CgameSystemCalls( int *args ) {
 		}
 		return 0;
 	case CG_R_ADDSHADOWLINE:
-		re.AddShadowLineToScene( (const float *)VMA(1), (const float *)VMA(2), VMF(3), VMF(4), VMF(5), args[6] );
+		re.AddShadowLineToScene( (const float *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), VMF(4), VMF(5), VMF(6), args[7] );
 		return 0;
 	case CG_R_ADDWINDPOINT:
 		re.AddWindPointToScene( (const float *)VMA(1), (const float *)VMA(2), VMF(3), VMF(4));
