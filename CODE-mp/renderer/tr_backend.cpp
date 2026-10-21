@@ -746,7 +746,12 @@ void RB_BeginDrawingView (void) {
 	if (backEnd.viewParms.hackPortalNum < 0) {
 		// we clear the hackportal to 0, and then we draw the portal surface at depth 1
 		// that way we limit where portal contents are drawn without having to abuse stencils or other stuff
-		qglClearDepth(0.0f);
+		if (glConfig.depthMapFloatNVActive || r_zinvert->integer > 1) {
+			qglClearDepth(-1.0f);
+		}
+		else {
+			qglClearDepth(0.0f);
+		}
 	}
 
 	qglClear( clearBits );
@@ -1615,7 +1620,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 
 	// z prepass
-	if (r_zPrepass->integer || r_fboGLSLProjector && r_fboGLSLProjector->integer) { // projector shadow prepass just utilizes the same logic as z prepass/piggybacks onto it.
+	if (backEnd.viewParms.hackPortalNum >= 0 && (r_zPrepass->integer || r_fboGLSLProjector && r_fboGLSLProjector->integer)) { // projector shadow prepass just utilizes the same logic as z prepass/piggybacks onto it.
 		g_bRenderZPrepass = true;
 		g_bRenderProjectorPrepass = r_fboGLSLProjector && r_fboGLSLProjector->integer;
 		R_FrameBuffer_SetDynamicUniforms(0, 0, 0, 0, 0, 0, 0, 0, &g_bRenderZPrepass);

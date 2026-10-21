@@ -1234,7 +1234,7 @@ qboolean R_MirrorViewBySurface (drawSurf_t *drawSurf, int64_t entityNum, int hac
 		return qfalse;
 	}
 
-	if ( r_noportals->integer || (r_fastsky->integer == 1) ) {
+	if ( r_noportals->integer || (r_fastsky->integer == 1) || r_fboGLSLFastPreview->integer && !tr.captureIsActive) {
 		return qfalse;
 	}
 
