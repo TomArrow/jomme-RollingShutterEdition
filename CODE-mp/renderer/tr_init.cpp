@@ -118,6 +118,7 @@ cvar_t	*r_nocull;
 cvar_t	*r_facePlaneCull;
 cvar_t	*r_showcluster;
 cvar_t	*r_nocurves;
+cvar_t	*r_distancecullInSolid;
 
 cvar_t	*r_parallaxTexCoordNormalMode;
 cvar_t	*r_parallaxTexCoordReuseMatrixThresh;
@@ -1120,6 +1121,7 @@ void R_Register( void )
 	r_windPointX = ri.Cvar_Get ("r_windPointX", "0", 0);
 	r_windPointY = ri.Cvar_Get ("r_windPointY", "0", 0);
 
+	r_distancecullInSolid = ri.Cvar_Get ("r_distancecullInSolid", "4000", CVAR_ARCHIVE );
 	r_nocurves = ri.Cvar_Get ("r_nocurves", "0", CVAR_CHEAT );
 	r_parallaxTexCoordNormalMode = ri.Cvar_Get ("r_parallaxTexCoordNormalMode", "0", CVAR_ARCHIVE );
 	r_parallaxTexCoordReuseMatrixThresh = ri.Cvar_Get ("r_parallaxTexCoordReuseMatrixThresh", "0.95", CVAR_ARCHIVE );

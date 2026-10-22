@@ -44,6 +44,7 @@ int R_CullLocalBox (vec3_t bounds[2]) {
 	cplane_t	*frust;
 	int			anyBack;
 	int			front, back;
+	int			frustumPlanes = tr.distanceCull ? 5 : 4;
 
 	if ( r_nocull->integer || tr.viewParms.isSceneView && tr.viewParms.sceneView.is360 ) {
 		return CULL_CLIP;
@@ -63,7 +64,7 @@ int R_CullLocalBox (vec3_t bounds[2]) {
 
 	// check against frustum planes
 	anyBack = 0;
-	for (i = 0 ; i < 4 ; i++) {
+	for (i = 0 ; i < frustumPlanes; i++) {
 		frust = &tr.viewParms.frustum[i];
 
 		front = back = 0;
@@ -128,13 +129,14 @@ int R_CullPointAndRadius( vec3_t pt, float radius )
 	float	dist;
 	cplane_t	*frust;
 	qboolean mightBeClipped = qfalse;
+	int			frustumPlanes = tr.distanceCull ? 5 : 4;
 
 	if ( r_nocull->integer || tr.viewParms.isSceneView && tr.viewParms.sceneView.is360) {
 		return CULL_CLIP;
 	}
 
 	// check against frustum planes
-	for (i = 0 ; i < 4 ; i++) 
+	for (i = 0 ; i < frustumPlanes; i++)
 	{
 		frust = &tr.viewParms.frustum[i];
 
@@ -734,7 +736,16 @@ static void SetFarClip( void )
 			farthestCornerDistance = distance;
 		}
 	}
-	tr.viewParms.zFar = sqrt( farthestCornerDistance );
+	if (tr.distanceCull) {
+
+		// Bring in the zFar to the distanceCull distance
+		// The sky renders at zFar so need to move it out a little
+		// ...and make sure there is a minimum zfar to prevent problems
+		tr.viewParms.zFar = Com_Clamp(2048.0f, tr.distanceCull * (1.732), sqrtf(farthestCornerDistance));
+	}
+	else {
+		tr.viewParms.zFar = sqrt(farthestCornerDistance);
+	}
 }
 
 
@@ -837,10 +848,18 @@ void R_SetupFrustum (void) {
 
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[3].normal );
 	VectorMA( tr.viewParms.frustum[3].normal, -xc, tr.viewParms.ori.axis[2], tr.viewParms.frustum[3].normal );
+		
+	// this is the far plane
+	VectorScale( tr.viewParms.ori.axis[0],-1.0f, tr.viewParms.frustum[4].normal );
 
-	for (i=0 ; i<4 ; i++) {
+	for (i=0 ; i<5 ; i++) {
 		tr.viewParms.frustum[i].type = PLANE_NON_AXIAL;
 		tr.viewParms.frustum[i].dist = DotProduct (origin, tr.viewParms.frustum[i].normal);
+		if (i == 4 && tr.distanceCull)
+		{
+			// far plane does not go through the view point, it goes alot farther..
+			tr.viewParms.frustum[i].dist -= tr.distanceCull * 1.02f; // a little slack so we don't cull stuff 
+		}
 		SetPlaneSignbits( &tr.viewParms.frustum[i] );
 	}
 }
@@ -1944,6 +1963,8 @@ void R_RenderView (viewParms_t *parms) {
 	firstHackPortalDrawSurf = tr.refdef.numHackPortalDrawSurfs;
 
 	tr.viewCount++;
+
+	tr.distanceCull = (r_distancecullInSolid->value && !tr.viewParms.isPortal && !R_inPVS(tr.viewParms.ori.origin, tr.viewParms.ori.origin)) ? r_distancecullInSolid->value : 0;
 
 	// set viewParms.world
 	R_RotateForViewer ();

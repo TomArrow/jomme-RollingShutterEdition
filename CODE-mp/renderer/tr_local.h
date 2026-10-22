@@ -787,7 +787,7 @@ typedef struct {
 	int			viewportX, viewportY, viewportWidth, viewportHeight;
 	float		fovX, fovY;
 	float		projectionMatrix[16];
-	cplane_t	frustum[4];
+	cplane_t	frustum[5];
 	vec3_t		visBounds[2];
 	float		zFar;
 	qboolean	isSceneView;
@@ -1453,6 +1453,8 @@ typedef struct {
 
 	vec4_t					stencilShadowColor;
 	vec3_t					shadowSunDirectionOverride;
+
+	float					distanceCull;
 } trGlobals_t;
 
 
@@ -1541,6 +1543,7 @@ extern	cvar_t	*r_nocull;
 extern	cvar_t	*r_facePlaneCull;		// enables culling of planar surfaces with back side test
 extern	cvar_t	*r_nocurves;
 extern	cvar_t	*r_showcluster;
+extern	cvar_t	*r_distancecullInSolid;
 
 extern	cvar_t	*r_parallaxTexCoordNormalMode;
 extern	cvar_t	*r_parallaxTexCoordReuseMatrixThresh;

@@ -534,6 +534,16 @@ static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits )
 					planeBits &= ~8;			// all descendants will also be in front
 				}
 			}
+			
+			if ( (planeBits & 16) && tr.distanceCull ) {
+				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[4]);
+				if (r == 2) {
+					return;						// culled
+				}
+				if ( r == 1 ) {
+					planeBits &= ~16;			// all descendants will also be in front
+				}
+			}
 
 		}
 
@@ -825,5 +835,5 @@ void R_AddWorldSurfaces (void) {
 	if ( tr.refdef.num_dlights > 32 ) {
 		tr.refdef.num_dlights = 32 ;
 	}
-	R_RecursiveWorldNode( tr.world->nodes, 15, ( 1 << tr.refdef.num_dlights ) - 1 );
+	R_RecursiveWorldNode( tr.world->nodes, 31, ( 1 << tr.refdef.num_dlights ) - 1 );
 }
