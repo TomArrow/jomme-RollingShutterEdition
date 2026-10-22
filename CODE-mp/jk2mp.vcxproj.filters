@@ -1425,6 +1425,9 @@
     <CopyFileToFolders Include="glsl\thermal-fragment.glsl">
       <Filter>Renderer\glsl</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="glsl\fisheye-fragment-fast.glsl">
+      <Filter>Renderer\glsl</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="win32\q3asm.asm">

@@ -13,6 +13,7 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 	bool doTessellationShader = doGeometryShader && glConfig.tesselationShaderAvailable && strlen(filenameTessellationControlShader) && strlen(filenameTessellationEvaluationShader);
 
 	char* filenameFragmentShaderSimple = "glsl/fisheye-fragment-simple.glsl";
+	char* filenameFragmentShaderFast = "glsl/fisheye-fragment-fast.glsl";
 
 	//shaderId =
 	const char* vertexText;
@@ -21,12 +22,14 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 	const char* tessellationEvaluationText;
 	const char* fragmentText;
 	const char* fragmentTextSimple;
+	const char* fragmentTextFast;
 	char* fragmentTextPerlinFuckery;
 	bool success = true;
 	try {
 		vertexText = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameVertexShader).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
 		fragmentText = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameFragmentShader).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
 		fragmentTextSimple = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameFragmentShaderSimple).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
+		fragmentTextFast = (new std::string(std::istreambuf_iterator<char>(std::ifstream(filenameFragmentShaderFast).rdbuf()), std::istreambuf_iterator<char>()))->c_str();
 		int fragmentLength = strlen(fragmentText)+1;
 		fragmentTextPerlinFuckery = new char[fragmentLength + 1];
 		for (int i = fragmentLength-1; i >= 0; i--) {
@@ -117,6 +120,14 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 		success = false;
 	}
 
+	GLuint fragmentShaderFastId = qglCreateShader(GL_FRAGMENT_SHADER);
+	ri.Printf(PRINT_WARNING, "DEBUG: Fragment shader fast id is %d.\n", (int)fragmentShaderFastId);
+	qglShaderSource(fragmentShaderFastId, 1, &fragmentTextFast, NULL);
+	qglCompileShader(fragmentShaderFastId);
+	if (hasErrored(fragmentShaderFastId, filenameFragmentShaderFast, false)) {
+		success = false;
+	}
+
 	GLuint fragmentShaderPerlinId = qglCreateShader(GL_FRAGMENT_SHADER);
 	ri.Printf(PRINT_WARNING, "DEBUG: Fragment shader (perlin fuckery) id is %d.\n", (int)fragmentShaderPerlinId);
 	//const char* withPerlin[2] = {"#define PERLINFUCKERY\n",fragmentText };
@@ -149,6 +160,9 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 			if (shaderbits & GLSLSHAD_ZPREPASS) {
 				qglAttachShader(shaderId[shaderbits], fragmentShaderSimpleId);
 			}
+			else if (shaderbits & GLSLSHAD_FAST) {
+				qglAttachShader(shaderId[shaderbits], fragmentShaderFastId);
+			}
 			else if (shaderbits & GLSLSHAD_PERLIN) {
 				qglAttachShader(shaderId[shaderbits], fragmentShaderPerlinId);
 			}
@@ -177,6 +191,7 @@ R_GLSL::R_GLSL(char* filenameVertexShader, char* filenameTessellationControlShad
 	qglDeleteShader(fragmentShaderId);
 	qglDeleteShader(fragmentShaderPerlinId);
 	qglDeleteShader(fragmentShaderSimpleId);
+	qglDeleteShader(fragmentShaderFastId);
 
 	//if (!success && shaderId) {
 		//qglDeleteProgram(shaderId);

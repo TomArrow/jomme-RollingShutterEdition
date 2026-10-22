@@ -377,7 +377,7 @@ void R_FrameBuffer_ReloadGLSL() {
 }
 
 static int R_FrameBuffer_GetShaderbits() {
-	return (r_fboGLSLNoiseFuckery->integer ? GLSLSHAD_PERLIN : 0) | (fbo.fishEyeData.doingZPrepass ? GLSLSHAD_ZPREPASS : 0);
+	return (r_fboGLSLNoiseFuckery->integer ? GLSLSHAD_PERLIN : 0) | (fbo.fishEyeData.doingZPrepass ? GLSLSHAD_ZPREPASS : 0) | ((r_fboGLSLFastPreview->integer > 1 && !tr.captureIsActive) ? GLSLSHAD_FAST : 0);
 }
 
 extern int firstServerTime;

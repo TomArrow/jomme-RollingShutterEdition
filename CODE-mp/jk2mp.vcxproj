@@ -948,6 +948,11 @@
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|x64'">$(OutDir)/glsl</DestinationFolders>
       <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/glsl</DestinationFolders>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="glsl\fisheye-fragment-fast.glsl">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/glsl</DestinationFolders>
+    </CopyFileToFolders>
     <None Include="win32\qe3.ico" />
   </ItemGroup>
   <ItemGroup>

@@ -9,7 +9,8 @@ extern int64_t boundShaderUniqueId;
 typedef enum glslShaderType_s {
 	GLSLSHAD_PERLIN = (1<<0),
 	GLSLSHAD_ZPREPASS = (1<<1),
-	GLSLSHAD_MAX = (1<<2),
+	GLSLSHAD_FAST = (1<<2),
+	GLSLSHAD_MAX = (1<<3),
 }glslShaderType_t;
 
 class R_GLSL
