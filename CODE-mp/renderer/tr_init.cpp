@@ -186,6 +186,7 @@ cvar_t	*r_stereo;
 cvar_t	*r_primitives;
 cvar_t	*r_texturebits;
 cvar_t	*r_texturebitslm;
+cvar_t	*r_priority;
 
 cvar_t	*r_multiSample;
 cvar_t	*r_multiSampleNvidia;
@@ -1020,6 +1021,8 @@ void R_Register( void )
 	r_uiFullScreen = ri.Cvar_Get( "r_uifullscreen", "0", 0);
 	r_subdivisions = ri.Cvar_Get ("r_subdivisions", "4", CVAR_ARCHIVE | CVAR_LATCH);
 
+	r_priority = ri.Cvar_Get ("r_priority", "3", CVAR_ARCHIVE | CVAR_LATCH);
+
 	r_hdr = ri.Cvar_Get("r_hdr", "1", CVAR_ARCHIVE | CVAR_LATCH);
 
 	r_multiSample = ri.Cvar_Get( "r_multiSample", "0", CVAR_ARCHIVE | CVAR_LATCH );
@@ -1296,15 +1299,43 @@ void R_Init( void ) {
 
 #if _WIN32
 
-#if 0 // this doesn't really work. thought it would make the pc lag less during rendering but its hopeless.
+#if 1 // this doesn't really work. thought it would make the pc lag less during rendering but its hopeless.
+		
 	ri.Printf( PRINT_ALL, "----- Trying to set GPU priority on Windows -----\n" );
 
-	NTSTATUS priorityResponse = D3DKMTSetProcessSchedulingPriorityClass(GetCurrentProcess(), D3DKMT_SCHEDULINGPRIORITYCLASS_IDLE);
+	int prio = r_priority ? r_priority->integer : 2;
+	int gpuprio = D3DKMT_SCHEDULINGPRIORITYCLASS_NORMAL;
+	int cpuprio = NORMAL_PRIORITY_CLASS;
+
+	switch (prio) {
+	case 0:
+		gpuprio = D3DKMT_SCHEDULINGPRIORITYCLASS_IDLE;
+		cpuprio = IDLE_PRIORITY_CLASS;
+		break;
+	case 1:
+		gpuprio = D3DKMT_SCHEDULINGPRIORITYCLASS_BELOW_NORMAL;
+		cpuprio = BELOW_NORMAL_PRIORITY_CLASS;
+		break;
+	case 2:
+		gpuprio = D3DKMT_SCHEDULINGPRIORITYCLASS_NORMAL;
+		cpuprio = NORMAL_PRIORITY_CLASS;
+		break;
+	case 3:
+		gpuprio = D3DKMT_SCHEDULINGPRIORITYCLASS_ABOVE_NORMAL;
+		cpuprio = ABOVE_NORMAL_PRIORITY_CLASS;
+		break;
+	case 4:
+		gpuprio = D3DKMT_SCHEDULINGPRIORITYCLASS_REALTIME;
+		cpuprio = REALTIME_PRIORITY_CLASS;
+		break;
+	}
+
+	NTSTATUS priorityResponse = D3DKMTSetProcessSchedulingPriorityClass(GetCurrentProcess(), (D3DKMT_SCHEDULINGPRIORITYCLASS)gpuprio);
 
 	int otherprio = 0;
-	if (!SetPriorityClass(GetCurrentProcess(), PROCESS_MODE_BACKGROUND_BEGIN)) {
+	if (cpuprio != IDLE_PRIORITY_CLASS || !SetPriorityClass(GetCurrentProcess(), PROCESS_MODE_BACKGROUND_BEGIN)) {
 		otherprio = 1;
-		if (!SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS)) {
+		if (!SetPriorityClass(GetCurrentProcess(), cpuprio)) {
 			otherprio = 2;
 		}
 	}
