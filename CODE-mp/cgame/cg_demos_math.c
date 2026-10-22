@@ -463,7 +463,7 @@ void demoDrawRawLine(const vec3_t start, const vec3_t end, float width, polyVert
 
 	VectorScale( start, 0.5, middle ) ;
 	VectorMA( middle, 0.5, end, middle );
-	if ( VectorDistance( middle, cg.refdef.vieworg ) < 100 && demoDrawLimit )
+	if ( VectorDistance( middle, cg.refdef.vieworg ) < mov_lineDrawDistance.integer && demoDrawLimit )
 		return;
 	GetPerpendicularViewVector( cg.refdef.vieworg, start, end, up );
 	VectorMA( start, width, up, verts[0].xyz);

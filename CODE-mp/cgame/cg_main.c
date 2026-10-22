@@ -870,6 +870,7 @@ vmCvar_t    cg_dismemberSaberHitSounds;
 vmCvar_t    cg_drawHitBox;
 
 //mme
+vmCvar_t	mov_lineDrawDistance;
 vmCvar_t	mov_chatBeep;
 vmCvar_t	mov_fragsOnly;
 vmCvar_t	mov_drawChatbox;
@@ -1228,6 +1229,7 @@ Ghoul2 Insert End
 	{ &mme_soundDeformShortDistanceReduction,	"mme_soundDeformShortDistanceReduction",	"200",	NULL,	CVAR_ARCHIVE	},
 	{ &mme_soundDeformOffsetMode,	"mme_soundDeformOffsetMode",	"1",	NULL,	CVAR_ARCHIVE	},
 	{ &mme_forceDM15Optics,	"mme_forceDM15Optics",	"",			NULL,	0	},
+	{ &mov_lineDrawDistance,"mov_lineDrawDistance",	"100",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_chatBeep,		"mov_chatBeep",			"0",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_fragsOnly,		"mov_fragsOnly",		"0",			NULL,	CVAR_ARCHIVE	},
 	{ &mov_drawChatbox,		"mov_drawChatbox",		"1",			NULL,	CVAR_ARCHIVE	},

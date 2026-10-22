@@ -195,7 +195,7 @@ typedef struct demoMain_s {
 		qboolean	paused;
 	} play;
 	struct {
-		float speed, acceleration, friction;
+		float speed, acceleration, friction, speedmultiplier;
 	} move;
 	struct {
 		vec3_t		angles;
@@ -265,6 +265,8 @@ void demoMovePoint( vec3_t origin, vec3_t velocity, vec3_t angles);
 void demoMoveDirection( vec3_t origin, vec3_t angles );
 void demoMoveUpdateAngles( void );
 void demoMoveDeltaCmd( void );
+void demoMoveFaster_f();
+void demoMoveSlower_f();
 
 //CHASE
 void demoMoveChase( void );

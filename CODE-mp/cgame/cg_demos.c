@@ -1370,6 +1370,7 @@ void demoPlaybackInit(void) {
 	demo.move.acceleration = 8;
 	demo.move.friction = 8;
 	demo.move.speed = 400;
+	demo.move.speedmultiplier = 1.0f;
 
 	demo.line.locked = qfalse;
 	demo.line.offset = 0;
@@ -1442,6 +1443,8 @@ void demoPlaybackInit(void) {
 	trap_AddCommand("sun");
 	trap_AddCommand("rain");
 	trap_AddCommand("cut");
+	trap_AddCommand("movefaster");
+	trap_AddCommand("moveslower");
 
 	demo.media.additiveWhiteShader = trap_R_RegisterShader( "mme_additiveWhite" );
 	demo.media.mouseCursor = trap_R_RegisterShaderNoMipHUD( "cursor" );
@@ -1672,6 +1675,10 @@ qboolean CG_DemosConsoleCommand( void ) {
 		demoRainCommand_f();
 	} else if (!Q_stricmp(cmd, "cut")) {
 		demoCutCommand_f();
+	}else if (!Q_stricmp(cmd, "movefaster") || !Q_stricmp(cmd, "weapprev")) {
+		demoMoveFaster_f();
+	}else if (!Q_stricmp(cmd, "moveslower") || !Q_stricmp(cmd, "weapnext")) {
+		demoMoveSlower_f();
 	} else {
 		return CG_ConsoleCommand();
 	}

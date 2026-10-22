@@ -2218,6 +2218,7 @@ extern	vmCvar_t	cg_dismemberSaberHitSounds;
 extern	vmCvar_t	cg_drawHitBox;
 
 //New MME cvars
+extern	vmCvar_t	mov_lineDrawDistance;
 extern	vmCvar_t	mov_chatBeep;
 extern	vmCvar_t	mov_fragsOnly;
 extern	vmCvar_t	mov_drawChatbox;

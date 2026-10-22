@@ -93,19 +93,21 @@ class R_GLSL_Uniform {
 	uniformHistoryEntry_t*	_getHistoryEntry(int64_t uniqueShaderId, uniformType_t type) {
 		uniformHistoryEntry_t* entry = NULL;
 		size_t lowestEntry = historyCount <= UNIFORM_HISTORY_ENTRIES ? 0 : historyCount - UNIFORM_HISTORY_ENTRIES;
-		for (size_t histEntry = historyCount - 1; histEntry >= lowestEntry; histEntry--) {
-			entry = &history[histEntry % UNIFORM_HISTORY_ENTRIES];
-			if (entry->lastUniqueShaderId == uniqueShaderId) {
-				assert(entry->type == type);
-				if (entry->type != type) {
-					// type changed. shouldnt rly happen. invalidate history data.
-					memset(entry, 0, sizeof(*entry));
-					entry->lastUniqueShaderId = uniqueShaderId;
-					entry->type = type;
+		if(historyCount){
+			for (size_t histEntry = historyCount - 1; histEntry >= lowestEntry; histEntry--) {
+				entry = &history[histEntry % UNIFORM_HISTORY_ENTRIES];
+				if (entry->lastUniqueShaderId == uniqueShaderId) {
+					assert(entry->type == type);
+					if (entry->type != type) {
+						// type changed. shouldnt rly happen. invalidate history data.
+						memset(entry, 0, sizeof(*entry));
+						entry->lastUniqueShaderId = uniqueShaderId;
+						entry->type = type;
+					}
+					return entry;
 				}
-				return entry;
+				if (histEntry == lowestEntry) break; // meh i made this very awkward with my choice of size_t
 			}
-			if (histEntry) break; // meh i made this very awkward with my choice of size_t
 		}
 		// couldn't find a match. create a new one (oldest is ditched, oh well)
 		entry = &history[historyCount % UNIFORM_HISTORY_ENTRIES];

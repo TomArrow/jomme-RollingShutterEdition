@@ -2,6 +2,17 @@
 
 #include "cg_demos.h" 
 
+void demoMoveFaster_f() {
+	if (demo.move.speedmultiplier < 10000.0f) {
+		demo.move.speedmultiplier *= 2.0f;
+	}
+}
+void demoMoveSlower_f() {
+	if (demo.move.speedmultiplier > 0.00001f) {
+		demo.move.speedmultiplier *= 0.5f;
+	}
+}
+
 static float demoExecScale( usercmd_t *cmd , float speed) {
 	int		max;
 	float	total;
@@ -87,6 +98,19 @@ void demoMovePoint( vec3_t origin, vec3_t velocity, vec3_t angles) {
 
 	AngleVectors( angles, forward, right, up );
 	scale = demoExecScale( &demo.cmd, demo.move.speed );
+	if (demo.cmd.buttons & BUTTON_ATTACK) {	//turbo boost
+		scale *= 10.0f;
+	}
+	if (demo.cmd.buttons & BUTTON_ALT_ATTACK) {	//turbo boost
+		scale *= 10.0f;
+	}
+	if (demo.cmd.buttons & BUTTON_WALKING) {	// slow down
+		scale *= 0.1f;
+	}
+	if (demo.cmd.buttons & BUTTON_GESTURE) {	// slow down more
+		scale *= 0.1f;
+	}
+	scale *= demo.move.speedmultiplier;
 	if ( !scale ) {
 		VectorClear( wishDir );
 	} else {
