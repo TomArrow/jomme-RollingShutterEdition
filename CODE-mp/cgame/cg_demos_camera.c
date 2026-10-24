@@ -94,7 +94,7 @@ static qboolean cameraMatchOrigin( const demoCameraPoint_t *match[4], vec3_t ori
 #ifdef RELDEBUG
 //#pragma optimize("", off)
 #endif
-static float cameraPointLength( demoCameraPoint_t *point ) {
+static float cameraPointLength( demoCameraPoint_t *point, float precisionMultiplier) {
 	int i;
 	demoCameraPoint_t *match[4];
 	vec3_t control[4];
@@ -114,7 +114,7 @@ static float cameraPointLength( demoCameraPoint_t *point ) {
 		point->len = VectorDistance( control[1], control[2] );
 		return point->len;
 	}
-	float smoothness = 0.0001f/mov_smoothPosPrecision.value;
+	float smoothness = 0.0001f/(mov_smoothPosPrecision.value* precisionMultiplier);
 	posGet( 0, demo.camera.smoothPos, control, lastOrigin );
 	while (step < 1) {
 		addStep = 1 - step;
@@ -137,7 +137,7 @@ static float cameraPointLength( demoCameraPoint_t *point ) {
 	return point->len;
 }
 
-static qboolean cameraOriginAt( int time, float timeFraction, vec3_t origin ) {
+qboolean cameraOriginAt( int time, float timeFraction, vec3_t origin, float precisionMultiplier) {
 	demoCameraPoint_t	*match[4];
 	float				searchLen;
 	vec3_t				dx, dy;
@@ -160,17 +160,17 @@ static qboolean cameraOriginAt( int time, float timeFraction, vec3_t origin ) {
 		searchLen = 0;
 	} else {
 		dx[1] = match[2]->time - match[1]->time;
-		dy[1] = cameraPointLength( match[1] );
+		dy[1] = cameraPointLength( match[1], precisionMultiplier);
 		if (match[0]) {
 			dx[0] = match[1]->time - match[0]->time;
-			dy[0] = cameraPointLength( match[0] );
+			dy[0] = cameraPointLength( match[0], precisionMultiplier);
 		} else {
 			dx[0] = dx[1];
 			dy[0] = dy[1];
 		}
 		if (match[3]) {
 			dx[2] = match[3]->time - match[2]->time;
-			dy[2] = cameraPointLength( match[2] );
+			dy[2] = cameraPointLength( match[2], precisionMultiplier);
 		} else {
 			dx[2] = dx[1];
 			dy[2] = dy[1];
@@ -186,7 +186,7 @@ static qboolean cameraOriginAt( int time, float timeFraction, vec3_t origin ) {
 		posGet( t, demo.camera.smoothPos, control, origin );
 		return qtrue;
 	} 
-	float smoothness = 0.0001f / mov_smoothPosPrecision.value;
+	float smoothness = 0.0001f / (mov_smoothPosPrecision.value* precisionMultiplier);
 	posGet( 0, demo.camera.smoothPos, control, origin );
 	while (step < 1) {
 		addStep = 1 - step;
@@ -675,7 +675,7 @@ void cameraUpdate( int time, float timeFraction ) {
 	if (!demo.camera.locked || !demo.camera.points ) {
 
 	} else {
-		cameraOriginAt( time, timeFraction, demo.camera.origin );
+		cameraOriginAt( time, timeFraction, demo.camera.origin,1.0f );
 		cameraAnglesAt( time, timeFraction, demo.camera.angles, qfalse );
 		if (!cameraFovAt( time, timeFraction, &demo.camera.fov ))
 			demo.camera.fov = 0;
@@ -829,7 +829,7 @@ void cameraDraw( int time, float timeFraction ) {
 		point = point->next;
 	}
 	/* Draw current line */
-	if ( cameraOriginAt( time, timeFraction, origin) && cameraAnglesAt( time, timeFraction, angles, qtrue )) {
+	if ( cameraOriginAt( time, timeFraction, origin,1.0f) && cameraAnglesAt( time, timeFraction, angles, qtrue )) {
 		AngleVectors( angles, forward, 0, 0);
 		VectorMA( origin, 80, forward, angles );
 		demoDrawLine( origin, angles, colorWhite );
@@ -868,7 +868,7 @@ static void cameraSmooth( void ) {
 	totalLen = 0;
 	point = startPoint;
 	while ( point ) {
-		totalLen += cameraPointLength( point );
+		totalLen += cameraPointLength( point,1.0f );
 		if (point == endPoint)
 			break;
 		point = point->next;
@@ -887,7 +887,7 @@ static void cameraSmooth( void ) {
 		if (!point)
 			CG_Error("Point chain corrupt");
 		point->time = startPoint->time + (doneLen / totalLen ) * totalTime;
-		doneLen += cameraPointLength( point );
+		doneLen += cameraPointLength( point,1.0f );
 		point = point->next;
 	}
 }
@@ -1242,7 +1242,7 @@ void demoCameraCommand_f(void) {
 		vec3_t v;
 
 		if (!Q_stricmp(CG_Argv(2), "here" )) {
-			cameraOriginAt( demo.play.time, demo.play.fraction, v );
+			cameraOriginAt( demo.play.time, demo.play.fraction, v, 1.0f );
 			VectorSubtract( demo.viewOrigin, v, v );
 		} else {
 			v[0] = atof( CG_Argv(2) );

@@ -98,9 +98,9 @@ void demoMovePoint( vec3_t origin, vec3_t velocity, vec3_t angles) {
 
 	AngleVectors( angles, forward, right, up );
 	scale = demoExecScale( &demo.cmd, demo.move.speed );
-	if (demo.cmd.buttons & BUTTON_ATTACK) {	//turbo boost
-		scale *= 10.0f;
-	}
+	//if (demo.cmd.buttons & BUTTON_ATTACK) {	//turbo boost ( actually dont cuz we need attack to move the camera )
+	//	scale *= 10.0f;
+	//}
 	if (demo.cmd.buttons & BUTTON_ALT_ATTACK) {	//turbo boost
 		scale *= 10.0f;
 	}

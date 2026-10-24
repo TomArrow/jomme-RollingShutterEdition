@@ -305,9 +305,73 @@ qboolean demoProjectLoad( const char *baseName ) {
 	return qtrue;
 }
 
+
+static void demoProjectBackup( const char* baseName ) {
+	fileHandle_t fileHandle;
+	fileHandle_t fileHandleBackup;
+	char fileName[MAX_OSPATH];
+	char fileNameBackup[MAX_OSPATH];
+	int size;
+	int index = 0;
+	qboolean foundFree = qfalse;
+	qtime_t q = { 0 };
+	byte buffer[1024];
+
+	Com_sprintf(fileName, sizeof(fileName), "project/%s/%s.cfg", mme_demoFileName.string, baseName);
+	size = trap_FS_FOpenFile(fileName, &fileHandle, FS_READ);
+	if (!fileHandle) {
+		return;
+	}
+	trap_RealTime(&q);
+	while (!foundFree && index < 9999) {
+		if (index == 0) {
+			Com_sprintf(fileNameBackup, sizeof(fileNameBackup), "project/%s/backup/%4d-%02d-%02d_%02d-%02d-%02d_%s.cfg", mme_demoFileName.string, q.tm_year + 1900, q.tm_mon + 1, q.tm_mday, q.tm_hour, q.tm_min, q.tm_sec, baseName);
+		}
+		else {
+			Com_sprintf(fileNameBackup, sizeof(fileNameBackup), "project/%s/backup/%4d-%02d-%02d_%02d-%02d-%02d_%s_%d.cfg", mme_demoFileName.string, q.tm_year + 1900, q.tm_mon + 1, q.tm_mday, q.tm_hour, q.tm_min, q.tm_sec, baseName, index);
+		}
+
+		trap_FS_FOpenFile(fileNameBackup, &fileHandleBackup, FS_READ);
+		if (!fileHandleBackup) {
+			break;
+		}
+		index++;
+	}
+
+	if (fileHandleBackup) {
+		Com_Printf("^1Unable to save project backup. No free file found.\n");
+		trap_FS_FCloseFile(fileHandle);
+		trap_FS_FCloseFile(fileHandleBackup);
+		return;
+	}
+
+	trap_FS_FCloseFile(fileHandleBackup);
+	trap_FS_FOpenFile(fileNameBackup, &fileHandleBackup, FS_WRITE);
+
+	if (!fileHandleBackup) {
+		Com_Printf("^1Unable to save project backup. Unable to open output file.\n");
+		trap_FS_FCloseFile(fileHandle);
+		return;
+	}
+
+	while (size > 0) {
+		int readcount = min(size, sizeof(buffer));
+		trap_FS_Read(buffer, readcount, fileHandle);
+		trap_FS_Write(buffer, readcount, fileHandleBackup);
+		size -= readcount;
+	}
+
+	Com_Printf("^3Saved old project backup as %s.\n", fileNameBackup);
+
+	trap_FS_FCloseFile(fileHandleBackup);
+	trap_FS_FCloseFile(fileHandle);
+}
+
 static qboolean demoProjectSave( const char *baseName ) {
 	fileHandle_t fileHandle;
 	char fileName[MAX_OSPATH];
+
+	demoProjectBackup(baseName);
 
 	Com_sprintf(fileName, sizeof(fileName), "project/%s/%s.cfg", mme_demoFileName.string, baseName );
 	trap_FS_FOpenFile( fileName, &fileHandle, FS_WRITE);

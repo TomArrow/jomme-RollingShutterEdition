@@ -65,6 +65,7 @@ typedef enum {
 	hudCamPitch, hudCamYaw, hudCamRoll,
 	hudCamFov,
 	hudCamTarget,
+	hudCamSpeedGraph,
 
 	hudChaseDistance,
 	hudChaseTarget,
@@ -167,6 +168,34 @@ static void hudDrawExtra(float x, float y, hudItem_t* item) {
 	float stepwidth = HUD_GRAPH_STEPWIDTH * cgs.widthRatioCoef;
 	qboolean anyFound = qtrue;
 	switch (item->handler) {
+	case hudCamSpeedGraph:
+	{
+		vec3_t origin= { 0 };
+		vec3_t oldOrigin = { 0 };
+		for (i = -1; i < HUD_GRAPH_STEPS; i++) {
+			cameraOriginAt(demo.play.time - HUD_GRAPH_TIMESPAN_PRE + HUD_GRAPH_TIMESTEP * i, demo.play.fraction, origin,0.1f);
+			if (i >= 0) {
+				vals[i] = VectorDistance(origin,oldOrigin);
+			}
+			VectorCopy(origin, oldOrigin);
+			if (i < 0) {
+				continue;
+			}
+			if (vals[i] > max) {
+				max = vals[i];
+			}
+			if (vals[i] < min) {
+				min = vals[i];
+			}
+		}
+		if ((max || min) && min != max && anyFound) {
+			mult = (float)HUD_TEXT_SPACING / (max - min);
+			for (i = 1; i < HUD_GRAPH_STEPS; i++) {
+				trap_R_DrawLine(HUD_GRAPH_LEFTOFFSET + stepwidth * (i - 1), y + HUD_TEXT_SPACING - (vals[i - 1] - min) * mult, HUD_GRAPH_LEFTOFFSET + stepwidth * i, y + HUD_TEXT_SPACING - (vals[i] - min) * mult, 1.5f, 0, 0, 1, 1, cgs.media.whiteShader);
+			}
+		}
+	}
+		break;
 	case hudCommandVariable0:
 	case hudCommandVariable1:
 	case hudCommandVariable2:
@@ -1200,6 +1229,7 @@ void hudInitTables(void) {
 	hudAddCheck(  10, 15, MASK_CAM_EDITHUD, "Fov", hudCamCheckFov );
 	hudAddButton(  0, 16, MASK_CAM_HUD, "SmoothPos:", hudCamSmoothPos );
 	hudAddButton(  0, 17, MASK_CAM_HUD, "SmoothAngles:", hudCamSmoothAngles );
+	hudAddHandler( 0, 18, MASK_CAM, "Speedgraph:", hudCamSpeedGraph);
 
 	// Chase items
 	hudAddFloat(   0,  4, MASK_CHASE_EDIT, "PosX:",  hudChasePosX );

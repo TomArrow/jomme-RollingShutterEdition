@@ -2760,7 +2760,8 @@ void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
 sfxHandle_t	trap_S_RegisterSound( const char *sample);		// returns buzz if not found
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop, qboolean bReturnWithoutStarting);	// empty name stops music
-void	trap_S_StopBackgroundTrack( void );
+void		trap_S_StopBackgroundTrack( void );
+int			trap_RealTime(qtime_t* qtime);
 
 
 void		trap_R_LoadWorldMap( const char *mapname );

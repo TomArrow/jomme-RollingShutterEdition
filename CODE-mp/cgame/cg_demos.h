@@ -259,6 +259,7 @@ void demoCameraCommand_f(void);
 void cameraSave( fileHandle_t fileHandle );
 qboolean cameraParse( BG_XMLParse_t *parse, const struct BG_XMLParseBlock_s *fromBlock, void *data);
 demoCameraPoint_t *cameraPointSynch( int time );
+qboolean cameraOriginAt( int time, float timeFraction, vec3_t origin, float precisionMultiplier );
 
 //MOVE
 void demoMovePoint( vec3_t origin, vec3_t velocity, vec3_t angles);
